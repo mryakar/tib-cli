@@ -1,0 +1,10 @@
+[versions]
+picocli = "4.7.7"
+# The CLI's own runtime. The projects it generates pick their Spring Boot version from the pack.
+spring-boot = "4.1.2"
+
+[libraries]
+picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
+picocli-spring-boot-starter = { module = "info.picocli:picocli-spring-boot-starter", version.ref = "picocli" }
+spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
+spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "spring-boot" }
