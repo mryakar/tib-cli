@@ -1,0 +1,27 @@
+#!/bin/sh
+# postinst script for APPLICATION_PACKAGE: jpackage's own, plus a link that puts tib on the PATH.
+#
+# see: dh_installdeb(1)
+
+set -e
+
+package_type=deb
+LAUNCHER_AS_SERVICE_SCRIPTS
+
+case "$1" in
+    configure)
+DESKTOP_COMMANDS_INSTALL
+LAUNCHER_AS_SERVICE_COMMANDS_INSTALL
+        ln -sf /opt/APPLICATION_PACKAGE/bin/APPLICATION_PACKAGE /usr/bin/APPLICATION_PACKAGE
+    ;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+    ;;
+esac
+
+exit 0

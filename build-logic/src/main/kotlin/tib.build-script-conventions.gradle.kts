@@ -19,6 +19,11 @@ plugins { id("com.diffplug.spotless") }
 val libs = versionCatalogs.named("libs")
 
 spotless {
+  kotlin {
+    target("build-logic/src/main/kotlin/**/*.kt")
+    ktfmt(libs.findVersion("ktfmt").get().requiredVersion).googleStyle()
+    licenseHeaderFile(layout.settingsDirectory.file("gradle/spotless/license-header.txt"))
+  }
   kotlinGradle {
     target("*.gradle.kts", "*/*.gradle.kts", "build-logic/src/main/kotlin/*.gradle.kts")
     ktfmt(libs.findVersion("ktfmt").get().requiredVersion).googleStyle()
