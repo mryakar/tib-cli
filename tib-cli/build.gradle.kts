@@ -92,9 +92,11 @@ fun jpackage(name: String, type: String, configure: JPackage.() -> Unit) =
       "--description",
       "The Idempotent Boilerplate: scaffolding CLI for Spring Boot services",
     )
-    // The installers also tell where the application comes from.
+    // The installers also tell where the application comes from and under which license.
     if (type != "app-image") {
       options.addAll("--about-url", "https://github.com/mryakar/tib-cli")
+      options.addAll("--license-file", layout.settingsDirectory.file("LICENSE").asFile.absolutePath)
+      inputs.file(layout.settingsDirectory.file("LICENSE"))
     }
     configure()
   }
