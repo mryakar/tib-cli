@@ -21,7 +21,10 @@ import spock.lang.Specification
 class TibCommandSpec extends Specification {
 
   StringWriter out = new StringWriter()
-  CommandLine tib = new CommandLine(new TibCommand(), new TestFactory()).setOut(new PrintWriter(out))
+  // Without colors: whether picocli would use them depends on the platform and the console.
+  CommandLine tib = new CommandLine(new TibCommand(), new TestFactory())
+  .setOut(new PrintWriter(out))
+  .setColorScheme(CommandLine.Help.defaultColorScheme(CommandLine.Help.Ansi.OFF))
 
   def "--version prints the version of the build"() {
     when:
