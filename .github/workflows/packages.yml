@@ -1,0 +1,71 @@
+# Builds the packages of each platform and installs them, as a user would, before it uploads them.
+# The build workflow runs it on every change, and the release workflow for the files of a release.
+name: Packages
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  packages:
+    name: Packages (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Code is compiled with JDK 21; the packages embed a runtime of JDK 25.
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: |
+            25
+            21
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - run: ./gradlew packages
+        shell: bash
+
+      - name: Install the .deb and run tib
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get install -y ./tib-cli/build/packages/tib_*.deb
+          command -v tib
+          tib --version
+          sudo apt-get remove -y tib
+          if [[ -e /usr/bin/tib ]]; then echo "/usr/bin/tib is still there" >&2; exit 1; fi
+      - name: Install the .msi and run tib
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $msi = Get-Item tib-cli\build\packages\tib-*.msi
+          $install = Start-Process msiexec -ArgumentList "/i `"$msi`" /qn /l*v install.log" -Wait -PassThru
+          if ($install.ExitCode -ne 0) { Get-Content install.log; throw "msiexec exited with $($install.ExitCode)" }
+          $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+          if ($machinePath -notlike '*\tib*') { throw "the installer did not put tib on the PATH: $machinePath" }
+          $env:Path = $machinePath
+          tib --version
+          if ($LASTEXITCODE -ne 0) { throw "tib --version exited with $LASTEXITCODE" }
+          $uninstall = Start-Process msiexec -ArgumentList "/x `"$msi`" /qn" -Wait -PassThru
+          if ($uninstall.ExitCode -ne 0) { throw "uninstall exited with $($uninstall.ExitCode)" }
+          $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
+          if ($machinePath -like '*\tib*') { throw "the uninstaller left tib on the PATH: $machinePath" }
+      - name: Unpack the portable zip and run tib
+        shell: bash
+        run: |
+          mkdir portable && cd portable
+          unzip -q ../tib-cli/build/packages/tib-*.zip
+          if [[ "$RUNNER_OS" == Windows ]]; then tib/tib.exe --version; else tib/bin/tib --version; fi
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: packages-${{ runner.os }}
+          path: tib-cli/build/packages/*
+          if-no-files-found: error
+          retention-days: 7
