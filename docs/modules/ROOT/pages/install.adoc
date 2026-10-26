@@ -1,0 +1,50 @@
+= Install
+:description: How to install tib on Linux and Windows.
+
+Every package embeds its own Java runtime: nothing else needs to be installed. The packages are on
+the https://github.com/mryakar/tib-cli/releases[releases page], with their checksums and signatures.
+
+== Debian and Ubuntu
+
+From the APT repository, which also brings updates with `apt upgrade`:
+
+[source,bash]
+----
+curl -fsSL https://mryakar.github.io/tib-cli/apt/tib.gpg | sudo tee /usr/share/keyrings/tib.gpg >/dev/null
+echo "deb [signed-by=/usr/share/keyrings/tib.gpg] https://mryakar.github.io/tib-cli/apt stable main" | sudo tee /etc/apt/sources.list.d/tib.list
+sudo apt update
+sudo apt install tib
+----
+
+Or from the `.deb` of a release:
+
+[source,bash]
+----
+sudo apt install ./tib_<version>_amd64.deb
+----
+
+Either way, `tib` is in `/usr/bin`, and the application in `/opt/tib`.
+
+== Windows
+
+Run the `.msi` of a release, or install it silently:
+
+[source,powershell]
+----
+msiexec /i tib-<version>.msi /qn
+----
+
+The installer puts `tib` on the PATH of the machine. Open a new console afterwards: a console that
+was already open keeps its old PATH.
+
+== Portable zip
+
+For a machine where you cannot install packages: unpack the zip of your platform anywhere, and run
+`tib/bin/tib` on Linux or `tib\tib.exe` on Windows. Put that directory on your PATH if you like.
+
+== Check
+
+[source,bash]
+----
+tib --version
+----

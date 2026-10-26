@@ -1,0 +1,5 @@
+# The documentation component. Its version comes from the playbook: the tag of a release, or main.
+name: tib
+title: tib
+nav:
+  - modules/ROOT/nav.adoc
