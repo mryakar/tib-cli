@@ -15,6 +15,7 @@ case "$1" in
 DESKTOP_COMMANDS_UNINSTALL
 LAUNCHER_AS_SERVICE_COMMANDS_UNINSTALL
         rm -f /usr/bin/APPLICATION_PACKAGE
+        rm -f /opt/APPLICATION_PACKAGE/lib/app/tib.aot
     ;;
 
     failed-upgrade)

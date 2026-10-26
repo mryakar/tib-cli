@@ -67,6 +67,9 @@ abstract class JPackage : DefaultTask() {
   @get:Optional
   abstract val modules: RegularFileProperty
 
+  /** The options of jlink, when the task builds the runtime of an application image. */
+  @get:Input abstract val jlinkOptions: ListProperty<String>
+
   /** An application image to build the package from, instead of the jars and a new runtime. */
   @get:InputDirectory
   @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -107,6 +110,9 @@ abstract class JPackage : DefaultTask() {
         args("--main-jar", mainJar.get())
         args("--main-class", mainClass.get())
         args("--add-modules", modules.joinToString(","))
+        if (jlinkOptions.get().isNotEmpty()) {
+          args("--jlink-options", jlinkOptions.get().joinToString(" "))
+        }
       }
       args("--dest", destination.absolutePath)
       if (resources.isPresent) {
