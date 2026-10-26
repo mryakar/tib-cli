@@ -15,8 +15,8 @@
  */
 // The command line: picocli commands wired as Spring beans, and the application that the packages
 // ship. Its Spring Boot version is the CLI's own runtime, not the one of the projects it generates.
-import me.yakar.tib.build.JPackage
-import me.yakar.tib.build.JdkModules
+import me.yakar.tib.gradle.JPackage
+import me.yakar.tib.gradle.JdkModules
 
 plugins {
   id("tib.java-conventions")
