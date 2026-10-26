@@ -1,0 +1,24 @@
+# Builds the documentation site from this repository: the pages under docs/ and the command
+# reference that the build generates from the commands themselves. Each release tag is a version
+# of the site; the main branch is the version called main.
+site:
+  title: tib
+  url: https://mryakar.github.io/tib-cli
+  start_page: tib::index.adoc
+content:
+  sources:
+    - url: ..
+      branches: HEAD
+      tags: v*
+      start_paths:
+        - docs
+        - tib-cli/build/docs/antora
+      version:
+        v(?<version>+({0..9}).+({0..9}).+({0..9})): $<version>
+        '*': main
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+output:
+  dir: build/site

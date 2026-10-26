@@ -1,0 +1,15 @@
+= tib
+:description: The tib command, its options and subcommands.
+
+// Generated from the commands themselves by the build (picocli-codegen); not written by hand.
+include::partial$commands/tib.adoc[tag=picocli-generated-man-section-synopsis]
+
+include::partial$commands/tib.adoc[tag=picocli-generated-man-section-description]
+
+include::partial$commands/tib.adoc[tag=picocli-generated-man-section-options]
+
+include::partial$commands/tib.adoc[tag=picocli-generated-man-section-arguments]
+
+include::partial$commands/tib.adoc[tag=picocli-generated-man-section-commands]
+
+include::partial$commands/tib.adoc[tag=picocli-generated-man-section-exit-status]

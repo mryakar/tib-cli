@@ -1,0 +1,16 @@
+= Getting started
+:description: The first commands of tib.
+
+With tib xref:install.adoc[installed], check that it answers:
+
+[source,bash]
+----
+$ tib --version
+tib 0.1.0
+----
+
+`tib --help` lists what it can do, and `tib <command> --help` the options of one command. Every
+command and option is also in the xref:reference/tib.adoc[reference].
+
+The generators that scaffold a service and add to it are being built; the
+https://github.com/mryakar/tib-cli/blob/main/ROADMAP.md[roadmap] lists them in order.

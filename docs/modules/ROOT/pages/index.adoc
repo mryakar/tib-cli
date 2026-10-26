@@ -1,0 +1,18 @@
+= tib
+:description: The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.
+
+tib scaffolds Spring Boot services and adds to them: an entity layer from a DDL or a spec, with
+its repository, service, mapper, DTOs, controller and tests. It runs again on the same project
+without breaking anything, and shows what it would change before it changes it.
+
+== Status
+
+tib is at the start. The current build has the pipeline: packages for Linux and Windows, this
+site, and one command, `tib --version`. The generators come next; the
+https://github.com/mryakar/tib-cli/blob/main/ROADMAP.md[roadmap] says in what order.
+
+== Where to go
+
+* xref:install.adoc[] puts `tib` on your PATH, from the APT repository, a package or a zip.
+* xref:getting-started.adoc[] runs the first command.
+* xref:reference/tib.adoc[] lists every command and option, generated from the commands themselves.

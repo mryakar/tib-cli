@@ -1,5 +1,6 @@
-# Publishes the GitHub Pages site: the APT repository of the released packages. It runs on every
-# change of main, when a release is published, and on request.
+# Publishes the GitHub Pages site: the documentation, built with Antora from the main branch and
+# the release tags, and the APT repository of the released packages. It runs on every change of
+# main, when a release is published, and on request.
 name: Pages
 
 on:
@@ -22,9 +23,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # Always main, whatever triggered the run, with the tags for the versions of the site.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: main
+          fetch-depth: 0
           persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - name: Generate the command reference from the commands
+        run: ./gradlew :tib-cli:antoraContent
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+      # From docs/: Antora resolves the local content source against the working directory.
+      - name: Build the documentation with Antora
+        working-directory: docs
+        run: |
+          npm ci
+          npx antora --clean --to-dir "$GITHUB_WORKSPACE/site" --stacktrace antora-playbook.yml
       - name: Download the .deb of every release
         run: |
           mkdir -p debs
