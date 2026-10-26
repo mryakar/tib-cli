@@ -51,7 +51,8 @@ class TibApplicationSpec extends Specification {
     then:
     process.waitFor(2, TimeUnit.MINUTES)
     process.exitValue() == 2
-    output.startsWith("Unknown option: '--no-such-option'")
+    // Contains, not starts with: on some consoles picocli colors the message.
+    output.contains("Unknown option: '--no-such-option'")
   }
 
   /**
