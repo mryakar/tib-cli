@@ -17,6 +17,7 @@
 // ship. Its Spring Boot version is the CLI's own runtime, not the one of the projects it generates.
 import me.yakar.tib.gradle.JPackage
 import me.yakar.tib.gradle.JdkModules
+import me.yakar.tib.gradle.StartupCacheScript
 
 plugins {
   id("tib.java-conventions")
@@ -109,26 +110,47 @@ val jpackageAppImage =
     if (windows) {
       options.add("--win-console")
     }
+    // jlink's defaults, without --strip-native-commands: the start-up cache is built with the
+    // runtime's own java.
+    jlinkOptions.addAll("--strip-debug", "--no-man-pages", "--no-header-files")
+    // The launcher loads the start-up cache that the installers build (see StartupCacheScript),
+    // silently when there is none, such as from the portable zip before its script was run.
+    StartupCacheScript.JVM_OPTIONS.forEach { options.addAll("--java-options", it) }
+    options.addAll("--java-options", "-XX:AOTCache=\$APPDIR/${StartupCacheScript.CACHE}")
+    options.addAll("--java-options", "-Xlog:aot=off,cds=off")
   }
 
-// The image that the packages ship: jpackage's, on Linux without the libraries of java.desktop
-// that would make the package depend on X11, ALSA and FreeType. Spring needs java.beans from that
-// module, nothing that calls those libraries.
+// The image that the packages ship: jpackage's, with the script that builds the start-up cache,
+// without the runtime's commands other than java, and, on Linux, without the libraries of
+// java.desktop that would make the package depend on X11, ALSA and FreeType. Spring needs
+// java.beans from that module, nothing that calls those libraries.
 val shippedImage =
   tasks.register<Sync>("shippedImage") {
     description = "Prepares the application image that the packages ship."
     from(jpackageAppImage.map { it.destination })
-    if (!windows) {
+    if (windows) {
+      exclude(
+        "tib/runtime/bin/jfr.exe",
+        "tib/runtime/bin/jrunscript.exe",
+        "tib/runtime/bin/keytool.exe",
+      )
+    } else {
       exclude(
         "tib/lib/runtime/lib/libawt_xawt.so",
         "tib/lib/runtime/lib/libsplashscreen.so",
         "tib/lib/runtime/lib/libjsound.so",
         "tib/lib/runtime/lib/libfontmanager.so",
+        "tib/lib/runtime/bin/jfr",
+        "tib/lib/runtime/bin/jrunscript",
+        "tib/lib/runtime/bin/keytool",
       )
     }
     into(layout.buildDirectory.dir("jpackage/image"))
     // The runtime's legal files are read-only, so a copy cannot overwrite the previous one.
     doFirst { destinationDir.deleteRecursively() }
+    val appDirectory = if (windows) "tib/app" else "tib/lib/app"
+    val isWindows = windows
+    doLast { StartupCacheScript.write(destinationDir.resolve(appDirectory), "tib", isWindows) }
   }
 
 val portableZip =
@@ -136,9 +158,10 @@ val portableZip =
     description =
       "Zips the application image: tib with its runtime, for a machine without admin rights."
     from(shippedImage.map { it.destinationDir })
-    // The archive is reproducible, so it carries no permissions of its own; the launcher gets its.
+    // The archive is reproducible, so it carries no permissions of its own; the launcher and the
+    // runtime's commands get theirs.
     eachFile {
-      if (relativePath.segments.contains("bin")) {
+      if (relativePath.segments.contains("bin") || name.endsWith(".sh")) {
         permissions { unix("rwxr-xr-x") }
       }
     }

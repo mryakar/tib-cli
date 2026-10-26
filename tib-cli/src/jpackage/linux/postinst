@@ -13,6 +13,8 @@ case "$1" in
 DESKTOP_COMMANDS_INSTALL
 LAUNCHER_AS_SERVICE_COMMANDS_INSTALL
         ln -sf /opt/APPLICATION_PACKAGE/bin/APPLICATION_PACKAGE /usr/bin/APPLICATION_PACKAGE
+        # The start-up cache is bound to the installation; it is built here, not in the package.
+        /opt/APPLICATION_PACKAGE/lib/app/startup-cache.sh || echo "APPLICATION_PACKAGE: could not build the start-up cache" >&2
     ;;
 
     abort-upgrade|abort-remove|abort-deconfigure)
