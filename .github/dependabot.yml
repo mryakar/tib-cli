@@ -1,0 +1,34 @@
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: weekly
+    # Versions younger than two weeks are left alone; security updates are not held back.
+    cooldown:
+      default-days: 14
+    commit-message:
+      prefix: build
+      include: scope
+    ignore:
+      # Groovy follows the Spock variant (spock-*-groovy-5.0); move both together.
+      - dependency-name: org.apache.groovy:groovy-bom
+        update-types: [version-update:semver-major]
+      # google-java-format 1.37 fails under Spotless 8.10 with NoSuchMethodError; move up with Spotless.
+      - dependency-name: com.google.googlejavaformat:google-java-format
+        versions: [">=1.37.0"]
+    groups:
+      gradle:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 14
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      github-actions:
+        patterns: ["*"]
