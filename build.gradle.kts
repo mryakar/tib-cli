@@ -14,3 +14,4 @@
  * limitations under the License.
  */
 // The root project builds nothing of its own; the modules are listed in settings.gradle.kts.
+plugins { id("tib.build-script-conventions") }
