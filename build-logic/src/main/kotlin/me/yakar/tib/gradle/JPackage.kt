@@ -51,17 +51,27 @@ abstract class JPackage : DefaultTask() {
   /** jpackage's --app-version; Windows accepts only numbers and dots. */
   @get:Input abstract val applicationVersion: Property<String>
 
-  /** The directory with the application's jars. */
+  /** The directory with the application's jars, when the task builds an application image. */
   @get:InputDirectory
   @get:PathSensitive(PathSensitivity.RELATIVE)
+  @get:Optional
   abstract val input: DirectoryProperty
 
-  @get:Input abstract val mainJar: Property<String>
+  @get:Input @get:Optional abstract val mainJar: Property<String>
 
-  @get:Input abstract val mainClass: Property<String>
+  @get:Input @get:Optional abstract val mainClass: Property<String>
 
   /** The modules of the JDK to put into the runtime, one per line. */
-  @get:InputFile @get:PathSensitive(PathSensitivity.NONE) abstract val modules: RegularFileProperty
+  @get:InputFile
+  @get:PathSensitive(PathSensitivity.NONE)
+  @get:Optional
+  abstract val modules: RegularFileProperty
+
+  /** An application image to build the package from, instead of the jars and a new runtime. */
+  @get:InputDirectory
+  @get:PathSensitive(PathSensitivity.RELATIVE)
+  @get:Optional
+  abstract val appImage: DirectoryProperty
 
   /** jpackage's --resource-dir, with the files that replace its own templates. */
   @get:InputDirectory
@@ -84,16 +94,20 @@ abstract class JPackage : DefaultTask() {
     fileSystemOperations.delete { delete(destination) }
     destination.mkdirs()
     val jdk = javaLauncher.get().metadata.installationPath
-    val modules = modules.get().asFile.readLines().filter { it.isNotBlank() }
     execOperations.exec {
       executable(jdk.file("bin/jpackage").asFile)
       args("--type", type.get())
       args("--name", applicationName.get())
       args("--app-version", applicationVersion.get())
-      args("--input", input.get().asFile.absolutePath)
-      args("--main-jar", mainJar.get())
-      args("--main-class", mainClass.get())
-      args("--add-modules", modules.joinToString(","))
+      if (appImage.isPresent) {
+        args("--app-image", appImage.get().asFile.absolutePath)
+      } else {
+        val modules = modules.get().asFile.readLines().filter { it.isNotBlank() }
+        args("--input", input.get().asFile.absolutePath)
+        args("--main-jar", mainJar.get())
+        args("--main-class", mainClass.get())
+        args("--add-modules", modules.joinToString(","))
+      }
       args("--dest", destination.absolutePath)
       if (resources.isPresent) {
         args("--resource-dir", resources.get().asFile.absolutePath)

@@ -103,15 +103,35 @@ fun jpackage(name: String, type: String, configure: JPackage.() -> Unit) =
 
 val jpackageAppImage =
   jpackage("jpackageAppImage", "app-image") {
-    description = "Builds the application image that the portable zip wraps."
+    description = "Builds the application image with jpackage."
     destination = layout.buildDirectory.dir("jpackage/app-image")
+  }
+
+// The image that the packages ship: jpackage's, on Linux without the libraries of java.desktop
+// that would make the package depend on X11, ALSA and FreeType. Spring needs java.beans from that
+// module, nothing that calls those libraries.
+val shippedImage =
+  tasks.register<Sync>("shippedImage") {
+    description = "Prepares the application image that the packages ship."
+    from(jpackageAppImage.map { it.destination })
+    if (!windows) {
+      exclude(
+        "tib/lib/runtime/lib/libawt_xawt.so",
+        "tib/lib/runtime/lib/libsplashscreen.so",
+        "tib/lib/runtime/lib/libjsound.so",
+        "tib/lib/runtime/lib/libfontmanager.so",
+      )
+    }
+    into(layout.buildDirectory.dir("jpackage/image"))
+    // The runtime's legal files are read-only, so a copy cannot overwrite the previous one.
+    doFirst { destinationDir.deleteRecursively() }
   }
 
 val portableZip =
   tasks.register<Zip>("portableZip") {
     description =
       "Zips the application image: tib with its runtime, for a machine without admin rights."
-    from(jpackageAppImage.map { it.destination })
+    from(shippedImage.map { it.destinationDir })
     // The archive is reproducible, so it carries no permissions of its own; the launcher gets its.
     eachFile {
       if (relativePath.segments.contains("bin")) {
@@ -126,6 +146,7 @@ val installer =
   if (windows) {
     jpackage("jpackageMsi", "msi") {
       description = "Builds the Windows installer."
+      appImage = layout.dir(shippedImage.map { it.destinationDir.resolve("tib") })
       resources = layout.projectDirectory.dir("src/jpackage/windows")
       destination = layout.buildDirectory.dir("jpackage/msi")
       // A fixed upgrade code, so that installing a newer version replaces the older one.
@@ -134,6 +155,7 @@ val installer =
   } else {
     jpackage("jpackageDeb", "deb") {
       description = "Builds the Debian package."
+      appImage = layout.dir(shippedImage.map { it.destinationDir.resolve("tib") })
       resources = layout.projectDirectory.dir("src/jpackage/linux")
       destination = layout.buildDirectory.dir("jpackage/deb")
       options.addAll(
