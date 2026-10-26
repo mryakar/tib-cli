@@ -1,0 +1,45 @@
+# The GitHub Release of a version: the packages of both platforms, their checksums and signatures,
+# with the notes that the release workflow takes from the changelog. The release stays a draft until
+# the maintainer publishes it.
+project:
+  name: tib
+  description: The Idempotent Boilerplate, a scaffolding CLI for Spring Boot services
+  longDescription: |
+    tib scaffolds Spring Boot services and adds to them, from a DDL or a spec, and runs again on
+    the same project without breaking anything.
+  authors:
+    - Amo
+  license: Apache-2.0
+  inceptionYear: "2026"
+  links:
+    homepage: https://github.com/mryakar/tib-cli
+    documentation: https://mryakar.github.io/tib-cli/
+  languages:
+    java:
+      groupId: me.yakar.tib
+      version: "21"
+
+release:
+  github:
+    owner: mryakar
+    name: tib-cli
+    draft: true
+    skipTag: true
+    tagName: "v{{projectVersion}}"
+    releaseName: "tib {{projectVersion}}"
+    prerelease:
+      pattern: ".*-(alpha|beta|rc)\\.\\d+"
+    changelog:
+      external: release-notes.md
+
+signing:
+  active: ALWAYS
+  pgp:
+    armored: true
+    mode: MEMORY
+
+files:
+  globs:
+    - pattern: packages/*.deb
+    - pattern: packages/*.msi
+    - pattern: packages/*.zip
