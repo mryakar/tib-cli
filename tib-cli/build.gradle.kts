@@ -105,6 +105,10 @@ val jpackageAppImage =
   jpackage("jpackageAppImage", "app-image") {
     description = "Builds the application image with jpackage."
     destination = layout.buildDirectory.dir("jpackage/app-image")
+    // The launcher is a console application; an option of the image, not of the installer.
+    if (windows) {
+      options.add("--win-console")
+    }
   }
 
 // The image that the packages ship: jpackage's, on Linux without the libraries of java.desktop
@@ -150,7 +154,7 @@ val installer =
       resources = layout.projectDirectory.dir("src/jpackage/windows")
       destination = layout.buildDirectory.dir("jpackage/msi")
       // A fixed upgrade code, so that installing a newer version replaces the older one.
-      options.addAll("--win-console", "--win-upgrade-uuid", "d91cba2b-e77e-47de-8bcc-4ca76321cfdf")
+      options.addAll("--win-upgrade-uuid", "d91cba2b-e77e-47de-8bcc-4ca76321cfdf")
     }
   } else {
     jpackage("jpackageDeb", "deb") {
