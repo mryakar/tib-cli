@@ -152,3 +152,45 @@ tasks.register<Sync>("packages") {
   from(portableZip)
   into(layout.buildDirectory.dir("packages"))
 }
+
+// Documentation. The command reference of the site is generated from the commands themselves, as
+// the man page that picocli-codegen writes, into a content root of the Antora site under build/.
+val docs =
+  sourceSets.create("docs") {
+    compileClasspath += sourceSets.main.get().output + configurations.runtimeClasspath.get()
+    runtimeClasspath += output + compileClasspath
+  }
+
+dependencies { "docsImplementation"(libs.picocli.codegen) }
+
+val antoraContent = layout.buildDirectory.dir("docs/antora")
+
+val commandReference =
+  tasks.register<JavaExec>("commandReference") {
+    description = "Generates the command reference of the documentation from the commands."
+    group = "documentation"
+    classpath = docs.runtimeClasspath
+    mainClass = "picocli.codegen.docgen.manpage.ManPageGenerator"
+    val partials = antoraContent.map { it.dir("modules/ROOT/partials/commands") }
+    outputs.dir(partials)
+    argumentProviders.add(
+      CommandLineArgumentProvider {
+        listOf(
+          "--outdir=${partials.get().asFile.absolutePath}",
+          "--factory=me.yakar.tib.cli.docs.CommandFactory",
+          "--force",
+          "me.yakar.tib.cli.TibCommand",
+        )
+      },
+    )
+  }
+
+tasks.register("antoraContent") {
+  description = "Prepares the generated content root of the documentation site."
+  group = "documentation"
+  dependsOn(commandReference)
+  // The content root needs a component descriptor; its version comes from the playbook.
+  val descriptor = antoraContent.map { it.file("antora.yml") }
+  outputs.file(descriptor)
+  doLast { descriptor.get().asFile.writeText("name: tib\n") }
+}
