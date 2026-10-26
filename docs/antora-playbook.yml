@@ -20,5 +20,7 @@ ui:
   bundle:
     url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
     snapshot: true
+  # The default UI's header, with its placeholder menu replaced by links to the repository.
+  supplemental_files: ./supplemental-ui
 output:
   dir: build/site
