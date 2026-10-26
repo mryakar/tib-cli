@@ -27,3 +27,16 @@ dependencies {
   implementation(libs.picocli.spring.boot.starter)
   runtimeOnly(project(":tib-pack-default"))
 }
+
+// The version that tib --version prints comes from the build.
+val projectVersion = version.toString()
+
+tasks.processResources {
+  val version = projectVersion
+  inputs.property("version", version)
+  filesMatching("application.properties") { expand("version" to version) }
+}
+
+// The application test starts the CLI in a JVM of its own and compares its output with the version
+// of the build.
+tasks.test { systemProperty("tib.version", projectVersion) }
