@@ -1,10 +1,28 @@
 [versions]
+google-java-format = "1.36.1"
+groovy = "5.1.3"
+jacoco = "0.8.15"
+junit = "6.1.3"
+ktfmt = "0.65"
 picocli = "4.7.7"
+spock = "2.5-groovy-5.0"
 # The CLI's own runtime. The projects it generates pick their Spring Boot version from the pack.
 spring-boot = "4.1.2"
 
 [libraries]
+groovy-bom = { module = "org.apache.groovy:groovy-bom", version.ref = "groovy" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-spring-boot-starter = { module = "info.picocli:picocli-spring-boot-starter", version.ref = "picocli" }
+spock-bom = { module = "org.spockframework:spock-bom", version.ref = "spock" }
 spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter", version.ref = "spring-boot" }
+
+# Tools that the build runs. They are declared as libraries only so that Dependabot updates their
+# versions; the build reads the versions.
+google-java-format = { module = "com.google.googlejavaformat:google-java-format", version.ref = "google-java-format" }
+jacoco-agent = { module = "org.jacoco:org.jacoco.agent", version.ref = "jacoco" }
+ktfmt = { module = "org.jetbrains.kotlinx:ktfmt", version.ref = "ktfmt" }
+
+# Gradle plugins used by the convention plugins in build-logic
+spotless-gradle-plugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version = "8.10.4" }

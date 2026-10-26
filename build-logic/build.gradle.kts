@@ -14,3 +14,5 @@
  * limitations under the License.
  */
 plugins { `kotlin-dsl` }
+
+dependencies { implementation(libs.spotless.gradle.plugin) }
