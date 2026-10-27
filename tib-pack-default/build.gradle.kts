@@ -38,9 +38,11 @@ jte {
 
 // The tests generate the example service of the documentation and compare it with its snapshot:
 // the expected files, kept next to the tests rather than among the resources, which leave out
-// files such as .gitignore.
+// files such as .gitignore. The acceptance test generates the example service and builds it with
+// Gradle, against a database in a container where there is Docker.
 val examples = layout.settingsDirectory.dir("docs/modules/ROOT/examples")
 val snapshots = layout.projectDirectory.dir("src/test/snapshots")
+val windows = System.getProperty("os.name").startsWith("Windows")
 
 tasks.test {
   inputs.dir(examples)
@@ -48,3 +50,27 @@ tasks.test {
   systemProperty("tib.examples", examples.asFile.absolutePath)
   systemProperty("tib.snapshots", snapshots.asFile.absolutePath)
 }
+
+testing {
+  suites {
+    register<JvmTestSuite>("acceptanceTest") {
+      description = "Generates the example service and builds it with Gradle."
+      dependencies {
+        implementation(project())
+        implementation(project(":tib-core"))
+      }
+      targets.all {
+        testTask.configure {
+          shouldRunAfter(tasks.test)
+          inputs.dir(examples)
+          systemProperty("tib.examples", examples.asFile.absolutePath)
+          // The service is built with the wrapper of this build, as a user would build it.
+          val wrapper = if (windows) "gradlew.bat" else "gradlew"
+          systemProperty("tib.gradlew", layout.settingsDirectory.file(wrapper).asFile.absolutePath)
+        }
+      }
+    }
+  }
+}
+
+tasks.check { dependsOn(testing.suites.named("acceptanceTest")) }
