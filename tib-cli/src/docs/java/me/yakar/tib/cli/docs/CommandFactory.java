@@ -15,6 +15,7 @@
  */
 package me.yakar.tib.cli.docs;
 
+import me.yakar.tib.cli.GenerateEntityCommand;
 import me.yakar.tib.cli.InitServiceCommand;
 import me.yakar.tib.cli.TibVersion;
 import picocli.CommandLine;
@@ -33,6 +34,9 @@ public final class CommandFactory implements IFactory {
     }
     if (cls == InitServiceCommand.class) {
       return cls.cast(new InitServiceCommand(new TibVersion("docs")));
+    }
+    if (cls == GenerateEntityCommand.class) {
+      return cls.cast(new GenerateEntityCommand(new TibVersion("docs")));
     }
     return CommandLine.defaultFactory().create(cls);
   }

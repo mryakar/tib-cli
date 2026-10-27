@@ -19,3 +19,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `tib init service` scaffolds a Spring Boot 3 service with JPA, PostgreSQL, Flyway and
   Testcontainers from its name or its spec, with `--dry-run` to see the files as a diff before
   anything is written, and `.tib/state.yaml`, the record of what tib wrote.
+- `tib generate entity` adds the entity layer of the spec's entities to the service: the mapped
+  superclass with the columns and the entity, the repository, the DTO and the mapper, the service
+  and the controller, and the Flyway migration that creates the table.

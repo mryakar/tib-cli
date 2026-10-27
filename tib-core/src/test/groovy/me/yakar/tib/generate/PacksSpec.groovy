@@ -64,6 +64,9 @@ class PacksSpec extends Specification {
           Generator init() {
             { Project project, Tree tree -> } as Generator
           }
+          Generator entity() {
+            init()
+          }
         }
   }
 }

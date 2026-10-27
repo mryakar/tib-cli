@@ -60,6 +60,7 @@ class SpecSchemaSpec extends Specification {
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x, type: String, length: 0 }',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x }',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    relations:\n      - { kind: manyToMany, target: Depot }',
+      'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    relations:\n      - { kind: manyToOne, target: Depot, nullable: maybe }',
     ]
   }
 

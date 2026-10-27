@@ -43,7 +43,7 @@ class SpecReaderSpec extends Specification {
     vehicle.fields()[1] == new Field('capacity', 'CAPACITY', FieldType.INTEGER, null, null, null, true, false)
     vehicle.fields()[2].precision() == 12
     vehicle.fields()[2].scale() == 2
-    vehicle.relations() == [new Relation(RelationKind.MANY_TO_ONE, 'Depot', 'depot', 'DEPOT_ID')]
+    vehicle.relations() == [new Relation(RelationKind.MANY_TO_ONE, 'Depot', 'depot', 'DEPOT_ID', true)]
 
     and: 'the depot keeps what the spec says'
     Entity depot = spec.entities()[1]
@@ -67,12 +67,12 @@ class SpecReaderSpec extends Specification {
   def "what the spec says explicitly is kept"() {
     when:
     Spec spec = SpecReader.read(entity('audit: false\n    options: { dto: false, mapper: false, pagination: false, events: false }\n'
-        + '    relations:\n      - { kind: oneToOne, target: Vehicle, field: twin, column: TWIN_REF }'))
+        + '    relations:\n      - { kind: oneToOne, target: Vehicle, field: twin, column: TWIN_REF, nullable: false }'))
 
     then:
     !spec.entities()[0].audit()
     spec.entities()[0].options() == new Options(false, false, false, false)
-    spec.entities()[0].relations() == [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'twin', 'TWIN_REF')]
+    spec.entities()[0].relations() == [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'twin', 'TWIN_REF', false)]
   }
 
   def "a spec with a problem is refused: #problem"() {

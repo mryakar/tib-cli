@@ -54,6 +54,24 @@ public final class Names {
     return sql.toString();
   }
 
+  /**
+   * The plural of a member name, by the common rules of English: {@code branch}, {@code branches}.
+   */
+  public static String plural(String name) {
+    if (name.endsWith("s")
+        || name.endsWith("x")
+        || name.endsWith("z")
+        || name.endsWith("ch")
+        || name.endsWith("sh")) {
+      return name + "es";
+    }
+    if (name.endsWith("y")
+        && !"aeiou".contains(name.substring(name.length() - 2, name.length() - 1))) {
+      return name.substring(0, name.length() - 1) + "ies";
+    }
+    return name + "s";
+  }
+
   /** The member name of a type name: {@code Depot} is {@code depot}. */
   public static String member(String typeName) {
     return Character.toLowerCase(typeName.charAt(0)) + typeName.substring(1);

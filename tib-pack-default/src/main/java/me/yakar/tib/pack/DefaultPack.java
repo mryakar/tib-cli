@@ -61,6 +61,11 @@ public final class DefaultPack implements Pack {
     return new InitGenerator(this);
   }
 
+  @Override
+  public Generator entity() {
+    return new EntityGenerator();
+  }
+
   static Properties load(InputStream stream) {
     Properties properties = new Properties();
     try (stream) {

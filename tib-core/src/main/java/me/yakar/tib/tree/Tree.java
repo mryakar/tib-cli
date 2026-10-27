@@ -21,9 +21,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.function.UnaryOperator;
 
 /**
@@ -59,6 +62,23 @@ public final class Tree {
 
   public boolean exists(String path) {
     return read(path).isPresent();
+  }
+
+  /** The paths of the files right under the directory, on disk or staged, in order. */
+  public List<String> list(String directory) {
+    String prefix = key(directory) + "/";
+    SortedSet<String> paths = new TreeSet<>();
+    Path onDisk = root.resolve(prefix);
+    // Through File: a directory that is not there, or cannot be read, has no files, no exception.
+    for (String name : Objects.requireNonNullElse(onDisk.toFile().list(), new String[0])) {
+      if (Files.isRegularFile(onDisk.resolve(name))) {
+        paths.add(prefix + name);
+      }
+    }
+    changes.keySet().stream()
+        .filter(path -> path.startsWith(prefix) && path.indexOf('/', prefix.length()) < 0)
+        .forEach(paths::add);
+    return List.copyOf(paths);
   }
 
   /** Writes a file of the generator's, whatever is there. */

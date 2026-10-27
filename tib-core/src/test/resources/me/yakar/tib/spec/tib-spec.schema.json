@@ -158,6 +158,11 @@
           "description": "The name of the column. Without one, the field's name in upper snake case with _ID.",
           "type": "string",
           "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "nullable": {
+          "description": "Whether the relation may be missing: whether the column accepts null.",
+          "type": "boolean",
+          "default": true
         }
       },
       "required": [

@@ -8,9 +8,10 @@ without breaking anything, and shows what it would change before it changes it.
 == Status
 
 tib is at the start. `tib init service` scaffolds a Spring Boot 3 service with JPA, PostgreSQL,
-Flyway and Testcontainers, from its name or from the xref:spec.adoc[spec file], with a real
-`--dry-run` and a record of what it wrote. The generators that add the entity layer come next; the
-https://github.com/mryakar/tib-cli/blob/main/ROADMAP.md[roadmap] says in what order.
+Flyway and Testcontainers, from its name or from the xref:spec.adoc[spec file], and `tib generate
+entity` adds the entity layer of the spec's entities: entity, repository, DTO, mapper, service,
+controller and migration. Both with a real `--dry-run` and a record of what they wrote. The
+https://github.com/mryakar/tib-cli/blob/main/ROADMAP.md[roadmap] says what comes next.
 
 == Where to go
 

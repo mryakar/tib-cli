@@ -1,3 +1,4 @@
-* text=auto eol=lf
-*.bat text eol=crlf
-*.jar binary
+# The files that the tests compare byte for byte keep their line feeds on every platform.
+docs/modules/ROOT/examples/** text eol=lf
+tib-pack-default/src/test/snapshots/** text eol=lf
+tib-core/src/test/resources/** text eol=lf

@@ -27,7 +27,7 @@ import picocli.CommandLine.Spec;
     mixinStandardHelpOptions = true,
     versionProvider = TibVersion.class,
     description = "The idempotent boilerplate tool: scaffolding for Spring Boot services.",
-    subcommands = {InitCommand.class, SchemaCommand.class})
+    subcommands = {InitCommand.class, GenerateCommand.class, SchemaCommand.class})
 public class TibCommand implements Runnable {
 
   @Spec private CommandSpec spec;

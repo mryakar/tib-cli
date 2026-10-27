@@ -1,0 +1,9 @@
+= tib generate entity
+:description: The tib generate entity command and its options.
+
+// Generated from the command itself by the build (picocli-codegen); not written by hand.
+include::partial$commands/tib-generate-entity.adoc[tag=picocli-generated-man-section-synopsis]
+
+include::partial$commands/tib-generate-entity.adoc[tag=picocli-generated-man-section-description]
+
+include::partial$commands/tib-generate-entity.adoc[tag=picocli-generated-man-section-options]

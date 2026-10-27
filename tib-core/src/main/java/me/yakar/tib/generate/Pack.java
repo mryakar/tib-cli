@@ -27,4 +27,7 @@ public interface Pack {
 
   /** The generator of a new service. */
   Generator init();
+
+  /** The generator of the entity layer of the entities of the spec. */
+  Generator entity();
 }

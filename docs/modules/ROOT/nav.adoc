@@ -5,4 +5,6 @@
 ** xref:reference/tib.adoc[]
 ** xref:reference/tib-init.adoc[]
 ** xref:reference/tib-init-service.adoc[]
+** xref:reference/tib-generate.adoc[]
+** xref:reference/tib-generate-entity.adoc[]
 ** xref:reference/tib-schema.adoc[]

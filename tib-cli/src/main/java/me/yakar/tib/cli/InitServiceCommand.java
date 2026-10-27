@@ -102,15 +102,7 @@ public class InitServiceCommand implements Callable<Integer> {
         return 1;
       }
       Generation.run(project, pack, pack.init(), version.version(), tree);
-      if (dryRun) {
-        out.print(tree.diff());
-        out.flush();
-        return 0;
-      }
-      int files = tree.changes().size();
-      tree.apply();
-      out.println("Wrote " + files + " files to " + tree.root() + ".");
-      return 0;
+      return Outcome.report(tree, dryRun, out);
     } catch (SpecException | PackException | TreeException | UncheckedIOException e) {
       err.println(e.getMessage());
       return 1;
