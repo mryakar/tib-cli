@@ -14,9 +14,37 @@
  * limitations under the License.
  */
 // The default template pack: a plain Spring Boot 3 service with JPA, PostgreSQL, Flyway and
-// Testcontainers.
-plugins { id("tib.java-conventions") }
+// Testcontainers. Its templates are compiled by the build, so that the packaged runtime needs no
+// compiler.
+import gg.jte.ContentType
+
+plugins {
+  id("tib.java-conventions")
+  id("gg.jte.gradle")
+}
 
 description = "tib default template pack: Spring Boot 3, JPA, PostgreSQL, Flyway, Testcontainers"
 
-dependencies { implementation(project(":tib-core")) }
+dependencies {
+  implementation(project(":tib-core"))
+  implementation(libs.jte.runtime)
+}
+
+jte {
+  generate()
+  sourceDirectory = layout.projectDirectory.dir("src/main/jte").asFile.toPath()
+  contentType = ContentType.Plain
+}
+
+// The tests generate the example service of the documentation and compare it with its snapshot:
+// the expected files, kept next to the tests rather than among the resources, which leave out
+// files such as .gitignore.
+val examples = layout.settingsDirectory.dir("docs/modules/ROOT/examples")
+val snapshots = layout.projectDirectory.dir("src/test/snapshots")
+
+tasks.test {
+  inputs.dir(examples)
+  inputs.dir(snapshots)
+  systemProperty("tib.examples", examples.asFile.absolutePath)
+  systemProperty("tib.snapshots", snapshots.asFile.absolutePath)
+}

@@ -23,7 +23,7 @@ import java.util.Set;
  * The spec of a service: what tib generates, resolved. Read from a YAML file, it carries the
  * defaults for what the file left out, so that the same spec means the same thing everywhere.
  */
-@Doc("The spec of a service: the service, its pack and its entities.")
+@Doc("The spec of a service: the service, its group, its pack and its entities.")
 public record Spec(
     @Doc(value = "The version of the spec format; 1.", required = true, minimum = 1) Integer tib,
     @Doc(
@@ -31,6 +31,11 @@ public record Spec(
             required = true,
             pattern = Names.SERVICE)
         String service,
+    @Doc(
+            value = "The group of the service: the root of its packages and its Maven group.",
+            pattern = Names.GROUP,
+            defaultValue = "com.example")
+        String group,
     @Doc(
             value = "The template pack, by name, with its version after an at sign to pin it.",
             pattern = Names.PACK,
@@ -42,6 +47,7 @@ public record Spec(
   public static final int VERSION = 1;
 
   public Spec {
+    group = group == null ? "com.example" : group;
     pack = pack == null ? "default" : pack;
     entities = Problems.list(entities);
   }

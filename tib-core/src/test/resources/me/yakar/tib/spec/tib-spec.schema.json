@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "tib spec",
   "type": "object",
-  "description": "The spec of a service: the service, its pack and its entities.",
+  "description": "The spec of a service: the service, its group, its pack and its entities.",
   "properties": {
     "tib": {
       "description": "The version of the spec format; 1.",
@@ -13,6 +13,12 @@
       "description": "The name of the service, in lower case words joined with hyphens.",
       "type": "string",
       "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "group": {
+      "description": "The group of the service: the root of its packages and its Maven group.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$",
+      "default": "com.example"
     },
     "pack": {
       "description": "The template pack, by name, with its version after an at sign to pin it.",

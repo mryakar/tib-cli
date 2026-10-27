@@ -15,4 +15,7 @@
  */
 plugins { `kotlin-dsl` }
 
-dependencies { implementation(libs.spotless.gradle.plugin) }
+dependencies {
+  implementation(libs.spotless.gradle.plugin)
+  implementation(libs.jte.gradle.plugin)
+}

@@ -3,4 +3,6 @@
 * xref:spec.adoc[]
 * Reference
 ** xref:reference/tib.adoc[]
+** xref:reference/tib-init.adoc[]
+** xref:reference/tib-init-service.adoc[]
 ** xref:reference/tib-schema.adoc[]

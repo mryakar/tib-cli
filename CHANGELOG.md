@@ -16,3 +16,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The documentation site, with the command reference generated from the commands.
 - The spec file: YAML that describes a service and its entities, and `tib schema`, which prints
   its JSON Schema for completion and validation in an editor.
+- `tib init service` scaffolds a Spring Boot 3 service with JPA, PostgreSQL, Flyway and
+  Testcontainers from its name or its spec, with `--dry-run` to see the files as a diff before
+  anything is written, and `.tib/state.yaml`, the record of what tib wrote.

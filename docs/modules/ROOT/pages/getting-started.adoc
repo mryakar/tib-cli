@@ -1,5 +1,5 @@
 = Getting started
-:description: The first commands of tib.
+:description: Scaffolding the first service with tib.
 
 With tib xref:install.adoc[installed], check that it answers:
 
@@ -9,8 +9,58 @@ $ tib --version
 tib 0.1.0
 ----
 
-`tib --help` lists what it can do, and `tib <command> --help` the options of one command. Every
-command and option is also in the xref:reference/tib.adoc[reference].
+== A new service
 
-The generators that scaffold a service and add to it are being built; the
+`tib init service` scaffolds a Spring Boot service: its Gradle build, the application class, its
+configuration, a test that runs against PostgreSQL in a container, and `AGENTS.md`, the notes for
+whoever, or whatever, works on the service next. First see what it would write, without writing
+anything:
+
+[source,bash]
+----
+$ mkdir vehicle-service && cd vehicle-service
+$ tib init service vehicle-service --dry-run
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,8 @@
++# Written by tib when the service was created; it is yours from then on.
++.gradle/
+...
+----
+
+Then write it:
+
+[source,bash]
+----
+$ tib init service vehicle-service
+Wrote 9 files to /home/you/vehicle-service.
+----
+
+The ninth file is `.tib/state.yaml`: what tib generated, with the spec it generated it from and
+every file with its owner. Commit it with the service. The build of the service wants Docker for
+its test:
+
+[source,bash]
+----
+$ gradle build
+----
+
+To scaffold the service from a xref:spec.adoc[spec file] instead of its name, which names its
+group, its pack and its entities, give the file:
+
+[source,bash]
+----
+$ tib init service --spec vehicle-service.yaml
+----
+
+== What tib owns
+
+Each generated file says in its first line what tib does with it on later runs. A file *written
+once* is yours from then on; one *written on every run*, such as `AGENTS.md`, is not to be edited,
+because tib replaces it. `tib` with `--dry-run` always shows what a run would change before it
+changes anything, and a run that would change nothing, changes nothing.
+
+`tib --help` lists what it can do, and `tib <command> --help` the options of one command. Every
+command and option is also in the xref:reference/tib.adoc[reference]. The generators that add an
+entity layer to the service are being built; the
 https://github.com/mryakar/tib-cli/blob/main/ROADMAP.md[roadmap] lists them in order.
