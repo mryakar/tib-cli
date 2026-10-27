@@ -1,0 +1,14 @@
+# Written by tib when the service was created; it is yours from then on.
+spring:
+  application:
+    name: vehicle-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/vehicle-service
+    username: vehicle-service
+    password: vehicle-service
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true

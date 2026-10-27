@@ -65,6 +65,10 @@ tasks.withType<JacocoReportBase>().configureEach {
   val tests = tasks.withType<Test>()
   dependsOn(tests)
   executionData(*tests.toTypedArray())
+  // The classes that the build generates from the templates of a pack are the template engine's.
+  classDirectories.setFrom(
+    classDirectories.files.map { fileTree(it) { exclude("gg/jte/generated/**") } },
+  )
 }
 
 tasks.jacocoTestReport { reports { xml.required = true } }

@@ -21,6 +21,9 @@ public final class Names {
   /** A service name: lower case words joined with hyphens, as in {@code vehicle-service}. */
   public static final String SERVICE = "^[a-z][a-z0-9]*(-[a-z0-9]+)*$";
 
+  /** A group: the root of the packages of a project, as in {@code com.example}. */
+  public static final String GROUP = "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$";
+
   /** A pack: its name, optionally with its version after an at sign. */
   public static final String PACK = "^[a-z][a-z0-9-]*(@[0-9A-Za-z.+-]+)?$";
 

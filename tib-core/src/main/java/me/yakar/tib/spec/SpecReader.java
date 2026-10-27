@@ -60,6 +60,11 @@ public final class SpecReader {
     } catch (JacksonException e) {
       throw new SpecException("not YAML: " + e.getOriginalMessage());
     }
+    return check(spec);
+  }
+
+  /** Checks a spec built in code as one read from YAML is checked. */
+  public static Spec check(Spec spec) {
     List<String> problems = spec.problems();
     if (!problems.isEmpty()) {
       throw new SpecException(problems);

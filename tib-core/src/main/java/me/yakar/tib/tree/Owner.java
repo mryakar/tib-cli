@@ -15,6 +15,8 @@
  */
 package me.yakar.tib.tree;
 
+import java.util.Locale;
+
 /** Who owns a generated file: what a run of tib may do to it. */
 public enum Owner {
   /** The generator: the file is written on every run and is not edited by hand. */
@@ -22,5 +24,11 @@ public enum Owner {
   /** The developer: the file is written once, when it is not there, and is theirs from then on. */
   DEVELOPER,
   /** Shared: the file is edited in place, never replaced. */
-  SHARED
+  SHARED;
+
+  /** The name in the state file. */
+  @Override
+  public String toString() {
+    return name().toLowerCase(Locale.ROOT);
+  }
 }

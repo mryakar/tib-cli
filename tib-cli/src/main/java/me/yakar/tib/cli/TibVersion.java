@@ -29,6 +29,11 @@ public class TibVersion implements IVersionProvider {
     this.version = version;
   }
 
+  /** The version, as in {@code 0.1.0}. */
+  public String version() {
+    return version;
+  }
+
   @Override
   public String[] getVersion() {
     return new String[] {"tib " + version};

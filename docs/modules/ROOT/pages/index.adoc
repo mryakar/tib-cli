@@ -7,14 +7,14 @@ without breaking anything, and shows what it would change before it changes it.
 
 == Status
 
-tib is at the start. The current build has the pipeline: packages for Linux and Windows, this
-site, the xref:spec.adoc[spec file] with its JSON Schema, and the commands `tib --version` and
-`tib schema`. The generators come next; the
+tib is at the start. `tib init service` scaffolds a Spring Boot 3 service with JPA, PostgreSQL,
+Flyway and Testcontainers, from its name or from the xref:spec.adoc[spec file], with a real
+`--dry-run` and a record of what it wrote. The generators that add the entity layer come next; the
 https://github.com/mryakar/tib-cli/blob/main/ROADMAP.md[roadmap] says in what order.
 
 == Where to go
 
 * xref:install.adoc[] puts `tib` on your PATH, from the APT repository, a package or a zip.
-* xref:getting-started.adoc[] runs the first command.
+* xref:getting-started.adoc[] scaffolds the first service.
 * xref:spec.adoc[] describes the YAML file that tells tib what to generate.
 * xref:reference/tib.adoc[] lists every command and option, generated from the commands themselves.

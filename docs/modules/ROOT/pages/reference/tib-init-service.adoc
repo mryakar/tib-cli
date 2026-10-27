@@ -1,0 +1,11 @@
+= tib init service
+:description: The tib init service command and its options.
+
+// Generated from the command itself by the build (picocli-codegen); not written by hand.
+include::partial$commands/tib-init-service.adoc[tag=picocli-generated-man-section-synopsis]
+
+include::partial$commands/tib-init-service.adoc[tag=picocli-generated-man-section-description]
+
+include::partial$commands/tib-init-service.adoc[tag=picocli-generated-man-section-options]
+
+include::partial$commands/tib-init-service.adoc[tag=picocli-generated-man-section-arguments]

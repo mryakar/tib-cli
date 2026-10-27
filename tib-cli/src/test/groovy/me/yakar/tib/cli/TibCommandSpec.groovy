@@ -48,7 +48,11 @@ class TibCommandSpec extends Specification {
   static class TestFactory implements CommandLine.IFactory {
     @Override
     <K> K create(Class<K> cls) {
-      cls == TibVersion ? cls.cast(new TibVersion('1.2.3')) : CommandLine.defaultFactory().create(cls)
+      switch (cls) {
+        case TibVersion -> cls.cast(new TibVersion('1.2.3'))
+        case InitServiceCommand -> cls.cast(new InitServiceCommand(new TibVersion('1.2.3')))
+        default -> CommandLine.defaultFactory().create(cls)
+      }
     }
   }
 }

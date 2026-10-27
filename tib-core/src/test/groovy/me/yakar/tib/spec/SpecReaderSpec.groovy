@@ -29,6 +29,7 @@ class SpecReaderSpec extends Specification {
     then:
     spec.tib() == 1
     spec.service() == 'vehicle-service'
+    spec.group() == 'com.example'
     spec.pack() == 'default'
     spec.entities()*.name() == ['Vehicle', 'Depot']
 
@@ -60,7 +61,7 @@ class SpecReaderSpec extends Specification {
     Spec spec = SpecReader.read('tib: 1\nservice: s\n')
 
     then:
-    spec == new Spec(1, 's', 'default', [])
+    spec == new Spec(1, 's', 'com.example', 'default', [])
   }
 
   def "what the spec says explicitly is kept"() {
@@ -93,6 +94,7 @@ class SpecReaderSpec extends Specification {
     'tib: 2\nservice: s'                                                        | 'tib: this build reads version 1'
     'tib: 1\nservice: Vehicle Service'                                          | "service: 'Vehicle Service' does not match ${Names.SERVICE}"
     'tib: 1\nservice: s\npack: Default'                                         | "pack: 'Default' does not match ${Names.PACK}"
+    'tib: 1\nservice: s\ngroup: Com.Example'                                     | "group: 'Com.Example' does not match ${Names.GROUP}"
     'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n  - name: Vehicle'       | "entities[1].name: 'Vehicle' is already an entity"
     'tib: 1\nservice: s\nentities:\n  -\n'                                      | 'entities[0]: missing'
     entity('relations:\n      - { kind: manyToOne, target: Depot }')            | "entities[0].relations[0].target: there is no entity 'Depot'"
