@@ -27,8 +27,8 @@ import spock.lang.TempDir
 
 /**
  * The example service of the documentation, generated and then built with Gradle, as a user
- * would build it. Where Docker runs, the build includes the test of the service, which starts
- * PostgreSQL in a container; elsewhere the build compiles the service and its test.
+ * would build it. Where Docker runs Linux containers, the build includes the test of the service,
+ * which starts PostgreSQL in a container; elsewhere the build compiles the service and its test.
  */
 class GeneratedServiceSpec extends Specification {
 
@@ -69,12 +69,15 @@ class GeneratedServiceSpec extends Specification {
     !docker || Files.readString(dir.resolve('build/test-results/test/TEST-com.example.vehicleservice.VehicleServiceApplicationTests.xml')).contains('failures="0"')
   }
 
-  /** Whether Docker runs here: the test of the service needs it for its database. */
+  /**
+   * Whether Docker runs Linux containers here: the test of the service needs one for its database.
+   * Docker on a Windows runner may run Windows containers only.
+   */
   private static boolean docker() {
     try {
-      Process docker = new ProcessBuilder('docker', 'info').redirectErrorStream(true).start()
-      docker.inputStream.text
-      return docker.waitFor() == 0
+      Process docker = new ProcessBuilder('docker', 'info', '--format', '{{.OSType}}').redirectErrorStream(true).start()
+      String os = docker.inputStream.text.trim()
+      return docker.waitFor() == 0 && os == 'linux'
     } catch (IOException ignored) {
       return false
     }

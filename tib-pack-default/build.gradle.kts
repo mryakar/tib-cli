@@ -39,7 +39,7 @@ jte {
 // The tests generate the example service of the documentation and compare it with its snapshot:
 // the expected files, kept next to the tests rather than among the resources, which leave out
 // files such as .gitignore. The acceptance test generates the example service and builds it with
-// Gradle, against a database in a container where there is Docker.
+// Gradle, against a database in a container where Docker runs Linux containers.
 val examples = layout.settingsDirectory.dir("docs/modules/ROOT/examples")
 val snapshots = layout.projectDirectory.dir("src/test/snapshots")
 val windows = System.getProperty("os.name").startsWith("Windows")
