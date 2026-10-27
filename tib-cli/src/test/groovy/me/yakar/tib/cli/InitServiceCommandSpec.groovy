@@ -39,13 +39,13 @@ class InitServiceCommandSpec extends Specification {
   def "tib init alone prints its usage"() {
     expect:
     tib.execute('init') == 0
-    out.toString().startsWith('Usage: tib init')
+    output().startsWith('Usage: tib init')
   }
 
   def "without a name or a spec it asks for one"() {
     expect:
     tib.execute('init', 'service') == 2
-    err.toString().startsWith('Give the name of the service, or --spec with its spec file.')
+    error().startsWith('Give the name of the service, or --spec with its spec file.')
   }
 
   def "a dry run prints the diff and writes nothing"() {
@@ -54,8 +54,8 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     exitCode == 0
-    out.toString().startsWith('--- /dev/null\n+++ b/.gitignore\n')
-    out.toString().contains('+++ b/src/main/java/com/example/vehicleservice/VehicleServiceApplication.java\n')
+    output().startsWith('--- /dev/null\n+++ b/.gitignore\n')
+    output().contains('+++ b/src/main/java/com/example/vehicleservice/VehicleServiceApplication.java\n')
     Files.list(dir).count() == 0
   }
 
@@ -65,7 +65,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     exitCode == 0
-    out.toString() == "Wrote 9 files to ${dir.toAbsolutePath().normalize()}.\n"
+    output() == "Wrote 9 files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/VehicleServiceApplication.java'))
     State state = State.read(Files.readString(dir.resolve(State.PATH)))
     state.tib().version() == '1.2.3'
@@ -78,7 +78,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     again == 1
-    err.toString() == "${dir.toAbsolutePath().normalize()} is already a tib project: .tib/state.yaml is there.\n"
+    error() == "${dir.toAbsolutePath().normalize()} is already a tib project: .tib/state.yaml is there.\n"
   }
 
   def "scaffolds the service of a spec file"() {
@@ -93,7 +93,7 @@ class InitServiceCommandSpec extends Specification {
   def "a problem of the spec is reported: #args"() {
     expect:
     tib.execute(*(['init', 'service'] + args + ['-d', dir.toString()])) == 1
-    err.toString() == message
+    error() == message
 
     where:
     args                               | message
@@ -108,7 +108,16 @@ class InitServiceCommandSpec extends Specification {
 
     expect:
     tib.execute('init', 'service', 's', '-d', file.toString()) == 1
-    err.toString().contains('file')
+    error().contains('file')
+  }
+
+  /** What the command printed, with the line separator of every platform. */
+  private String output() {
+    out.toString().replace('\r\n', '\n')
+  }
+
+  private String error() {
+    err.toString().replace('\r\n', '\n')
   }
 
   private static String spec(String line) {
