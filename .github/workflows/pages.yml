@@ -22,6 +22,8 @@ jobs:
     name: Build the site
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # The environment that holds the key which signs the APT repository, for main and the tags.
+    environment: apt
     steps:
       # Always main, whatever triggered the run, with the tags for the versions of the site.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
