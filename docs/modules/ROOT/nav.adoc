@@ -1,4 +1,6 @@
 * xref:install.adoc[]
 * xref:getting-started.adoc[]
+* xref:spec.adoc[]
 * Reference
 ** xref:reference/tib.adoc[]
+** xref:reference/tib-schema.adoc[]

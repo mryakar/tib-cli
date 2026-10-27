@@ -14,3 +14,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   portable zip for Linux and Windows.
 - An APT repository on GitHub Pages for Debian and Ubuntu.
 - The documentation site, with the command reference generated from the commands.
+- The spec file: YAML that describes a service and its entities, and `tib schema`, which prints
+  its JSON Schema for completion and validation in an editor.

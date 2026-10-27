@@ -1,0 +1,238 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "tib spec",
+  "type": "object",
+  "description": "The spec of a service: the service, its pack and its entities.",
+  "properties": {
+    "tib": {
+      "description": "The version of the spec format; 1.",
+      "type": "integer",
+      "minimum": 1
+    },
+    "service": {
+      "description": "The name of the service, in lower case words joined with hyphens.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+    },
+    "pack": {
+      "description": "The template pack, by name, with its version after an at sign to pin it.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(@[0-9A-Za-z.+-]+)?$",
+      "default": "default"
+    },
+    "entities": {
+      "description": "The entities of the service.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Entity"
+      }
+    }
+  },
+  "required": [
+    "tib",
+    "service"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "Id": {
+      "type": "object",
+      "description": "The identifier of the entity.",
+      "properties": {
+        "field": {
+          "description": "The name of the field.",
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z0-9]*$",
+          "default": "id"
+        },
+        "type": {
+          "description": "The Java type of the identifier.",
+          "type": "string",
+          "enum": [
+            "Long",
+            "UUID"
+          ],
+          "default": "Long"
+        },
+        "strategy": {
+          "description": "How the identifier gets its value: identity or sequence for a Long, uuid for a UUID.",
+          "type": "string",
+          "enum": [
+            "identity",
+            "sequence",
+            "uuid"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "Field": {
+      "type": "object",
+      "description": "A field of the entity, with the column that holds it.",
+      "properties": {
+        "name": {
+          "description": "The name of the field, in lower camel case.",
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z0-9]*$"
+        },
+        "column": {
+          "description": "The name of the column. Without one, the field's name in upper snake case.",
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "type": {
+          "description": "The Java type of the field.",
+          "type": "string",
+          "enum": [
+            "String",
+            "Integer",
+            "Long",
+            "BigDecimal",
+            "Boolean",
+            "LocalDate",
+            "LocalDateTime",
+            "Instant",
+            "UUID"
+          ]
+        },
+        "length": {
+          "description": "The length of a String; the pack picks one when there is none.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "precision": {
+          "description": "The precision of a BigDecimal: its number of digits.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "scale": {
+          "description": "The scale of a BigDecimal: its number of digits after the point.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "nullable": {
+          "description": "Whether the column accepts null.",
+          "type": "boolean",
+          "default": true
+        },
+        "unique": {
+          "description": "Whether the column is unique.",
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "required": [
+        "name",
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "Relation": {
+      "type": "object",
+      "description": "A relation to another entity, held by a column of this entity's table.",
+      "properties": {
+        "kind": {
+          "description": "The kind of the relation.",
+          "type": "string",
+          "enum": [
+            "manyToOne",
+            "oneToOne"
+          ]
+        },
+        "target": {
+          "description": "The name of the target entity.",
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$"
+        },
+        "field": {
+          "description": "The name of the field that holds the target. Without one, the target's name in lower camel case.",
+          "type": "string",
+          "pattern": "^[a-z][A-Za-z0-9]*$"
+        },
+        "column": {
+          "description": "The name of the column. Without one, the field's name in upper snake case with _ID.",
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        }
+      },
+      "required": [
+        "kind",
+        "target"
+      ],
+      "additionalProperties": false
+    },
+    "Options": {
+      "type": "object",
+      "description": "What is generated for the entity besides the entity itself.",
+      "properties": {
+        "dto": {
+          "description": "Whether the entity gets DTOs.",
+          "type": "boolean",
+          "default": true
+        },
+        "mapper": {
+          "description": "Whether the entity gets a mapper between it and its DTOs.",
+          "type": "boolean",
+          "default": true
+        },
+        "pagination": {
+          "description": "Whether the queries of the entity are paginated.",
+          "type": "boolean",
+          "default": true
+        },
+        "events": {
+          "description": "Whether changes of the entity are published as events.",
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "Entity": {
+      "type": "object",
+      "description": "An entity: a table and the class mapped to it.",
+      "properties": {
+        "name": {
+          "description": "The name of the entity, in upper camel case.",
+          "type": "string",
+          "pattern": "^[A-Z][A-Za-z0-9]*$"
+        },
+        "table": {
+          "description": "The name of the table. Without one, the entity's name in upper snake case.",
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "id": {
+          "description": "The identifier. Without one, a Long named id that the database assigns.",
+          "$ref": "#/$defs/Id"
+        },
+        "fields": {
+          "description": "The fields of the entity.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Field"
+          }
+        },
+        "relations": {
+          "description": "The relations of the entity to others.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Relation"
+          }
+        },
+        "audit": {
+          "description": "Whether the entity records when and by whom it was created and changed.",
+          "type": "boolean",
+          "default": false
+        },
+        "options": {
+          "description": "What is generated for the entity.",
+          "$ref": "#/$defs/Options"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
