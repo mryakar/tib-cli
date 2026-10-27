@@ -32,11 +32,13 @@ release:
     changelog:
       external: release-notes.md
 
+# Signed by gpg, with the key that the release workflow imports. In memory, JReleaser wraps each
+# signature in a packet that gpg 2.4 refuses to verify, and hashes with SHA-1.
 signing:
   active: ALWAYS
   pgp:
     armored: true
-    mode: MEMORY
+    mode: COMMAND
 
 files:
   globs:
