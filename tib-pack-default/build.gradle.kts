@@ -62,6 +62,9 @@ testing {
       targets.all {
         testTask.configure {
           shouldRunAfter(tasks.test)
+          // The output of the build of the service, so that a failure shows in the log of the
+          // build.
+          testLogging.showStandardStreams = true
           inputs.dir(examples)
           systemProperty("tib.examples", examples.asFile.absolutePath)
           // The service is built with the wrapper of this build, as a user would build it.
