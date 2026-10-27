@@ -19,7 +19,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.generate.Pack
 import me.yakar.tib.generate.Packs
+import me.yakar.tib.ddl.DdlReader
 import me.yakar.tib.generate.Project
+import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.SpecReader
 import me.yakar.tib.tree.Change
 import me.yakar.tib.tree.Owner
@@ -157,6 +159,21 @@ class DefaultPackSpec extends Specification {
 
     then:
     again.changes().empty
+  }
+
+  def "the migrations of the example service read back into its spec"() {
+    given:
+    Spec spec = SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
+    Tree tree = Tree.at(dir)
+    new DefaultPack().entity().generate(Project.of(spec), tree)
+
+    when:
+    String migrations = tree.list(EntityGenerator.MIGRATIONS).collect {
+      tree.read(it).orElseThrow()
+    }.join('\n')
+
+    then:
+    DdlReader.read(migrations, spec) == spec
   }
 
   def "entities come after the entities they refer to, cycles in the order of the spec"() {

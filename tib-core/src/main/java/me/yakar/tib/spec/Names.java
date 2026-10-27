@@ -15,6 +15,8 @@
  */
 package me.yakar.tib.spec;
 
+import java.util.Locale;
+
 /** The patterns that the names in a spec follow. */
 public final class Names {
 
@@ -70,6 +72,49 @@ public final class Names {
       return name.substring(0, name.length() - 1) + "ies";
     }
     return name + "s";
+  }
+
+  /**
+   * The Java type name of an SQL name: {@code VEHICLE_TYPE} and {@code vehicle_type} are {@code
+   * VehicleType}; a word in mixed case keeps its case, as in {@code vehicleType}.
+   */
+  public static String type(String sqlName) {
+    StringBuilder type = new StringBuilder();
+    for (String word : sqlName.split("_")) {
+      if (!word.isEmpty()) {
+        String cased =
+            word.equals(word.toUpperCase(Locale.ROOT)) || word.equals(word.toLowerCase(Locale.ROOT))
+                ? word.toLowerCase(Locale.ROOT)
+                : word;
+        type.append(Character.toUpperCase(cased.charAt(0))).append(cased.substring(1));
+      }
+    }
+    return type.toString();
+  }
+
+  /**
+   * The singular of a name, by the rules of {@link #plural}: {@code Depots} is {@code Depot},
+   * {@code Branches} is {@code Branch}; a name that does not end as a plural is one already, as
+   * {@code Status} is.
+   */
+  public static String singular(String name) {
+    if (name.endsWith("ies")) {
+      return name.substring(0, name.length() - 3) + "y";
+    }
+    if (name.endsWith("sses")
+        || name.endsWith("xes")
+        || name.endsWith("zes")
+        || name.endsWith("ches")
+        || name.endsWith("shes")) {
+      return name.substring(0, name.length() - 2);
+    }
+    if (name.endsWith("s")
+        && !name.endsWith("ss")
+        && !name.endsWith("us")
+        && !name.endsWith("is")) {
+      return name.substring(0, name.length() - 1);
+    }
+    return name;
   }
 
   /** The member name of a type name: {@code Depot} is {@code depot}. */

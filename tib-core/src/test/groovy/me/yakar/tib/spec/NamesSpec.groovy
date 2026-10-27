@@ -32,6 +32,38 @@ class NamesSpec extends Specification {
     'line2Code'   | 'LINE2_CODE'
   }
 
+  def "the type name of #sql is #type"() {
+    expect:
+    Names.type(sql) == type
+
+    where:
+    sql            | type
+    'VEHICLE'      | 'Vehicle'
+    'vehicle_type' | 'VehicleType'
+    'PLATE_NUMBER' | 'PlateNumber'
+    'plateNumber'  | 'PlateNumber'
+    '_LINE__2_'    | 'Line2'
+  }
+
+  def "the singular of #name is #singular"() {
+    expect:
+    Names.singular(name) == singular
+
+    where:
+    name         | singular
+    'Depots'     | 'Depot'
+    'Categories' | 'Category'
+    'Addresses'  | 'Address'
+    'Boxes'      | 'Box'
+    'Quizzes'    | 'Quizz'
+    'Branches'   | 'Branch'
+    'Wishes'     | 'Wish'
+    'Address'    | 'Address'
+    'Status'     | 'Status'
+    'Analysis'   | 'Analysis'
+    'Vehicle'    | 'Vehicle'
+  }
+
   def "the plural of #name is #plural"() {
     expect:
     Names.plural(name) == plural
