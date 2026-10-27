@@ -51,7 +51,8 @@ class GeneratedServiceSpec extends Specification {
     when:
     List<String> command = [GRADLEW, '-p', dir.toString(), 'build', '--console=plain', '--no-daemon']
     if (!docker) {
-      command.addAll(['-x', 'test'])
+      // Without its test, nothing in the build compiles the test of the service: it is asked for.
+      command.addAll(['testClasses', '-x', 'test'])
     }
     Process gradle = new ProcessBuilder(command).redirectErrorStream(true).start()
     StringBuilder output = new StringBuilder()
