@@ -67,8 +67,8 @@ contain only related changes. CI checks every commit message in a pull request.
   Rebase your branch onto `main` instead of merging `main` into it.
 - CI builds and tests on Linux and Windows, builds the packages and installs each of them.
 - `./gradlew check` also generates the example service and builds it with Gradle, as a user would;
-  where Docker runs, that includes the service's test against PostgreSQL in a container, elsewhere
-  the build compiles the service and its test.
+  where Docker runs Linux containers, that includes the service's test against PostgreSQL in a
+  container, elsewhere the build compiles the service and its test.
 
 ## Releases
 
