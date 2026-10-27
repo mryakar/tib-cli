@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=tib.schema.json
+tib: 1
+service: vehicle-service
+pack: default
+entities:
+  - name: Vehicle
+    fields:
+      - { name: plateNumber, type: String, length: 16, nullable: false, unique: true }
+      - { name: capacity, type: Integer }
+      - { name: price, type: BigDecimal, precision: 12, scale: 2 }
+    relations:
+      - { kind: manyToOne, target: Depot }
+    audit: true
+  - name: Depot
+    table: DEPOTS
+    id: { type: UUID }
+    fields:
+      - { name: code, column: DEPOT_CODE, type: String, length: 8, nullable: false, unique: true }
+      - { name: openedOn, type: LocalDate }
+    options: { events: true }

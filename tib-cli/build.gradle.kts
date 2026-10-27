@@ -234,12 +234,30 @@ val commandReference =
         )
       },
     )
+    // The man pages link to each other by file name; Antora resolves such a link from the root
+    // of the pages, so the links get the directory of the reference pages.
+    doLast {
+      partials.get().asFile.listFiles()!!.forEach { page ->
+        page.writeText(page.readText().replace("xref:tib-", "xref:./tib-"))
+      }
+    }
+  }
+
+val schemaAttachment =
+  tasks.register<JavaExec>("schemaAttachment") {
+    description = "Writes the JSON Schema of the spec file for the documentation site."
+    group = "documentation"
+    classpath = docs.runtimeClasspath
+    mainClass = "me.yakar.tib.cli.docs.SchemaAttachment"
+    val file = antoraContent.map { it.file("modules/ROOT/attachments/tib-spec.schema.json") }
+    outputs.file(file)
+    argumentProviders.add(CommandLineArgumentProvider { listOf(file.get().asFile.absolutePath) })
   }
 
 tasks.register("antoraContent") {
   description = "Prepares the generated content root of the documentation site."
   group = "documentation"
-  dependsOn(commandReference)
+  dependsOn(commandReference, schemaAttachment)
   // The content root needs a component descriptor; its version comes from the playbook.
   val descriptor = antoraContent.map { it.file("antora.yml") }
   outputs.file(descriptor)

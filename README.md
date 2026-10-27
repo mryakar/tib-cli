@@ -8,9 +8,9 @@ DDL or a spec, and runs again on the same project without breaking anything.
 ## Status
 
 tib is at the start. What works today is the pipeline around it: packages for Linux and Windows
-with their own Java runtime, a [documentation site](https://mryakar.github.io/tib-cli/), and one
-command, `tib --version`. The generators come next; the [roadmap](ROADMAP.md) says in what order.
-Nothing is released yet.
+with their own Java runtime, a [documentation site](https://mryakar.github.io/tib-cli/), the spec
+file with its JSON Schema, and two commands, `tib --version` and `tib schema`. The generators come
+next; the [roadmap](ROADMAP.md) says in what order. Nothing is released yet.
 
 ## What it will do
 

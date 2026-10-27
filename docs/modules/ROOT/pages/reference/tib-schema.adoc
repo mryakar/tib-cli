@@ -1,0 +1,9 @@
+= tib schema
+:description: The tib schema command and its options.
+
+// Generated from the command itself by the build (picocli-codegen); not written by hand.
+include::partial$commands/tib-schema.adoc[tag=picocli-generated-man-section-synopsis]
+
+include::partial$commands/tib-schema.adoc[tag=picocli-generated-man-section-description]
+
+include::partial$commands/tib-schema.adoc[tag=picocli-generated-man-section-options]
