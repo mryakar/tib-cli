@@ -51,6 +51,7 @@ class TibCommandSpec extends Specification {
       switch (cls) {
         case TibVersion -> cls.cast(new TibVersion('1.2.3'))
         case InitServiceCommand -> cls.cast(new InitServiceCommand(new TibVersion('1.2.3')))
+        case GenerateEntityCommand -> cls.cast(new GenerateEntityCommand(new TibVersion('1.2.3')))
         default -> CommandLine.defaultFactory().create(cls)
       }
     }

@@ -53,6 +53,27 @@ group, its pack and its entities, give the file:
 $ tib init service --spec vehicle-service.yaml
 ----
 
+== The entities
+
+With the spec in place, `tib generate entity` adds the entity layer of every entity it names:
+
+[source,bash]
+----
+$ tib generate entity --spec vehicle-service.yaml --dry-run
+$ tib generate entity --spec vehicle-service.yaml
+Wrote 17 files to /home/you/vehicle-service.
+----
+
+For `Vehicle` that is, in the package `com.example.vehicleservice.vehicle`: `VehicleGenerated`,
+the mapped superclass with the columns, written on every run; `Vehicle`, the entity, written once
+for your code; `VehicleRepository`; `VehicleDto` and `VehicleMapper`; `VehicleService` and
+`VehicleController`, written once, a CRUD API under `/api/vehicles`; and the Flyway migration
+`V2__create_vehicle.sql`, written once, numbered after the migrations already there. An entity
+comes after the entities it refers to, so that its migration can reference their tables.
+
+Run it again after a change of the spec: the files written on every run follow the spec, the
+files written once stay yours, and a run that would change nothing says so.
+
 == What tib owns
 
 Each generated file says in its first line what tib does with it on later runs. A file *written

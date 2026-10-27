@@ -65,6 +65,22 @@ class TreeSpec extends Specification {
     tree.read('libs.versions.toml') == Optional.of('[versions]\nspring = "3.5.0"\n')
   }
 
+  def "lists the files of a directory, on disk and staged"() {
+    given:
+    Files.createDirectories(project.resolve('db/migration/old'))
+    Files.writeString(project.resolve('db/migration/V1__a.sql'), '')
+    Files.writeString(project.resolve('db/migration/old/V0__z.sql'), '')
+    Tree tree = Tree.at(project)
+    tree.own('db/migration/V2__b.sql', '')
+    tree.own('db/migration/deeper/V3__c.sql', '')
+    tree.own('db/other.sql', '')
+
+    expect:
+    tree.list('db/migration') == ['db/migration/V1__a.sql', 'db/migration/V2__b.sql']
+    tree.list('db/none') == []
+    tree.list('db') == ['db/other.sql']
+  }
+
   def "a shared file has to be there"() {
     when:
     Tree.at(project).edit('application.yaml') { it }

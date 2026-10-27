@@ -34,4 +34,9 @@ public final class TestPack implements Pack {
   public Generator init() {
     return (Project project, Tree tree) -> tree.own("test.txt", project.name() + "\n");
   }
+
+  @Override
+  public Generator entity() {
+    return init();
+  }
 }

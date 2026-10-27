@@ -30,10 +30,15 @@ public record Relation(
             value =
                 "The name of the column. Without one, the field's name in upper snake case with _ID.",
             pattern = Names.SQL)
-        String column) {
+        String column,
+    @Doc(
+            value = "Whether the relation may be missing: whether the column accepts null.",
+            defaultValue = "true")
+        Boolean nullable) {
 
   public Relation {
     field = field == null && target != null ? Names.member(target) : field;
     column = column == null && field != null ? Names.sql(field) + "_ID" : column;
+    nullable = nullable == null || nullable;
   }
 }

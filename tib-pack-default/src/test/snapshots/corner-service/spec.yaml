@@ -1,0 +1,35 @@
+# The corners of the entity layer: a sequence identifier, a one-to-one relation, a relation to
+# itself and two relations to one target, an entity without DTOs, one without a mapper, one without
+# pagination, one with nothing to import, and every type.
+tib: 1
+service: corner-service
+group: me.yakar
+entities:
+  - name: Branch
+    id: { strategy: sequence }
+    fields:
+      - { name: code, type: String, nullable: false }
+      - { name: count, type: Long }
+      - { name: open, type: Boolean }
+      - { name: openedAt, type: LocalDateTime }
+      - { name: seenAt, type: Instant }
+      - { name: token, type: UUID }
+      - { name: ratio, type: BigDecimal }
+      - { name: amount, type: BigDecimal, precision: 10 }
+    relations:
+      - { kind: oneToOne, target: Branch, field: parent, nullable: true }
+    options: { pagination: false }
+  - name: Note
+    fields:
+      - { name: text, type: String, length: 2000 }
+    options: { dto: false }
+  - name: Tag
+    fields:
+      - { name: label, type: String }
+    relations:
+      - { kind: manyToOne, target: Branch, nullable: false }
+      - { kind: manyToOne, target: Branch, field: other }
+  - name: Plain
+    fields:
+      - { name: label, type: String }
+    options: { mapper: false }

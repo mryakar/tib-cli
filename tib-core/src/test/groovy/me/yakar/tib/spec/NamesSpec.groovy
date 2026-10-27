@@ -32,6 +32,22 @@ class NamesSpec extends Specification {
     'line2Code'   | 'LINE2_CODE'
   }
 
+  def "the plural of #name is #plural"() {
+    expect:
+    Names.plural(name) == plural
+
+    where:
+    name      | plural
+    'vehicle' | 'vehicles'
+    'branch'  | 'branches'
+    'bus'     | 'buses'
+    'box'     | 'boxes'
+    'quiz'    | 'quizes'
+    'dish'    | 'dishes'
+    'entry'   | 'entries'
+    'day'     | 'days'
+  }
+
   def "the member name of #type is #member"() {
     expect:
     Names.member(type) == member
