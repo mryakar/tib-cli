@@ -54,7 +54,11 @@ class GeneratedServiceSpec extends Specification {
       command.addAll(['-x', 'test'])
     }
     Process gradle = new ProcessBuilder(command).redirectErrorStream(true).start()
-    String output = gradle.inputStream.text
+    StringBuilder output = new StringBuilder()
+    gradle.inputStream.eachLine { line ->
+      println line
+      output.append(line).append('\n')
+    }
     gradle.waitFor(15, TimeUnit.MINUTES)
 
     then:
