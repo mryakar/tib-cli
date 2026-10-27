@@ -1,0 +1,90 @@
+= Entities from DDL
+:description: How tib generate entity reads the tables of SQL DDL into the entities of a service.
+
+`tib generate entity --ddl FILE` reads the tables of SQL DDL into the spec of the service, the
+one that `.tib/state.yaml` records, and generates the entity layer of its entities as it does from
+a xref:spec.adoc[spec file]. The DDL of the example service:
+
+[source,sql]
+----
+include::example$vehicle-service.sql[]
+----
+
+[source,bash]
+----
+$ tib init service vehicle-service
+$ tib generate entity --ddl vehicle-service.sql --dry-run
+$ tib generate entity --ddl vehicle-service.sql
+Wrote 17 files to /home/you/vehicle-service.
+----
+
+== What tib reads
+
+Each table that a `CREATE TABLE` statement creates is an entity, named after the table in upper
+camel case and in the singular: `vehicles` is `Vehicle`, `VEHICLE_TYPES` is `VehicleType`. The
+names of its fields are the names of their columns in lower camel case: `plate_number` is
+`plateNumber`. The table and the columns keep their names.
+
+The primary key, of one column, is the identifier. A UUID gets its value from the application; an
+integer is a `Long` that the database assigns, by identity when the column says so
+(`GENERATED ... AS IDENTITY`, `SERIAL`, `BIGSERIAL`, `AUTO_INCREMENT`), by a sequence otherwise.
+
+A column that references another table, with `REFERENCES` or a foreign key, is a relation to the
+entity of that table: many to one, or one to one when the column is unique. The relation is named
+after the column without `_id`: `depot_id` is `depot`. The table may be in the DDL or be the table
+of an entity that the service already has.
+
+The columns `created_at` and `updated_at`, both timestamps with a time zone, make the entity
+audited, as `audit: true` does in a spec. Every other column is a field, which accepts null unless
+the column is `NOT NULL` and is unique when the column is or when a unique key has that column
+alone.
+
+[cols="2,1"]
+|===
+|SQL type |Field type
+
+|`VARCHAR(n)`, `VARCHAR2(n)`, `NVARCHAR(n)`, `CHARACTER VARYING(n)`, `CHAR(n)`, `TEXT`, `CLOB`
+|`String`, of length _n_
+
+|`SMALLINT`, `INTEGER`, `SERIAL`; `NUMERIC(p)` and `NUMBER(p)` up to nine digits
+|`Integer`
+
+|`BIGINT`, `BIGSERIAL`; `NUMERIC(p)` and `NUMBER(p)` up to nineteen digits
+|`Long`
+
+|`NUMERIC`, `DECIMAL`, `NUMBER`, with a scale or more digits
+|`BigDecimal`
+
+|`BOOLEAN`
+|`Boolean`
+
+|`DATE`
+|`LocalDate`
+
+|`TIMESTAMP`, `TIMESTAMP WITHOUT TIME ZONE`
+|`LocalDateTime`
+
+|`TIMESTAMPTZ`, `TIMESTAMP WITH TIME ZONE`
+|`Instant`
+
+|`UUID`
+|`UUID`
+|===
+
+`ALTER TABLE` statements may add primary, foreign and unique keys to the tables before them. Other
+statements, such as those that create sequences or indexes, comments or data, are skipped; so are
+the defaults and checks of the columns and the unique keys of several columns. A column of another
+type, a key of several columns or an `ALTER TABLE` that changes anything else is a problem, which
+tib reports with the table and the column it is about, and then writes nothing.
+
+== The spec of the service
+
+The entity of a table takes the place of the entity of the same table in the spec of the service,
+and keeps its name, its options and the names of the fields and relations of the same columns;
+the entities of the other tables come after those of the spec. So the DDL gives the columns, and
+the spec keeps what the DDL cannot say. The spec that results is the one `.tib/state.yaml`
+records, and a second run with the same DDL changes nothing.
+
+The migration of an entity is written once, from its spec, for PostgreSQL. After a change of the
+DDL, the files written on every run follow it; a change of the schema of a table that has its
+migration already is a new migration.

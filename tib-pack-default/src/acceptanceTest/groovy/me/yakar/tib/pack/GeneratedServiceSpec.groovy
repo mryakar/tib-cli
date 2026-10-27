@@ -18,6 +18,7 @@ package me.yakar.tib.pack
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import me.yakar.tib.ddl.DdlReader
 import me.yakar.tib.generate.Pack
 import me.yakar.tib.generate.Project
 import me.yakar.tib.spec.SpecReader
@@ -26,8 +27,8 @@ import spock.lang.Specification
 import spock.lang.TempDir
 
 /**
- * The example service of the documentation, generated and then built with Gradle, as a user
- * would build it. Where Docker runs Linux containers, the build includes the test of the service,
+ * The example service of the documentation, generated from its spec and from its DDL and then
+ * built with Gradle, as a user would build it. Where Docker runs Linux containers, the build includes the test of the service,
  * which starts PostgreSQL in a container; elsewhere the build compiles the service and its test.
  */
 class GeneratedServiceSpec extends Specification {
@@ -38,9 +39,9 @@ class GeneratedServiceSpec extends Specification {
   @TempDir
   Path dir
 
-  def "the generated example service builds"() {
+  def "the example service generated from its #input builds"() {
     given: 'the service, with its entities'
-    Project project = Project.of(SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml')))
+    Project project = Project.of(spec)
     Tree tree = Tree.at(dir)
     Pack pack = new DefaultPack()
     pack.init().generate(project, tree)
@@ -68,6 +69,11 @@ class GeneratedServiceSpec extends Specification {
     Files.exists(dir.resolve('build/classes/java/test/com/example/vehicleservice/VehicleServiceApplicationTests.class'))
     !docker || Files.exists(dir.resolve('build/test-results/test/TEST-com.example.vehicleservice.VehicleServiceApplicationTests.xml'))
     !docker || Files.readString(dir.resolve('build/test-results/test/TEST-com.example.vehicleservice.VehicleServiceApplicationTests.xml')).contains('failures="0"')
+
+    where:
+    input  | spec
+    'spec' | SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
+    'DDL'  | DdlReader.read(EXAMPLES.resolve('vehicle-service.sql'), SpecReader.read('tib: 1\nservice: vehicle-service\n'))
   }
 
   /**

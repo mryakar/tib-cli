@@ -38,16 +38,24 @@ class GenerateEntityCommandSpec extends Specification {
 
   String spec = EXAMPLES.resolve('vehicle-service.yaml').toString()
 
+  String ddl = EXAMPLES.resolve('vehicle-service.sql').toString()
+
   def "tib generate alone prints its usage"() {
     expect:
     tib.execute('generate') == 0
     output().startsWith('Usage: tib generate')
   }
 
-  def "the spec is required"() {
+  def "the spec or the DDL is required"() {
     expect:
     tib.execute('generate', 'entity') == 2
-    error().startsWith("Missing required option: '--spec=FILE'")
+    error().startsWith('Error: Missing required argument (specify one of these): (--spec=FILE | --ddl=FILE)')
+  }
+
+  def "the spec and the DDL exclude each other"() {
+    expect:
+    tib.execute('generate', 'entity', '--spec', spec, '--ddl', ddl) == 2
+    error().startsWith('Error: --spec=FILE, --ddl=FILE are mutually exclusive (specify only one)')
   }
 
   def "a directory that is not a tib project is refused"() {
@@ -97,8 +105,43 @@ class GenerateEntityCommandSpec extends Specification {
     err.toString().replace('\r\n', '\n')
   }
 
+  def "generates the entity layer of the tables of the DDL into the service, once"() {
+    given:
+    tib.execute('init', 'service', 'vehicle-service', '-d', dir.toString())
+    out.buffer.length = 0
+
+    when:
+    int run = tib.execute('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
+
+    then:
+    run == 0
+    output() == "Wrote 17 files to ${dir.toAbsolutePath().normalize()}.\n"
+    Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/depot/DepotGenerated.java'))
+    Files.exists(dir.resolve('src/main/resources/db/migration/V2__create_vehicles.sql'))
+    State.read(Files.readString(dir.resolve(State.PATH))).spec().entities()*.name() == ['Depot', 'Vehicle']
+
+    when: 'again'
+    out.buffer.length = 0
+    int again = tib.execute('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
+
+    then:
+    again == 0
+    output() == 'Nothing to change.\n'
+  }
+
+  def "a problem of the DDL is reported"() {
+    given:
+    tib.execute('init', 'service', 'vehicle-service', '-d', dir.toString())
+    Path bad = Files.writeString(dir.resolve('bad.sql'), 'CREATE TABLE T (A INT);\n')
+
+    expect:
+    tib.execute('generate', 'entity', '--ddl', bad.toString(), '-d', dir.toString()) == 1
+    error() == 'the DDL has a problem: T: there is no primary key\n'
+  }
+
   def "a problem of the spec is reported"() {
     given:
+    tib.execute('init', 'service', 'vehicle-service', '-d', dir.toString())
     Path bad = Files.writeString(dir.resolve('bad.yaml'), 'tib: 1\nservice: s\npack: nope\n')
 
     expect:

@@ -15,5 +15,5 @@ promised in advance.
 Out of scope for the MVP: several services at once, the frontend, reflecting a changed DDL on an
 existing entity, upgrades, the assistant, native images, a DSL of its own, and more than one stack.
 
-What is done today: the pipeline of phase 1, with `tib --version` as its first command. The
-generators follow.
+What is done today: `tib init service`, and `tib generate entity` from a spec or from DDL, with
+`--dry-run` and the state file. The test skeletons, `tib status` and the first release follow.

@@ -19,8 +19,8 @@ Nothing is released yet.
 
 - `tib init service` sets up a Spring Boot service from a template pack: the default pack is plain
   Spring Boot with JPA, PostgreSQL, Flyway and Testcontainers.
-- `tib generate entity Vehicle --ddl vehicle.sql` adds the entity, repository, service, mapper,
-  DTOs, controller, migration and tests for a table, from its DDL or from a YAML spec.
+- `tib generate entity --ddl vehicle.sql` adds the entity, repository, service, mapper, DTOs,
+  controller, migration and tests for a table, from its DDL or from a YAML spec.
 - `--dry-run` shows the diff and writes nothing. Running a command twice changes nothing the
   second time. Generated files say who owns them: the generator, you, or both through markers.
 - Every command runs without questions when given a spec, and prints machine-readable output, so
