@@ -74,6 +74,14 @@ comes after the entities it refers to, so that its migration can reference their
 Run it again after a change of the spec: the files written on every run follow the spec, the
 files written once stay yours, and a run that would change nothing says so.
 
+The entities may come from the tables of SQL DDL instead, which tib adds to the spec of the
+service; xref:ddl.adoc[] says what it reads:
+
+[source,bash]
+----
+$ tib generate entity --ddl vehicle-service.sql
+----
+
 == What tib owns
 
 Each generated file says in its first line what tib does with it on later runs. A file *written

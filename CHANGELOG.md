@@ -22,3 +22,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `tib generate entity` adds the entity layer of the spec's entities to the service: the mapped
   superclass with the columns and the entity, the repository, the DTO and the mapper, the service
   and the controller, and the Flyway migration that creates the table.
+- `tib generate entity --ddl` reads the entities from the tables of SQL DDL: the `CREATE TABLE`
+  statements and the keys that `ALTER TABLE` adds.

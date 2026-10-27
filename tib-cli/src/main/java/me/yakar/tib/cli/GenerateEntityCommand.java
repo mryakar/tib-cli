@@ -19,6 +19,8 @@ import java.io.PrintWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
+import me.yakar.tib.ddl.DdlException;
+import me.yakar.tib.ddl.DdlReader;
 import me.yakar.tib.generate.Generation;
 import me.yakar.tib.generate.Pack;
 import me.yakar.tib.generate.PackException;
@@ -32,29 +34,48 @@ import me.yakar.tib.tree.Tree;
 import me.yakar.tib.tree.TreeException;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 
 /**
  * {@code tib generate entity}: generates the entity layer of every entity of the spec into the
- * service that tib scaffolded. A run that would change nothing, changes nothing.
+ * service that tib scaffolded, from a spec file or from DDL whose tables are the entities. A run
+ * that would change nothing, changes nothing.
  */
 @Component
 @Command(
     name = "entity",
     mixinStandardHelpOptions = true,
-    description = "Generates the entity layer of the entities of the spec.")
+    description =
+        "Generates the entity layer of the entities of the spec, or of the tables of DDL.")
 public class GenerateEntityCommand implements Callable<Integer> {
 
   @CommandLine.Spec private CommandSpec commandSpec;
 
-  @Option(
-      names = "--spec",
-      required = true,
-      paramLabel = "FILE",
-      description = "The spec file of the service.")
-  private Path spec;
+  @ArgGroup(multiplicity = "1")
+  private Input input;
+
+  /** Where the entities come from: a spec file, or DDL. */
+  static class Input {
+
+    @Option(
+        names = "--spec",
+        required = true,
+        paramLabel = "FILE",
+        description = "The spec file of the service.")
+    Path spec;
+
+    @Option(
+        names = "--ddl",
+        required = true,
+        paramLabel = "FILE",
+        description =
+            "SQL DDL whose tables are the entities, added to the spec of the service: CREATE TABLE"
+                + " statements, and ALTER TABLE statements that add keys.")
+    Path ddl;
+  }
 
   @Option(
       names = {"-d", "--dir"},
@@ -78,9 +99,6 @@ public class GenerateEntityCommand implements Callable<Integer> {
     PrintWriter out = commandSpec.commandLine().getOut();
     PrintWriter err = commandSpec.commandLine().getErr();
     try {
-      Spec service = SpecReader.read(spec);
-      Project project = Project.of(service);
-      Pack pack = Packs.find(service.pack());
       Tree tree = Tree.at(dir);
       if (!tree.exists(State.PATH)) {
         err.println(
@@ -90,9 +108,19 @@ public class GenerateEntityCommand implements Callable<Integer> {
                 + ". Run tib init service first.");
         return 1;
       }
+      Spec service =
+          input.spec != null
+              ? SpecReader.read(input.spec)
+              : DdlReader.read(input.ddl, State.read(tree.read(State.PATH).orElseThrow()).spec());
+      Project project = Project.of(service);
+      Pack pack = Packs.find(service.pack());
       Generation.run(project, pack, pack.entity(), version.version(), tree);
       return Outcome.report(tree, dryRun, out);
-    } catch (SpecException | PackException | TreeException | UncheckedIOException e) {
+    } catch (SpecException
+        | DdlException
+        | PackException
+        | TreeException
+        | UncheckedIOException e) {
       err.println(e.getMessage());
       return 1;
     }
