@@ -20,7 +20,7 @@ public abstract class TagGenerated {
   @Column(name = "ID", nullable = false)
   private Long id;
 
-  @Column(name = "LABEL")
+  @Column(name = "LABEL", length = 255)
   private String label;
 
   @ManyToOne(fetch = FetchType.LAZY, optional = false)

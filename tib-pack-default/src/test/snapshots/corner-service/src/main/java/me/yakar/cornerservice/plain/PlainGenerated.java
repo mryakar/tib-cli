@@ -16,7 +16,7 @@ public abstract class PlainGenerated {
   @Column(name = "ID", nullable = false)
   private Long id;
 
-  @Column(name = "LABEL")
+  @Column(name = "LABEL", length = 255)
   private String label;
 
   public Long getId() {

@@ -25,7 +25,7 @@ public abstract class BranchGenerated {
   @Column(name = "ID", nullable = false)
   private Long id;
 
-  @Column(name = "CODE", nullable = false)
+  @Column(name = "CODE", nullable = false, length = 255)
   private String code;
 
   @Column(name = "COUNT")

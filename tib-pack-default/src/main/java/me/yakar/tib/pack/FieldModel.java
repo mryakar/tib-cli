@@ -23,6 +23,9 @@ import me.yakar.tib.spec.Names;
 /** A field as the templates see it. */
 public record FieldModel(Field field) {
 
+  /** The length of a String that the spec gives none. */
+  static final int DEFAULT_LENGTH = 255;
+
   public String name() {
     return field.name();
   }
@@ -40,8 +43,12 @@ public record FieldModel(Field field) {
     return field.nullable();
   }
 
+  /** The length of a String: the spec's, or else the default; a field of another type has none. */
   Integer length() {
-    return field.length();
+    if (field.length() != null || field.type() != FieldType.STRING) {
+      return field.length();
+    }
+    return DEFAULT_LENGTH;
   }
 
   /** The JPA annotation of the column. */
@@ -53,8 +60,8 @@ public record FieldModel(Field field) {
     if (field.unique()) {
       column.append(", unique = true");
     }
-    if (field.length() != null) {
-      column.append(", length = ").append(field.length());
+    if (length() != null) {
+      column.append(", length = ").append(length());
     }
     if (field.precision() != null) {
       column.append(", precision = ").append(field.precision());
@@ -71,8 +78,8 @@ public record FieldModel(Field field) {
     if (!field.nullable()) {
       validation.append("@NotNull ");
     }
-    if (field.length() != null) {
-      validation.append("@Size(max = ").append(field.length()).append(") ");
+    if (length() != null) {
+      validation.append("@Size(max = ").append(length()).append(") ");
     }
     return validation.toString();
   }
@@ -83,7 +90,7 @@ public record FieldModel(Field field) {
         new StringBuilder(
             field.column()
                 + " "
-                + sqlType(field.type(), field.length(), field.precision(), field.scale()));
+                + sqlType(field.type(), length(), field.precision(), field.scale()));
     if (!field.nullable()) {
       sql.append(" NOT NULL");
     }
@@ -98,10 +105,10 @@ public record FieldModel(Field field) {
     return sqlType(type == IdType.UUID ? FieldType.UUID : FieldType.LONG, null, null, null);
   }
 
-  /** The SQL type of a Java type: a String without a length gets 255. */
+  /** The SQL type of a Java type. */
   static String sqlType(FieldType type, Integer length, Integer precision, Integer scale) {
     return switch (type) {
-      case STRING -> "VARCHAR(" + (length == null ? 255 : length) + ")";
+      case STRING -> "VARCHAR(" + length + ")";
       case INTEGER -> "INTEGER";
       case LONG -> "BIGINT";
       case BIG_DECIMAL ->
