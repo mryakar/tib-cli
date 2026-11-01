@@ -5,9 +5,9 @@ spring:
   application:
     name: ${project.name()}
   datasource:
-    url: jdbc:postgresql://localhost:5432/${project.name()}
-    username: ${project.name()}
-    password: ${project.name()}
+    url: jdbc:postgresql://localhost:5432/${project.name().replace('-', '_')}
+    username: ${project.name().replace('-', '_')}
+    password: ${project.name().replace('-', '_')}
   jpa:
     open-in-view: false
     hibernate:
