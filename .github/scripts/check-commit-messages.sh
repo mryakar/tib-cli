@@ -20,7 +20,8 @@ set -euo pipefail
 
 base="${1:?usage: check-commit-messages.sh <base> <head>}"
 head="${2:?usage: check-commit-messages.sh <base> <head>}"
-pattern='^(feat|fix|docs|refactor|chore|test|build|ci|perf)(\([a-z0-9-]+\))?!?: [^ ].*$'
+types='feat|fix|docs|refactor|chore|test|build|ci|perf'
+pattern="^($types)(\\([a-z0-9-]+\\))?!?: [^ ].*\$"
 failed=0
 
 # Read before the loop, so that a range git cannot resolve stops the script.
@@ -38,7 +39,7 @@ while IFS=$'\x1f' read -r sha parents subject; do
 done <<<"$commits"
 
 if ((failed)); then
-  echo "Allowed types: feat, fix, docs, refactor, chore, test, build, ci, perf."
+  echo "Allowed types: ${types//|/, }."
   echo "Format: <type>(<optional-scope>)!: <description>"
 fi
 exit "$failed"
