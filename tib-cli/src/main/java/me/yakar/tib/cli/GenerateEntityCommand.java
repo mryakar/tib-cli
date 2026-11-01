@@ -15,39 +15,26 @@
  */
 package me.yakar.tib.cli;
 
-import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.Callable;
-import me.yakar.tib.TibException;
 import me.yakar.tib.ddl.DdlReader;
-import me.yakar.tib.generate.Generation;
 import me.yakar.tib.generate.Pack;
-import me.yakar.tib.generate.Packs;
-import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
-import org.springframework.stereotype.Component;
-import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 
-/**
- * {@code tib generate entity}: generates the entity layer of every entity of the spec into the
- * service that tib scaffolded, from a spec file or from DDL whose tables are the entities.
- */
-@Component
+/** {@code tib generate entity}. */
 @Command(
     name = "entity",
     description =
         "Generates the entity layer of the entities of the spec, or of the tables of DDL.")
 public class GenerateEntityCommand implements Callable<Integer> {
-
-  @CommandLine.Spec private CommandSpec commandSpec;
 
   @ArgGroup(multiplicity = "1")
   private Input input;
@@ -72,49 +59,23 @@ public class GenerateEntityCommand implements Callable<Integer> {
     Path ddl;
   }
 
-  @Option(
-      names = {"-d", "--dir"},
-      paramLabel = "DIR",
-      description = "The directory of the service; the current one by default.")
-  private Path dir = Path.of(".");
-
-  @Option(
-      names = "--dry-run",
-      description = "Prints what would be written, as a diff, and writes nothing.")
-  private boolean dryRun;
-
-  private final TibVersion version;
-
-  public GenerateEntityCommand(TibVersion version) {
-    this.version = version;
-  }
+  @Mixin private GenerationOptions options;
 
   @Override
   public Integer call() {
-    PrintWriter out = commandSpec.commandLine().getOut();
-    PrintWriter err = commandSpec.commandLine().getErr();
-    try {
-      Tree tree = Tree.at(dir);
-      Optional<State> state = State.in(tree);
-      if (state.isEmpty()) {
-        err.println(
-            tree.root()
-                + " is not a tib project: there is no "
-                + State.PATH
-                + ". Run tib init service first.");
-        return 1;
-      }
-      Spec service =
-          input.spec != null
-              ? SpecReader.read(input.spec)
-              : DdlReader.read(input.ddl, state.get().spec());
-      Project project = new Project(service);
-      Pack pack = Packs.find(service.pack());
-      Generation.run(project, pack, Pack::entity, version.version(), tree);
-      return Outcome.report(tree, dryRun, out);
-    } catch (TibException e) {
-      err.println(e.getMessage());
-      return 1;
+    Tree tree = options.tree();
+    Optional<State> state = State.in(tree);
+    if (state.isEmpty()) {
+      return options.refuse(
+          tree.root()
+              + " is not a tib project: there is no "
+              + State.PATH
+              + ". Run tib init service first.");
     }
+    Spec service =
+        input.spec != null
+            ? SpecReader.read(input.spec)
+            : DdlReader.read(input.ddl, state.get().spec());
+    return options.generate(service, Pack::entity, tree);
   }
 }

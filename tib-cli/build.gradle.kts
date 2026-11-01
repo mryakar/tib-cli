@@ -204,7 +204,11 @@ val docs =
     runtimeClasspath += output + compileClasspath
   }
 
-dependencies { "docsImplementation"(libs.picocli.codegen) }
+// The tests build the commands with the factory of the documentation generator.
+dependencies {
+  "docsImplementation"(libs.picocli.codegen)
+  testImplementation(docs.output)
+}
 
 val commandReference =
   tasks.register<JavaExec>("commandReference") {

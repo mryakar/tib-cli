@@ -15,23 +15,21 @@
  */
 package me.yakar.tib.cli;
 
-import org.springframework.stereotype.Component;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Spec;
 
 /** {@code tib generate}: adds to a service. Without a subcommand it prints its usage. */
-@Component
 @Command(
     name = "generate",
     description = "Adds to a service that tib scaffolded.",
     subcommands = GenerateEntityCommand.class)
 public class GenerateCommand implements Runnable {
 
-  @Spec private CommandSpec spec;
+  @CommandLine.Spec private CommandSpec commandSpec;
 
   @Override
   public void run() {
-    spec.commandLine().usage(spec.commandLine().getOut());
+    commandSpec.commandLine().usage(commandSpec.commandLine().getOut());
   }
 }

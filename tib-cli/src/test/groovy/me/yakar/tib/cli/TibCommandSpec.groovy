@@ -15,6 +15,7 @@
  */
 package me.yakar.tib.cli
 
+import me.yakar.tib.cli.docs.CommandFactory
 import picocli.CommandLine
 import spock.lang.Specification
 
@@ -22,7 +23,7 @@ class TibCommandSpec extends Specification {
 
   StringWriter out = new StringWriter()
   // Without colors: whether picocli would use them depends on the platform and the console.
-  CommandLine tib = new CommandLine(new TibCommand(), new TestFactory())
+  CommandLine tib = TibApplication.commandLine(new CommandFactory('1.2.3'))
   .setOut(new PrintWriter(out))
   .setColorScheme(CommandLine.Help.defaultColorScheme(CommandLine.Help.Ansi.OFF))
 
@@ -45,18 +46,5 @@ class TibCommandSpec extends Specification {
     then:
     exitCode == 0
     out.toString().startsWith('Usage: tib')
-  }
-
-  /** Builds the version provider as Spring would, with the version of the build. */
-  static class TestFactory implements CommandLine.IFactory {
-    @Override
-    <K> K create(Class<K> cls) {
-      switch (cls) {
-        case TibVersion -> cls.cast(new TibVersion('1.2.3'))
-        case InitServiceCommand -> cls.cast(new InitServiceCommand(new TibVersion('1.2.3')))
-        case GenerateEntityCommand -> cls.cast(new GenerateEntityCommand(new TibVersion('1.2.3')))
-        default -> CommandLine.defaultFactory().create(cls)
-      }
-    }
   }
 }

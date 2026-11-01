@@ -15,14 +15,12 @@
  */
 package me.yakar.tib.cli;
 
-import org.springframework.stereotype.Component;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.ScopeType;
-import picocli.CommandLine.Spec;
 
 /** The top-level {@code tib} command. Without a subcommand it prints its usage. */
-@Component
 @Command(
     name = "tib",
     mixinStandardHelpOptions = true,
@@ -32,10 +30,10 @@ import picocli.CommandLine.Spec;
     subcommands = {InitCommand.class, GenerateCommand.class, SchemaCommand.class})
 public class TibCommand implements Runnable {
 
-  @Spec private CommandSpec spec;
+  @CommandLine.Spec private CommandSpec commandSpec;
 
   @Override
   public void run() {
-    spec.commandLine().usage(spec.commandLine().getOut());
+    commandSpec.commandLine().usage(commandSpec.commandLine().getOut());
   }
 }
