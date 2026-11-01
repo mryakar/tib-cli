@@ -60,12 +60,12 @@ class TreeSpec extends Specification {
     then:
     tree.changes()*.path() == ['Controller.java', 'Generated.java', 'libs.versions.toml']
     tree.changes()*.owner() == [Owner.DEVELOPER, Owner.GENERATOR, Owner.SHARED]
-    tree.changes()*.kind() == [Change.Kind.CREATED, Change.Kind.CREATED, Change.Kind.CHANGED]
+    tree.changes()*.before() == [null, null, '[versions]\n']
     tree.read('Service.java') == Optional.of('class Service {}\n')
     tree.read('libs.versions.toml') == Optional.of('[versions]\nspring = "3.5.0"\n')
   }
 
-  def "lists the files of a directory, on disk and staged"() {
+  def "lists the files under a directory at any depth, on disk and staged"() {
     given:
     Files.createDirectories(project.resolve('db/migration/old'))
     Files.writeString(project.resolve('db/migration/V1__a.sql'), '')
@@ -76,9 +76,14 @@ class TreeSpec extends Specification {
     tree.own('db/other.sql', '')
 
     expect:
-    tree.list('db/migration') == ['db/migration/V1__a.sql', 'db/migration/V2__b.sql']
+    tree.list('db/migration') == [
+      'db/migration/V1__a.sql',
+      'db/migration/V2__b.sql',
+      'db/migration/deeper/V3__c.sql',
+      'db/migration/old/V0__z.sql'
+    ]
     tree.list('db/none') == []
-    tree.list('db') == ['db/other.sql']
+    tree.list('db').last() == 'db/other.sql'
   }
 
   def "a shared file has to be there"() {
@@ -147,10 +152,9 @@ class TreeSpec extends Specification {
     Files.readString(project.resolve('src/main/java/B.java')) == 'class B {}\n'
     tree.changes().empty
     tree.diff().empty
-    Files.list(project).count() == 2
+    project.toFile().list().length == 2
 
     and: 'the dry run showed what was applied'
-    Tree.at(project).own('a.txt', 'a\n')
     diff.contains('-a\n+b\n')
 
     and: 'a second run of the same generation changes nothing'
@@ -172,7 +176,7 @@ class TreeSpec extends Specification {
     e.message == "cannot read ${project.resolve('f')}: Input length = 1"
   }
 
-  def "a file that cannot be written fails the apply"() {
+  def "a file whose directory cannot be made fails the apply"() {
     given: 'the directory of the new file is a file'
     Files.writeString(project.resolve('f'), 'x')
     Tree tree = Tree.at(project)
@@ -184,5 +188,43 @@ class TreeSpec extends Specification {
     then:
     TreeException e = thrown()
     e.message == "cannot write ${project.resolve('f')}: already exists"
+  }
+
+  def "a file that cannot replace what is there fails the apply, and leaves nothing of its own"() {
+    given: 'the second file is a directory with a file in it'
+    Files.createDirectories(project.resolve('b/c'))
+    Files.writeString(project.resolve('b/c/d'), 'd')
+    Tree tree = Tree.at(project)
+    tree.own('a/x', 'x')
+    tree.own('b/c', 'c')
+
+    when:
+    tree.apply()
+
+    then:
+    TreeException e = thrown()
+    e.message.startsWith("cannot write ${project.resolve('b/c')}: ")
+
+    and: 'no file was written next to its target, and the change stays staged'
+    Files.walk(project).withCloseable { paths ->
+      paths.noneMatch {
+        it.fileName.toString().startsWith('.tib-')
+      }
+    }
+    Files.readString(project.resolve('b/c/d')) == 'd'
+    tree.changes()*.path() == ['a/x', 'b/c']
+  }
+
+  def "a file is there without being read"() {
+    given:
+    Files.write(project.resolve('f'), [0xff, 0xfe] as byte[])
+    Tree tree = Tree.at(project)
+
+    when:
+    tree.once('f', 'text\n')
+
+    then:
+    tree.exists('f')
+    tree.changes().empty
   }
 }

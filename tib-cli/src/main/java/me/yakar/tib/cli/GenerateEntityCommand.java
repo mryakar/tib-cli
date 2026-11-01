@@ -38,8 +38,7 @@ import picocli.CommandLine.Option;
 
 /**
  * {@code tib generate entity}: generates the entity layer of every entity of the spec into the
- * service that tib scaffolded, from a spec file or from DDL whose tables are the entities. A run
- * that would change nothing, changes nothing.
+ * service that tib scaffolded, from a spec file or from DDL whose tables are the entities.
  */
 @Component
 @Command(
