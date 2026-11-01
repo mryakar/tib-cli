@@ -20,11 +20,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -41,6 +44,7 @@ public final class Tree {
 
   private final Path root;
   private final SortedMap<String, Change> changes = new TreeMap<>();
+  private final Set<String> writtenBefore = new HashSet<>();
 
   private Tree(Path root) {
     this.root = root;
@@ -96,10 +100,13 @@ public final class Tree {
     stage(key(path), content, Owner.GENERATOR);
   }
 
-  /** Stages a file that the developer owns, only when there is none. */
+  /**
+   * Stages a file that the developer owns, only when there is none and tib did not write it before:
+   * a file that the developer removed stays removed.
+   */
   public void once(String path, String content) {
     String key = key(path);
-    if (!exists(key)) {
+    if (!writtenBefore.contains(key) && !exists(key)) {
       stage(key, content, Owner.DEVELOPER);
     }
   }
@@ -109,6 +116,11 @@ public final class Tree {
     String key = key(path);
     String content = read(key).orElseThrow(() -> new TreeException(key + " is not there to edit"));
     stage(key, edit.apply(content), Owner.SHARED);
+  }
+
+  /** Tells the tree the files that tib wrote to the project in earlier runs. */
+  public void writtenBefore(Collection<String> paths) {
+    paths.forEach(path -> writtenBefore.add(key(path)));
   }
 
   /** The changes staged so far, by path. */
