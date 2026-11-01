@@ -65,7 +65,7 @@ Suite: stable
 Codename: stable
 Architectures: amd64
 Components: main
-Description: tib, the idempotent boilerplate tool
+Description: The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services
 Date: $(date -Ru)
 RELEASE
   for hash in MD5Sum:md5sum SHA1:sha1sum SHA256:sha256sum; do
