@@ -16,8 +16,8 @@
 #
 # Builds the APT repository of the .deb files in <debs>, into <out>: the pool, the package index
 # of the stable suite, and its Release file, signed with the OpenPGP key in GPG_SECRET_KEY
-# (armored, with GPG_PASSPHRASE) when there are packages. GPG_PUBLIC_KEY (armored) goes to
-# <out>/tib.gpg as the keyring that apt sources name with signed-by.
+# (armored, with GPG_PASSPHRASE). GPG_PUBLIC_KEY (armored) goes to <out>/tib.gpg as the keyring
+# that apt sources name with signed-by. Both keys are required when there are packages.
 set -euo pipefail
 
 debs="${1:?usage: build-apt-repo.sh <debs> <out>}"
@@ -26,17 +26,20 @@ pool="pool/main/t/tib"
 suite="dists/stable"
 component="main/binary-amd64"
 
+shopt -s nullglob
+files=("$debs"/*.deb)
+if ((${#files[@]} == 0)); then
+  echo "no packages: the repository has an empty index"
+elif [[ -z "${GPG_SECRET_KEY:-}" || -z "${GPG_PUBLIC_KEY:-}" ]]; then
+  echo "GPG_SECRET_KEY and GPG_PUBLIC_KEY must be set: the repository has packages" >&2
+  exit 1
+fi
+
 rm -rf "$out"
 mkdir -p "$out/$pool" "$out/$suite/$component"
 
 if [[ -n "${GPG_PUBLIC_KEY:-}" ]]; then
   gpg --dearmor <<<"$GPG_PUBLIC_KEY" >"$out/tib.gpg"
-fi
-
-shopt -s nullglob
-files=("$debs"/*.deb)
-if ((${#files[@]} == 0)); then
-  echo "no packages: the repository has an empty index"
 fi
 
 # The index: the control fields of each package, and where it is and what it hashes to.
@@ -77,16 +80,14 @@ RELEASE
 if ((${#files[@]} == 0)); then
   exit 0
 fi
-if [[ -z "${GPG_SECRET_KEY:-}" ]]; then
-  echo "GPG_SECRET_KEY is not set: the repository has packages, so its Release must be signed" >&2
-  exit 1
-fi
 
 # Signed: InRelease for current apt, Release.gpg for older ones. The key lives only in this run.
 export GNUPGHOME
 GNUPGHOME="$(mktemp -d)"
 trap 'rm -rf "$GNUPGHOME"' EXIT
 gpg --batch --import <<<"$GPG_SECRET_KEY"
-sign=(gpg --batch --yes --pinentry-mode loopback --passphrase "${GPG_PASSPHRASE:-}" --digest-algo SHA256)
-"${sign[@]}" --clearsign -o "$out/$suite/InRelease" "$out/$suite/Release"
-"${sign[@]}" --detach-sign --armor -o "$out/$suite/Release.gpg" "$out/$suite/Release"
+# The passphrase comes on standard input, so that it shows in no process list.
+sign=(gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --digest-algo SHA256)
+"${sign[@]}" --clearsign -o "$out/$suite/InRelease" "$out/$suite/Release" <<<"${GPG_PASSPHRASE:-}"
+"${sign[@]}" --detach-sign --armor -o "$out/$suite/Release.gpg" "$out/$suite/Release" \
+  <<<"${GPG_PASSPHRASE:-}"
