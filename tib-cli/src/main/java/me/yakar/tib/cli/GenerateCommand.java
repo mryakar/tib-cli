@@ -15,21 +15,11 @@
  */
 package me.yakar.tib.cli;
 
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Model.CommandSpec;
 
-/** {@code tib generate}: adds to a service. Without a subcommand it prints its usage. */
+/** {@code tib generate}: adds to a service. */
 @Command(
     name = "generate",
     description = "Adds to a service that tib scaffolded.",
     subcommands = GenerateEntityCommand.class)
-public class GenerateCommand implements Runnable {
-
-  @CommandLine.Spec private CommandSpec commandSpec;
-
-  @Override
-  public void run() {
-    commandSpec.commandLine().usage(commandSpec.commandLine().getOut());
-  }
-}
+public class GenerateCommand {}

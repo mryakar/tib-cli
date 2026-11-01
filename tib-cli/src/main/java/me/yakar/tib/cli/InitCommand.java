@@ -15,21 +15,11 @@
  */
 package me.yakar.tib.cli;
 
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Model.CommandSpec;
 
-/** {@code tib init}: scaffolds something new. Without a subcommand it prints its usage. */
+/** {@code tib init}: scaffolds something new. */
 @Command(
     name = "init",
     description = "Scaffolds a new project.",
     subcommands = InitServiceCommand.class)
-public class InitCommand implements Runnable {
-
-  @CommandLine.Spec private CommandSpec commandSpec;
-
-  @Override
-  public void run() {
-    commandSpec.commandLine().usage(commandSpec.commandLine().getOut());
-  }
-}
+public class InitCommand {}

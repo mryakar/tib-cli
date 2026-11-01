@@ -34,15 +34,26 @@ class TibCommandSpec extends Specification {
     args << [['--version'], ['init', 'service', '--version'], ['generate', 'entity', '-V']]
   }
 
-  def "#args without a subcommand prints its usage"() {
+  def "#args without a subcommand is a usage error"() {
     when:
     Result result = tib.run(*args)
 
     then:
-    result.exitCode() == 0
-    result.out().startsWith("Usage: ${(['tib'] + args).join(' ')} ")
+    result.exitCode() == 2
+    result.out() == ''
+    result.err().startsWith("Missing required subcommand\nUsage: ${(['tib'] + args).join(' ')} ")
 
     where:
     args << [[], ['init'], ['generate']]
+  }
+
+  def "tib init --help prints the usage, with exit code 0"() {
+    when:
+    Result result = tib.run('init', '--help')
+
+    then:
+    result.exitCode() == 0
+    result.out().startsWith('Usage: tib init ')
+    result.err() == ''
   }
 }
