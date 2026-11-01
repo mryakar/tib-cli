@@ -318,6 +318,14 @@ public final class EntityModel {
 
   // The migration.
 
+  /**
+   * The relations whose columns get an index: the many-to-one ones. A one-to-one column is unique,
+   * which indexes it.
+   */
+  public List<RelationModel> indexed() {
+    return relations.stream().filter(relation -> !relation.oneToOne()).toList();
+  }
+
   /** The definitions of the columns of the table. */
   public List<String> columns() {
     List<String> columns = new ArrayList<>();

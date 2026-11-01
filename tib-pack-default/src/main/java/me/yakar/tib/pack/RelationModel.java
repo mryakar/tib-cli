@@ -37,13 +37,22 @@ public record RelationModel(Relation relation, EntityModel target) {
     return relation.field() + Names.property(target.idField());
   }
 
+  /** The column that holds the identifier of the target: {@code DEPOT_ID}. */
+  public String column() {
+    return relation.column();
+  }
+
   boolean nullable() {
     return relation.nullable();
   }
 
+  boolean oneToOne() {
+    return relation.kind() == RelationKind.ONE_TO_ONE;
+  }
+
   /** The JPA annotation of the relation's kind. */
   String annotation() {
-    return relation.kind() == RelationKind.MANY_TO_ONE ? "ManyToOne" : "OneToOne";
+    return oneToOne() ? "OneToOne" : "ManyToOne";
   }
 
   /** The JPA annotation of the relation: {@code @ManyToOne(fetch = FetchType.LAZY)}. */
@@ -61,22 +70,22 @@ public record RelationModel(Relation relation, EntityModel target) {
         + relation.column()
         + "\""
         + (relation.nullable() ? "" : ", nullable = false")
-        + (relation.kind() == RelationKind.ONE_TO_ONE ? ", unique = true" : "")
+        + (oneToOne() ? ", unique = true" : "")
         + ")";
   }
 
   /** The validation annotation of the DTO's component, in front of its type. */
-  public String validation() {
+  String validation() {
     return relation.nullable() ? "" : "@NotNull ";
   }
 
   /** The definition of the column in SQL, with its foreign key. */
-  public String sql() {
+  String sql() {
     return relation.column()
         + " "
         + FieldModel.sqlType(target.entity().id().type())
         + (relation.nullable() ? "" : " NOT NULL")
-        + (relation.kind() == RelationKind.ONE_TO_ONE ? " UNIQUE" : "")
+        + (oneToOne() ? " UNIQUE" : "")
         + " REFERENCES "
         + target.table()
         + " ("
