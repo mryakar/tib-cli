@@ -16,6 +16,7 @@
 package me.yakar.tib.cli;
 
 import java.util.stream.IntStream;
+import me.yakar.tib.TibException;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
@@ -24,7 +25,9 @@ import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
 import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import picocli.CommandLine;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.IFactory;
+import picocli.CommandLine.ParseResult;
 import picocli.spring.boot.autoconfigure.PicocliAutoConfiguration;
 
 /**
@@ -41,17 +44,34 @@ import picocli.spring.boot.autoconfigure.PicocliAutoConfiguration;
 public class TibApplication implements CommandLineRunner, ExitCodeGenerator {
 
   private final IFactory factory;
-  private final TibCommand command;
   private int exitCode;
 
-  public TibApplication(IFactory factory, TibCommand command) {
+  public TibApplication(IFactory factory) {
     this.factory = factory;
-    this.command = command;
   }
 
   @Override
   public void run(String... args) {
-    exitCode = new CommandLine(command, factory).execute(args);
+    exitCode = commandLine(factory).execute(args);
+  }
+
+  /** The {@code tib} command, with its subcommands built by the factory. */
+  static CommandLine commandLine(IFactory factory) {
+    return new CommandLine(TibCommand.class, factory)
+        .setExecutionExceptionHandler(TibApplication::report);
+  }
+
+  /**
+   * Prints the message of a failure that the user can fix, exit code 1; any other exception is a
+   * bug, which picocli reports with its stack trace.
+   */
+  static int report(Exception e, CommandLine commandLine, ParseResult parseResult)
+      throws Exception {
+    if (e instanceof TibException) {
+      commandLine.getErr().println(e.getMessage());
+      return ExitCode.SOFTWARE;
+    }
+    throw e;
   }
 
   @Override

@@ -18,6 +18,7 @@ package me.yakar.tib.cli
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.state.State
+import me.yakar.tib.cli.docs.CommandFactory
 import picocli.CommandLine
 import spock.lang.Specification
 import spock.lang.TempDir
@@ -31,7 +32,7 @@ class GenerateEntityCommandSpec extends Specification {
 
   StringWriter out = new StringWriter()
   StringWriter err = new StringWriter()
-  CommandLine tib = new CommandLine(new TibCommand(), new TibCommandSpec.TestFactory())
+  CommandLine tib = TibApplication.commandLine(new CommandFactory('1.2.3'))
   .setOut(new PrintWriter(out))
   .setErr(new PrintWriter(err))
   .setColorScheme(CommandLine.Help.defaultColorScheme(CommandLine.Help.Ansi.OFF))

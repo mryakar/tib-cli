@@ -16,24 +16,22 @@
 package me.yakar.tib.cli;
 
 import me.yakar.tib.spec.SpecSchema;
-import org.springframework.stereotype.Component;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Spec;
 
 /** {@code tib schema}: prints the JSON Schema of the spec file. */
-@Component
 @Command(
     name = "schema",
     description =
         "Prints the JSON Schema of the spec file, for completion and validation in an editor.")
 public class SchemaCommand implements Runnable {
 
-  @Spec private CommandSpec spec;
+  @CommandLine.Spec private CommandSpec commandSpec;
 
   @Override
   public void run() {
-    spec.commandLine().getOut().print(SpecSchema.json());
-    spec.commandLine().getOut().flush();
+    commandSpec.commandLine().getOut().print(SpecSchema.json());
+    commandSpec.commandLine().getOut().flush();
   }
 }

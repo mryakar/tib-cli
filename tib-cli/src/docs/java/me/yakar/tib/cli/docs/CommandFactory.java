@@ -15,28 +15,35 @@
  */
 package me.yakar.tib.cli.docs;
 
-import me.yakar.tib.cli.GenerateEntityCommand;
-import me.yakar.tib.cli.InitServiceCommand;
+import me.yakar.tib.cli.GenerationOptions;
 import me.yakar.tib.cli.TibVersion;
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
 /**
- * Builds the commands for the documentation generator, without Spring: the beans that the commands
- * take from the application get a stand-in.
+ * Builds the commands without Spring, for the documentation generator and the tests: what the
+ * commands take from the application gets a version of its own.
  */
 public final class CommandFactory implements IFactory {
+
+  private final String version;
+
+  /** With the version {@code docs}, for the documentation generator. */
+  public CommandFactory() {
+    this("docs");
+  }
+
+  public CommandFactory(String version) {
+    this.version = version;
+  }
 
   @Override
   public <K> K create(Class<K> cls) throws Exception {
     if (cls == TibVersion.class) {
-      return cls.cast(new TibVersion("docs"));
+      return cls.cast(new TibVersion(version));
     }
-    if (cls == InitServiceCommand.class) {
-      return cls.cast(new InitServiceCommand(new TibVersion("docs")));
-    }
-    if (cls == GenerateEntityCommand.class) {
-      return cls.cast(new GenerateEntityCommand(new TibVersion("docs")));
+    if (cls == GenerationOptions.class) {
+      return cls.cast(new GenerationOptions(new TibVersion(version)));
     }
     return CommandLine.defaultFactory().create(cls);
   }

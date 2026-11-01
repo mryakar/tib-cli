@@ -15,31 +15,22 @@
  */
 package me.yakar.tib.cli;
 
-import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
-import me.yakar.tib.TibException;
-import me.yakar.tib.generate.Generation;
 import me.yakar.tib.generate.Pack;
-import me.yakar.tib.generate.Packs;
-import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
-import org.springframework.stereotype.Component;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Parameters;
 
-/**
- * {@code tib init service}: scaffolds a new Spring Boot service from its name or its spec, with the
- * pack the spec names. With {@code --dry-run} it prints what it would write and writes nothing.
- */
-@Component
+/** {@code tib init service}. */
 @Command(
     name = "service",
     description = "Scaffolds a new Spring Boot service, from its name or its spec file.")
@@ -60,48 +51,23 @@ public class InitServiceCommand implements Callable<Integer> {
       description = "The spec file of the service, instead of its name.")
   private Path spec;
 
-  @Option(
-      names = {"-d", "--dir"},
-      paramLabel = "DIR",
-      description = "The directory of the service; the current one by default.")
-  private Path dir = Path.of(".");
-
-  @Option(
-      names = "--dry-run",
-      description = "Prints what would be written, as a diff, and writes nothing.")
-  private boolean dryRun;
-
-  private final TibVersion version;
-
-  public InitServiceCommand(TibVersion version) {
-    this.version = version;
-  }
+  @Mixin private GenerationOptions options;
 
   @Override
   public Integer call() {
-    PrintWriter out = commandSpec.commandLine().getOut();
-    PrintWriter err = commandSpec.commandLine().getErr();
     if (name == null && spec == null) {
       throw new ParameterException(
           commandSpec.commandLine(), "Give the name of the service, or --spec with its spec file.");
     }
-    try {
-      Spec service =
-          spec != null
-              ? SpecReader.read(spec)
-              : new Spec(Spec.VERSION, name, null, null, null).check();
-      Project project = new Project(service);
-      Pack pack = Packs.find(service.pack());
-      Tree tree = Tree.at(dir);
-      if (tree.exists(State.PATH)) {
-        err.println(tree.root() + " is already a tib project: " + State.PATH + " is there.");
-        return 1;
-      }
-      Generation.run(project, pack, Pack::init, version.version(), tree);
-      return Outcome.report(tree, dryRun, out);
-    } catch (TibException e) {
-      err.println(e.getMessage());
-      return 1;
+    Spec service =
+        spec != null
+            ? SpecReader.read(spec)
+            : new Spec(Spec.VERSION, name, null, null, null).check();
+    Tree tree = options.tree();
+    if (tree.exists(State.PATH)) {
+      return options.refuse(
+          tree.root() + " is already a tib project: " + State.PATH + " is there.");
     }
+    return options.generate(service, Pack::init, tree);
   }
 }

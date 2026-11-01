@@ -16,13 +16,14 @@
 package me.yakar.tib.cli
 
 import me.yakar.tib.spec.SpecSchema
+import me.yakar.tib.cli.docs.CommandFactory
 import picocli.CommandLine
 import spock.lang.Specification
 
 class SchemaCommandSpec extends Specification {
 
   StringWriter out = new StringWriter()
-  CommandLine tib = new CommandLine(new TibCommand(), new TibCommandSpec.TestFactory())
+  CommandLine tib = TibApplication.commandLine(new CommandFactory('1.2.3'))
   .setOut(new PrintWriter(out))
   .setColorScheme(CommandLine.Help.defaultColorScheme(CommandLine.Help.Ansi.OFF))
 

@@ -17,19 +17,29 @@ package me.yakar.tib.cli
 
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
+import me.yakar.tib.cli.docs.CommandFactory
 import spock.lang.Specification
 
 class TibApplicationSpec extends Specification {
 
   def "runs the command and keeps its exit code"() {
     given:
-    TibApplication application = new TibApplication(new TibCommandSpec.TestFactory(), new TibCommand())
+    TibApplication application = new TibApplication(new CommandFactory('1.2.3'))
 
     when:
     application.run('--no-such-option')
 
     then:
     application.exitCode == 2
+  }
+
+  def "an exception that is not tib's goes on to picocli"() {
+    when:
+    TibApplication.report(new IllegalStateException('a bug'), null, null)
+
+    then:
+    IllegalStateException e = thrown()
+    e.message == 'a bug'
   }
 
   def "the application prints its version and exits with 0"() {
