@@ -11,3 +11,9 @@ CREATE TABLE ${entity.table()} (
   ${column.get()}${column.isLast() ? "" : ","}
   @endfor
 );
+@if(!entity.indexed().isEmpty())<%-- keeps the blank line below --%>
+
+@for(var relation : entity.indexed())
+CREATE INDEX ${entity.table()}_${relation.column()}_IDX ON ${entity.table()} (${relation.column()});
+@endfor
+@endif
