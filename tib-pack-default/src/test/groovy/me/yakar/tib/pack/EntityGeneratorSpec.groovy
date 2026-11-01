@@ -68,9 +68,14 @@ entities:
     } == "${EntityGenerator.MIGRATIONS}/${migration}"
 
     where:
-    existing                            | migration
-    []                                  | 'V1__create_a.sql'
-    ['V3__by_hand.sql', 'R__views.sql'] | 'V4__create_a.sql'
+    existing                                       | migration
+    []                                             | 'V1__create_a.sql'
+    ['V3__by_hand.sql', 'R__views.sql']            | 'V4__create_a.sql'
+    ['V202611011200__by_hand.sql']                 | 'V202611011201__create_a.sql'
+    ['V2.1__by_hand.sql']                          | 'V3__create_a.sql'
+    ['V2_1_3__by_hand.sql', 'V1__by_hand.sql']     | 'V3__create_a.sql'
+    ['V1__by_hand.sql', 'older/V5__by_hand.sql']   | 'V6__create_a.sql'
+    ['notes.txt']                                  | 'V1__create_a.sql'
   }
 
   def "the migration of a table that has one is not written again"() {
