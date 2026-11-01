@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  jpackage's own main.wxs, with two additions. The installer puts the installation directory on the
-  PATH of the machine, or of the user for a per-user installation, so that `tib` works in any
-  console, and takes it off again when the application is uninstalled. And it builds the start-up
-  cache of the application after the files are in place, which the uninstaller removes.
+  main.wxs from OpenJDK's jdk.jpackage resources (JDK 25), with two additions. The installer puts
+  the installation directory on the PATH of the machine, or of the user for a per-user installation,
+  so that `tib` works in any console, and takes it off again when the application is uninstalled.
+  And it builds the start-up cache of the application after the files are in place, which the
+  uninstaller removes.
 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
      xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
