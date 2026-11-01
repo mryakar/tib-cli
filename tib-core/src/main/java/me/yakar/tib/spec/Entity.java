@@ -55,6 +55,16 @@ public record Entity(
   }
 
   void check(Problems problems, String path, Set<String> entityNames) {
+    String packageName = name.toLowerCase(Locale.ROOT);
+    if (Names.isKeyword(packageName)) {
+      problems.add(
+          path + ".name",
+          "'" + name + "' makes the package '" + packageName + "', which is a Java keyword");
+    }
+    if (Names.isReserved(table)) {
+      problems.add(
+          path + ".table", "'" + table + "' is a reserved word in SQL; give the entity a table");
+    }
     id.check(problems, path + ".id");
     Set<String> members = new HashSet<>();
     members.add(id.field());
@@ -77,6 +87,7 @@ public record Entity(
     for (int i = 0; i < relations.size(); i++) {
       Relation relation = relations.get(i);
       String relationPath = path + ".relations[" + i + "]";
+      relation.check(problems, relationPath);
       if (!entityNames.contains(relation.target())) {
         problems.add(relationPath + ".target", "there is no entity '" + relation.target() + "'");
       }

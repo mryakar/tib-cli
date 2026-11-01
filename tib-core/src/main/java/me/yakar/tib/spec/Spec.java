@@ -72,6 +72,17 @@ public record Spec(
   }
 
   private void check(Problems problems) {
+    for (String segment : group.split("\\.")) {
+      if (Names.isKeyword(segment)) {
+        problems.add("group", "'" + group + "' has '" + segment + "', which is a Java keyword");
+      }
+    }
+    String packageName = service.replace("-", "");
+    if (Names.isKeyword(packageName)) {
+      problems.add(
+          "service",
+          "'" + service + "' makes the package '" + packageName + "', which is a Java keyword");
+    }
     if (tib != VERSION) {
       problems.add("tib", "this build reads version " + VERSION);
     }

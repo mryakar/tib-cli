@@ -41,6 +41,16 @@ public record Id(
   }
 
   void check(Problems problems, String path) {
+    if (Names.isKeyword(field)) {
+      problems.add(path + ".field", "'" + field + "' is a Java keyword");
+    }
+    if (Names.isReserved(Names.sql(field))) {
+      problems.add(
+          path + ".field",
+          "the column '"
+              + Names.sql(field)
+              + "' is a reserved word in SQL; give the identifier another field");
+    }
     if (!strategy.fits(type)) {
       problems.add(path, "the strategy " + strategy + " does not fit the type " + type);
     }

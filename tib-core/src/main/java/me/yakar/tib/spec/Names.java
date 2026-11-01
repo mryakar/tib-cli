@@ -16,6 +16,8 @@
 package me.yakar.tib.spec;
 
 import java.util.Locale;
+import java.util.Set;
+import javax.lang.model.SourceVersion;
 
 /** The patterns that the names in a spec follow, and the conversions between Java and SQL names. */
 public final class Names {
@@ -35,10 +37,133 @@ public final class Names {
   /** A Java member name: lower camel case. */
   static final String MEMBER = "^[a-z][A-Za-z0-9]*$";
 
-  /** An SQL identifier that needs no quoting. */
+  /**
+   * An SQL identifier: letters, digits and underscores. It needs no quoting unless it is a reserved
+   * word, which {@link #isReserved} tells.
+   */
   static final String SQL = "^[A-Za-z_][A-Za-z0-9_]*$";
 
+  /**
+   * The words that PostgreSQL reserves, most of them reserved in standard SQL too: a table or a
+   * column cannot have one as its name without quotes.
+   */
+  private static final Set<String> RESERVED =
+      Set.of(
+          "ALL",
+          "ANALYSE",
+          "ANALYZE",
+          "AND",
+          "ANY",
+          "ARRAY",
+          "AS",
+          "ASC",
+          "ASYMMETRIC",
+          "AUTHORIZATION",
+          "BINARY",
+          "BOTH",
+          "CASE",
+          "CAST",
+          "CHECK",
+          "COLLATE",
+          "COLLATION",
+          "COLUMN",
+          "CONCURRENTLY",
+          "CONSTRAINT",
+          "CREATE",
+          "CROSS",
+          "CURRENT_CATALOG",
+          "CURRENT_DATE",
+          "CURRENT_ROLE",
+          "CURRENT_SCHEMA",
+          "CURRENT_TIME",
+          "CURRENT_TIMESTAMP",
+          "CURRENT_USER",
+          "DEFAULT",
+          "DEFERRABLE",
+          "DESC",
+          "DISTINCT",
+          "DO",
+          "ELSE",
+          "END",
+          "EXCEPT",
+          "FALSE",
+          "FETCH",
+          "FOR",
+          "FOREIGN",
+          "FREEZE",
+          "FROM",
+          "FULL",
+          "GRANT",
+          "GROUP",
+          "HAVING",
+          "ILIKE",
+          "IN",
+          "INITIALLY",
+          "INNER",
+          "INTERSECT",
+          "INTO",
+          "IS",
+          "ISNULL",
+          "JOIN",
+          "LATERAL",
+          "LEADING",
+          "LEFT",
+          "LIKE",
+          "LIMIT",
+          "LOCALTIME",
+          "LOCALTIMESTAMP",
+          "NATURAL",
+          "NOT",
+          "NOTNULL",
+          "NULL",
+          "OFFSET",
+          "ON",
+          "ONLY",
+          "OR",
+          "ORDER",
+          "OUTER",
+          "OVERLAPS",
+          "PLACING",
+          "PRIMARY",
+          "REFERENCES",
+          "RETURNING",
+          "RIGHT",
+          "SELECT",
+          "SESSION_USER",
+          "SIMILAR",
+          "SOME",
+          "SYMMETRIC",
+          "SYSTEM_USER",
+          "TABLE",
+          "TABLESAMPLE",
+          "THEN",
+          "TO",
+          "TRAILING",
+          "TRUE",
+          "UNION",
+          "UNIQUE",
+          "USER",
+          "USING",
+          "VARIADIC",
+          "VERBOSE",
+          "WHEN",
+          "WHERE",
+          "WINDOW",
+          "WITH");
+
   private Names() {}
+
+  /** Whether a Java name is a keyword of the language, as {@code class} is. */
+  static boolean isKeyword(String javaName) {
+    return !SourceVersion.isName(javaName);
+  }
+
+  /**
+   * Whether an SQL name, in any case, is a word that the database reserves, as {@code ORDER} is.
+   */
+  static boolean isReserved(String sqlName) {
+    return RESERVED.contains(sqlName.toUpperCase(Locale.ROOT));
+  }
 
   /**
    * The SQL name of a Java name, when the spec gives none: {@code plateNumber} is {@code
