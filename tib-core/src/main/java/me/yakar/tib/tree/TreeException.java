@@ -15,14 +15,21 @@
  */
 package me.yakar.tib.tree;
 
+import java.io.IOException;
 import java.io.Serial;
+import java.nio.file.Path;
+import me.yakar.tib.TibException;
 
-/** A change that the tree cannot stage or apply. */
-public class TreeException extends RuntimeException {
+/** A change that the tree cannot stage or apply, or a file of the project that it cannot read. */
+public class TreeException extends TibException {
 
   @Serial private static final long serialVersionUID = 1L;
 
-  public TreeException(String message) {
+  TreeException(String message) {
     super(message);
+  }
+
+  TreeException(String verb, Path file, IOException cause) {
+    super(verb, file, cause);
   }
 }

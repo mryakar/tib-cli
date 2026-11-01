@@ -16,13 +16,14 @@
 package me.yakar.tib.generate;
 
 import java.io.Serial;
+import me.yakar.tib.TibException;
 
 /** A pack that is not there. */
-public class PackException extends RuntimeException {
+public class PackException extends TibException {
 
   @Serial private static final long serialVersionUID = 1L;
 
-  public PackException(String message) {
+  PackException(String message) {
     super(message);
   }
 }

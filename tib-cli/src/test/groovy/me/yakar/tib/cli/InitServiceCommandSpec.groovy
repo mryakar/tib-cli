@@ -100,6 +100,7 @@ class InitServiceCommandSpec extends Specification {
     ['Vehicle Service']                | "the spec has a problem: service: 'Vehicle Service' does not match ^[a-z][a-z0-9]*(-[a-z0-9]+)*\$\n"
     ['--spec', spec('pack: nope')]     | "there is no pack 'nope'\n"
     ['--spec', spec('tib: 2')]         | "the spec has a problem: tib: this build reads version 1\n"
+    ['--spec', 'no-such-spec.yaml']    | "cannot read no-such-spec.yaml: no such file\n"
   }
 
   def "a directory that cannot be written to is reported"() {
@@ -108,7 +109,7 @@ class InitServiceCommandSpec extends Specification {
 
     expect:
     tib.execute('init', 'service', 's', '-d', file.toString()) == 1
-    error().contains('file')
+    error() == "cannot write ${file.toAbsolutePath().normalize()}: already exists\n"
   }
 
   /** What the command printed, with the line separator of every platform. */

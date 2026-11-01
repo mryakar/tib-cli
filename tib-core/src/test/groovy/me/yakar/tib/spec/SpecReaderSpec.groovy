@@ -15,6 +15,7 @@
  */
 package me.yakar.tib.spec
 
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import spock.lang.Specification
 
@@ -123,23 +124,31 @@ class SpecReaderSpec extends Specification {
     e.message == "the spec has 2 problems:\n  service: required\n  entities[0].name: 'vehicle' does not match ${Names.TYPE}"
   }
 
-  def "a value of the wrong shape is refused with the reader's own words"() {
+  def "a value of the wrong shape is refused with the reader's own words: #yaml"() {
     when:
-    SpecReader.read('tib: [1]\nservice: s')
+    SpecReader.read(yaml)
 
     then:
     SpecException e = thrown()
     e.problems().size() == 1
-    e.problems()[0].startsWith('tib: ')
+    e.problems()[0].startsWith(path)
+
+    where:
+    yaml                  | path
+    'tib: [1]\nservice: s' | 'tib: '
+    '- tib: 1'            | 'spec: '
   }
 
-  def "an empty file is refused"() {
+  def "an empty file is refused: '#yaml'"() {
     when:
-    SpecReader.read('')
+    SpecReader.read(yaml)
 
     then:
     SpecException e = thrown()
-    e.problems()[0].startsWith('spec: ')
+    e.message == 'the spec has a problem: spec: the file is empty'
+
+    where:
+    yaml << ['', '---\n', '# nothing\n']
   }
 
   def "a file that is not YAML is refused"() {
@@ -152,11 +161,17 @@ class SpecReaderSpec extends Specification {
   }
 
   def "a file that is not there cannot be read"() {
+    given:
+    Path file = EXAMPLES.resolve('no-such-service.yaml')
+
     when:
-    SpecReader.read(EXAMPLES.resolve('no-such-service.yaml'))
+    SpecReader.read(file)
 
     then:
-    thrown(UncheckedIOException)
+    SpecException e = thrown()
+    e.message == "cannot read $file: no such file"
+    e.problems() == [e.message]
+    e.cause instanceof NoSuchFileException
   }
 
   private static String entity(String body) {

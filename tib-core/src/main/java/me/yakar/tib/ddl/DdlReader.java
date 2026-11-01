@@ -16,7 +16,6 @@
 package me.yakar.tib.ddl;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -81,11 +80,13 @@ public final class DdlReader {
 
   /** Reads the DDL file into the spec of the service, as {@link #read(String, Spec)} does. */
   public static Spec read(Path file, Spec service) {
+    String ddl;
     try {
-      return read(Files.readString(file), service);
+      ddl = Files.readString(file);
     } catch (IOException e) {
-      throw new UncheckedIOException(e);
+      throw new DdlException(file, e);
     }
+    return read(ddl, service);
   }
 
   /**

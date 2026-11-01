@@ -148,4 +148,30 @@ class GenerateEntityCommandSpec extends Specification {
     tib.execute('generate', 'entity', '--spec', bad.toString(), '-d', dir.toString()) == 1
     error() == "there is no pack 'nope'\n"
   }
+
+  def "a spec file that is not there is reported"() {
+    given:
+    tib.execute('init', 'service', 'vehicle-service', '-d', dir.toString())
+    Path missing = dir.resolve('missing.yaml')
+
+    expect:
+    tib.execute('generate', 'entity', '--spec', missing.toString(), '-d', dir.toString()) == 1
+    error() == "cannot read $missing: no such file\n"
+  }
+
+  def "a state file that tib cannot read is reported: #option"() {
+    given:
+    Files.createDirectories(dir.resolve('.tib'))
+    Files.writeString(dir.resolve(State.PATH), '[')
+
+    expect:
+    tib.execute('generate', 'entity', option, file, '-d', dir.toString()) == 1
+    error().startsWith('.tib/state.yaml: ')
+    error().readLines().size() == 1
+
+    where:
+    option   | file
+    '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString()
+    '--ddl'  | EXAMPLES.resolve('vehicle-service.sql').toString()
+  }
 }
