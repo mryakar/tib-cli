@@ -33,7 +33,7 @@ public record Options(
   }
 
   /** The options an entity gets when the spec gives none. */
-  public static Options defaults() {
+  static Options defaults() {
     return new Options(null, null, null, null);
   }
 }

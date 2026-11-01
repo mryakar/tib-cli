@@ -15,34 +15,30 @@
  */
 package me.yakar.tib.spec;
 
+import java.util.Locale;
+
 /** How the identifier of an entity gets its value. */
 public enum IdStrategy {
   /** The database assigns it, from an identity column; for a {@code Long}. */
-  IDENTITY("identity"),
+  IDENTITY,
   /** A database sequence assigns it; for a {@code Long}. */
-  SEQUENCE("sequence"),
+  SEQUENCE,
   /** The application generates it; for a {@code UUID}. */
-  UUID("uuid");
-
-  private final String name;
-
-  IdStrategy(String name) {
-    this.name = name;
-  }
+  UUID;
 
   /** The name in the spec. */
   @Override
   public String toString() {
-    return name;
+    return name().toLowerCase(Locale.ROOT);
   }
 
   /** Whether the strategy produces values of the type. */
-  public boolean fits(IdType type) {
+  boolean fits(IdType type) {
     return (this == UUID) == (type == IdType.UUID);
   }
 
   /** The strategy an identifier of the type gets when the spec names none. */
-  public static IdStrategy defaultFor(IdType type) {
+  static IdStrategy defaultFor(IdType type) {
     return type == IdType.UUID ? UUID : IDENTITY;
   }
 }

@@ -36,7 +36,7 @@ public record Id(
   }
 
   /** The identifier an entity gets when the spec gives none. */
-  public static Id defaults() {
+  static Id defaults() {
     return new Id(null, null, null);
   }
 

@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.RECORD_COMPONENT, ElementType.TYPE})
-public @interface Doc {
+@interface Doc {
 
   /** The description, for the schema. */
   String value();

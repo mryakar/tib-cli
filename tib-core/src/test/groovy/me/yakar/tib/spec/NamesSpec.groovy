@@ -89,4 +89,14 @@ class NamesSpec extends Specification {
     'Depot' | 'depot'
     'D'     | 'd'
   }
+
+  def "the accessor name of #member is #property"() {
+    expect:
+    Names.property(member) == property
+
+    where:
+    member        | property
+    'plateNumber' | 'PlateNumber'
+    'x'           | 'X'
+  }
 }

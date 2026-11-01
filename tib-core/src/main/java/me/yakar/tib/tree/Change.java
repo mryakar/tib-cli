@@ -31,7 +31,7 @@ public record Change(String path, Optional<String> before, String after, Owner o
   }
 
   /** The change as a unified diff. */
-  public String diff() {
+  String diff() {
     return UnifiedDiff.of(path, before.orElse(null), after);
   }
 }
