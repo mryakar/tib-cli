@@ -2,9 +2,6 @@
   "name": "tib-docs",
   "private": true,
   "description": "Builds the documentation site of tib with Antora.",
-  "scripts": {
-    "build": "antora --clean antora-playbook.yml"
-  },
   "devDependencies": {
     "antora": "3.2.1"
   }
