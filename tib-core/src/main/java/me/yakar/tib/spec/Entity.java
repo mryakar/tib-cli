@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/** An entity: a table and the Java class mapped to it, with its fields and relations. */
 @Doc("An entity: a table and the class mapped to it.")
 public record Entity(
     @Doc(

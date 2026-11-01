@@ -15,6 +15,7 @@
  */
 package me.yakar.tib.spec;
 
+import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -25,6 +26,7 @@ import java.lang.annotation.Target;
  * from these annotations, and the spec is checked against the same rules, so the two cannot drift
  * apart.
  */
+@Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.RECORD_COMPONENT, ElementType.TYPE})
 public @interface Doc {

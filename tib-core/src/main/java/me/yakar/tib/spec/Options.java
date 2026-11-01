@@ -15,7 +15,6 @@
  */
 package me.yakar.tib.spec;
 
-/** What the generators produce for an entity besides the entity itself. */
 @Doc("What is generated for the entity besides the entity itself.")
 public record Options(
     @Doc(value = "Whether the entity gets DTOs.", defaultValue = "true") Boolean dto,
