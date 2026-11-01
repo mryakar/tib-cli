@@ -31,13 +31,23 @@ class InitServiceCommandSpec extends Specification {
 
   Tib tib = new Tib()
 
-  def "without a name or a spec it asks for one"() {
+  def "the name or the spec is required"() {
     when:
     Result result = tib.run('init', 'service')
 
     then:
     result.exitCode() == 2
-    result.err().startsWith('Give the name of the service, or --spec with its spec file.')
+    result.err().startsWith('Error: Missing required argument (specify one of these): (NAME | --spec=FILE)\n')
+  }
+
+  def "the name and the spec exclude each other"() {
+    when:
+    Result result = tib.run('init', 'service', 'vehicle-service', '--spec', EXAMPLES.resolve('vehicle-service.yaml').toString(), '-d', dir.toString())
+
+    then:
+    result.exitCode() == 2
+    result.err().startsWith('Error: NAME, --spec=FILE are mutually exclusive (specify only one)\n')
+    dir.toFile().list().length == 0
   }
 
   def "a dry run prints the diff and writes nothing"() {

@@ -22,12 +22,10 @@ import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
-import picocli.CommandLine;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
-import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Parameters;
 
 /** {@code tib init service}. */
@@ -36,33 +34,34 @@ import picocli.CommandLine.Parameters;
     description = "Scaffolds a new Spring Boot service, from its name or its spec file.")
 public class InitServiceCommand implements Callable<Integer> {
 
-  @CommandLine.Spec private CommandSpec commandSpec;
+  @ArgGroup(multiplicity = "1")
+  private Input input;
 
-  @Parameters(
-      index = "0",
-      arity = "0..1",
-      paramLabel = "NAME",
-      description = "The name of the service, in lower case words joined with hyphens.")
-  private String name;
+  /** Where the service comes from: its name, or its spec file. */
+  static class Input {
 
-  @Option(
-      names = "--spec",
-      paramLabel = "FILE",
-      description = "The spec file of the service, instead of its name.")
-  private Path spec;
+    @Parameters(
+        arity = "1",
+        paramLabel = "NAME",
+        description = "The name of the service, in lower case words joined with hyphens.")
+    String name;
+
+    @Option(
+        names = "--spec",
+        required = true,
+        paramLabel = "FILE",
+        description = "The spec file of the service.")
+    Path spec;
+  }
 
   @Mixin private GenerationOptions options;
 
   @Override
   public Integer call() {
-    if (name == null && spec == null) {
-      throw new ParameterException(
-          commandSpec.commandLine(), "Give the name of the service, or --spec with its spec file.");
-    }
     Spec service =
-        spec != null
-            ? SpecReader.read(spec)
-            : new Spec(Spec.VERSION, name, null, null, null).check();
+        input.spec != null
+            ? SpecReader.read(input.spec)
+            : new Spec(Spec.VERSION, input.name, null, null, null).check();
     Tree tree = options.tree();
     if (tree.exists(State.PATH)) {
       return options.refuse(
