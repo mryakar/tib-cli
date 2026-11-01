@@ -27,7 +27,8 @@ names of its fields are the names of their columns in lower camel case: `plate_n
 
 The primary key, of one column, is the identifier. A UUID gets its value from the application; an
 integer is a `Long` that the database assigns, by identity when the column says so
-(`GENERATED ... AS IDENTITY`, `SERIAL`, `BIGSERIAL`, `AUTO_INCREMENT`), by a sequence otherwise.
+(`GENERATED ... AS IDENTITY`, `IDENTITY`, `AUTO_INCREMENT`, `SMALLSERIAL`, `SERIAL`,
+`BIGSERIAL`), by a sequence otherwise.
 
 A column that references another table, with `REFERENCES` or a foreign key, is a relation to the
 entity of that table: many to one, or one to one when the column is unique. The relation is named
@@ -43,25 +44,25 @@ alone.
 |===
 |SQL type |Field type
 
-|`VARCHAR(n)`, `VARCHAR2(n)`, `NVARCHAR(n)`, `CHARACTER VARYING(n)`, `CHAR(n)`, `TEXT`, `CLOB`
-|`String`, of length _n_
+|`VARCHAR(n)`, `VARCHAR2(n)`, `NVARCHAR(n)`, `NVARCHAR2(n)`, `CHARACTER VARYING(n)`, `CHAR(n)`, `CHARACTER(n)`, `NCHAR(n)`, `TEXT`, `CLOB`, `NCLOB`
+|`String`, of length _n_ when there is one
 
-|`SMALLINT`, `INTEGER`, `SERIAL`; `NUMERIC(p)` and `NUMBER(p)` up to nine digits
+|`SMALLINT`, `INT`, `INTEGER`, `INT2`, `INT4`, `SMALLSERIAL`, `SERIAL`; `NUMERIC(p)`, `DECIMAL(p)` and `NUMBER(p)`, also with a scale of 0, up to nine digits
 |`Integer`
 
-|`BIGINT`, `BIGSERIAL`; `NUMERIC(p)` and `NUMBER(p)` up to nineteen digits
+|`BIGINT`, `INT8`, `BIGSERIAL`; `NUMERIC(p)`, `DECIMAL(p)` and `NUMBER(p)`, also with a scale of 0, up to nineteen digits
 |`Long`
 
-|`NUMERIC`, `DECIMAL`, `NUMBER`, with a scale or more digits
+|`NUMERIC`, `DECIMAL` and `NUMBER` without digits, with a scale above 0, or with more digits
 |`BigDecimal`
 
-|`BOOLEAN`
+|`BOOLEAN`, `BOOL`
 |`Boolean`
 
 |`DATE`
 |`LocalDate`
 
-|`TIMESTAMP`, `TIMESTAMP WITHOUT TIME ZONE`
+|`TIMESTAMP`, `TIMESTAMP WITHOUT TIME ZONE`, `DATETIME`
 |`LocalDateTime`
 
 |`TIMESTAMPTZ`, `TIMESTAMP WITH TIME ZONE`
@@ -71,11 +72,31 @@ alone.
 |`UUID`
 |===
 
-`ALTER TABLE` statements may add primary, foreign and unique keys to the tables before them. Other
-statements, such as those that create sequences or indexes, comments or data, are skipped; so are
-the defaults and checks of the columns and the unique keys of several columns. A column of another
-type, a key of several columns or an `ALTER TABLE` that changes anything else is a problem, which
-tib reports with the table and the column it is about, and then writes nothing.
+The mapping does not go both ways, so the migrations that tib writes do not read back into exactly
+their spec: a `BigDecimal` without a scale is a `NUMERIC(p, 0)`, which reads back as a `Long`, or an
+`Integer`, when it has up to nineteen digits; a `String` without a length is a `VARCHAR(255)`,
+which reads back with `length: 255`.
+
+`ALTER TABLE` statements may add primary, foreign and unique keys to the tables created before
+them. Every other statement, such as one that creates a sequence or an index, a comment or data,
+or drops a table, is skipped; so are the defaults and checks of the columns and the unique keys of
+several columns. SQL that tib cannot parse, DDL without a `CREATE TABLE`, a column of another
+type, a table without a primary key, a primary or foreign key
+of several columns, a reference to a table that is neither in the DDL nor in the service, a table
+created twice, and an `ALTER TABLE` that changes anything else or comes before its table are
+problems: tib reports each with the table and the column it is about, and writes nothing.
+
+The spec that the DDL yields is checked as a xref:spec.adoc#_the_rules[spec file] is. A table or a
+column named like a word that SQL reserves, or a column named like a Java keyword, is a problem
+of the spec, which names the entity and the field as the spec sees them. For a table `user` with
+a column `class`:
+
+[source,text]
+----
+the spec has 2 problems:
+  entities[0].table: 'user' is a reserved word in SQL; give the entity a table
+  entities[0].fields[0].name: 'class' is a Java keyword
+----
 
 == The spec of the service
 
@@ -86,5 +107,5 @@ the spec keeps what the DDL cannot say. The spec that results is the one `.tib/s
 records, and a second run with the same DDL changes nothing.
 
 The migration of an entity is written once, from its spec, for PostgreSQL. After a change of the
-DDL, the files written on every run follow it; a change of the schema of a table that has its
-migration already is a new migration.
+DDL the files written on every run follow it; the change of a table that has its migration already
+needs a new migration, which you write.
