@@ -51,6 +51,7 @@ public class DepotService {
   private Depot find(UUID id) {
     return depots
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no depot " + id));
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no depot " + id));
   }
 }

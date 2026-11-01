@@ -50,6 +50,7 @@ public class TagService {
   private Tag find(Long id) {
     return tags
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no tag " + id));
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no tag " + id));
   }
 }
