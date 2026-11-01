@@ -27,12 +27,3 @@ dependencies {
   // The tests check the spec file against the JSON Schema that the engine publishes.
   testImplementation(libs.json.schema.validator)
 }
-
-// The tests read the examples of the documentation, the spec and the DDL, so that they cannot
-// drift apart.
-val examples = layout.settingsDirectory.dir("docs/modules/ROOT/examples")
-
-tasks.test {
-  inputs.dir(examples)
-  systemProperty("tib.examples", examples.asFile.absolutePath)
-}

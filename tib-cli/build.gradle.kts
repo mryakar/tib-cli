@@ -45,13 +45,7 @@ tasks.processResources {
 
 // The application test starts the CLI in a JVM of its own and compares its output with the version
 // of the build.
-tasks.test {
-  systemProperty("tib.version", projectVersion)
-  // The command tests scaffold the example service of the documentation.
-  val examples = layout.settingsDirectory.dir("docs/modules/ROOT/examples")
-  inputs.dir(examples)
-  systemProperty("tib.examples", examples.asFile.absolutePath)
-}
+tasks.test { systemProperty("tib.version", projectVersion) }
 
 // Packaging. jpackage builds the installer of this platform (.deb on Linux, .msi on Windows) and
 // an application image that the portable zip wraps; each embeds a runtime of JDK 25, trimmed to

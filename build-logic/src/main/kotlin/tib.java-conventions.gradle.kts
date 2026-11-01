@@ -26,8 +26,7 @@ val libs = versionCatalogs.named("libs")
 
 fun version(alias: String): String = libs.findVersion(alias).get().requiredVersion
 
-// The code is compiled for Java 21 and runs on 21 and later; the runtime that the packages embed
-// may be newer.
+// Compiled for Java 21; runs on 21 and later.
 java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
 
 tasks.withType<JavaCompile>().configureEach {
@@ -46,28 +45,43 @@ testing {
   }
 }
 
-// Code is compiled for Java 21; -PtestJavaVersion runs the tests on a newer JVM, such as the one
-// the packages embed.
+// -PtestJavaVersion runs the tests on another JVM, such as the one the packages embed.
 val testJavaVersion = providers.gradleProperty("testJavaVersion").map(String::toInt).orElse(21)
 
+// The tests read the examples of the documentation and, in a module that has them, the snapshots
+// of what it generates; they write what they generate under build/snapshots/<task>.
 tasks.withType<Test>().configureEach {
   javaLauncher = javaToolchains.launcherFor {
     languageVersion = testJavaVersion.map(JavaLanguageVersion::of)
   }
+  val examples = layout.settingsDirectory.dir("docs/modules/ROOT/examples")
+  val snapshots = layout.projectDirectory.dir("src/test/snapshots").takeIf { it.asFile.isDirectory }
+  val actual = layout.buildDirectory.dir("snapshots/$name")
+  inputs.dir(examples).withPropertyName("examples").withPathSensitivity(PathSensitivity.RELATIVE)
+  snapshots?.let {
+    inputs.dir(it).withPropertyName("snapshots").withPathSensitivity(PathSensitivity.RELATIVE)
+  }
+  outputs.dir(actual).withPropertyName("actualSnapshots")
+  // As arguments, the absolute paths are no inputs, so the cached results fit any checkout.
+  jvmArgumentProviders.add(
+    CommandLineArgumentProvider {
+      listOfNotNull(
+        "-Dtib.examples=${examples.asFile.absolutePath}",
+        snapshots?.let { "-Dtib.snapshots=${it.asFile.absolutePath}" },
+        "-Dtib.snapshots.actual=${actual.get().asFile.absolutePath}",
+      )
+    },
+  )
 }
 
 jacoco { toolVersion = version("jacoco") }
 
-// Coverage counts every test suite. Taking the data from the tasks adds no dependency on them, so
-// it is declared.
+// Coverage counts every test suite; executionData(tasks) adds no task dependency, so dependsOn
+// does.
 tasks.withType<JacocoReportBase>().configureEach {
   val tests = tasks.withType<Test>()
   dependsOn(tests)
   executionData(*tests.toTypedArray())
-  // The classes that the build generates from the templates of a pack are the template engine's.
-  classDirectories.setFrom(
-    classDirectories.files.map { fileTree(it) { exclude("gg/jte/generated/**") } },
-  )
 }
 
 tasks.jacocoTestReport { reports { xml.required = true } }
