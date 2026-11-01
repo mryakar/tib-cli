@@ -22,7 +22,7 @@ class ProjectSpec extends Specification {
 
   def "the names of the project come from the spec: #service"() {
     given:
-    Project project = Project.of(new Spec(1, service, group, null, null))
+    Project project = new Project(new Spec(1, service, group, null, null))
 
     expect:
     project.name() == service

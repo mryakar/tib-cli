@@ -65,7 +65,7 @@ class DefaultPackSpec extends Specification {
 
   def "generates the example service of the documentation as the snapshot says"() {
     given:
-    Project project = Project.of(SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml')))
+    Project project = new Project(SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml')))
     Tree tree = Tree.at(dir)
     Pack pack = new DefaultPack()
 
@@ -117,7 +117,7 @@ class DefaultPackSpec extends Specification {
 
   def "generates the corners of the entity layer as the snapshot says"() {
     given:
-    Project project = Project.of(SpecReader.read(SNAPSHOTS.resolve('corner-service/spec.yaml')))
+    Project project = new Project(SpecReader.read(SNAPSHOTS.resolve('corner-service/spec.yaml')))
     Tree tree = Tree.at(dir)
     Files.createDirectories(dir.resolve('src/main/resources/db/migration'))
     Files.writeString(dir.resolve('src/main/resources/db/migration/V3__by_hand.sql'), '-- mine\n')
@@ -145,7 +145,7 @@ class DefaultPackSpec extends Specification {
 
   def "a second run on the generated service changes nothing"() {
     given:
-    Project project = Project.of(SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml')))
+    Project project = new Project(SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml')))
     Tree tree = Tree.at(dir)
     Pack pack = new DefaultPack()
     pack.init().generate(project, tree)
@@ -165,7 +165,7 @@ class DefaultPackSpec extends Specification {
     given:
     Spec spec = SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
     Tree tree = Tree.at(dir)
-    new DefaultPack().entity().generate(Project.of(spec), tree)
+    new DefaultPack().entity().generate(new Project(spec), tree)
 
     when:
     String migrations = tree.list(EntityGenerator.MIGRATIONS).collect {
@@ -178,7 +178,7 @@ class DefaultPackSpec extends Specification {
 
   def "entities come after the entities they refer to, cycles in the order of the spec"() {
     given:
-    Project project = Project.of(SpecReader.parse('''\
+    Project project = new Project(SpecReader.parse('''\
 tib: 1
 service: s
 entities:
