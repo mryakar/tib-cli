@@ -67,6 +67,9 @@ public final class DdlReader {
   private static final Pattern REFERENCES =
       Pattern.compile("\\bREFERENCES\\s+([^\\s(]+)", Pattern.CASE_INSENSITIVE);
 
+  /** A string literal, which the keywords above are never found in. */
+  private static final Pattern LITERAL = Pattern.compile("'(?:[^']|'')*'");
+
   /** The suffix of the column of a relation, after the name of the relation. */
   private static final Pattern ID_SUFFIX = Pattern.compile("(?i)(.)_ID$");
 
@@ -173,6 +176,20 @@ public final class DdlReader {
     return QUOTED.matcher(name).replaceFirst("$1");
   }
 
+  /**
+   * The names of the members of the entity of the spec, by the keys of their columns: a column that
+   * the spec has keeps the name the spec gives it.
+   */
+  private static Map<String, String> members(Entity known) {
+    Map<String, String> members = new HashMap<>();
+    if (known != null) {
+      members.put(key(Names.sql(known.id().field())), known.id().field());
+      known.fields().forEach(field -> members.put(key(field.column()), field.name()));
+      known.relations().forEach(relation -> members.put(key(relation.column()), relation.field()));
+    }
+    return members;
+  }
+
   /** A table that the DDL creates, with the keys that it gives the table. */
   private static final class Table {
 
@@ -244,10 +261,15 @@ public final class DdlReader {
         return null;
       }
       Column key = column(primaryKey.get(0));
-      Id id = key.id(name, known, problems);
+      Map<String, String> members = members(known);
+      Id id = key.id(name, members, problems);
       Column created = column(Entity.CREATED_AT);
       Column updated = column(Entity.UPDATED_AT);
-      boolean audit = created != null && updated != null && created.instant() && updated.instant();
+      boolean audit =
+          created != null
+              && updated != null
+              && created.is(FieldType.INSTANT)
+              && updated.is(FieldType.INSTANT);
       List<Field> fields = new ArrayList<>();
       List<Relation> relations = new ArrayList<>();
       for (Column column : columns.values()) {
@@ -261,10 +283,10 @@ public final class DdlReader {
             problems.add(
                 path + ": there is no table " + column.references + " in the DDL or the service");
           } else {
-            relations.add(column.relation(target, known));
+            relations.add(column.relation(target, members));
           }
         } else {
-          Field field = column.field(path, known, problems);
+          Field field = column.field(path, members, problems);
           if (field != null) {
             fields.add(field);
           }
@@ -298,7 +320,9 @@ public final class DdlReader {
       name = unquote(definition.getColumnName());
       type = SqlType.of(definition.getColDataType());
       String specs =
-          definition.getColumnSpecs() == null ? "" : String.join(" ", definition.getColumnSpecs());
+          definition.getColumnSpecs() == null
+              ? ""
+              : LITERAL.matcher(String.join(" ", definition.getColumnSpecs())).replaceAll("''");
       notNull = NOT_NULL.matcher(specs).find();
       primary = PRIMARY_KEY.matcher(specs).find();
       identity = IDENTITY.matcher(specs).find();
@@ -310,24 +334,21 @@ public final class DdlReader {
       }
     }
 
-    /** Whether the column holds an instant: the columns of an audited entity do. */
-    boolean instant() {
-      return type != null && type.type() == FieldType.INSTANT;
+    /** Whether the column holds values of the field type. */
+    boolean is(FieldType fieldType) {
+      return type != null && type.type() == fieldType;
     }
 
     /**
      * The identifier that the column holds: a Long that the database assigns, by identity or by a
      * sequence, or a UUID.
      */
-    Id id(String table, Entity known, List<String> problems) {
-      String field =
-          known != null && Names.sql(known.id().field()).equalsIgnoreCase(name)
-              ? known.id().field()
-              : Names.member(Names.type(name));
-      if (type != null && type.type() == FieldType.UUID) {
+    Id id(String table, Map<String, String> members, List<String> problems) {
+      String field = members.getOrDefault(key(name), Names.member(Names.type(name)));
+      if (is(FieldType.UUID)) {
         return new Id(field, IdType.UUID, IdStrategy.UUID);
       }
-      if (type == null || type.type() != FieldType.INTEGER && type.type() != FieldType.LONG) {
+      if (!is(FieldType.INTEGER) && !is(FieldType.LONG)) {
         problems.add(
             table
                 + "."
@@ -343,20 +364,13 @@ public final class DdlReader {
           identity || type.serial() ? IdStrategy.IDENTITY : IdStrategy.SEQUENCE);
     }
 
-    Field field(String path, Entity known, List<String> problems) {
+    Field field(String path, Map<String, String> members, List<String> problems) {
       if (type == null) {
         problems.add(
             path + ": the type " + SqlType.text(definition.getColDataType()) + " is not supported");
         return null;
       }
-      String field = Names.member(Names.type(name));
-      if (known != null) {
-        for (Field same : known.fields()) {
-          if (same.column().equalsIgnoreCase(name)) {
-            field = same.name();
-          }
-        }
-      }
+      String field = members.getOrDefault(key(name), Names.member(Names.type(name)));
       return new Field(
           field,
           name,
@@ -372,15 +386,10 @@ public final class DdlReader {
      * The relation that the column holds: one to one when the column is unique. Its field is named
      * after the column without {@code _ID}.
      */
-    Relation relation(String target, Entity known) {
-      String field = Names.member(Names.type(ID_SUFFIX.matcher(name).replaceFirst("$1")));
-      if (known != null) {
-        for (Relation same : known.relations()) {
-          if (same.column().equalsIgnoreCase(name)) {
-            field = same.field();
-          }
-        }
-      }
+    Relation relation(String target, Map<String, String> members) {
+      String field =
+          members.getOrDefault(
+              key(name), Names.member(Names.type(ID_SUFFIX.matcher(name).replaceFirst("$1"))));
       return new Relation(
           unique ? RelationKind.ONE_TO_ONE : RelationKind.MANY_TO_ONE,
           target,
