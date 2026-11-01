@@ -59,7 +59,7 @@ class SpecReaderSpec extends Specification {
 
   def "a spec with only the required values is complete"() {
     when:
-    Spec spec = SpecReader.read('tib: 1\nservice: s\n')
+    Spec spec = SpecReader.parse('tib: 1\nservice: s\n')
 
     then:
     spec == new Spec(1, 's', 'com.example', 'default', [])
@@ -67,7 +67,7 @@ class SpecReaderSpec extends Specification {
 
   def "what the spec says explicitly is kept"() {
     when:
-    Spec spec = SpecReader.read(entity('audit: false\n    options: { dto: false, mapper: false, pagination: false, events: false }\n'
+    Spec spec = SpecReader.parse(entity('audit: false\n    options: { dto: false, mapper: false, pagination: false, events: false }\n'
         + '    relations:\n      - { kind: oneToOne, target: Vehicle, field: twin, column: TWIN_REF, nullable: false }'))
 
     then:
@@ -78,7 +78,7 @@ class SpecReaderSpec extends Specification {
 
   def "a spec with a problem is refused: #problem"() {
     when:
-    SpecReader.read(yaml)
+    SpecReader.parse(yaml)
 
     then:
     SpecException e = thrown()
@@ -116,7 +116,7 @@ class SpecReaderSpec extends Specification {
 
   def "several problems are reported together, the structure before the meaning"() {
     when:
-    SpecReader.read('tib: 2\nentities:\n  - { name: vehicle }')
+    SpecReader.parse('tib: 2\nentities:\n  - { name: vehicle }')
 
     then:
     SpecException e = thrown()
@@ -126,7 +126,7 @@ class SpecReaderSpec extends Specification {
 
   def "a value of the wrong shape is refused with the reader's own words: #yaml"() {
     when:
-    SpecReader.read(yaml)
+    SpecReader.parse(yaml)
 
     then:
     SpecException e = thrown()
@@ -141,7 +141,7 @@ class SpecReaderSpec extends Specification {
 
   def "an empty file is refused: '#yaml'"() {
     when:
-    SpecReader.read(yaml)
+    SpecReader.parse(yaml)
 
     then:
     SpecException e = thrown()
@@ -153,7 +153,7 @@ class SpecReaderSpec extends Specification {
 
   def "a file that is not YAML is refused"() {
     when:
-    SpecReader.read("tib: 1\nservice: 'unterminated")
+    SpecReader.parse("tib: 1\nservice: 'unterminated")
 
     then:
     SpecException e = thrown()

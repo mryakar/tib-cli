@@ -36,7 +36,7 @@ class StateSpec extends Specification {
   State state = new State(
   new State.Tib('0.1.0', 1),
   new State.PackRef('default', '0.1.0'),
-  SpecReader.read('''\
+  SpecReader.parse('''\
       tib: 1
       service: vehicle-service
       group: me.yakar
@@ -70,7 +70,7 @@ class StateSpec extends Specification {
 
     expect: "if not, the new state file is in $actual, to be copied over the snapshot on purpose"
     state.yaml() == snapshot
-    State.read(snapshot) == state
+    State.parse(snapshot) == state
   }
 
   def "the state of a project is in its tree, if tib ran on it before"() {
@@ -89,12 +89,12 @@ class StateSpec extends Specification {
 
   def "a state without files has none"() {
     expect:
-    State.read('spec:\n  tib: 1\n  service: s\n').files() == []
+    State.parse('spec:\n  tib: 1\n  service: s\n').files() == []
   }
 
   def "a state that tib cannot read is refused: '#yaml'"() {
     when:
-    State.read(yaml)
+    State.parse(yaml)
 
     then:
     StateException e = thrown()
@@ -112,7 +112,7 @@ class StateSpec extends Specification {
 
   def "the spec in the state is checked as a spec"() {
     when:
-    State.read('spec:\n  tib: 1\n  service: Vehicle Service\n')
+    State.parse('spec:\n  tib: 1\n  service: Vehicle Service\n')
 
     then:
     SpecException e = thrown()

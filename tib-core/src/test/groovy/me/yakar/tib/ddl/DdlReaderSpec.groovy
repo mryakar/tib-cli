@@ -36,7 +36,7 @@ class DdlReaderSpec extends Specification {
 
   static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
 
-  static final Spec SERVICE = SpecReader.read('tib: 1\nservice: vehicle-service\ngroup: me.yakar\n')
+  static final Spec SERVICE = SpecReader.parse('tib: 1\nservice: vehicle-service\ngroup: me.yakar\n')
 
   @TempDir
   Path dir
@@ -172,7 +172,7 @@ class DdlReaderSpec extends Specification {
 
   def "a table without a primary key, or with one of several columns, is a problem"() {
     when:
-    DdlReader.read('CREATE TABLE A (X INT);\nCREATE TABLE B (X INT, Y INT, PRIMARY KEY (X, Y));', SERVICE)
+    DdlReader.parse('CREATE TABLE A (X INT);\nCREATE TABLE B (X INT, Y INT, PRIMARY KEY (X, Y));', SERVICE)
 
     then:
     DdlException e = thrown()
@@ -218,7 +218,7 @@ class DdlReaderSpec extends Specification {
 
   def "a column that references a table is a relation to its entity"() {
     when:
-    Entity entity = DdlReader.read('''
+    Entity entity = DdlReader.parse('''
       CREATE TABLE DEPOT (ID BIGINT PRIMARY KEY);
       CREATE TABLE "Vehicle_Types" (ID BIGINT PRIMARY KEY);
       CREATE TABLE VEHICLE (
@@ -247,7 +247,7 @@ class DdlReaderSpec extends Specification {
 
   def "a column may reference the table of an entity of the service"() {
     given:
-    Spec service = SpecReader.read('''
+    Spec service = SpecReader.parse('''
       tib: 1
       service: s
       entities:
@@ -256,7 +256,7 @@ class DdlReaderSpec extends Specification {
       '''.stripIndent())
 
     expect:
-    DdlReader.read('CREATE TABLE VEHICLE (ID BIGINT PRIMARY KEY, DEPOT_ID BIGINT REFERENCES depots);', service)
+    DdlReader.parse('CREATE TABLE VEHICLE (ID BIGINT PRIMARY KEY, DEPOT_ID BIGINT REFERENCES depots);', service)
         .entities()*.name() == ['Depot', 'Vehicle']
   }
 
@@ -316,7 +316,7 @@ class DdlReaderSpec extends Specification {
 
   def "the entity of a table of the service takes its place and keeps its names and options"() {
     given:
-    Spec service = SpecReader.read('''
+    Spec service = SpecReader.parse('''
       tib: 1
       service: s
       entities:
@@ -334,7 +334,7 @@ class DdlReaderSpec extends Specification {
       '''.stripIndent())
 
     when:
-    Spec spec = DdlReader.read('''
+    Spec spec = DdlReader.parse('''
       CREATE TABLE DEPOT (ID BIGINT PRIMARY KEY);
       CREATE TABLE vehicle (
         "KEY" BIGINT PRIMARY KEY,
@@ -359,15 +359,15 @@ class DdlReaderSpec extends Specification {
 
   def "the identifier of a table of the service is named after its column when the column is another"() {
     given:
-    Spec service = SpecReader.read('tib: 1\nservice: s\nentities:\n  - name: Car\n    table: VEHICLE\n')
+    Spec service = SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: Car\n    table: VEHICLE\n')
 
     expect:
-    DdlReader.read('CREATE TABLE VEHICLE (VEHICLE_ID BIGINT PRIMARY KEY);', service).entities()[0].id().field() == 'vehicleId'
+    DdlReader.parse('CREATE TABLE VEHICLE (VEHICLE_ID BIGINT PRIMARY KEY);', service).entities()[0].id().field() == 'vehicleId'
   }
 
   def "statements other than CREATE TABLE and ALTER TABLE are skipped"() {
     expect:
-    DdlReader.read('''
+    DdlReader.parse('''
       CREATE SEQUENCE T_SEQ START WITH 1 INCREMENT BY 50;
       DROP TABLE IF EXISTS T;
       CREATE TABLE T (ID BIGINT PRIMARY KEY);
@@ -379,7 +379,7 @@ class DdlReaderSpec extends Specification {
 
   def "#problem"() {
     when:
-    DdlReader.read(ddl, SERVICE)
+    DdlReader.parse(ddl, SERVICE)
 
     then:
     DdlException e = thrown()
@@ -406,6 +406,6 @@ class DdlReaderSpec extends Specification {
   }
 
   private static Entity entity(String ddl) {
-    DdlReader.read(ddl, SERVICE).entities()[0]
+    DdlReader.parse(ddl, SERVICE).entities()[0]
   }
 }

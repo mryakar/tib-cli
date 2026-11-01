@@ -48,11 +48,11 @@ public final class SpecReader {
     } catch (IOException e) {
       throw new SpecException(file, e);
     }
-    return read(yaml);
+    return parse(yaml);
   }
 
   /** Reads a spec from its YAML. */
-  public static Spec read(String yaml) {
+  public static Spec parse(String yaml) {
     Spec spec;
     // A file without a document has no first token, and one with an empty document is null.
     try (JsonParser parser = YAML.createParser(yaml)) {

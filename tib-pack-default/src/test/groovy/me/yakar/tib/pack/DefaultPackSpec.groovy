@@ -173,12 +173,12 @@ class DefaultPackSpec extends Specification {
     }.join('\n')
 
     then:
-    DdlReader.read(migrations, spec) == spec
+    DdlReader.parse(migrations, spec) == spec
   }
 
   def "entities come after the entities they refer to, cycles in the order of the spec"() {
     given:
-    Project project = Project.of(SpecReader.read('''\
+    Project project = Project.of(SpecReader.parse('''\
 tib: 1
 service: s
 entities:
