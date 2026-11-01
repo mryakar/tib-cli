@@ -8,7 +8,10 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/** A branch as the API shows and takes it; a relation is the identifier of its target. */
+/**
+ * A branch as the API shows and takes it; a relation is the identifier of its target.
+ * The identifier is read only; the service ignores it.
+ */
 public record BranchDto(
     Long id,
     @NotNull @Size(max = 255) String code,

@@ -4,7 +4,14 @@
 // Written by tib on every run. Do not edit: your changes would be lost.
 package ${entity.packageName()};
 
-${entity.dtoImports()}/** A ${entity.variable()} as the API shows and takes it; a relation is the identifier of its target. */
+${entity.dtoImports()}/**
+ * A ${entity.variable()} as the API shows and takes it@if(!entity.relations().isEmpty()); a relation is the identifier of its target@endif.
+ @if(entity.audited())
+ * The identifier and the audit times are read only; the service ignores them.
+ @else
+ * The identifier is read only; the service ignores it.
+ @endif
+ */
 public record ${entity.name()}Dto(
     @for(var component : ForSupport.of(entity.dtoComponents()))
     ${component.get()}${component.isLast() ? ") {}" : ","}
