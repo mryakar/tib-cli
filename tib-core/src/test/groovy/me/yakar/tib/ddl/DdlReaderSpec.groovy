@@ -124,7 +124,7 @@ class DdlReaderSpec extends Specification {
     entity('CREATE TABLE T (T_ID BIGINT, CONSTRAINT T_PK PRIMARY KEY (T_ID));').id().field() == 'tId'
   }
 
-  def "a primary key of #sql is a problem"() {
+  def "a primary key of the type #sql is a problem"() {
     when:
     entity("CREATE TABLE T (ID $sql PRIMARY KEY);")
 
