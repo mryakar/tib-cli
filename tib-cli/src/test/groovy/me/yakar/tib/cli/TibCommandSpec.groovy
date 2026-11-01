@@ -15,36 +15,34 @@
  */
 package me.yakar.tib.cli
 
-import me.yakar.tib.cli.docs.CommandFactory
-import picocli.CommandLine
+import me.yakar.tib.cli.Tib.Result
 import spock.lang.Specification
 
 class TibCommandSpec extends Specification {
 
-  StringWriter out = new StringWriter()
-  // Without colors: whether picocli would use them depends on the platform and the console.
-  CommandLine tib = TibApplication.commandLine(new CommandFactory('1.2.3'))
-  .setOut(new PrintWriter(out))
-  .setColorScheme(CommandLine.Help.defaultColorScheme(CommandLine.Help.Ansi.OFF))
+  Tib tib = new Tib()
 
   def "#args prints the version of the build"() {
     when:
-    int exitCode = tib.execute(*args)
+    Result result = tib.run(*args)
 
     then:
-    exitCode == 0
-    out.toString().trim() == 'tib 1.2.3'
+    result.exitCode() == 0
+    result.out() == 'tib 1.2.3\n'
 
     where:
     args << [['--version'], ['init', 'service', '--version'], ['generate', 'entity', '-V']]
   }
 
-  def "without a subcommand it prints its usage"() {
+  def "#args without a subcommand prints its usage"() {
     when:
-    int exitCode = tib.execute()
+    Result result = tib.run(*args)
 
     then:
-    exitCode == 0
-    out.toString().startsWith('Usage: tib')
+    result.exitCode() == 0
+    result.out().startsWith("Usage: ${(['tib'] + args).join(' ')} ")
+
+    where:
+    args << [[], ['init'], ['generate']]
   }
 }
