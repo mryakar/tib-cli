@@ -30,7 +30,8 @@ import net.sf.jsqlparser.statement.create.table.ColDataType;
 record SqlType(FieldType type, Integer length, Integer precision, Integer scale, boolean serial) {
 
   /** The name of a type, its sizes in parentheses and what follows them. */
-  private static final Pattern TYPE = Pattern.compile("([^(]*)(?:\\(([^)]*)\\))?(.*)");
+  private static final Pattern TYPE =
+      Pattern.compile("([^(]*)(?:\\(([^)]*)\\))?(.*)", Pattern.DOTALL);
 
   /** A size, which may have a unit after it, as in {@code VARCHAR2(20 CHAR)}. */
   private static final Pattern SIZE = Pattern.compile("\\s*(\\d+)(\\s+\\w+)?\\s*");
@@ -38,9 +39,14 @@ record SqlType(FieldType type, Integer length, Integer precision, Integer scale,
   /** The SQL type as the DDL writes it, for the messages. */
   static String text(ColDataType type) {
     List<String> arguments = type.getArgumentsStringList();
-    String text =
-        type.getDataType() + (arguments == null ? "" : "(" + String.join(", ", arguments) + ")");
-    return text.replaceAll("\\s+\\(", "(");
+    StringBuilder text = new StringBuilder(type.getDataType());
+    if (arguments != null) {
+      text.append('(').append(String.join(", ", arguments)).append(')');
+    }
+    for (Integer size : type.getArrayData()) {
+      text.append('[').append(size == null ? "" : size).append(']');
+    }
+    return text.toString().replaceAll("\\s+\\(", "(");
   }
 
   /** The type of the field that the SQL type maps to; null for a type that no field type holds. */

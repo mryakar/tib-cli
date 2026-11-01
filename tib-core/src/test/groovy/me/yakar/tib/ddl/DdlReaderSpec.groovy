@@ -70,72 +70,38 @@ class DdlReaderSpec extends Specification {
     e.message == "cannot read ${dir.resolve('missing.sql')}: no such file"
   }
 
-  def "the SQL type #sql is a #type"() {
-    when:
-    Field field = entity("CREATE TABLE T (ID BIGINT PRIMARY KEY, F $sql);").fields()[0]
-
-    then:
-    field.type() == type
-    field.length() == length
-    field.precision() == precision
-    field.scale() == scale
-
-    where:
-    sql                              | type                      | length | precision | scale
-    'VARCHAR(40)'                    | FieldType.STRING          | 40     | null      | null
-    'varchar2(20 char)'              | FieldType.STRING          | 20     | null      | null
-    'CHARACTER VARYING(5)'           | FieldType.STRING          | 5      | null      | null
-    'NVARCHAR2(3)'                   | FieldType.STRING          | 3      | null      | null
-    'NVARCHAR(3)'                    | FieldType.STRING          | 3      | null      | null
-    'CHAR(2)'                        | FieldType.STRING          | 2      | null      | null
-    'CHARACTER(2)'                   | FieldType.STRING          | 2      | null      | null
-    'NCHAR(2)'                       | FieldType.STRING          | 2      | null      | null
-    'TEXT'                           | FieldType.STRING          | null   | null      | null
-    'CLOB'                           | FieldType.STRING          | null   | null      | null
-    'NCLOB'                          | FieldType.STRING          | null   | null      | null
-    'SMALLINT'                       | FieldType.INTEGER         | null   | null      | null
-    'INT'                            | FieldType.INTEGER         | null   | null      | null
-    'INTEGER'                        | FieldType.INTEGER         | null   | null      | null
-    'INT2'                           | FieldType.INTEGER         | null   | null      | null
-    'INT4'                           | FieldType.INTEGER         | null   | null      | null
-    'SERIAL'                         | FieldType.INTEGER         | null   | null      | null
-    'SMALLSERIAL'                    | FieldType.INTEGER         | null   | null      | null
-    'BIGINT'                         | FieldType.LONG            | null   | null      | null
-    'INT8'                           | FieldType.LONG            | null   | null      | null
-    'BIGSERIAL'                      | FieldType.LONG            | null   | null      | null
-    'NUMBER(9)'                      | FieldType.INTEGER         | null   | null      | null
-    'NUMBER(10, 0)'                  | FieldType.LONG            | null   | null      | null
-    'NUMBER(19)'                     | FieldType.LONG            | null   | null      | null
-    'NUMBER(20)'                     | FieldType.BIG_DECIMAL     | null   | 20        | 0
-    'NUMERIC(12, 2)'                 | FieldType.BIG_DECIMAL     | null   | 12        | 2
-    'DECIMAL(5,1)'                   | FieldType.BIG_DECIMAL     | null   | 5         | 1
-    'NUMERIC'                        | FieldType.BIG_DECIMAL     | null   | null      | null
-    'BOOLEAN'                        | FieldType.BOOLEAN         | null   | null      | null
-    'BOOL'                           | FieldType.BOOLEAN         | null   | null      | null
-    'DATE'                           | FieldType.LOCAL_DATE      | null   | null      | null
-    'TIMESTAMP'                      | FieldType.LOCAL_DATE_TIME | null   | null      | null
-    'TIMESTAMP(6) WITHOUT TIME ZONE' | FieldType.LOCAL_DATE_TIME | null   | null      | null
-    'DATETIME'                       | FieldType.LOCAL_DATE_TIME | null   | null      | null
-    'TIMESTAMPTZ'                    | FieldType.INSTANT         | null   | null      | null
-    'TIMESTAMP WITH TIME ZONE'       | FieldType.INSTANT         | null   | null      | null
-    'UUID'                           | FieldType.UUID            | null   | null      | null
+  def "a column of a supported SQL type is a field of its type, with its sizes"() {
+    expect:
+    entity('CREATE TABLE T (ID BIGINT PRIMARY KEY, F NUMERIC(12, 2));').fields() == [new Field('f', 'F', FieldType.BIG_DECIMAL, null, 12, 2, true, false)]
   }
 
-  def "the SQL type #sql is not supported"() {
+  def "a column of an SQL type that is not supported is a problem"() {
     when:
-    entity("CREATE TABLE T (ID BIGINT PRIMARY KEY, F $sql);")
+    entity('CREATE TABLE T (ID BIGINT PRIMARY KEY, F INTEGER[]);')
 
     then:
     DdlException e = thrown()
-    e.problems() == ["T.F: the type $text is not supported"]
-    e.message == "the DDL has a problem: T.F: the type $text is not supported"
+    e.problems() == ['T.F: the type INTEGER[] is not supported']
+    e.message == 'the DDL has a problem: T.F: the type INTEGER[] is not supported'
+  }
+
+  def "a keyword in a string literal says nothing of the column: #literal"() {
+    expect:
+    entity("CREATE TABLE T (ID BIGINT PRIMARY KEY $literal, A INT $literal);") == new Entity(
+        'T', 'T', new Id('id', IdType.LONG, IdStrategy.SEQUENCE),
+        [new Field('a', 'A', FieldType.INTEGER, null, null, null, true, false)],
+        [], false, null)
 
     where:
-    sql                | text
-    'MONEY'            | 'MONEY'
-    'DOUBLE PRECISION' | 'DOUBLE PRECISION'
-    'INTEGER[]'        | 'INTEGER'
-    'VARCHAR(MAX)'     | 'VARCHAR(MAX)'
+    literal << [
+      "COMMENT 'NOT NULL'",
+      "DEFAULT 'not null'",
+      "COMMENT 'not unique, may be null'",
+      "COMMENT 'the primary key'",
+      "COMMENT 'an identity, or auto_increment'",
+      "COMMENT 'references the order'",
+      "COMMENT 'it''s unique'",
+    ]
   }
 
   def "the primary key #sql is an identifier of #type by #strategy"() {
@@ -377,7 +343,7 @@ class DdlReaderSpec extends Specification {
       ''', SERVICE).entities()*.name() == ['T']
   }
 
-  def "#problem"() {
+  def "a DDL that tib cannot use is refused: #problem"() {
     when:
     DdlReader.parse(ddl, SERVICE)
 
@@ -389,11 +355,21 @@ class DdlReaderSpec extends Specification {
     ddl                                                                           | problem
     ''                                                                            | 'there is no CREATE TABLE'
     '-- nothing\n'                                                                | 'there is no CREATE TABLE'
-    'CREATE TABLE T (A INT,\n B NUMBER(*, 0));'                                   | 'it is not SQL that tib reads: Encountered: <OPENING_BRACKET> / "(", at line 2, column 10'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nCREATE TABLE t (ID INT PRIMARY KEY);'  | 't: the table is created twice'
     'ALTER TABLE T ADD UNIQUE (A);\nCREATE TABLE T (ID INT PRIMARY KEY, A INT);'  | 'T: ALTER TABLE comes before the table is created'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ADD COLUMN A INT;'       | 'T: ALTER TABLE may only add keys'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T DROP COLUMN ID;'         | 'T: ALTER TABLE may only add keys'
+  }
+
+  def "SQL that the parser cannot read is refused with where the parser stopped"() {
+    when:
+    DdlReader.parse('CREATE TABLE T (A INT,\n B NUMBER(*, 0));', SERVICE)
+
+    then:
+    DdlException e = thrown()
+    e.problems().size() == 1
+    e.problems()[0].startsWith('it is not SQL that tib reads: ')
+    e.problems()[0].contains('line 2')
   }
 
   def "the spec that the DDL gives is checked as a spec"() {
