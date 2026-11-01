@@ -15,9 +15,6 @@
  */
 package me.yakar.tib.pack;
 
-import gg.jte.ContentType;
-import gg.jte.TemplateEngine;
-import gg.jte.output.StringOutput;
 import java.util.Map;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
@@ -29,9 +26,6 @@ import me.yakar.tib.tree.Tree;
  * developer's from then on.
  */
 final class InitGenerator implements Generator {
-
-  private static final TemplateEngine TEMPLATES =
-      TemplateEngine.createPrecompiled(ContentType.Plain);
 
   private final DefaultPack pack;
 
@@ -60,8 +54,6 @@ final class InitGenerator implements Generator {
   }
 
   private String render(String template, Project project) {
-    StringOutput output = new StringOutput();
-    TEMPLATES.render(template, Map.of("project", project, "pack", pack), output);
-    return output.toString();
+    return Templates.render(template, Map.of("project", project, "pack", pack));
   }
 }
