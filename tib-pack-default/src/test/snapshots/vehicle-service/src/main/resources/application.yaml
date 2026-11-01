@@ -3,9 +3,9 @@ spring:
   application:
     name: vehicle-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/vehicle-service
-    username: vehicle-service
-    password: vehicle-service
+    url: jdbc:postgresql://localhost:5432/vehicle_service
+    username: vehicle_service
+    password: vehicle_service
   jpa:
     open-in-view: false
     hibernate:
