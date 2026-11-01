@@ -28,17 +28,20 @@ class SpecSchemaSpec extends Specification {
 
   static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
 
+  static final Path SNAPSHOTS = Path.of(System.getProperty('tib.snapshots'))
+
   @Shared
   Schema schema = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_2020_12).getSchema(SpecSchema.json())
 
-  def "the schema is the one that is published"() {
+  def "the schema changes only on purpose"() {
     given:
-    String published = getClass().getResource('tib-spec.schema.json').text
-    Path actual = Path.of('build', 'tib-spec.schema.json')
+    String snapshot = Files.readString(SNAPSHOTS.resolve('tib-spec.schema.json'))
+    Path actual = Path.of('build', 'snapshots', 'tib-spec.schema.json')
+    Files.createDirectories(actual.parent)
     Files.writeString(actual, SpecSchema.json())
 
-    expect: "if not, the new schema is in $actual, to be copied over the published one on purpose"
-    SpecSchema.json() == published
+    expect: "if not, the new schema is in $actual, to be copied over the snapshot on purpose"
+    SpecSchema.json() == snapshot
   }
 
   def "the example spec of the documentation is valid"() {
