@@ -53,7 +53,7 @@ class StateSpec extends Specification {
           relations:
             - { kind: manyToOne, target: Depot, field: home, column: HOME_ID, nullable: false }
           audit: true
-          options: { dto: false, mapper: false, pagination: false, events: true }
+          options: { dto: false, mapper: false, pagination: false }
       '''.stripIndent()),
   [
     new State.File('AGENTS.md', Owner.GENERATOR, 'abc'),

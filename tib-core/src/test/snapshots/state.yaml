@@ -21,7 +21,6 @@ spec:
       dto: true
       mapper: true
       pagination: true
-      events: false
   - name: Vehicle
     table: VEHICLE
     id:
@@ -56,7 +55,6 @@ spec:
       dto: false
       mapper: false
       pagination: false
-      events: true
 files:
 - path: AGENTS.md
   owner: generator

@@ -39,7 +39,7 @@ class SpecReaderSpec extends Specification {
     vehicle.table() == 'VEHICLE'
     vehicle.id() == new Id('id', IdType.LONG, IdStrategy.IDENTITY)
     vehicle.audit()
-    vehicle.options() == new Options(true, true, true, false)
+    vehicle.options() == new Options(true, true, true)
     vehicle.fields()[0] == new Field('plateNumber', 'PLATE_NUMBER', FieldType.STRING, 16, null, null, false, true)
     vehicle.fields()[1] == new Field('capacity', 'CAPACITY', FieldType.INTEGER, null, null, null, true, false)
     vehicle.fields()[2].precision() == 12
@@ -53,7 +53,7 @@ class SpecReaderSpec extends Specification {
     depot.fields()[0].column() == 'DEPOT_CODE'
     depot.fields()[1].type() == FieldType.LOCAL_DATE
     !depot.audit()
-    depot.options() == new Options(true, true, true, true)
+    depot.options() == new Options(true, true, true)
     depot.relations().empty
   }
 
@@ -67,12 +67,12 @@ class SpecReaderSpec extends Specification {
 
   def "what the spec says explicitly is kept"() {
     when:
-    Spec spec = SpecReader.parse(entity('audit: false\n    options: { dto: false, mapper: false, pagination: false, events: false }\n'
+    Spec spec = SpecReader.parse(entity('audit: false\n    options: { dto: false, mapper: false, pagination: false }\n'
         + '    relations:\n      - { kind: oneToOne, target: Vehicle, field: twin, column: TWIN_REF, nullable: false }'))
 
     then:
     !spec.entities()[0].audit()
-    spec.entities()[0].options() == new Options(false, false, false, false)
+    spec.entities()[0].options() == new Options(false, false, false)
     spec.entities()[0].relations() == [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'twin', 'TWIN_REF', false)]
   }
 

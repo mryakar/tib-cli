@@ -319,7 +319,7 @@ class DdlReaderSpec extends Specification {
     car.fields()*.name() == ['plate', 'color']
     car.fields()*.column() == ['plate_number', 'COLOR']
     car.relations()*.field() == ['remark', 'depot']
-    car.options() == new Options(false, true, true, false)
+    car.options() == new Options(false, true, true)
     spec.entities()[0] == service.entities()[0]
   }
 

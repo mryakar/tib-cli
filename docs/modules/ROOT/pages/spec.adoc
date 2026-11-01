@@ -26,9 +26,8 @@ tib fills in what the file does not say, always the same way:
 * A field accepts null and is not unique. A `String` without a length gets one from the pack.
 * A relation's field is the target's name in lower camel case, `depot`, and its column that name
   in upper snake case with `_ID`, `DEPOT_ID`; the relation may be missing (`nullable: true`).
-* An entity is not audited, and gets DTOs, a mapper and pagination, but no events. Without the
-  DTOs, or without the mapper, there is no service and no controller either; events do nothing
-  yet.
+* An entity is not audited, and gets DTOs, a mapper and pagination. Without the DTOs, or without
+  the mapper, there is no service and no controller either.
 
 == The schema
 
