@@ -26,13 +26,16 @@ class TibCommandSpec extends Specification {
   .setOut(new PrintWriter(out))
   .setColorScheme(CommandLine.Help.defaultColorScheme(CommandLine.Help.Ansi.OFF))
 
-  def "--version prints the version of the build"() {
+  def "#args prints the version of the build"() {
     when:
-    int exitCode = tib.execute('--version')
+    int exitCode = tib.execute(*args)
 
     then:
     exitCode == 0
     out.toString().trim() == 'tib 1.2.3'
+
+    where:
+    args << [['--version'], ['init', 'service', '--version'], ['generate', 'entity', '-V']]
   }
 
   def "without a subcommand it prints its usage"() {

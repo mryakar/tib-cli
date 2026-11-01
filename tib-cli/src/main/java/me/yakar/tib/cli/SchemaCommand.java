@@ -25,7 +25,6 @@ import picocli.CommandLine.Spec;
 @Component
 @Command(
     name = "schema",
-    mixinStandardHelpOptions = true,
     description =
         "Prints the JSON Schema of the spec file, for completion and validation in an editor.")
 public class SchemaCommand implements Runnable {

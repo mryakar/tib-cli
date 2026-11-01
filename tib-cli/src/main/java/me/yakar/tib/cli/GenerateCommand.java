@@ -24,7 +24,6 @@ import picocli.CommandLine.Spec;
 @Component
 @Command(
     name = "generate",
-    mixinStandardHelpOptions = true,
     description = "Adds to a service that tib scaffolded.",
     subcommands = GenerateEntityCommand.class)
 public class GenerateCommand implements Runnable {
