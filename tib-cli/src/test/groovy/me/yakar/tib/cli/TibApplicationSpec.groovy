@@ -43,6 +43,17 @@ class TibApplicationSpec extends Specification {
     output == 'tib ' + System.getProperty('tib.version')
   }
 
+  def "the arguments do not configure Spring"() {
+    when:
+    Process process = start('--spring.main.banner-mode=console', '--version')
+    String output = process.inputStream.text.trim()
+
+    then:
+    process.waitFor(2, TimeUnit.MINUTES)
+    process.exitValue() == 0
+    output == 'tib ' + System.getProperty('tib.version')
+  }
+
   def "the application exits with the exit code of the command"() {
     when:
     Process process = start('--no-such-option')
