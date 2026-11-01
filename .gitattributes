@@ -1,3 +1,6 @@
 # Every text file keeps its line feeds on every platform: the templates of the packs render into
 # files that the tests compare byte for byte with their snapshots.
 * text=auto eol=lf
+# Batch files keep the carriage returns that cmd.exe expects.
+*.bat text eol=crlf
+*.cmd text eol=crlf

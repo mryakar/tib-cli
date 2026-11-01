@@ -6,12 +6,9 @@ build/
 # IDE
 .idea/
 *.iml
-out/
+/out/
+/bin/
 .vscode/
-.classpath
-.project
-.settings/
-bin/
 
 # OS
 .DS_Store
