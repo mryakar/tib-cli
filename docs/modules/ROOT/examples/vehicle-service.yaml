@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=tib.schema.json
+# yaml-language-server: $schema=tib-spec.schema.json
 tib: 1
 service: vehicle-service
 pack: default

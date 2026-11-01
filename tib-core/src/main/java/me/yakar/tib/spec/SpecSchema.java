@@ -31,7 +31,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * The JSON Schema of the spec file, generated from the records of the model and their {@link Doc}
- * annotations: what the schema accepts is what the reader accepts.
+ * annotations. The reader checks the same rules, and also the rules between values.
  */
 public final class SpecSchema {
 
