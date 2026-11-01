@@ -115,6 +115,9 @@ public final class SpecSchema {
       if (doc.minimum() != Doc.NO_MINIMUM) {
         schema.put("minimum", doc.minimum());
       }
+      if (doc.maximum() != Doc.NO_MAXIMUM) {
+        schema.put("maximum", doc.maximum());
+      }
     } else if (type == Boolean.class) {
       schema.put("type", "boolean");
     } else if (type instanceof ParameterizedType list) {

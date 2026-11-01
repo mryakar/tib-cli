@@ -43,8 +43,13 @@ import java.lang.annotation.Target;
   /** The lowest value an integer property may have, if any. */
   long minimum() default NO_MINIMUM;
 
+  /** The highest value an integer property may have, if any. */
+  long maximum() default NO_MAXIMUM;
+
   /** The value the property gets when the spec gives none, if it is a literal. */
   String defaultValue() default "";
 
   long NO_MINIMUM = Long.MIN_VALUE;
+
+  long NO_MAXIMUM = Long.MAX_VALUE;
 }

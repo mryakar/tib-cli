@@ -99,7 +99,7 @@ class InitServiceCommandSpec extends Specification {
     args                               | message
     ['Vehicle Service']                | "the spec has a problem: service: 'Vehicle Service' does not match ^[a-z][a-z0-9]*(-[a-z0-9]+)*\$\n"
     ['--spec', spec('pack: nope')]     | "there is no pack 'nope'\n"
-    ['--spec', spec('tib: 2')]         | "the spec has a problem: tib: this build reads version 1\n"
+    ['--spec', spec('tib: 2')]         | "the spec has a problem: tib: 2 is above 1\n"
     ['--spec', 'no-such-spec.yaml']    | "cannot read no-such-spec.yaml: no such file\n"
   }
 

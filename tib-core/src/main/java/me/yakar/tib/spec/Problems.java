@@ -66,6 +66,9 @@ final class Problems {
         if (doc.minimum() != Doc.NO_MINIMUM && integer < doc.minimum()) {
           add(path, integer + " is below " + doc.minimum());
         }
+        if (doc.maximum() != Doc.NO_MAXIMUM && integer > doc.maximum()) {
+          add(path, integer + " is above " + doc.maximum());
+        }
       }
       case List<?> list -> {
         for (int i = 0; i < list.size(); i++) {

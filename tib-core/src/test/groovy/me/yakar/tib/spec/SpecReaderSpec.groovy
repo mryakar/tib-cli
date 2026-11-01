@@ -92,7 +92,7 @@ class SpecReaderSpec extends Specification {
     field('{ name: x, type: String, length: abc }')                             | "entities[0].fields[0].length: 'abc' is not of type Integer"
     'service: s'                                                                | 'tib: required'
     'tib: 0\nservice: s'                                                        | 'tib: 0 is below 1'
-    'tib: 2\nservice: s'                                                        | 'tib: this build reads version 1'
+    'tib: 2\nservice: s'                                                        | 'tib: 2 is above 1'
     'tib: 1\nservice: Vehicle Service'                                          | "service: 'Vehicle Service' does not match ${Names.SERVICE}"
     'tib: 1\nservice: s\npack: Default'                                         | "pack: 'Default' does not match ${Names.PACK}"
     'tib: 1\nservice: s\ngroup: Com.Example'                                     | "group: 'Com.Example' does not match ${Names.GROUP}"
@@ -135,7 +135,7 @@ class SpecReaderSpec extends Specification {
 
   def "several problems are reported together, the structure before the meaning"() {
     when:
-    SpecReader.parse('tib: 2\nentities:\n  - { name: vehicle }')
+    SpecReader.parse('tib: 1\nentities:\n  - { name: vehicle, relations: [{ kind: manyToOne, target: Nope }] }')
 
     then:
     SpecException e = thrown()
