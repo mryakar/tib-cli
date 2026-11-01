@@ -14,7 +14,19 @@ public class ${entity.name()}Controller {
     this.service = service;
   }
 
-${entity.controllerList()}
+  @if(entity.paginated())
+  @GetMapping
+  public Page<${entity.name()}Dto> list(Pageable pageable) {
+    return service.list(pageable);
+  }
+
+  @else
+  @GetMapping
+  public List<${entity.name()}Dto> list() {
+    return service.list();
+  }
+
+  @endif
   @GetMapping("/{id}")
   public ${entity.name()}Dto get(@PathVariable ${entity.idType()} id) {
     return service.get(id);

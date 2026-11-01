@@ -1,3 +1,4 @@
+@import gg.jte.support.ForSupport
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
 // Written by tib on every run. Do not edit: your changes would be lost.
@@ -11,10 +12,15 @@ public class ${entity.name()}Mapper {
 
   public ${entity.name()}Dto toDto(${entity.name()} ${entity.variable()}) {
     return new ${entity.name()}Dto(
-        ${entity.mapperArguments()});
+        @for(var argument : ForSupport.of(entity.dtoArguments()))
+        ${argument.get()}${argument.isLast() ? ");" : ","}
+        @endfor
   }
 
   /** Copies the fields of the DTO onto the entity; not its identifier, nor its relations. */
   public void update(${entity.name()}Dto dto, ${entity.name()} ${entity.variable()}) {
-${entity.mapperUpdates()}  }
+    @for(var field : entity.fields())
+    ${entity.variable()}.set${field.property()}(dto.${field.name()}());
+    @endfor
+  }
 }

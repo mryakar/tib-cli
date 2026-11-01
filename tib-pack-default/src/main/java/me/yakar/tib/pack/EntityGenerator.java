@@ -15,7 +15,7 @@
  */
 package me.yakar.tib.pack;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,11 +31,8 @@ import me.yakar.tib.spec.Relation;
 import me.yakar.tib.tree.Tree;
 
 /**
- * Generates the entity layer of every entity of the spec: the mapped superclass with the columns,
- * written on every run, and the entity, written once; the repository; the DTO and the mapper; the
- * service and the controller, written once; and the Flyway migration that creates the table,
- * written once and numbered after the migrations already there. Entities come after the entities
- * they refer to, so that the migrations can reference their tables.
+ * Generates the entity layer of every entity of the spec, each entity after the entities it refers
+ * to, so that its migration can reference their tables.
  */
 final class EntityGenerator implements Generator {
 
@@ -45,14 +42,15 @@ final class EntityGenerator implements Generator {
 
   @Override
   public void generate(Project project, Tree tree) {
-    Map<String, Entity> entities = new LinkedHashMap<>();
-    project.spec().entities().forEach(entity -> entities.put(entity.name(), entity));
-    for (Entity entity : ordered(entities)) {
-      generate(new EntityModel(project, entity, entities), tree);
+    Map<String, EntityModel> models = new HashMap<>();
+    for (Entity entity : ordered(project.spec().entities())) {
+      EntityModel model = new EntityModel(project, entity, models);
+      models.put(entity.name(), model);
+      generateEntity(model, tree);
     }
   }
 
-  private void generate(EntityModel entity, Tree tree) {
+  private static void generateEntity(EntityModel entity, Tree tree) {
     String directory = entity.directory() + "/";
     String name = entity.name();
     tree.own(directory + name + "Generated.java", render("entity/generated_java.jte", entity));
@@ -70,7 +68,7 @@ final class EntityGenerator implements Generator {
   }
 
   /** The migration that creates the table: the one already there, or the next one. */
-  static String migration(Tree tree, EntityModel entity) {
+  private static String migration(Tree tree, EntityModel entity) {
     String suffix = "__create_" + entity.table().toLowerCase(Locale.ROOT) + ".sql";
     int latest = 0;
     for (String migration : tree.list(MIGRATIONS)) {
@@ -85,23 +83,26 @@ final class EntityGenerator implements Generator {
     return MIGRATIONS + "/V" + (latest + 1) + suffix;
   }
 
-  /** The entities, each after the entities it refers to; otherwise in the order of the spec. */
-  static List<Entity> ordered(Map<String, Entity> entities) {
+  /**
+   * The entities, each after the entities it refers to; otherwise in the order of the spec. A spec
+   * has no cycle of relations, but an entity may refer to itself.
+   */
+  static List<Entity> ordered(List<Entity> entities) {
+    Map<String, Entity> byName = new LinkedHashMap<>();
+    entities.forEach(entity -> byName.put(entity.name(), entity));
     Set<String> done = new LinkedHashSet<>();
-    entities.keySet().forEach(name -> visit(name, entities, new LinkedHashSet<>(), done));
-    List<Entity> ordered = new ArrayList<>();
-    done.forEach(name -> ordered.add(entities.get(name)));
-    return ordered;
+    byName.keySet().forEach(name -> visit(name, byName, done));
+    return done.stream().map(byName::get).toList();
   }
 
-  private static void visit(
-      String name, Map<String, Entity> entities, Set<String> visiting, Set<String> done) {
-    // An entity that is placed, or is being placed (a cycle, or a relation to itself), is done.
-    if (done.contains(name) || !visiting.add(name)) {
+  private static void visit(String name, Map<String, Entity> entities, Set<String> done) {
+    if (done.contains(name)) {
       return;
     }
     for (Relation relation : entities.get(name).relations()) {
-      visit(relation.target(), entities, visiting, done);
+      if (!relation.target().equals(name)) {
+        visit(relation.target(), entities, done);
+      }
     }
     done.add(name);
   }
