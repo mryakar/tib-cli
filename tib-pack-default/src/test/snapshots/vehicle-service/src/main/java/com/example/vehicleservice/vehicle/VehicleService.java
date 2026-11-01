@@ -1,7 +1,6 @@
 // Written by tib when the entity was created; it is yours from then on.
 package com.example.vehicleservice.vehicle;
 
-import com.example.vehicleservice.depot.DepotRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -16,12 +15,10 @@ public class VehicleService {
 
   private final VehicleRepository vehicles;
   private final VehicleMapper mapper;
-  private final DepotRepository depots;
 
-  public VehicleService(VehicleRepository vehicles, VehicleMapper mapper, DepotRepository depots) {
+  public VehicleService(VehicleRepository vehicles, VehicleMapper mapper) {
     this.vehicles = vehicles;
     this.mapper = mapper;
-    this.depots = depots;
   }
 
   @Transactional(readOnly = true)
@@ -36,13 +33,13 @@ public class VehicleService {
 
   public VehicleDto create(VehicleDto dto) {
     Vehicle vehicle = new Vehicle();
-    apply(dto, vehicle);
+    mapper.update(dto, vehicle);
     return mapper.toDto(vehicles.save(vehicle));
   }
 
   public VehicleDto update(Long id, VehicleDto dto) {
     Vehicle vehicle = find(id);
-    apply(dto, vehicle);
+    mapper.update(dto, vehicle);
     return mapper.toDto(vehicle);
   }
 
@@ -54,10 +51,5 @@ public class VehicleService {
     return vehicles
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no vehicle " + id));
-  }
-
-  private void apply(VehicleDto dto, Vehicle vehicle) {
-    mapper.update(dto, vehicle);
-    vehicle.setDepot(dto.depotId() == null ? null : depots.getReferenceById(dto.depotId()));
   }
 }

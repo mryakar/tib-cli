@@ -3,9 +3,15 @@ package me.yakar.cornerservice.branch;
 
 import org.springframework.stereotype.Component;
 
-/** Between the entity and its DTO. The relations are the service's to resolve. */
+/** Between the entity and its DTO; a relation is resolved by the identifier of its target. */
 @Component
 public class BranchMapper {
+
+  private final BranchRepository branches;
+
+  public BranchMapper(BranchRepository branches) {
+    this.branches = branches;
+  }
 
   public BranchDto toDto(Branch branch) {
     return new BranchDto(
@@ -21,7 +27,7 @@ public class BranchMapper {
         branch.getParent() == null ? null : branch.getParent().getId());
   }
 
-  /** Copies the fields of the DTO onto the entity; not its identifier, nor its relations. */
+  /** Copies the DTO onto the entity, all but its identifier. */
   public void update(BranchDto dto, Branch branch) {
     branch.setCode(dto.code());
     branch.setCount(dto.count());
@@ -31,5 +37,6 @@ public class BranchMapper {
     branch.setToken(dto.token());
     branch.setRatio(dto.ratio());
     branch.setAmount(dto.amount());
+    branch.setParent(dto.parentId() == null ? null : branches.getReferenceById(dto.parentId()));
   }
 }

@@ -3,7 +3,7 @@ package com.example.vehicleservice.depot;
 
 import org.springframework.stereotype.Component;
 
-/** Between the entity and its DTO. The relations are the service's to resolve. */
+/** Between the entity and its DTO. */
 @Component
 public class DepotMapper {
 
@@ -14,7 +14,7 @@ public class DepotMapper {
         depot.getOpenedOn());
   }
 
-  /** Copies the fields of the DTO onto the entity; not its identifier, nor its relations. */
+  /** Copies the DTO onto the entity, all but its identifier. */
   public void update(DepotDto dto, Depot depot) {
     depot.setCode(dto.code());
     depot.setOpenedOn(dto.openedOn());

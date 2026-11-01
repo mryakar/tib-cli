@@ -34,13 +34,13 @@ public class DepotService {
 
   public DepotDto create(DepotDto dto) {
     Depot depot = new Depot();
-    apply(dto, depot);
+    mapper.update(dto, depot);
     return mapper.toDto(depots.save(depot));
   }
 
   public DepotDto update(UUID id, DepotDto dto) {
     Depot depot = find(id);
-    apply(dto, depot);
+    mapper.update(dto, depot);
     return mapper.toDto(depot);
   }
 
@@ -52,9 +52,5 @@ public class DepotService {
     return depots
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no depot " + id));
-  }
-
-  private void apply(DepotDto dto, Depot depot) {
-    mapper.update(dto, depot);
   }
 }

@@ -10,16 +10,10 @@ public class ${entity.name()}Service {
 
   private final ${entity.name()}Repository ${entity.plural()};
   private final ${entity.name()}Mapper mapper;
-  @for(var target : entity.targets())
-  private final ${target.name()}Repository ${target.plural()};
-  @endfor<%-- keeps the blank line below --%>
 
-  public ${entity.name()}Service(${entity.name()}Repository ${entity.plural()}, ${entity.name()}Mapper mapper@for(var target : entity.targets()), ${target.name()}Repository ${target.plural()}@endfor) {
+  public ${entity.name()}Service(${entity.name()}Repository ${entity.plural()}, ${entity.name()}Mapper mapper) {
     this.${entity.plural()} = ${entity.plural()};
     this.mapper = mapper;
-    @for(var target : entity.targets())
-    this.${target.plural()} = ${target.plural()};
-    @endfor
   }
 
   @if(entity.paginated())
@@ -42,13 +36,13 @@ public class ${entity.name()}Service {
 
   public ${entity.name()}Dto create(${entity.name()}Dto dto) {
     ${entity.name()} ${entity.variable()} = new ${entity.name()}();
-    apply(dto, ${entity.variable()});
+    mapper.update(dto, ${entity.variable()});
     return mapper.toDto(${entity.plural()}.save(${entity.variable()}));
   }
 
   public ${entity.name()}Dto update(${entity.idType()} id, ${entity.name()}Dto dto) {
     ${entity.name()} ${entity.variable()} = find(id);
-    apply(dto, ${entity.variable()});
+    mapper.update(dto, ${entity.variable()});
     return mapper.toDto(${entity.variable()});
   }
 
@@ -60,12 +54,5 @@ public class ${entity.name()}Service {
     return ${entity.plural()}
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no ${entity.variable()} " + id));
-  }
-
-  private void apply(${entity.name()}Dto dto, ${entity.name()} ${entity.variable()}) {
-    mapper.update(dto, ${entity.variable()});
-    @for(var relation : entity.relations())
-    ${entity.variable()}.set${relation.property()}(dto.${relation.idField()}() == null ? null : ${relation.target().plural()}.getReferenceById(dto.${relation.idField()}()));
-    @endfor
   }
 }
