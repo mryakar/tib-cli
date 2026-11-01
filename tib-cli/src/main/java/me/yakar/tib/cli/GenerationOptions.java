@@ -46,7 +46,7 @@ public final class GenerationOptions {
 
   @Option(
       names = "--dry-run",
-      description = "Prints what would be written, as a diff, and writes nothing.")
+      description = "Print what would be written, as a diff, and write nothing.")
   private boolean dryRun;
 
   private final TibVersion version;

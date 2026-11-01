@@ -17,7 +17,7 @@ package me.yakar.tib.cli;
 
 import picocli.CommandLine.Command;
 
-/** {@code tib init}: scaffolds something new. */
+/** {@code tib init}. */
 @Command(
     name = "init",
     description = "Scaffolds a new project.",

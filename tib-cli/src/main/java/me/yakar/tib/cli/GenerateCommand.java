@@ -17,9 +17,9 @@ package me.yakar.tib.cli;
 
 import picocli.CommandLine.Command;
 
-/** {@code tib generate}: adds to a service. */
+/** {@code tib generate}. */
 @Command(
     name = "generate",
-    description = "Adds to a service that tib scaffolded.",
+    description = "Generates code into a service that tib scaffolded.",
     subcommands = GenerateEntityCommand.class)
 public class GenerateCommand {}
