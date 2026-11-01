@@ -47,13 +47,20 @@ class TibCommandSpec extends Specification {
     args << [[], ['init'], ['generate']]
   }
 
-  def "tib init --help prints the usage, with exit code 0"() {
+  def "tib init --help prints the usage with the exit codes, with exit code 0"() {
     when:
     Result result = tib.run('init', '--help')
 
     then:
     result.exitCode() == 0
     result.out().startsWith('Usage: tib init ')
+    result.out().endsWith('''\
+      |Exit codes:
+      |  0   Done, or nothing to change.
+      |  1   The spec, the DDL, the pack or the project has a problem; the message
+      |        says which.
+      |  2   The command line is wrong.
+      |'''.stripMargin())
     result.err() == ''
   }
 }

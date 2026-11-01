@@ -18,12 +18,18 @@ package me.yakar.tib.cli;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ScopeType;
 
-/** The top-level {@code tib} command. */
+/** {@code tib}. */
 @Command(
     name = "tib",
     mixinStandardHelpOptions = true,
     versionProvider = TibVersion.class,
     scope = ScopeType.INHERIT,
-    description = "The idempotent boilerplate tool: scaffolding for Spring Boot services.",
+    description = "The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.",
+    exitCodeListHeading = "Exit codes:%n",
+    exitCodeList = {
+      "0:Done, or nothing to change.",
+      "1:The spec, the DDL, the pack or the project has a problem; the message says which.",
+      "2:The command line is wrong."
+    },
     subcommands = {InitCommand.class, GenerateCommand.class, SchemaCommand.class})
 public class TibCommand {}
