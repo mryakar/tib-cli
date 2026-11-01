@@ -1,30 +1,19 @@
 # tib
 
-> The Idempotent Boilerplate
+The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.
 
-A scaffolding CLI for Spring Boot services: it sets up a service, adds an entity layer to it from a
-DDL or a spec, and runs again on the same project without breaking anything.
+## What it does
 
-## Status
+- `tib init service` scaffolds a Spring Boot 3 service with JPA, PostgreSQL, Flyway and
+  Testcontainers, from its name or from a spec file.
+- `tib generate entity` adds the entity layer of the spec's entities, or of the tables of SQL DDL:
+  the entity, repository, DTO, mapper, service, controller and Flyway migration.
+- `--dry-run` shows the diff and writes nothing; a second run of the same command prints
+  `Nothing to change.` and changes nothing. Every generated file says in its first line who owns
+  it: the generator or you.
 
-tib is at the start. `tib init service` scaffolds a Spring Boot 3 service with JPA, PostgreSQL,
-Flyway and Testcontainers, from its name or from a spec file, and `tib generate entity` adds the
-entity layer of the spec's entities, with a real `--dry-run` and a record of what was written.
-Around it: packages for Linux and Windows with their own Java runtime, a
-[documentation site](https://mryakar.github.io/tib-cli/), and the JSON Schema of the spec. The
-generators that add the entity layer come next; the [roadmap](ROADMAP.md) says in what order.
-Nothing is released yet.
-
-## What it will do
-
-- `tib init service` sets up a Spring Boot service from a template pack: the default pack is plain
-  Spring Boot with JPA, PostgreSQL, Flyway and Testcontainers.
-- `tib generate entity --ddl vehicle.sql` adds the entity, repository, service, mapper, DTOs,
-  controller, migration and tests for a table, from its DDL or from a YAML spec.
-- `--dry-run` shows the diff and writes nothing. Running a command twice changes nothing the
-  second time. Generated files say who owns them: the generator, you, or both through markers.
-- Every command runs without questions when given a spec, and prints machine-readable output, so
-  that scripts and agents can drive it.
+The [documentation](https://mryakar.github.io/tib-cli/) walks through a first service and lists
+every command; the [roadmap](ROADMAP.md) says what is done and what comes next.
 
 ## Install
 
@@ -42,9 +31,7 @@ portable zip for either platform needs no installation. The
 
 ## Building
 
-tib needs JDK 21. `./gradlew build` compiles, formats, tests and checks the coverage;
-`./gradlew packages` builds the packages of your platform. [CONTRIBUTING.md](CONTRIBUTING.md)
-has the rest.
+tib needs JDK 21. [CONTRIBUTING.md](CONTRIBUTING.md) says how to build and test it.
 
 ## License
 
