@@ -41,14 +41,14 @@ class GenerationSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    Generation.run(project, pack, generator, '1.2.3', tree)
+    Generation.run(project, pack, { generator }, '1.2.3', tree)
 
     then:
     tree.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'Service.java']
     tree.changes()*.owner() == [Owner.GENERATOR, Owner.GENERATOR, Owner.DEVELOPER]
 
     and:
-    State state = State.read(tree.read(State.PATH).get())
+    State state = State.in(tree).get()
     state.tib() == new State.Tib('1.2.3', 1)
     state.pack() == new State.PackRef('p', '1')
     state.spec() == project.spec()
@@ -60,26 +60,20 @@ class GenerationSpec extends Specification {
   def "a later run keeps the files of the earlier ones in the state"() {
     given:
     Tree first = Tree.at(dir)
-    Generation.run(project, pack, generator, '1.2.3', first)
+    Generation.run(project, pack, { generator }, '1.2.3', first)
     first.apply()
     Files.writeString(dir.resolve('Service.java'), 'class Service { int edited; }\n')
 
     when:
     Tree second = Tree.at(dir)
-    Generation.run(project, pack, { Project p, Tree tree ->
-      tree.own('Other.java', 'class Other {}\n')
-    } as Generator, '1.2.4', second)
+    Generation.run(project, pack, Pack::entity, '1.2.4', second)
 
     then: 'the developer file is not staged again, but stays on record as it was written'
-    second.changes()*.path() == ['.tib/state.yaml', 'Other.java']
-    State state = State.read(second.read(State.PATH).get())
+    second.changes()*.path() == ['.tib/state.yaml', 'test.txt']
+    State state = State.in(second).get()
     state.tib().version() == '1.2.4'
-    state.files()*.path() == ['Generated.java', 'Other.java', 'Service.java']
-    state.files()[2].sha256() == Generation.sha256('class Service {}\n')
-
-    and:
-    Generation.state(second).present
-    Generation.state(Tree.at(Files.createDirectory(dir.resolve('empty')))).empty
+    state.files()*.path() == ['Generated.java', 'Service.java', 'test.txt']
+    state.files()[1].sha256() == Generation.sha256('class Service {}\n')
   }
 
   def "the hash is the SHA-256 in hex"() {

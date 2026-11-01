@@ -1,0 +1,71 @@
+tib:
+  version: 0.1.0
+  spec: 1
+pack:
+  name: default
+  version: 0.1.0
+spec:
+  tib: 1
+  service: vehicle-service
+  group: me.yakar
+  pack: default@0.1.0
+  entities:
+  - name: Depot
+    table: DEPOTS
+    id:
+      field: key
+      type: UUID
+      strategy: uuid
+    fields: []
+    relations: []
+    audit: false
+    options:
+      dto: true
+      mapper: true
+      pagination: true
+      events: false
+  - name: Vehicle
+    table: VEHICLE
+    id:
+      field: id
+      type: Long
+      strategy: sequence
+    fields:
+    - name: plateNumber
+      column: PLATE
+      type: String
+      length: 16
+      precision: null
+      scale: null
+      nullable: false
+      unique: true
+    - name: price
+      column: PRICE
+      type: BigDecimal
+      length: null
+      precision: 12
+      scale: 2
+      nullable: true
+      unique: false
+    relations:
+    - kind: manyToOne
+      target: Depot
+      field: home
+      column: HOME_ID
+      nullable: false
+    audit: true
+    options:
+      dto: false
+      mapper: false
+      pagination: false
+      events: true
+files:
+- path: AGENTS.md
+  owner: generator
+  sha256: abc
+- path: build.gradle.kts
+  owner: developer
+  sha256: def
+- path: gradle/libs.versions.toml
+  owner: shared
+  sha256: 012
