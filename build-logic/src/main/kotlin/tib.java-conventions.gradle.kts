@@ -41,7 +41,6 @@ testing {
     dependencies {
       implementation(platform(libs.findLibrary("groovy-bom").get()))
       implementation(platform(libs.findLibrary("junit-bom").get()))
-      implementation(platform(libs.findLibrary("spock-bom").get()))
       runtimeOnly("org.junit.platform:junit-platform-launcher")
     }
   }
