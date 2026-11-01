@@ -34,7 +34,7 @@ class StateSpec extends Specification {
 
   /** A state whose spec sets every value, so that every key of the file is in it. */
   State state = new State(
-  new State.Tib('0.1.0', 1),
+  '0.1.0',
   new State.PackRef('default', '0.1.0'),
   SpecReader.parse('''\
       tib: 1
@@ -103,7 +103,7 @@ class StateSpec extends Specification {
     where:
     yaml                                  | message
     '['                                   | '.tib/state.yaml: '
-    'tib: 1\nspec:\n  tib: 1\n  service: s' | '.tib/state.yaml: '
+    'tib: [1]\nspec:\n  tib: 1\n  service: s' | '.tib/state.yaml: '
     'other: 1\n'                          | '.tib/state.yaml: '
     ''                                    | '.tib/state.yaml: '
     '---\n'                                | '.tib/state.yaml: spec: required'

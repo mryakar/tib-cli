@@ -27,11 +27,13 @@ import tools.jackson.dataformat.yaml.YAMLMapper;
 import tools.jackson.dataformat.yaml.YAMLWriteFeature;
 
 /**
- * What tib keeps in the project about what it generated: the versions it ran with, the resolved
- * spec, and every file it wrote with its owner and the hash of its content. The file is {@value
- * #PATH}; tib writes it, nobody edits it.
+ * What tib keeps in the project about what it generated: the version of tib and the pack it ran
+ * with, the resolved spec, and every file it wrote with its owner and the hash of its content. The
+ * file is {@value #PATH}; tib writes it, nobody edits it.
+ *
+ * @param tib the version of tib that wrote the state
  */
-public record State(Tib tib, PackRef pack, Spec spec, List<File> files) {
+public record State(String tib, PackRef pack, Spec spec, List<File> files) {
 
   /** The path of the state file in a project. */
   public static final String PATH = ".tib/state.yaml";
@@ -44,9 +46,6 @@ public record State(Tib tib, PackRef pack, Spec spec, List<File> files) {
           .disable(YAMLWriteFeature.WRITE_DOC_START_MARKER)
           .enable(YAMLWriteFeature.MINIMIZE_QUOTES)
           .build();
-
-  /** The versions of tib and of the spec format that wrote the state. */
-  public record Tib(String version, Integer spec) {}
 
   /** The pack that generated the files. */
   public record PackRef(String name, String version) {}

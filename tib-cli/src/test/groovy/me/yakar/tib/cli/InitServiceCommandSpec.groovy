@@ -68,7 +68,7 @@ class InitServiceCommandSpec extends Specification {
     output() == "Wrote 9 files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/VehicleServiceApplication.java'))
     State state = State.parse(Files.readString(dir.resolve(State.PATH)))
-    state.tib().version() == '1.2.3'
+    state.tib() == '1.2.3'
     state.pack().name() == 'default'
     state.spec().service() == 'vehicle-service'
     state.files().size() == 8

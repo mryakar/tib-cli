@@ -53,7 +53,7 @@ public final class Generation {
     }
     State state =
         new State(
-            new State.Tib(tibVersion, project.spec().tib()),
+            tibVersion,
             new State.PackRef(pack.name(), pack.version()),
             project.spec(),
             files.values().stream().toList());

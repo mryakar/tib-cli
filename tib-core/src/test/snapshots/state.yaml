@@ -1,6 +1,4 @@
-tib:
-  version: 0.1.0
-  spec: 1
+tib: 0.1.0
 pack:
   name: default
   version: 0.1.0

@@ -49,7 +49,7 @@ class GenerationSpec extends Specification {
 
     and:
     State state = State.in(tree).get()
-    state.tib() == new State.Tib('1.2.3', 1)
+    state.tib() == '1.2.3'
     state.pack() == new State.PackRef('p', '1')
     state.spec() == project.spec()
     state.files()*.path() == ['Generated.java', 'Service.java']
@@ -71,7 +71,7 @@ class GenerationSpec extends Specification {
     then: 'the developer file is not staged again, but stays on record as it was written'
     second.changes()*.path() == ['.tib/state.yaml', 'test.txt']
     State state = State.in(second).get()
-    state.tib().version() == '1.2.4'
+    state.tib() == '1.2.4'
     state.files()*.path() == ['Generated.java', 'Service.java', 'test.txt']
     state.files()[1].sha256() == Generation.sha256('class Service {}\n')
   }
