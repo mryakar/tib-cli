@@ -36,7 +36,7 @@ class SpecSchemaSpec extends Specification {
   def "the schema changes only on purpose"() {
     given:
     String snapshot = Files.readString(SNAPSHOTS.resolve('tib-spec.schema.json'))
-    Path actual = Path.of('build', 'snapshots', 'tib-spec.schema.json')
+    Path actual = Path.of(System.getProperty('tib.snapshots.actual'), 'tib-spec.schema.json')
     Files.createDirectories(actual.parent)
     Files.writeString(actual, SpecSchema.json())
 
