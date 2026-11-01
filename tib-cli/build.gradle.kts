@@ -16,6 +16,8 @@
 // The command line: picocli commands wired as Spring beans, and the application that the packages
 // ship. Its Spring Boot version is the CLI's own runtime, not the one of the projects it generates.
 import me.yakar.tib.gradle.JPackage
+import me.yakar.tib.gradle.JPackageImage
+import me.yakar.tib.gradle.JPackageInstaller
 import me.yakar.tib.gradle.JdkModules
 import me.yakar.tib.gradle.StartupCacheScript
 
@@ -75,35 +77,26 @@ val jdkModules =
     output = layout.buildDirectory.file("jpackage/modules.txt")
   }
 
-fun jpackage(name: String, type: String, configure: JPackage.() -> Unit) =
-  tasks.register<JPackage>(name) {
-    javaLauncher = packagingJdk
-    this.type = type
-    applicationName = launcherName
-    // Windows accepts only numbers in a version, so a snapshot packages as its release version.
-    applicationVersion = projectVersion.substringBefore('-')
+tasks.withType<JPackage>().configureEach {
+  javaLauncher = packagingJdk
+  applicationName = launcherName
+  // A snapshot packages as its release version.
+  applicationVersion = projectVersion.substringBefore('-')
+  options.addAll(
+    "--vendor",
+    "Amo",
+    "--description",
+    "The Idempotent Boilerplate: scaffolding CLI for Spring Boot services",
+  )
+}
+
+val jpackageAppImage =
+  tasks.register<JPackageImage>("jpackageAppImage") {
+    description = "Builds the application image with jpackage."
     input = layout.dir(jpackageInput.map { it.destinationDir })
     mainJar = tasks.jar.flatMap { it.archiveFileName }
     mainClass = "me.yakar.tib.cli.TibApplication"
     modules = jdkModules.flatMap { it.output }
-    options.addAll(
-      "--vendor",
-      "Amo",
-      "--description",
-      "The Idempotent Boilerplate: scaffolding CLI for Spring Boot services",
-    )
-    // The installers also tell where the application comes from and under which license.
-    if (type != "app-image") {
-      options.addAll("--about-url", "https://github.com/mryakar/tib-cli")
-      options.addAll("--license-file", layout.settingsDirectory.file("LICENSE").asFile.absolutePath)
-      inputs.file(layout.settingsDirectory.file("LICENSE"))
-    }
-    configure()
-  }
-
-val jpackageAppImage =
-  jpackage("jpackageAppImage", "app-image") {
-    description = "Builds the application image with jpackage."
     destination = layout.buildDirectory.dir("jpackage/app-image")
     // The launcher is a console application; an option of the image, not of the installer.
     if (windows) {
@@ -169,20 +162,27 @@ val portableZip =
     destinationDirectory = layout.buildDirectory.dir("jpackage/zip")
   }
 
+// The installers are built from the image that the packages ship.
+tasks.withType<JPackageInstaller>().configureEach {
+  appImage = layout.dir(shippedImage.map { it.destinationDir.resolve(launcherName) })
+  aboutUrl = "https://github.com/mryakar/tib-cli"
+  licenseFile = layout.settingsDirectory.file("LICENSE")
+}
+
 val installer =
   if (windows) {
-    jpackage("jpackageMsi", "msi") {
+    tasks.register<JPackageInstaller>("jpackageMsi") {
       description = "Builds the Windows installer."
-      appImage = layout.dir(shippedImage.map { it.destinationDir.resolve(launcherName) })
+      type = "msi"
       resources = layout.projectDirectory.dir("src/jpackage/windows")
       destination = layout.buildDirectory.dir("jpackage/msi")
       // A fixed upgrade code, so that installing a newer version replaces the older one.
       options.addAll("--win-upgrade-uuid", "d91cba2b-e77e-47de-8bcc-4ca76321cfdf")
     }
   } else {
-    jpackage("jpackageDeb", "deb") {
+    tasks.register<JPackageInstaller>("jpackageDeb") {
       description = "Builds the Debian package."
-      appImage = layout.dir(shippedImage.map { it.destinationDir.resolve(launcherName) })
+      type = "deb"
       resources = layout.projectDirectory.dir("src/jpackage/linux")
       destination = layout.buildDirectory.dir("jpackage/deb")
       options.addAll(
