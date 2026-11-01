@@ -19,17 +19,9 @@ import me.yakar.tib.gradle.JPackage
 import me.yakar.tib.gradle.JdkModules
 import me.yakar.tib.gradle.StartupCacheScript
 
-plugins {
-  id("tib.java-conventions")
-  application
-}
+plugins { id("tib.java-conventions") }
 
 description = "tib command line"
-
-application {
-  applicationName = "tib"
-  mainClass = "me.yakar.tib.cli.TibApplication"
-}
 
 dependencies {
   implementation(platform(libs.spring.boot.dependencies))
@@ -64,6 +56,7 @@ tasks.test {
 // the modules the application uses. The code still runs on Java 21 and later.
 val packagingJdk = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
 val windows = System.getProperty("os.name").startsWith("Windows")
+val launcherName = "tib"
 val platform = if (windows) "windows" else "linux"
 
 val jpackageInput =
@@ -86,12 +79,12 @@ fun jpackage(name: String, type: String, configure: JPackage.() -> Unit) =
   tasks.register<JPackage>(name) {
     javaLauncher = packagingJdk
     this.type = type
-    applicationName = "tib"
+    applicationName = launcherName
     // Windows accepts only numbers in a version, so a snapshot packages as its release version.
     applicationVersion = projectVersion.substringBefore('-')
     input = layout.dir(jpackageInput.map { it.destinationDir })
     mainJar = tasks.jar.flatMap { it.archiveFileName }
-    mainClass = application.mainClass
+    mainClass = "me.yakar.tib.cli.TibApplication"
     modules = jdkModules.flatMap { it.output }
     options.addAll(
       "--vendor",
@@ -154,9 +147,10 @@ val shippedImage =
     into(layout.buildDirectory.dir("jpackage/image"))
     // The runtime's legal files are read-only, so a copy cannot overwrite the previous one.
     doFirst { destinationDir.deleteRecursively() }
-    val appDirectory = if (windows) "tib/app" else "tib/lib/app"
+    val launcher = launcherName
+    val appDirectory = if (windows) "$launcher/app" else "$launcher/lib/app"
     val isWindows = windows
-    doLast { StartupCacheScript.write(destinationDir.resolve(appDirectory), "tib", isWindows) }
+    doLast { StartupCacheScript.write(destinationDir.resolve(appDirectory), launcher, isWindows) }
   }
 
 val portableZip =
@@ -179,7 +173,7 @@ val installer =
   if (windows) {
     jpackage("jpackageMsi", "msi") {
       description = "Builds the Windows installer."
-      appImage = layout.dir(shippedImage.map { it.destinationDir.resolve("tib") })
+      appImage = layout.dir(shippedImage.map { it.destinationDir.resolve(launcherName) })
       resources = layout.projectDirectory.dir("src/jpackage/windows")
       destination = layout.buildDirectory.dir("jpackage/msi")
       // A fixed upgrade code, so that installing a newer version replaces the older one.
@@ -188,7 +182,7 @@ val installer =
   } else {
     jpackage("jpackageDeb", "deb") {
       description = "Builds the Debian package."
-      appImage = layout.dir(shippedImage.map { it.destinationDir.resolve("tib") })
+      appImage = layout.dir(shippedImage.map { it.destinationDir.resolve(launcherName) })
       resources = layout.projectDirectory.dir("src/jpackage/linux")
       destination = layout.buildDirectory.dir("jpackage/deb")
       options.addAll(
