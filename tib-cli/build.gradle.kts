@@ -197,7 +197,7 @@ tasks.register<Sync>("packages") {
 }
 
 // Documentation. The command reference of the site is generated from the commands themselves, as
-// the man page that picocli-codegen writes, into a content root of the Antora site under build/.
+// the man page that picocli-codegen writes. Antora runs antoraContent for each version of the site.
 val docs =
   sourceSets.create("docs") {
     compileClasspath += sourceSets.main.get().output + configurations.runtimeClasspath.get()
@@ -206,20 +206,18 @@ val docs =
 
 dependencies { "docsImplementation"(libs.picocli.codegen) }
 
-val antoraContent = layout.buildDirectory.dir("docs/antora")
-
 val commandReference =
   tasks.register<JavaExec>("commandReference") {
     description = "Generates the command reference of the documentation from the commands."
     group = "documentation"
     classpath = docs.runtimeClasspath
     mainClass = "picocli.codegen.docgen.manpage.ManPageGenerator"
-    val partials = antoraContent.map { it.dir("modules/ROOT/partials/commands") }
-    outputs.dir(partials)
+    val pages = layout.buildDirectory.dir("docs/commands")
+    outputs.dir(pages)
     argumentProviders.add(
       CommandLineArgumentProvider {
         listOf(
-          "--outdir=${partials.get().asFile.absolutePath}",
+          "--outdir=${pages.get().asFile.absolutePath}",
           "--factory=me.yakar.tib.cli.docs.CommandFactory",
           "--force",
           "me.yakar.tib.cli.TibCommand",
@@ -229,7 +227,7 @@ val commandReference =
     // The man pages link to each other by file name; Antora resolves such a link from the root
     // of the pages, so the links get the directory of the reference pages.
     doLast {
-      partials.get().asFile.listFiles()!!.forEach { page ->
+      pages.get().asFile.listFiles()!!.forEach { page ->
         page.writeText(page.readText().replace("xref:tib-", "xref:./tib-"))
       }
     }
@@ -241,17 +239,15 @@ val schemaAttachment =
     group = "documentation"
     classpath = docs.runtimeClasspath
     mainClass = "me.yakar.tib.cli.docs.SchemaAttachment"
-    val file = antoraContent.map { it.file("modules/ROOT/attachments/tib-spec.schema.json") }
+    val file = layout.buildDirectory.file("docs/schema/tib-spec.schema.json")
     outputs.file(file)
     argumentProviders.add(CommandLineArgumentProvider { listOf(file.get().asFile.absolutePath) })
   }
 
-tasks.register("antoraContent") {
-  description = "Prepares the generated content root of the documentation site."
+tasks.register<Sync>("antoraContent") {
+  description = "Assembles the generated files of the documentation in an Antora module."
   group = "documentation"
-  dependsOn(commandReference, schemaAttachment)
-  // The content root needs a component descriptor; its version comes from the playbook.
-  val descriptor = antoraContent.map { it.file("antora.yml") }
-  outputs.file(descriptor)
-  doLast { descriptor.get().asFile.writeText("name: tib\n") }
+  from(commandReference) { into("modules/ROOT/partials/commands") }
+  from(schemaAttachment) { into("modules/ROOT/attachments") }
+  into(layout.buildDirectory.dir("docs/antora"))
 }

@@ -3,6 +3,7 @@
   "private": true,
   "description": "Builds the documentation site of tib with Antora.",
   "devDependencies": {
+    "@antora/collector-extension": "1.0.3",
     "antora": "3.2.1"
   }
 }
