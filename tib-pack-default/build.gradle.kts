@@ -35,6 +35,17 @@ jte {
   contentType = ContentType.Plain
 }
 
+// The versions of the generated stack come from the version catalog, where Dependabot sees them.
+tasks.processResources {
+  val stack =
+    mapOf(
+      "boot" to libs.versions.generated.spring.boot.get(),
+      "postgres" to libs.versions.generated.postgres.get(),
+    )
+  inputs.properties(stack)
+  filesMatching("**/pack.properties") { expand(stack) }
+}
+
 // Coverage leaves out the classes that jte generates from the templates.
 tasks.withType<JacocoReportBase>().configureEach {
   classDirectories.setFrom(

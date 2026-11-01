@@ -17,6 +17,9 @@ updates:
       # google-java-format 1.37 fails under Spotless 8.10 with NoSuchMethodError; move up with Spotless.
       - dependency-name: com.google.googlejavaformat:google-java-format
         versions: [">=1.37.0"]
+      # The default pack generates Spring Boot 3 services; a major version changes what it generates.
+      - dependency-name: org.springframework.boot:spring-boot-gradle-plugin
+        update-types: [version-update:semver-major]
     groups:
       gradle:
         patterns: ["*"]
