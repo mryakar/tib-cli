@@ -27,19 +27,25 @@ import spock.lang.Specification
 import spock.lang.TempDir
 
 /**
- * The example service of the documentation, generated from its spec and from its DDL and then
- * built with Gradle, as a user would build it. Where Docker runs Linux containers, the build includes the test of the service,
- * which starts PostgreSQL in a container; elsewhere the build compiles the service and its test.
+ * The services of the example spec, of its DDL and of the corner spec of the snapshots, generated
+ * and then built with Gradle, as a user would build them. Where Docker runs Linux containers, the
+ * build includes the test of the service, which starts PostgreSQL in a container; elsewhere the
+ * build compiles the service and its test. On Linux under CI, Docker has to be there.
  */
 class GeneratedServiceSpec extends Specification {
 
   static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
+  static final Path SNAPSHOTS = Path.of(System.getProperty('tib.snapshots'))
   static final String GRADLEW = System.getProperty('tib.gradlew')
+  static final boolean LINUX = System.getProperty('os.name') == 'Linux'
 
   @TempDir
   Path dir
 
-  def "the example service generated from its #input builds"() {
+  @TempDir
+  Path logs
+
+  def "the service generated from the #input builds"() {
     given: 'the service, with its entities'
     Project project = new Project(spec)
     Tree tree = Tree.at(dir)
@@ -48,6 +54,9 @@ class GeneratedServiceSpec extends Specification {
     pack.entity().generate(project, tree)
     tree.apply()
     boolean docker = docker()
+    assert docker || !LINUX || !System.getenv('CI') : 'the build of the service needs Docker under CI'
+    Path log = logs.resolve('gradle.log')
+    Process gradle = null
 
     when:
     List<String> command = [GRADLEW, '-p', dir.toString(), 'build', '--console=plain', '--no-daemon']
@@ -55,25 +64,27 @@ class GeneratedServiceSpec extends Specification {
       // Without its test, nothing in the build compiles the test of the service: it is asked for.
       command.addAll(['testClasses', '-x', 'test'])
     }
-    Process gradle = new ProcessBuilder(command).redirectErrorStream(true).start()
-    StringBuilder output = new StringBuilder()
-    gradle.inputStream.eachLine { line ->
-      println line
-      output.append(line).append('\n')
-    }
-    gradle.waitFor(15, TimeUnit.MINUTES)
+    gradle = new ProcessBuilder(command).redirectErrorStream(true).redirectOutput(log.toFile()).start()
+    assert gradle.waitFor(15, TimeUnit.MINUTES) : 'the build of the service took too long'
+    println Files.readString(log)
 
     then:
-    assert gradle.exitValue() == 0 : output
-    Files.exists(dir.resolve('build/classes/java/main/com/example/vehicleservice/vehicle/VehicleController.class'))
-    Files.exists(dir.resolve('build/classes/java/test/com/example/vehicleservice/VehicleServiceApplicationTests.class'))
-    !docker || Files.exists(dir.resolve('build/test-results/test/TEST-com.example.vehicleservice.VehicleServiceApplicationTests.xml'))
-    !docker || Files.readString(dir.resolve('build/test-results/test/TEST-com.example.vehicleservice.VehicleServiceApplicationTests.xml')).contains('failures="0"')
+    assert gradle.exitValue() == 0 : Files.readString(log)
+    String classes = project.packagePath() + '/' + project.applicationClass()
+    Files.exists(dir.resolve("build/classes/java/main/${classes}.class"))
+    Files.exists(dir.resolve("build/classes/java/test/${classes}Tests.class"))
+    Files.exists(dir.resolve("build/classes/java/test/${project.packagePath()}/Test${project.applicationClass()}.class"))
+    !docker || Files.readString(dir.resolve("build/test-results/test/TEST-${project.basePackage()}.${project.applicationClass()}Tests.xml")).contains('failures="0"')
+
+    cleanup:
+    gradle?.destroyForcibly()
 
     where:
-    input  | spec
-    'spec' | SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
-    'DDL'  | DdlReader.read(EXAMPLES.resolve('vehicle-service.sql'), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
+    input             | spec
+    'example spec'    | SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
+    'example DDL'     | DdlReader.read(EXAMPLES.resolve('vehicle-service.sql'), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
+    // The corner spec is a resource of the unit tests, next to their snapshots.
+    'corner spec'     | SpecReader.read(SNAPSHOTS.resolveSibling('resources/me/yakar/tib/pack/corner-service.yaml'))
   }
 
   /**
@@ -83,8 +94,11 @@ class GeneratedServiceSpec extends Specification {
   private static boolean docker() {
     try {
       Process docker = new ProcessBuilder('docker', 'info', '--format', '{{.OSType}}').redirectErrorStream(true).start()
-      String os = docker.inputStream.text.trim()
-      return docker.waitFor() == 0 && os == 'linux'
+      if (!docker.waitFor(30, TimeUnit.SECONDS)) {
+        docker.destroyForcibly()
+        return false
+      }
+      return docker.exitValue() == 0 && docker.inputStream.text.trim() == 'linux'
     } catch (IOException ignored) {
       return false
     }
