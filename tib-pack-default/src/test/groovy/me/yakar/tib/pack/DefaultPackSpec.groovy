@@ -87,7 +87,6 @@ class DefaultPackSpec extends Specification {
 
     then:
     changes.findAll { it.owner() == Owner.GENERATOR }*.path()*.replaceAll('.*/', '') == [
-      'AGENTS.md',
       'DepotDto.java',
       'DepotGenerated.java',
       'DepotMapper.java',
