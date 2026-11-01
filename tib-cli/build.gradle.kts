@@ -80,7 +80,7 @@ tasks.withType<JPackage>().configureEach {
     "--vendor",
     "Amo",
     "--description",
-    "The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.",
+    "The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services",
   )
 }
 
