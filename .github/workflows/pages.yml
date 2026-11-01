@@ -13,6 +13,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: pages
   cancel-in-progress: false
@@ -52,7 +56,7 @@ jobs:
       - name: Download the .deb of every release
         run: |
           mkdir -p debs
-          gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases \
+          gh release list --repo "$GITHUB_REPOSITORY" --exclude-drafts --exclude-pre-releases --limit 1000 \
             --json tagName --jq '.[].tagName' |
             while read -r tag; do
               gh release download "$tag" --repo "$GITHUB_REPOSITORY" --pattern '*.deb' --dir debs
