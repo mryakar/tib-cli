@@ -20,6 +20,9 @@ jobs:
     name: Verify the release
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    permissions:
+      contents: read
+      checks: read
     outputs:
       version: ${{ steps.version.outputs.version }}
     steps:
@@ -34,6 +37,20 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
       - name: Check that the tag is on main
         run: git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+      # Every job of the build workflow, on each platform and JDK, has passed on the tagged commit.
+      - name: Check that the tagged commit passed the build
+        run: |
+          builds="$(gh api --paginate "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" \
+            --jq '.check_runs[] | select(.name | startswith("Build (")) | "\(.name): \(.conclusion // .status)"')"
+          if [[ -z "$builds" ]]; then
+            echo "::error::no Build check ran on $GITHUB_SHA"
+            exit 1
+          fi
+          if grep -v ': success$' <<<"$builds" | sed 's/^/::error::did not pass: /'; then
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
 
   packages:
     name: Packages
