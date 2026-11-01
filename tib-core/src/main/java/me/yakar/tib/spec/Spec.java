@@ -17,6 +17,7 @@ package me.yakar.tib.spec;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -75,10 +76,14 @@ public record Spec(
       problems.add("tib", "this build reads version " + VERSION);
     }
     Set<String> names = new HashSet<>();
+    // The tables, in upper case: SQL names are the same in any case.
+    Set<String> tables = new HashSet<>();
     for (int i = 0; i < entities.size(); i++) {
-      if (!names.add(entities.get(i).name())) {
-        problems.add(
-            "entities[" + i + "].name", "'" + entities.get(i).name() + "' is already an entity");
+      Entity entity = entities.get(i);
+      if (!names.add(entity.name())) {
+        problems.add("entities[" + i + "].name", "'" + entity.name() + "' is already an entity");
+      } else if (!tables.add(entity.table().toUpperCase(Locale.ROOT))) {
+        problems.add("entities[" + i + "].table", "'" + entity.table() + "' is already a table");
       }
     }
     for (int i = 0; i < entities.size(); i++) {
