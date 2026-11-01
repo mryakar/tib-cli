@@ -110,7 +110,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
           input.spec != null
               ? SpecReader.read(input.spec)
               : DdlReader.read(input.ddl, state.get().spec());
-      Project project = Project.of(service);
+      Project project = new Project(service);
       Pack pack = Packs.find(service.pack());
       Generation.run(project, pack, Pack::entity, version.version(), tree);
       return Outcome.report(tree, dryRun, out);

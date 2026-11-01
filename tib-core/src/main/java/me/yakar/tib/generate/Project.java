@@ -15,33 +15,40 @@
  */
 package me.yakar.tib.generate;
 
-import java.util.Locale;
+import me.yakar.tib.spec.Names;
 import me.yakar.tib.spec.Spec;
 
 /**
  * What the generators know about the project of a spec: its names, derived from the spec the same
  * way every time.
  */
-public record Project(
-    String name, String group, String basePackage, String applicationClass, Spec spec) {
+public record Project(Spec spec) {
 
-  /** The project of the spec. */
-  public static Project of(Spec spec) {
-    String[] words = spec.service().split("-");
-    StringBuilder application = new StringBuilder();
-    for (String word : words) {
-      application.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
-    }
-    return new Project(
-        spec.service(),
-        spec.group(),
-        spec.group() + "." + String.join("", words).toLowerCase(Locale.ROOT),
-        application + "Application",
-        spec);
+  /** The name of the service, as in {@code vehicle-service}. */
+  public String name() {
+    return spec.service();
+  }
+
+  /** The group of the service, as in {@code com.example}. */
+  public String group() {
+    return spec.group();
+  }
+
+  /**
+   * The base package: the group and the name without hyphens, as in {@code
+   * com.example.vehicleservice}.
+   */
+  public String basePackage() {
+    return spec.group() + "." + spec.service().replace("-", "");
+  }
+
+  /** The class that starts the service, as in {@code VehicleServiceApplication}. */
+  public String applicationClass() {
+    return Names.type(spec.service().replace('-', '_')) + "Application";
   }
 
   /** The directory of the base package, relative to a source root. */
   public String packagePath() {
-    return basePackage.replace('.', '/');
+    return basePackage().replace('.', '/');
   }
 }

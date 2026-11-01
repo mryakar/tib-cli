@@ -41,7 +41,7 @@ class GeneratedServiceSpec extends Specification {
 
   def "the example service generated from its #input builds"() {
     given: 'the service, with its entities'
-    Project project = Project.of(spec)
+    Project project = new Project(spec)
     Tree tree = Tree.at(dir)
     Pack pack = new DefaultPack()
     pack.init().generate(project, tree)
