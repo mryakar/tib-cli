@@ -36,20 +36,16 @@ jte {
   contentType = ContentType.Plain
 }
 
-// The tests generate the example service of the documentation and compare it with its snapshot:
-// the expected files, kept next to the tests rather than among the resources, which leave out
-// files such as .gitignore. The acceptance test generates the example service and builds it with
-// Gradle, against a database in a container where Docker runs Linux containers.
-val examples = layout.settingsDirectory.dir("docs/modules/ROOT/examples")
-val snapshots = layout.projectDirectory.dir("src/test/snapshots")
-val windows = System.getProperty("os.name").startsWith("Windows")
-
-tasks.test {
-  inputs.dir(examples)
-  inputs.dir(snapshots)
-  systemProperty("tib.examples", examples.asFile.absolutePath)
-  systemProperty("tib.snapshots", snapshots.asFile.absolutePath)
+// Coverage leaves out the classes that jte generates from the templates.
+tasks.withType<JacocoReportBase>().configureEach {
+  classDirectories.setFrom(
+    classDirectories.files.map { fileTree(it) { exclude("gg/jte/generated/**") } },
+  )
 }
+
+// The tests compare the generated example service with its snapshot under src/test/snapshots
+// (resources would leave out .gitignore); the acceptance test builds it with Gradle.
+val windows = System.getProperty("os.name").startsWith("Windows")
 
 testing {
   suites {
@@ -62,11 +58,8 @@ testing {
       targets.all {
         testTask.configure {
           shouldRunAfter(tasks.test)
-          // The output of the build of the service, so that a failure shows in the log of the
-          // build.
+          // Shows the output of the service's build in the log.
           testLogging.showStandardStreams = true
-          inputs.dir(examples)
-          systemProperty("tib.examples", examples.asFile.absolutePath)
           // The service is built with the wrapper of this build, as a user would build it.
           val wrapper = if (windows) "gradlew.bat" else "gradlew"
           systemProperty("tib.gradlew", layout.settingsDirectory.file(wrapper).asFile.absolutePath)
