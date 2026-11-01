@@ -74,6 +74,7 @@ class GenerateEntityCommandSpec extends Specification {
     result.exitCode() == 0
     result.out().contains('+++ b/src/main/java/com/example/vehicleservice/vehicle/VehicleGenerated.java\n')
     result.out().contains('+++ b/.tib/state.yaml\n')
+    result.err() == ''
     files() == before
   }
 
@@ -96,6 +97,14 @@ class GenerateEntityCommandSpec extends Specification {
     then:
     again.exitCode() == 0
     again.out() == 'Nothing to change.\n'
+
+    when: 'again, as a dry run'
+    Result dryRun = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
+
+    then: 'the diff is empty'
+    dryRun.exitCode() == 0
+    dryRun.out() == ''
+    dryRun.err() == 'Nothing to change.\n'
   }
 
   def "generates the entity layer of the tables of the DDL into the service, once"() {
