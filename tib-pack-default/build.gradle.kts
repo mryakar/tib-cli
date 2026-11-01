@@ -32,7 +32,6 @@ dependencies {
 
 jte {
   generate()
-  sourceDirectory = layout.projectDirectory.dir("src/main/jte").asFile.toPath()
   contentType = ContentType.Plain
 }
 
