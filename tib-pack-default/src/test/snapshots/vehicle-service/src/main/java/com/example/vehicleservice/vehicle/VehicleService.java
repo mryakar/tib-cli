@@ -50,6 +50,7 @@ public class VehicleService {
   private Vehicle find(Long id) {
     return vehicles
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no vehicle " + id));
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no vehicle " + id));
   }
 }

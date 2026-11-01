@@ -53,6 +53,7 @@ public class ${entity.name()}Service {
   private ${entity.name()} find(${entity.idType()} id) {
     return ${entity.plural()}
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no ${entity.variable()} " + id));
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no ${entity.variable()} " + id));
   }
 }

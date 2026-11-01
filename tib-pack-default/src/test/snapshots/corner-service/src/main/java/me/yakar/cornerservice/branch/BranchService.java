@@ -49,6 +49,7 @@ public class BranchService {
   private Branch find(Long id) {
     return branches
         .findById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no branch " + id));
+        .orElseThrow(
+            () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no branch " + id));
   }
 }
