@@ -151,10 +151,10 @@ val portableZip =
     description =
       "Zips the application image: tib with its runtime, for a machine without admin rights."
     from(shippedImage.map { it.destinationDir })
-    // The archive is reproducible, so it carries no permissions of its own; the launcher and the
-    // runtime's commands get theirs.
+    // The archive is reproducible, so it carries no permissions of its own; the launcher, the
+    // scripts, the runtime's commands and its jspawnhelper, which starts processes, get theirs.
     eachFile {
-      if (relativePath.segments.contains("bin") || name.endsWith(".sh")) {
+      if (relativePath.segments.contains("bin") || name.endsWith(".sh") || name == "jspawnhelper") {
         permissions { unix("rwxr-xr-x") }
       }
     }
