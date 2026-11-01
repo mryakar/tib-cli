@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonParser;
@@ -66,16 +65,7 @@ public final class SpecReader {
     if (spec == null) {
       throw new SpecException("spec: the file is empty");
     }
-    return check(spec);
-  }
-
-  /** Checks a spec built in code as one read from YAML is checked. */
-  public static Spec check(Spec spec) {
-    List<String> problems = spec.problems();
-    if (!problems.isEmpty()) {
-      throw new SpecException(problems);
-    }
-    return spec;
+    return spec.check();
   }
 
   /** The path of the value the exception is about, as in {@code entities[0].fields[2]}. */

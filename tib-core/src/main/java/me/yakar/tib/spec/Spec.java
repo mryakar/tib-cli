@@ -52,14 +52,22 @@ public record Spec(
     entities = Problems.list(entities);
   }
 
-  /** The problems of the spec; none when it is valid. */
-  List<String> problems() {
+  /**
+   * Checks the spec against its rules: the structure first, then what the values mean together.
+   *
+   * @return the spec
+   * @throws SpecException with every problem found
+   */
+  public Spec check() {
     Problems problems = new Problems();
     problems.check(this, "");
     if (problems.isEmpty()) {
       check(problems);
     }
-    return problems.messages();
+    if (!problems.isEmpty()) {
+      throw new SpecException(problems.messages());
+    }
+    return this;
   }
 
   private void check(Problems problems) {

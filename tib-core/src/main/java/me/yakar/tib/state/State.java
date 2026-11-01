@@ -18,7 +18,6 @@ package me.yakar.tib.state;
 import java.util.List;
 import java.util.Optional;
 import me.yakar.tib.spec.Spec;
-import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.tree.Owner;
 import me.yakar.tib.tree.Tree;
 import tools.jackson.core.JacksonException;
@@ -80,7 +79,7 @@ public record State(Tib tib, PackRef pack, Spec spec, List<File> files) {
     if (state == null || state.spec() == null) {
       throw new StateException(PATH + ": spec: required");
     }
-    SpecReader.check(state.spec());
+    state.spec().check();
     return state;
   }
 }
