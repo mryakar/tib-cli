@@ -39,8 +39,10 @@ was already open keeps its old PATH.
 
 == Portable zip
 
-For a machine where you cannot install packages: unpack the zip of your platform anywhere, and run
-`tib/bin/tib` on Linux or `tib\tib.exe` on Windows. Put that directory on your PATH if you like.
+For a machine where you cannot install packages: unpack the zip of your platform anywhere, run
+`tib/lib/app/startup-cache.sh` on Linux or `tib\app\startup-cache.cmd` on Windows once, so that
+tib starts faster, and run `tib/bin/tib` or `tib\tib.exe`. Put that directory on your PATH if you
+like.
 
 == Verify a download
 
@@ -62,12 +64,13 @@ gpg --verify tib_<version>_amd64.deb.asc tib_<version>_amd64.deb
 `gpg` reports a good signature and prints the primary key fingerprint above. On Windows, `gpg`
 comes with https://gpg4win.org[Gpg4win].
 
-A release also has `checksums_sha256.txt`, signed the same way, with the SHA-256 of every file:
+A release also has `checksums_sha256.txt`, signed the same way, with the SHA-256 of every file.
+Check its signature, then the files you downloaded against it:
 
 [source,bash]
 ----
 gpg --verify checksums_sha256.txt.asc checksums_sha256.txt
-sha256sum tib_<version>_amd64.deb
+sha256sum --check --ignore-missing checksums_sha256.txt
 ----
 
 The APT repository needs no step of your own: apt checks every download against `tib.gpg`. To see
