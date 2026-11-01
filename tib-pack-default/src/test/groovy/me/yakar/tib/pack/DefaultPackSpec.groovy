@@ -193,9 +193,7 @@ entities:
 '''))
 
     expect:
-    EntityGenerator.ordered(project.spec().entities().collectEntries {
-      [it.name(), it]
-    })*.name() == ['B', 'A', 'C']
+    EntityGenerator.ordered(project.spec().entities())*.name() == ['B', 'A', 'C']
   }
 
   /** Every file is as the snapshot says; if not, the new one is under build/snapshots, to be copied on purpose. */

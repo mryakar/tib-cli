@@ -33,6 +33,7 @@ dependencies {
 jte {
   generate()
   contentType = ContentType.Plain
+  trimControlStructures = true
 }
 
 // The versions of the generated stack come from the version catalog, where Dependabot sees them.

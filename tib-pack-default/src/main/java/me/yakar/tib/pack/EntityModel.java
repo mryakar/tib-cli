@@ -16,7 +16,6 @@
 package me.yakar.tib.pack;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -24,31 +23,45 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Entity;
-import me.yakar.tib.spec.Field;
 import me.yakar.tib.spec.IdStrategy;
 import me.yakar.tib.spec.IdType;
 import me.yakar.tib.spec.Names;
-import me.yakar.tib.spec.Relation;
-import me.yakar.tib.spec.RelationKind;
 
 /**
- * An entity as the templates see it: its names, and the blocks of code that depend on its fields,
- * relations and options, worked out here so that the templates only print them and the layout of
- * the generated code is exact.
+ * An entity as the templates see it: its names, its fields and relations, and what the generated
+ * code imports and declares. The templates lay the code out.
  */
 public final class EntityModel {
 
   private final Project project;
   private final Entity entity;
-  private final Map<String, Entity> entities;
+  private final List<FieldModel> fields;
+  private final List<RelationModel> relations;
+  private final List<EntityModel> targets;
 
-  EntityModel(Project project, Entity entity, Map<String, Entity> entities) {
+  /**
+   * The model of an entity, after the models of the entities it refers to: those are in the map, by
+   * name.
+   */
+  EntityModel(Project project, Entity entity, Map<String, EntityModel> models) {
     this.project = project;
     this.entity = entity;
-    this.entities = entities;
+    this.fields = entity.fields().stream().map(FieldModel::new).toList();
+    List<RelationModel> relations = new ArrayList<>();
+    List<EntityModel> targets = new ArrayList<>();
+    for (var relation : entity.relations()) {
+      EntityModel target =
+          relation.target().equals(entity.name()) ? this : models.get(relation.target());
+      relations.add(new RelationModel(relation, target));
+      if (target != this && !targets.contains(target)) {
+        targets.add(target);
+      }
+    }
+    this.relations = List.copyOf(relations);
+    this.targets = List.copyOf(targets);
   }
 
-  public Entity entity() {
+  Entity entity() {
     return entity;
   }
 
@@ -76,7 +89,7 @@ public final class EntityModel {
   }
 
   /** The directory of the package, relative to the project. */
-  public String directory() {
+  String directory() {
     return "src/main/java/" + packageName().replace('.', '/');
   }
 
@@ -102,39 +115,34 @@ public final class EntityModel {
     return entity.table() + "_SEQ";
   }
 
-  public boolean dto() {
+  public boolean audited() {
+    return entity.audit();
+  }
+
+  /** Whether the list of the entities comes in pages. */
+  public boolean paginated() {
+    return entity.options().pagination();
+  }
+
+  boolean dto() {
     return entity.options().dto();
   }
 
   /** Whether the service and the controller are generated: they need the DTO and the mapper. */
-  public boolean layer() {
+  boolean layer() {
     return entity.options().dto() && entity.options().mapper();
   }
 
-  List<FieldModel> fields() {
-    return entity.fields().stream().map(FieldModel::new).toList();
+  public List<FieldModel> fields() {
+    return fields;
   }
 
-  List<RelationModel> relations() {
-    return entity.relations().stream()
-        .map(
-            relation ->
-                new RelationModel(
-                    relation, new EntityModel(project, entities.get(relation.target()), entities)))
-        .toList();
+  public List<RelationModel> relations() {
+    return relations;
   }
 
-  /**
-   * The entities the service needs the repositories of: the targets of its relations, once each.
-   */
-  List<EntityModel> targets() {
-    List<EntityModel> targets = new ArrayList<>();
-    for (RelationModel relation : relations()) {
-      String target = relation.target().name();
-      if (!target.equals(name()) && targets.stream().noneMatch(t -> t.name().equals(target))) {
-        targets.add(relation.target());
-      }
-    }
+  /** The other entities that the relations refer to, once each, in the order of the relations. */
+  public List<EntityModel> targets() {
     return targets;
   }
 
@@ -150,13 +158,13 @@ public final class EntityModel {
     if (idSequence()) {
       imports.add("jakarta.persistence.SequenceGenerator");
     }
-    for (RelationModel relation : relations()) {
+    for (RelationModel relation : relations) {
       imports.add("jakarta.persistence.FetchType");
       imports.add("jakarta.persistence.JoinColumn");
       imports.add("jakarta.persistence." + relation.annotation());
-      if (!relation.target().name().equals(name())) {
-        imports.add(relation.target().packageName() + "." + relation.target().name());
-      }
+    }
+    for (EntityModel target : targets) {
+      imports.add(target.packageName() + "." + target.name());
     }
     if (entity.audit()) {
       imports.add("java.time.Instant");
@@ -166,59 +174,8 @@ public final class EntityModel {
     return imports(imports);
   }
 
-  /** The fields of the class with their annotations, a blank line between them. */
-  public String declarations() {
-    List<List<String>> blocks = new ArrayList<>();
-    List<String> id = new ArrayList<>(idAnnotations());
-    id.add("@Column(name = \"" + idColumn() + "\", nullable = false)");
-    id.add("private " + idType() + " " + idField() + ";");
-    blocks.add(id);
-    for (FieldModel field : fields()) {
-      blocks.add(
-          List.of(
-              field.columnAnnotation(), "private " + field.javaType() + " " + field.name() + ";"));
-    }
-    for (RelationModel relation : relations()) {
-      List<String> block = new ArrayList<>(relation.annotations());
-      block.add("private " + relation.target().name() + " " + relation.field() + ";");
-      blocks.add(block);
-    }
-    if (entity.audit()) {
-      blocks.add(
-          List.of(
-              "@CreationTimestamp",
-              "@Column(name = \"CREATED_AT\", nullable = false, updatable = false)",
-              "private Instant createdAt;"));
-      blocks.add(
-          List.of(
-              "@UpdateTimestamp",
-              "@Column(name = \"UPDATED_AT\", nullable = false)",
-              "private Instant updatedAt;"));
-    }
-    return blocks(blocks, "  ");
-  }
-
-  /** The getters and setters, a blank line between them. */
-  public String accessors() {
-    List<List<String>> blocks = new ArrayList<>();
-    blocks.add(getter(idType(), "Id", idField()));
-    blocks.add(setter(idType(), "Id", idField()));
-    for (FieldModel field : fields()) {
-      blocks.add(getter(field.javaType(), field.property(), field.name()));
-      blocks.add(setter(field.javaType(), field.property(), field.name()));
-    }
-    for (RelationModel relation : relations()) {
-      blocks.add(getter(relation.target().name(), relation.property(), relation.field()));
-      blocks.add(setter(relation.target().name(), relation.property(), relation.field()));
-    }
-    if (entity.audit()) {
-      blocks.add(getter("Instant", "CreatedAt", "createdAt"));
-      blocks.add(getter("Instant", "UpdatedAt", "updatedAt"));
-    }
-    return blocks(blocks, "  ");
-  }
-
-  private List<String> idAnnotations() {
+  /** The annotations of the identifier, before its column. */
+  public List<String> idAnnotations() {
     return switch (entity.id().strategy()) {
       case IDENTITY -> List.of("@Id", "@GeneratedValue(strategy = GenerationType.IDENTITY)");
       case SEQUENCE ->
@@ -236,24 +193,10 @@ public final class EntityModel {
     };
   }
 
-  private static List<String> getter(String type, String property, String field) {
-    return List.of("public " + type + " get" + property + "() {", "  return " + field + ";", "}");
-  }
-
-  private static List<String> setter(String type, String property, String field) {
-    return List.of(
-        "public void set" + property + "(" + type + " " + field + ") {",
-        "  this." + field + " = " + field + ";",
-        "}");
-  }
-
   // The repository.
 
   public String repositoryImports() {
-    SortedSet<String> imports = new TreeSet<>();
-    if (entity.id().type() == IdType.UUID) {
-      imports.add("java.util.UUID");
-    }
+    SortedSet<String> imports = idImports();
     imports.add("org.springframework.data.jpa.repository.JpaRepository");
     return imports(imports);
   }
@@ -262,7 +205,7 @@ public final class EntityModel {
 
   public String dtoImports() {
     SortedSet<String> imports = typeImports();
-    for (RelationModel relation : relations()) {
+    for (RelationModel relation : relations) {
       if (relation.target().entity().id().type() == IdType.UUID) {
         imports.add("java.util.UUID");
       }
@@ -270,7 +213,7 @@ public final class EntityModel {
         imports.add("jakarta.validation.constraints.NotNull");
       }
     }
-    for (FieldModel field : fields()) {
+    for (FieldModel field : fields) {
       if (!field.nullable()) {
         imports.add("jakarta.validation.constraints.NotNull");
       }
@@ -284,34 +227,34 @@ public final class EntityModel {
     return imports(imports);
   }
 
-  /** The components of the record, one per line. */
-  public String dtoComponents() {
+  /** The components of the record: its type and name, after their validation. */
+  public List<String> dtoComponents() {
     List<String> components = new ArrayList<>();
     components.add(idType() + " " + idField());
-    for (FieldModel field : fields()) {
+    for (FieldModel field : fields) {
       components.add(field.validation() + field.javaType() + " " + field.name());
     }
-    for (RelationModel relation : relations()) {
+    for (RelationModel relation : relations) {
       components.add(relation.validation() + relation.target().idType() + " " + relation.idField());
     }
     if (entity.audit()) {
       components.add("Instant createdAt");
       components.add("Instant updatedAt");
     }
-    return String.join(",\n    ", components);
+    return components;
   }
 
   // The mapper.
 
-  /** The arguments of the DTO's constructor, from the entity, one per line. */
-  public String mapperArguments() {
+  /** The arguments of the DTO's constructor, from the entity. */
+  public List<String> dtoArguments() {
     String it = variable();
     List<String> arguments = new ArrayList<>();
     arguments.add(it + ".getId()");
-    for (FieldModel field : fields()) {
+    for (FieldModel field : fields) {
       arguments.add(it + ".get" + field.property() + "()");
     }
-    for (RelationModel relation : relations()) {
+    for (RelationModel relation : relations) {
       String target = it + ".get" + relation.property() + "()";
       arguments.add(target + " == null ? null : " + target + ".getId()");
     }
@@ -319,32 +262,15 @@ public final class EntityModel {
       arguments.add(it + ".getCreatedAt()");
       arguments.add(it + ".getUpdatedAt()");
     }
-    return String.join(",\n        ", arguments);
-  }
-
-  /** The statements that copy the fields of the DTO onto the entity. */
-  public String mapperUpdates() {
-    List<String> statements = new ArrayList<>();
-    for (FieldModel field : fields()) {
-      statements.add(variable() + ".set" + field.property() + "(dto." + field.name() + "());");
-    }
-    return lines(statements, "    ");
+    return arguments;
   }
 
   // The service.
 
   public String serviceImports() {
-    SortedSet<String> imports = new TreeSet<>();
-    if (entity.id().type() == IdType.UUID) {
-      imports.add("java.util.UUID");
-    }
-    if (entity.options().pagination()) {
-      imports.add("org.springframework.data.domain.Page");
-      imports.add("org.springframework.data.domain.Pageable");
-    } else {
-      imports.add("java.util.List");
-    }
-    for (EntityModel target : targets()) {
+    SortedSet<String> imports = idImports();
+    listImports(imports);
+    for (EntityModel target : targets) {
       imports.add(target.packageName() + "." + target.name() + "Repository");
     }
     imports.add("org.springframework.http.HttpStatus");
@@ -354,85 +280,12 @@ public final class EntityModel {
     return imports(imports);
   }
 
-  /** The repositories of the targets, as fields of the service. */
-  public String serviceFields() {
-    List<String> fields = new ArrayList<>();
-    for (EntityModel target : targets()) {
-      fields.add("private final " + target.name() + "Repository " + target.plural() + ";");
-    }
-    return lines(fields, "  ");
-  }
-
-  /** The repositories of the targets, as parameters of the constructor, after the first ones. */
-  public String serviceParameters() {
-    StringBuilder parameters = new StringBuilder();
-    for (EntityModel target : targets()) {
-      parameters.append(", ").append(target.name()).append("Repository ").append(target.plural());
-    }
-    return parameters.toString();
-  }
-
-  public String serviceAssignments() {
-    List<String> assignments = new ArrayList<>();
-    for (EntityModel target : targets()) {
-      assignments.add("this." + target.plural() + " = " + target.plural() + ";");
-    }
-    return lines(assignments, "    ");
-  }
-
-  /** The method that lists the entities: a page of them, or all of them. */
-  public String serviceList() {
-    String dto = name() + "Dto";
-    List<String> method =
-        entity.options().pagination()
-            ? List.of(
-                "@Transactional(readOnly = true)",
-                "public Page<" + dto + "> list(Pageable pageable) {",
-                "  return " + plural() + ".findAll(pageable).map(mapper::toDto);",
-                "}")
-            : List.of(
-                "@Transactional(readOnly = true)",
-                "public List<" + dto + "> list() {",
-                "  return " + plural() + ".findAll().stream().map(mapper::toDto).toList();",
-                "}");
-    return lines(method, "  ");
-  }
-
-  /** The statements that resolve the relations of the DTO onto the entity. */
-  public String serviceRelations() {
-    List<String> statements = new ArrayList<>();
-    for (RelationModel relation : relations()) {
-      String repository =
-          relation.target().name().equals(name()) ? plural() : relation.target().plural();
-      statements.add(
-          variable()
-              + ".set"
-              + relation.property()
-              + "(dto."
-              + relation.idField()
-              + "() == null ? null : "
-              + repository
-              + ".getReferenceById(dto."
-              + relation.idField()
-              + "()));");
-    }
-    return lines(statements, "    ");
-  }
-
   // The controller.
 
   public String controllerImports() {
-    SortedSet<String> imports = new TreeSet<>();
+    SortedSet<String> imports = idImports();
     imports.add("jakarta.validation.Valid");
-    if (entity.id().type() == IdType.UUID) {
-      imports.add("java.util.UUID");
-    }
-    if (entity.options().pagination()) {
-      imports.add("org.springframework.data.domain.Page");
-      imports.add("org.springframework.data.domain.Pageable");
-    } else {
-      imports.add("java.util.List");
-    }
+    listImports(imports);
     imports.add("org.springframework.http.HttpStatus");
     for (String annotation :
         List.of(
@@ -450,67 +303,48 @@ public final class EntityModel {
     return imports(imports);
   }
 
-  /** The endpoint that lists the entities: a page of them, or all of them. */
-  public String controllerList() {
-    String dto = name() + "Dto";
-    List<String> method =
-        entity.options().pagination()
-            ? List.of(
-                "@GetMapping",
-                "public Page<" + dto + "> list(Pageable pageable) {",
-                "  return service.list(pageable);",
-                "}")
-            : List.of(
-                "@GetMapping",
-                "public List<" + dto + "> list() {",
-                "  return service.list();",
-                "}");
-    return lines(method, "  ");
-  }
-
   // The migration.
 
-  /** The statement that creates the sequence of a sequence identifier, or nothing. */
-  public String sequenceStatement() {
-    return idSequence()
-        ? "CREATE SEQUENCE " + sequence() + " START WITH 1 INCREMENT BY 50;\n\n"
-        : "";
-  }
-
-  /** The columns of the table, one definition per line. */
-  public String columns() {
+  /** The definitions of the columns of the table. */
+  public List<String> columns() {
     List<String> columns = new ArrayList<>();
     columns.add(idColumn() + " " + idSql() + " PRIMARY KEY");
-    for (FieldModel field : fields()) {
+    for (FieldModel field : fields) {
       columns.add(field.sql());
     }
-    for (RelationModel relation : relations()) {
+    for (RelationModel relation : relations) {
       columns.add(relation.sql());
     }
     if (entity.audit()) {
-      columns.add("CREATED_AT TIMESTAMP WITH TIME ZONE NOT NULL");
-      columns.add("UPDATED_AT TIMESTAMP WITH TIME ZONE NOT NULL");
+      columns.add(Entity.CREATED_AT + " TIMESTAMP WITH TIME ZONE NOT NULL");
+      columns.add(Entity.UPDATED_AT + " TIMESTAMP WITH TIME ZONE NOT NULL");
     }
-    return String.join(",\n  ", columns);
+    return columns;
   }
 
   private String idSql() {
-    return switch (entity.id().strategy()) {
-      case IDENTITY -> "BIGINT GENERATED BY DEFAULT AS IDENTITY";
-      case SEQUENCE -> "BIGINT";
-      case UUID -> "UUID";
-    };
+    String type = FieldModel.sqlType(entity.id().type());
+    return entity.id().strategy() == IdStrategy.IDENTITY
+        ? type + " GENERATED BY DEFAULT AS IDENTITY"
+        : type;
   }
 
-  // Text.
+  // Imports.
 
-  private SortedSet<String> typeImports() {
+  /** The import of the identifier's type, if it needs one. */
+  private SortedSet<String> idImports() {
     SortedSet<String> imports = new TreeSet<>();
     if (entity.id().type() == IdType.UUID) {
       imports.add("java.util.UUID");
     }
-    for (Field field : entity.fields()) {
-      switch (field.type()) {
+    return imports;
+  }
+
+  /** The imports of the identifier's type and of the fields' types. */
+  private SortedSet<String> typeImports() {
+    SortedSet<String> imports = idImports();
+    for (FieldModel field : fields) {
+      switch (field.field().type()) {
         case BIG_DECIMAL -> imports.add("java.math.BigDecimal");
         case LOCAL_DATE -> imports.add("java.time.LocalDate");
         case LOCAL_DATE_TIME -> imports.add("java.time.LocalDateTime");
@@ -522,181 +356,23 @@ public final class EntityModel {
     return imports;
   }
 
+  /** The imports of a list of the entities: a page of them, or all of them. */
+  private void listImports(SortedSet<String> imports) {
+    if (paginated()) {
+      imports.add("org.springframework.data.domain.Page");
+      imports.add("org.springframework.data.domain.Pageable");
+    } else {
+      imports.add("java.util.List");
+    }
+  }
+
   /** The import statements, and a blank line after them; nothing when there are none. */
-  private static String imports(Collection<String> imports) {
+  private static String imports(SortedSet<String> imports) {
     if (imports.isEmpty()) {
       return "";
     }
     StringBuilder text = new StringBuilder();
     imports.forEach(imported -> text.append("import ").append(imported).append(";\n"));
     return text.append('\n').toString();
-  }
-
-  /** The lines, each indented, each ended. */
-  private static String lines(List<String> lines, String indent) {
-    StringBuilder text = new StringBuilder();
-    lines.forEach(line -> text.append(indent).append(line).append('\n'));
-    return text.toString();
-  }
-
-  /** The blocks of lines, indented, a blank line between them, without a final line end. */
-  private static String blocks(List<List<String>> blocks, String indent) {
-    List<String> texts = new ArrayList<>();
-    blocks.forEach(block -> texts.add(lines(block, indent).stripTrailing()));
-    return String.join("\n\n", texts);
-  }
-
-  /** A field as the templates see it. */
-  record FieldModel(Field field) {
-
-    String name() {
-      return field.name();
-    }
-
-    String javaType() {
-      return field.type().toString();
-    }
-
-    boolean nullable() {
-      return field.nullable();
-    }
-
-    Integer length() {
-      return field.length();
-    }
-
-    /** The name with its first letter in upper case, for the accessors. */
-    String property() {
-      return Character.toUpperCase(field.name().charAt(0)) + field.name().substring(1);
-    }
-
-    /** The JPA annotation of the column. */
-    String columnAnnotation() {
-      StringBuilder column = new StringBuilder("@Column(name = \"" + field.column() + "\"");
-      if (!field.nullable()) {
-        column.append(", nullable = false");
-      }
-      if (field.unique()) {
-        column.append(", unique = true");
-      }
-      if (field.length() != null) {
-        column.append(", length = ").append(field.length());
-      }
-      if (field.precision() != null) {
-        column.append(", precision = ").append(field.precision());
-      }
-      if (field.scale() != null) {
-        column.append(", scale = ").append(field.scale());
-      }
-      return column.append(")").toString();
-    }
-
-    /** The validation annotations of the DTO's component, in front of its type. */
-    String validation() {
-      StringBuilder validation = new StringBuilder();
-      if (!field.nullable()) {
-        validation.append("@NotNull ");
-      }
-      if (field.length() != null) {
-        validation.append("@Size(max = ").append(field.length()).append(") ");
-      }
-      return validation.toString();
-    }
-
-    /** The definition of the column in SQL. */
-    String sql() {
-      StringBuilder sql = new StringBuilder(field.column() + " " + sqlType());
-      if (!field.nullable()) {
-        sql.append(" NOT NULL");
-      }
-      if (field.unique()) {
-        sql.append(" UNIQUE");
-      }
-      return sql.toString();
-    }
-
-    private String sqlType() {
-      return switch (field.type()) {
-        case STRING -> "VARCHAR(" + (field.length() == null ? 255 : field.length()) + ")";
-        case INTEGER -> "INTEGER";
-        case LONG -> "BIGINT";
-        case BIG_DECIMAL ->
-            field.precision() == null
-                ? "NUMERIC"
-                : "NUMERIC("
-                    + field.precision()
-                    + ", "
-                    + (field.scale() == null ? 0 : field.scale())
-                    + ")";
-        case BOOLEAN -> "BOOLEAN";
-        case LOCAL_DATE -> "DATE";
-        case LOCAL_DATE_TIME -> "TIMESTAMP";
-        case INSTANT -> "TIMESTAMP WITH TIME ZONE";
-        case UUID -> "UUID";
-      };
-    }
-  }
-
-  /** A relation as the templates see it, with its target. */
-  record RelationModel(Relation relation, EntityModel target) {
-
-    String field() {
-      return relation.field();
-    }
-
-    boolean nullable() {
-      return relation.nullable();
-    }
-
-    String property() {
-      return Character.toUpperCase(relation.field().charAt(0)) + relation.field().substring(1);
-    }
-
-    /** The field of the DTO that holds the identifier of the target: {@code depotId}. */
-    String idField() {
-      String id = target.idField();
-      return relation.field() + Character.toUpperCase(id.charAt(0)) + id.substring(1);
-    }
-
-    /** The JPA annotation of the relation's kind. */
-    String annotation() {
-      return relation.kind() == RelationKind.MANY_TO_ONE ? "ManyToOne" : "OneToOne";
-    }
-
-    /** The JPA annotations of the relation, one per line. */
-    List<String> annotations() {
-      boolean one = relation.kind() == RelationKind.ONE_TO_ONE;
-      return List.of(
-          "@"
-              + annotation()
-              + "(fetch = FetchType.LAZY"
-              + (relation.nullable() ? "" : ", optional = false")
-              + ")",
-          "@JoinColumn(name = \""
-              + relation.column()
-              + "\""
-              + (relation.nullable() ? "" : ", nullable = false")
-              + (one ? ", unique = true" : "")
-              + ")");
-    }
-
-    /** The validation annotation of the DTO's component, in front of its type. */
-    String validation() {
-      return relation.nullable() ? "" : "@NotNull ";
-    }
-
-    /** The definition of the column in SQL, with its foreign key. */
-    String sql() {
-      return relation.column()
-          + " "
-          + (target.entity().id().type() == IdType.UUID ? "UUID" : "BIGINT")
-          + (relation.nullable() ? "" : " NOT NULL")
-          + (relation.kind() == RelationKind.ONE_TO_ONE ? " UNIQUE" : "")
-          + " REFERENCES "
-          + target.table()
-          + " ("
-          + target.idColumn()
-          + ")";
-    }
   }
 }

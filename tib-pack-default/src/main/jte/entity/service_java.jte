@@ -10,13 +10,31 @@ public class ${entity.name()}Service {
 
   private final ${entity.name()}Repository ${entity.plural()};
   private final ${entity.name()}Mapper mapper;
-${entity.serviceFields()}
-  public ${entity.name()}Service(${entity.name()}Repository ${entity.plural()}, ${entity.name()}Mapper mapper${entity.serviceParameters()}) {
+  @for(var target : entity.targets())
+  private final ${target.name()}Repository ${target.plural()};
+  @endfor<%-- keeps the blank line below --%>
+
+  public ${entity.name()}Service(${entity.name()}Repository ${entity.plural()}, ${entity.name()}Mapper mapper@for(var target : entity.targets()), ${target.name()}Repository ${target.plural()}@endfor) {
     this.${entity.plural()} = ${entity.plural()};
     this.mapper = mapper;
-${entity.serviceAssignments()}  }
+    @for(var target : entity.targets())
+    this.${target.plural()} = ${target.plural()};
+    @endfor
+  }
 
-${entity.serviceList()}
+  @if(entity.paginated())
+  @Transactional(readOnly = true)
+  public Page<${entity.name()}Dto> list(Pageable pageable) {
+    return ${entity.plural()}.findAll(pageable).map(mapper::toDto);
+  }
+
+  @else
+  @Transactional(readOnly = true)
+  public List<${entity.name()}Dto> list() {
+    return ${entity.plural()}.findAll().stream().map(mapper::toDto).toList();
+  }
+
+  @endif
   @Transactional(readOnly = true)
   public ${entity.name()}Dto get(${entity.idType()} id) {
     return mapper.toDto(find(id));
@@ -46,5 +64,8 @@ ${entity.serviceList()}
 
   private void apply(${entity.name()}Dto dto, ${entity.name()} ${entity.variable()}) {
     mapper.update(dto, ${entity.variable()});
-${entity.serviceRelations()}  }
+    @for(var relation : entity.relations())
+    ${entity.variable()}.set${relation.property()}(dto.${relation.idField()}() == null ? null : ${relation.target().plural()}.getReferenceById(dto.${relation.idField()}()));
+    @endfor
+  }
 }
