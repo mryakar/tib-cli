@@ -49,7 +49,7 @@ tasks.test { systemProperty("tib.version", projectVersion) }
 
 // Packaging. jpackage builds the installer of this platform (.deb on Linux, .msi on Windows) and
 // an application image that the portable zip wraps; each embeds a runtime of JDK 25, trimmed to
-// the modules the application uses. The code still runs on Java 21 and later.
+// the modules the application uses.
 val packagingJdk = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
 val windows = System.getProperty("os.name").startsWith("Windows")
 val launcherName = "tib"
@@ -106,9 +106,8 @@ val jpackageAppImage =
   }
 
 // The image that the packages ship: jpackage's, with the script that builds the start-up cache,
-// without the runtime's commands other than java, and, on Linux, without the libraries of
-// java.desktop that would make the package depend on X11, ALSA and FreeType. Spring needs
-// java.beans from that module, nothing that calls those libraries.
+// without the runtime's commands other than java and, on Linux, without the java.desktop libraries
+// that need X11, ALSA and FreeType.
 val shippedImage =
   tasks.register<Sync>("shippedImage") {
     description = "Prepares the application image that the packages ship."

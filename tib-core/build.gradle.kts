@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// The engine: the intermediate representation, the input and generator contracts, the virtual
+// The engine: the spec and its JSON Schema, the DDL reader, the pack and generator contracts, the
 // file tree and the state file. It has no dependency on Spring.
 plugins { id("tib.java-conventions") }
 
-description = "tib engine: model, generator contracts, virtual file tree and state"
+description = "tib engine: spec, DDL reader, pack contracts, file tree and state"
 
 dependencies {
   implementation(platform(libs.jackson.bom))
