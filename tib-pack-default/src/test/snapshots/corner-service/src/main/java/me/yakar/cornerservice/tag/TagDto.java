@@ -4,7 +4,10 @@ package me.yakar.cornerservice.tag;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/** A tag as the API shows and takes it; a relation is the identifier of its target. */
+/**
+ * A tag as the API shows and takes it; a relation is the identifier of its target.
+ * The identifier is read only; the service ignores it.
+ */
 public record TagDto(
     Long id,
     @Size(max = 255) String label,

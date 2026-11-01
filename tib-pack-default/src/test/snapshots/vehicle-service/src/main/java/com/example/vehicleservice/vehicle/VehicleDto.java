@@ -7,7 +7,10 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-/** A vehicle as the API shows and takes it; a relation is the identifier of its target. */
+/**
+ * A vehicle as the API shows and takes it; a relation is the identifier of its target.
+ * The identifier and the audit times are read only; the service ignores them.
+ */
 public record VehicleDto(
     Long id,
     @NotNull @Size(max = 16) String plateNumber,
