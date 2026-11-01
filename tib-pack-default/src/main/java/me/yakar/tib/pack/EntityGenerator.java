@@ -38,7 +38,10 @@ final class EntityGenerator implements Generator {
 
   static final String MIGRATIONS = "src/main/resources/db/migration";
 
-  private static final Pattern VERSION = Pattern.compile("/V(\\d+)__");
+  /**
+   * A versioned migration, at any depth: the major part of its version, as in V2__, V2.1__, V2_1__.
+   */
+  private static final Pattern VERSION = Pattern.compile("/V(\\d+)(?:[._]\\d+)*__");
 
   @Override
   public void generate(Project project, Tree tree) {
@@ -67,17 +70,20 @@ final class EntityGenerator implements Generator {
     tree.once(migration(tree, entity), render("entity/migration_sql.jte", entity));
   }
 
-  /** The migration that creates the table: the one already there, or the next one. */
+  /**
+   * The migration that creates the table: the one already there, or the next major version after
+   * the versioned migrations there.
+   */
   private static String migration(Tree tree, EntityModel entity) {
     String suffix = "__create_" + entity.table().toLowerCase(Locale.ROOT) + ".sql";
-    int latest = 0;
+    long latest = 0;
     for (String migration : tree.list(MIGRATIONS)) {
       if (migration.endsWith(suffix)) {
         return migration;
       }
       Matcher version = VERSION.matcher(migration);
       if (version.find()) {
-        latest = Math.max(latest, Integer.parseInt(version.group(1)));
+        latest = Math.max(latest, Long.parseLong(version.group(1)));
       }
     }
     return MIGRATIONS + "/V" + (latest + 1) + suffix;
