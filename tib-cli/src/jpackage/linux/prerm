@@ -1,5 +1,6 @@
 #!/bin/sh
-# prerm script for APPLICATION_PACKAGE: jpackage's own, plus the removal of the link on the PATH.
+# prerm script for APPLICATION_PACKAGE, from OpenJDK's jdk.jpackage resources (JDK 25), with two
+# additions: the removal of the link on the PATH and of the start-up cache.
 #
 # see: dh_installdeb(1)
 

@@ -1,5 +1,6 @@
 #!/bin/sh
-# postinst script for APPLICATION_PACKAGE: jpackage's own, plus a link that puts tib on the PATH.
+# postinst script for APPLICATION_PACKAGE, from OpenJDK's jdk.jpackage resources (JDK 25), with
+# two additions: a link that puts tib on the PATH, and the build of the start-up cache.
 #
 # see: dh_installdeb(1)
 
