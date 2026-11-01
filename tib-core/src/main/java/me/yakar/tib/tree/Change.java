@@ -15,23 +15,14 @@
  */
 package me.yakar.tib.tree;
 
-import java.util.Optional;
-
-/** A change that a run of tib stages for one file: its content before and after. */
-public record Change(String path, Optional<String> before, String after, Owner owner) {
-
-  /** Whether the file is created or changed. */
-  public enum Kind {
-    CREATED,
-    CHANGED
-  }
-
-  public Kind kind() {
-    return before.isPresent() ? Kind.CHANGED : Kind.CREATED;
-  }
+/**
+ * A change that a run of tib stages for one file: its content before, null when the file is new,
+ * and after.
+ */
+public record Change(String path, String before, String after, Owner owner) {
 
   /** The change as a unified diff. */
   String diff() {
-    return UnifiedDiff.of(path, before.orElse(null), after);
+    return UnifiedDiff.of(path, before, after);
   }
 }

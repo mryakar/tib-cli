@@ -15,11 +15,14 @@
  */
 package me.yakar.tib.tree;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.SortedMap;
@@ -31,8 +34,8 @@ import java.util.function.UnaryOperator;
 /**
  * The files of a project as a run of tib sees them: the directory on disk, with the changes of the
  * run staged on top. Nothing reaches the disk until {@link #apply()}, so a dry run reads the same
- * tree, prints its {@link #diff()} and stops. A change that leaves a file as it is, is no change: a
- * second run of the same generation stages nothing.
+ * tree, prints its {@link #diff()} and stops. A change that leaves a file as it is stages nothing,
+ * so a second run of the same generation stages nothing.
  */
 public final class Tree {
 
@@ -59,33 +62,41 @@ public final class Tree {
     return change != null ? Optional.of(change.after()) : onDisk(key);
   }
 
+  /** Whether the file is there, as the run sees it; it is not read. */
   public boolean exists(String path) {
-    return read(path).isPresent();
+    String key = key(path);
+    return changes.containsKey(key) || Files.isRegularFile(root.resolve(key));
   }
 
-  /** The paths of the files right under the directory, on disk or staged, in order. */
+  /** The paths of the files under the directory, at any depth, on disk or staged, in order. */
   public List<String> list(String directory) {
     String prefix = key(directory) + "/";
     SortedSet<String> paths = new TreeSet<>();
-    Path onDisk = root.resolve(prefix);
-    // Through File: a directory that is not there, or cannot be read, has no files, no exception.
-    for (String name : Objects.requireNonNullElse(onDisk.toFile().list(), new String[0])) {
-      if (Files.isRegularFile(onDisk.resolve(name))) {
-        paths.add(prefix + name);
-      }
-    }
-    changes.keySet().stream()
-        .filter(path -> path.startsWith(prefix) && path.indexOf('/', prefix.length()) < 0)
-        .forEach(paths::add);
+    list(root.resolve(prefix).toFile(), prefix, paths);
+    changes.keySet().stream().filter(path -> path.startsWith(prefix)).forEach(paths::add);
     return List.copyOf(paths);
   }
 
-  /** Writes a file of the generator's, whatever is there. */
+  /**
+   * Adds the files under the directory on disk. Through File: a directory that is not there, or
+   * cannot be read, has no files, and no exception.
+   */
+  private static void list(File directory, String prefix, SortedSet<String> paths) {
+    for (File file : Objects.requireNonNullElse(directory.listFiles(), new File[0])) {
+      if (file.isFile()) {
+        paths.add(prefix + file.getName());
+      } else {
+        list(file, prefix + file.getName() + "/", paths);
+      }
+    }
+  }
+
+  /** Stages a file that the generator owns, whatever is there. */
   public void own(String path, String content) {
     stage(key(path), content, Owner.GENERATOR);
   }
 
-  /** Writes a file of the developer's, only when there is none. */
+  /** Stages a file that the developer owns, only when there is none. */
   public void once(String path, String content) {
     String key = key(path);
     if (!exists(key)) {
@@ -93,7 +104,7 @@ public final class Tree {
     }
   }
 
-  /** Edits a shared file in place; it has to be there. */
+  /** Stages an edit of a shared file; the file has to be there. */
   public void edit(String path, UnaryOperator<String> edit) {
     String key = key(path);
     String content = read(key).orElseThrow(() -> new TreeException(key + " is not there to edit"));
@@ -113,31 +124,45 @@ public final class Tree {
   }
 
   /**
-   * Writes the staged changes to disk, each file in one step: a file is either the old one or the
-   * new one, never half written. Afterwards nothing is staged.
+   * Writes the staged changes to disk. Every file is first written next to its target, and then
+   * moved over it in one step, so a file is either the old one or the new one, never half written;
+   * when a write fails, the files written next to their targets are removed. Afterwards nothing is
+   * staged.
    */
   public void apply() {
-    for (Change change : changes.values()) {
-      Path file = root.resolve(change.path());
-      // What is written when it fails: the directory of the file, then the file.
-      Path target = file.getParent();
-      try {
+    // The files written next to their targets, by target, in the order of the paths.
+    Map<Path, Path> staged = new LinkedHashMap<>();
+    // What is written when it fails: the directory of a file, the file, or the file it replaces.
+    Path target = root;
+    try {
+      for (Change change : changes.values()) {
+        Path file = root.resolve(change.path());
+        target = file.getParent();
         Files.createDirectories(target);
         target = file;
         Path staging = Files.createTempFile(file.getParent(), ".tib-", ".tmp");
+        staged.put(file, staging);
         Files.writeString(staging, change.after());
-        Files.move(
-            staging, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
-      } catch (IOException e) {
-        throw new TreeException("write", target, e);
       }
+      for (Map.Entry<Path, Path> entry : staged.entrySet()) {
+        target = entry.getKey();
+        Files.move(
+            entry.getValue(),
+            target,
+            StandardCopyOption.ATOMIC_MOVE,
+            StandardCopyOption.REPLACE_EXISTING);
+      }
+    } catch (IOException e) {
+      // Through File: a file that was moved already, or cannot be removed, is no exception.
+      staged.values().forEach(staging -> staging.toFile().delete());
+      throw new TreeException("write", target, e);
     }
     changes.clear();
   }
 
   private void stage(String key, String after, Owner owner) {
-    Optional<String> before = onDisk(key);
-    if (before.isPresent() && before.get().equals(after)) {
+    String before = onDisk(key).orElse(null);
+    if (after.equals(before)) {
       changes.remove(key);
     } else {
       changes.put(key, new Change(key, before, after, owner));
