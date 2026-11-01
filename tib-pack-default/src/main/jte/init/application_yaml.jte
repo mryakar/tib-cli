@@ -19,5 +19,3 @@ spring:
   mvc:
     problemdetails:
       enabled: true
-  flyway:
-    enabled: true
