@@ -2,10 +2,11 @@
 package me.yakar.cornerservice.tag;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /** A tag as the API shows and takes it; a relation is the identifier of its target. */
 public record TagDto(
     Long id,
-    String label,
+    @Size(max = 255) String label,
     @NotNull Long branchId,
     Long otherId) {}
