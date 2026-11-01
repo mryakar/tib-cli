@@ -17,9 +17,10 @@ package me.yakar.tib.pack
 
 import java.nio.file.Files
 import java.nio.file.Path
+import me.yakar.tib.ddl.DdlReader
+import me.yakar.tib.generate.Generation
 import me.yakar.tib.generate.Pack
 import me.yakar.tib.generate.Packs
-import me.yakar.tib.ddl.DdlReader
 import me.yakar.tib.generate.Project
 import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.SpecReader
@@ -33,9 +34,29 @@ class DefaultPackSpec extends Specification {
 
   static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
   static final Path SNAPSHOTS = Path.of(System.getProperty('tib.snapshots'))
+  static final Path ACTUAL = Path.of(System.getProperty('tib.snapshots.actual'))
+
+  /** The example service of the documentation. */
+  static final Spec VEHICLES = SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
+
+  /** The corners of the entity layer that the example service does not reach. */
+  static final Spec CORNERS = SpecReader.parse(DefaultPackSpec.getResource('corner-service.yaml').text)
+
+  /** The first line of a generated file, without its comment marks, starts with one of these. */
+  static final Map<Owner, List<String>> HEADERS = [
+    (Owner.GENERATOR): ['Written by tib on every run. Do not edit: your changes would be lost.',],
+    (Owner.DEVELOPER): [
+      'Written by tib when the service was created; it is yours from then on.',
+      'Written by tib when the entity was created; it is yours from then on.',
+      'Written by tib when the entity was created. A change of the schema is a new migration.',
+    ],
+  ]
 
   @TempDir
   Path dir
+
+  @TempDir
+  Path other
 
   def "the pack says what it is, and the engine finds it"() {
     given:
@@ -44,9 +65,6 @@ class DefaultPackSpec extends Specification {
     expect:
     pack.name() == 'default'
     pack.version() == '0.1.0'
-    pack.bootVersion() == '3.5.16'
-    pack.javaVersion() == '21'
-    pack.postgresVersion() == '17'
     Packs.find('default') instanceof DefaultPack
     Packs.find('default@0.1.0') instanceof DefaultPack
   }
@@ -64,43 +82,10 @@ class DefaultPackSpec extends Specification {
   }
 
   def "generates the example service of the documentation as the snapshot says"() {
-    given:
-    Project project = new Project(SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml')))
-    Tree tree = Tree.at(dir)
-    Pack pack = new DefaultPack()
-
     when:
-    pack.init().generate(project, tree)
-    pack.entity().generate(project, tree)
-    List<Change> changes = tree.changes()
+    List<Change> changes = generate(VEHICLES, dir).changes()
 
     then:
-    changes*.path() == [
-      '.gitignore',
-      'AGENTS.md',
-      'build.gradle.kts',
-      'settings.gradle.kts',
-      'src/main/java/com/example/vehicleservice/VehicleServiceApplication.java',
-      'src/main/java/com/example/vehicleservice/depot/Depot.java',
-      'src/main/java/com/example/vehicleservice/depot/DepotController.java',
-      'src/main/java/com/example/vehicleservice/depot/DepotDto.java',
-      'src/main/java/com/example/vehicleservice/depot/DepotGenerated.java',
-      'src/main/java/com/example/vehicleservice/depot/DepotMapper.java',
-      'src/main/java/com/example/vehicleservice/depot/DepotRepository.java',
-      'src/main/java/com/example/vehicleservice/depot/DepotService.java',
-      'src/main/java/com/example/vehicleservice/vehicle/Vehicle.java',
-      'src/main/java/com/example/vehicleservice/vehicle/VehicleController.java',
-      'src/main/java/com/example/vehicleservice/vehicle/VehicleDto.java',
-      'src/main/java/com/example/vehicleservice/vehicle/VehicleGenerated.java',
-      'src/main/java/com/example/vehicleservice/vehicle/VehicleMapper.java',
-      'src/main/java/com/example/vehicleservice/vehicle/VehicleRepository.java',
-      'src/main/java/com/example/vehicleservice/vehicle/VehicleService.java',
-      'src/main/resources/application.yaml',
-      'src/main/resources/db/migration/V1__create_depots.sql',
-      'src/main/resources/db/migration/V2__create_vehicle.sql',
-      'src/test/java/com/example/vehicleservice/TestcontainersConfiguration.java',
-      'src/test/java/com/example/vehicleservice/VehicleServiceApplicationTests.java',
-    ]
     changes.findAll { it.owner() == Owner.GENERATOR }*.path()*.replaceAll('.*/', '') == [
       'AGENTS.md',
       'DepotDto.java',
@@ -116,56 +101,67 @@ class DefaultPackSpec extends Specification {
   }
 
   def "generates the corners of the entity layer as the snapshot says"() {
-    given:
-    Project project = new Project(SpecReader.read(SNAPSHOTS.resolve('corner-service/spec.yaml')))
+    given: 'a migration by hand, and a repeatable one'
     Tree tree = Tree.at(dir)
-    Files.createDirectories(dir.resolve('src/main/resources/db/migration'))
-    Files.writeString(dir.resolve('src/main/resources/db/migration/V3__by_hand.sql'), '-- mine\n')
-    Files.writeString(dir.resolve('src/main/resources/db/migration/R__views.sql'), '-- repeatable\n')
+    Files.createDirectories(dir.resolve(EntityGenerator.MIGRATIONS))
+    Files.writeString(dir.resolve(EntityGenerator.MIGRATIONS).resolve('V3__by_hand.sql'), '-- mine\n')
+    Files.writeString(dir.resolve(EntityGenerator.MIGRATIONS).resolve('R__views.sql'), '-- repeatable\n')
 
     when:
-    new DefaultPack().entity().generate(project, tree)
-    List<Change> changes = tree.changes()
+    new DefaultPack().entity().generate(new Project(CORNERS), tree)
 
-    then: 'Branch comes first, Tag refers to it; the migrations continue after the one by hand'
-    changes*.path().findAll { it.endsWith('.sql') } == [
-      'src/main/resources/db/migration/V4__create_branch.sql',
-      'src/main/resources/db/migration/V5__create_note.sql',
-      'src/main/resources/db/migration/V6__create_tag.sql',
-      'src/main/resources/db/migration/V7__create_plain.sql',
-    ]
-    changes*.path().findAll {
-      it.contains('/note/')
-    }*.replaceAll('.*/', '') == ['Note.java', 'NoteGenerated.java', 'NoteRepository.java']
-    changes*.path().findAll {
-      it.contains('/plain/')
-    }*.replaceAll('.*/', '') == ['Plain.java', 'PlainDto.java', 'PlainGenerated.java', 'PlainRepository.java']
-    snapshot('corner-service', changes)
+    then:
+    snapshot('corner-service', tree.changes())
+  }
+
+  def "the first line of every generated file states its owner: #name"() {
+    when:
+    List<Change> changes = generate(spec, dir).changes()
+
+    then:
+    changes.each { change ->
+      String header = change.after().readLines()[0].replaceFirst(/^(\/\/|#|--|<!--) /, '')
+      assert HEADERS[change.owner()].any { header.startsWith(it) } : change.path()
+    }
+
+    where:
+    name              | spec
+    'vehicle-service' | VEHICLES
+    'corner-service'  | CORNERS
+  }
+
+  def "the same spec gives the same files, the state included: #name"() {
+    when:
+    Tree first = Tree.at(dir)
+    Tree second = Tree.at(other)
+    [first, second].each { tree ->
+      Generation.run(new Project(spec), new DefaultPack(), { it.init() }, '0.0.0', tree)
+      Generation.run(new Project(spec), new DefaultPack(), { it.entity() }, '0.0.0', tree)
+    }
+
+    then:
+    first.changes()*.path().contains('.tib/state.yaml')
+    first.changes()*.path() == second.changes()*.path()
+    first.changes()*.after() == second.changes()*.after()
+
+    where:
+    name              | spec
+    'vehicle-service' | VEHICLES
+    'corner-service'  | CORNERS
   }
 
   def "a second run on the generated service changes nothing"() {
     given:
-    Project project = new Project(SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml')))
-    Tree tree = Tree.at(dir)
-    Pack pack = new DefaultPack()
-    pack.init().generate(project, tree)
-    pack.entity().generate(project, tree)
-    tree.apply()
+    generate(VEHICLES, dir).apply()
 
-    when:
-    Tree again = Tree.at(dir)
-    pack.init().generate(project, again)
-    pack.entity().generate(project, again)
-
-    then:
-    again.changes().empty
+    expect:
+    generate(VEHICLES, dir).changes().empty
   }
 
   def "the migrations of the example service read back into its spec"() {
     given:
-    Spec spec = SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
     Tree tree = Tree.at(dir)
-    new DefaultPack().entity().generate(new Project(spec), tree)
+    new DefaultPack().entity().generate(new Project(VEHICLES), tree)
 
     when:
     String migrations = tree.list(EntityGenerator.MIGRATIONS).collect {
@@ -173,40 +169,40 @@ class DefaultPackSpec extends Specification {
     }.join('\n')
 
     then:
-    DdlReader.parse(migrations, spec) == spec
+    DdlReader.parse(migrations, VEHICLES) == VEHICLES
   }
 
-  def "entities come after the entities they refer to"() {
-    given:
-    Project project = new Project(SpecReader.parse('''\
-tib: 1
-service: s
-entities:
-  - name: A
-    relations:
-      - { kind: manyToOne, target: B }
-  - name: B
-  - name: C
-    relations:
-      - { kind: manyToOne, target: B }
-      - { kind: manyToOne, target: B, field: other }
-'''))
-
-    expect:
-    EntityGenerator.ordered(project.spec().entities())*.name() == ['B', 'A', 'C']
+  /** The service of the spec with its entities, staged in a tree at the directory. */
+  private static Tree generate(Spec spec, Path dir) {
+    Project project = new Project(spec)
+    Tree tree = Tree.at(dir)
+    Pack pack = new DefaultPack()
+    pack.init().generate(project, tree)
+    pack.entity().generate(project, tree)
+    return tree
   }
 
-  /** Every file is as the snapshot says; if not, the new one is under build/snapshots, to be copied on purpose. */
+  /**
+   * The files are the ones of the snapshot, each as the snapshot says. What was generated is
+   * written where the build asks for it, to be copied over the snapshot on purpose.
+   */
   private static void snapshot(String name, List<Change> changes) {
+    Path actual = ACTUAL.resolve(name)
+    actual.toFile().deleteDir()
     changes.each { change ->
-      Path actual = Path.of('build', 'snapshots', name, change.path())
-      Files.createDirectories(actual.parent)
-      Files.writeString(actual, change.after())
+      Path file = actual.resolve(change.path())
+      Files.createDirectories(file.parent)
+      Files.writeString(file, change.after())
     }
+    Path expected = SNAPSHOTS.resolve(name)
+    List<String> files = Files.walk(expected).withCloseable { paths ->
+      paths.filter { Files.isRegularFile(it) }.collect {
+        expected.relativize(it).toString().replace('\\', '/')
+      }.sort()
+    }
+    assert files == changes*.path()
     changes.each { change ->
-      Path expected = SNAPSHOTS.resolve(name).resolve(change.path())
-      assert Files.exists(expected) : "no snapshot for ${change.path()}"
-      assert change.after() == Files.readString(expected)
+      assert change.after() == Files.readString(expected.resolve(change.path())) : change.path()
     }
   }
 }
