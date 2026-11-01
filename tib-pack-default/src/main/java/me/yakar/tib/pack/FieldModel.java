@@ -73,7 +73,7 @@ public record FieldModel(Field field) {
   }
 
   /** The validation annotations of the DTO's component, in front of its type. */
-  public String validation() {
+  String validation() {
     StringBuilder validation = new StringBuilder();
     if (!field.nullable()) {
       validation.append("@NotNull ");
@@ -85,7 +85,7 @@ public record FieldModel(Field field) {
   }
 
   /** The definition of the column in SQL. */
-  public String sql() {
+  String sql() {
     StringBuilder sql =
         new StringBuilder(
             field.column()
@@ -106,7 +106,7 @@ public record FieldModel(Field field) {
   }
 
   /** The SQL type of a Java type. */
-  static String sqlType(FieldType type, Integer length, Integer precision, Integer scale) {
+  private static String sqlType(FieldType type, Integer length, Integer precision, Integer scale) {
     return switch (type) {
       case STRING -> "VARCHAR(" + length + ")";
       case INTEGER -> "INTEGER";
