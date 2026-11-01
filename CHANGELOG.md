@@ -13,6 +13,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Packages with their own Java runtime: a `.deb` and an `.msi` that put `tib` on the PATH, and a
   portable zip for Linux and Windows.
 - An APT repository on GitHub Pages for Debian and Ubuntu.
+- OpenPGP signatures for the files of a release and for the APT repository; the install page shows
+  the key and how to verify a download.
 - The documentation site, with the command reference generated from the commands.
 - The spec file: YAML that describes a service and its entities, and `tib schema`, which prints
   its JSON Schema for completion and validation in an editor.
