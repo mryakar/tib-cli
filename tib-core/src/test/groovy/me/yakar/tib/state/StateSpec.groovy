@@ -16,7 +16,9 @@
 package me.yakar.tib.state
 
 import me.yakar.tib.spec.Entity
+import me.yakar.tib.spec.Names
 import me.yakar.tib.spec.Spec
+import me.yakar.tib.spec.SpecException
 import me.yakar.tib.tree.Owner
 import spock.lang.Specification
 
@@ -40,5 +42,37 @@ class StateSpec extends Specification {
     yaml.contains('      type: Long\n      strategy: identity\n')
     yaml.contains('files:\n- path: AGENTS.md\n  owner: generator\n  sha256: abc\n')
     State.read(yaml) == state
+  }
+
+  def "a state without files has none"() {
+    expect:
+    State.read('spec:\n  tib: 1\n  service: s\n').files() == []
+  }
+
+  def "a state that tib cannot read is refused: '#yaml'"() {
+    when:
+    State.read(yaml)
+
+    then:
+    StateException e = thrown()
+    e.message.startsWith(message)
+
+    where:
+    yaml                                  | message
+    '['                                   | '.tib/state.yaml: '
+    'tib: 1\nspec:\n  tib: 1\n  service: s' | '.tib/state.yaml: '
+    'other: 1\n'                          | '.tib/state.yaml: '
+    ''                                    | '.tib/state.yaml: '
+    '---\n'                                | '.tib/state.yaml: spec: required'
+    'files: []\n'                         | '.tib/state.yaml: spec: required'
+  }
+
+  def "the spec in the state is checked as a spec"() {
+    when:
+    State.read('spec:\n  tib: 1\n  service: Vehicle Service\n')
+
+    then:
+    SpecException e = thrown()
+    e.problems() == ["service: 'Vehicle Service' does not match ${Names.SERVICE}"]
   }
 }

@@ -16,7 +16,6 @@
 package me.yakar.tib.tree;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -118,17 +117,20 @@ public final class Tree {
    * new one, never half written. Afterwards nothing is staged.
    */
   public void apply() {
-    try {
-      for (Change change : changes.values()) {
-        Path file = root.resolve(change.path());
-        Files.createDirectories(file.getParent());
+    for (Change change : changes.values()) {
+      Path file = root.resolve(change.path());
+      // What is written when it fails: the directory of the file, then the file.
+      Path target = file.getParent();
+      try {
+        Files.createDirectories(target);
+        target = file;
         Path staging = Files.createTempFile(file.getParent(), ".tib-", ".tmp");
         Files.writeString(staging, change.after());
         Files.move(
             staging, file, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+      } catch (IOException e) {
+        throw new TreeException("write", target, e);
       }
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
     }
     changes.clear();
   }
@@ -150,7 +152,7 @@ public final class Tree {
     try {
       return Optional.of(Files.readString(file));
     } catch (IOException e) {
-      throw new UncheckedIOException(e);
+      throw new TreeException("read", file, e);
     }
   }
 

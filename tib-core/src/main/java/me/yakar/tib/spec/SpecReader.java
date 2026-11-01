@@ -16,13 +16,13 @@
 package me.yakar.tib.spec;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
 import tools.jackson.databind.DatabindException;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.cfg.EnumFeature;
@@ -43,22 +43,28 @@ public final class SpecReader {
 
   /** Reads the spec file. */
   public static Spec read(Path file) {
+    String yaml;
     try {
-      return read(Files.readString(file));
+      yaml = Files.readString(file);
     } catch (IOException e) {
-      throw new UncheckedIOException(e);
+      throw new SpecException(file, e);
     }
+    return read(yaml);
   }
 
   /** Reads a spec from its YAML. */
   public static Spec read(String yaml) {
     Spec spec;
-    try {
-      spec = YAML.readValue(yaml, Spec.class);
+    // A file without a document has no first token, and one with an empty document is null.
+    try (JsonParser parser = YAML.createParser(yaml)) {
+      spec = parser.nextToken() == null ? null : YAML.readValue(parser, Spec.class);
     } catch (DatabindException e) {
       throw new SpecException(path(e) + ": " + reason(e));
     } catch (JacksonException e) {
       throw new SpecException("not YAML: " + e.getOriginalMessage());
+    }
+    if (spec == null) {
+      throw new SpecException("spec: the file is empty");
     }
     return check(spec);
   }

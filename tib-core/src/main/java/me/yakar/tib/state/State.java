@@ -17,7 +17,9 @@ package me.yakar.tib.state;
 
 import java.util.List;
 import me.yakar.tib.spec.Spec;
+import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.tree.Owner;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.cfg.EnumFeature;
 import tools.jackson.dataformat.yaml.YAMLMapper;
@@ -52,7 +54,7 @@ public record State(Tib tib, PackRef pack, Spec spec, List<File> files) {
   public record File(String path, Owner owner, String sha256) {}
 
   public State {
-    files = List.copyOf(files);
+    files = files == null ? List.of() : List.copyOf(files);
   }
 
   /** The state as YAML. */
@@ -60,8 +62,18 @@ public record State(Tib tib, PackRef pack, Spec spec, List<File> files) {
     return YAML.writeValueAsString(this);
   }
 
-  /** The state read from its YAML. */
+  /** The state read from its YAML, with its spec checked as a spec file is. */
   public static State read(String yaml) {
-    return YAML.readValue(yaml, State.class);
+    State state;
+    try {
+      state = YAML.readValue(yaml, State.class);
+    } catch (JacksonException e) {
+      throw new StateException(PATH + ": " + e.getOriginalMessage());
+    }
+    if (state == null || state.spec() == null) {
+      throw new StateException(PATH + ": spec: required");
+    }
+    SpecReader.check(state.spec());
+    return state;
   }
 }

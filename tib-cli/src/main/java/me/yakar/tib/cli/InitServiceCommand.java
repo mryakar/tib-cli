@@ -16,20 +16,17 @@
 package me.yakar.tib.cli;
 
 import java.io.PrintWriter;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
+import me.yakar.tib.TibException;
 import me.yakar.tib.generate.Generation;
 import me.yakar.tib.generate.Pack;
-import me.yakar.tib.generate.PackException;
 import me.yakar.tib.generate.Packs;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Spec;
-import me.yakar.tib.spec.SpecException;
 import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
-import me.yakar.tib.tree.TreeException;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -103,7 +100,7 @@ public class InitServiceCommand implements Callable<Integer> {
       }
       Generation.run(project, pack, pack.init(), version.version(), tree);
       return Outcome.report(tree, dryRun, out);
-    } catch (SpecException | PackException | TreeException | UncheckedIOException e) {
+    } catch (TibException e) {
       err.println(e.getMessage());
       return 1;
     }

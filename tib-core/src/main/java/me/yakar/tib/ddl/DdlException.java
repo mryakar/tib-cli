@@ -15,32 +15,22 @@
  */
 package me.yakar.tib.ddl;
 
+import java.io.IOException;
 import java.io.Serial;
+import java.nio.file.Path;
 import java.util.List;
+import me.yakar.tib.TibException;
 
-/** The DDL has problems that keep it from being read into a spec. */
-public class DdlException extends RuntimeException {
+/** The DDL has problems that keep it from being read into a spec, or its file cannot be read. */
+public class DdlException extends TibException {
 
   @Serial private static final long serialVersionUID = 1L;
 
-  // An immutable list, which serializes; the lint cannot see that.
-  @SuppressWarnings("serial")
-  private final List<String> problems;
-
-  public DdlException(List<String> problems) {
-    super(message(problems));
-    this.problems = List.copyOf(problems);
+  DdlException(List<String> problems) {
+    super("DDL", problems);
   }
 
-  /** The problems, each with the table or the column it is about. */
-  public List<String> problems() {
-    return problems;
-  }
-
-  private static String message(List<String> problems) {
-    if (problems.size() == 1) {
-      return "the DDL has a problem: " + problems.get(0);
-    }
-    return "the DDL has " + problems.size() + " problems:\n  " + String.join("\n  ", problems);
+  DdlException(Path file, IOException cause) {
+    super("read", file, cause);
   }
 }

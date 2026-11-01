@@ -61,12 +61,13 @@ class DdlReaderSpec extends Specification {
     ]
   }
 
-  def "a file that is not there is an I/O problem"() {
+  def "a file that is not there cannot be read"() {
     when:
     DdlReader.read(dir.resolve('missing.sql'), SERVICE)
 
     then:
-    thrown(UncheckedIOException)
+    DdlException e = thrown()
+    e.message == "cannot read ${dir.resolve('missing.sql')}: no such file"
   }
 
   def "the SQL type #sql is a #type"() {

@@ -168,7 +168,8 @@ class TreeSpec extends Specification {
     Tree.at(project).read('f')
 
     then:
-    thrown(UncheckedIOException)
+    TreeException e = thrown()
+    e.message == "cannot read ${project.resolve('f')}: Input length = 1"
   }
 
   def "a file that cannot be written fails the apply"() {
@@ -181,6 +182,7 @@ class TreeSpec extends Specification {
     tree.apply()
 
     then:
-    thrown(UncheckedIOException)
+    TreeException e = thrown()
+    e.message == "cannot write ${project.resolve('f')}: already exists"
   }
 }

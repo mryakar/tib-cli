@@ -16,22 +16,18 @@
 package me.yakar.tib.cli;
 
 import java.io.PrintWriter;
-import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
-import me.yakar.tib.ddl.DdlException;
+import me.yakar.tib.TibException;
 import me.yakar.tib.ddl.DdlReader;
 import me.yakar.tib.generate.Generation;
 import me.yakar.tib.generate.Pack;
-import me.yakar.tib.generate.PackException;
 import me.yakar.tib.generate.Packs;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Spec;
-import me.yakar.tib.spec.SpecException;
 import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
-import me.yakar.tib.tree.TreeException;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
@@ -116,11 +112,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
       Pack pack = Packs.find(service.pack());
       Generation.run(project, pack, pack.entity(), version.version(), tree);
       return Outcome.report(tree, dryRun, out);
-    } catch (SpecException
-        | DdlException
-        | PackException
-        | TreeException
-        | UncheckedIOException e) {
+    } catch (TibException e) {
       err.println(e.getMessage());
       return 1;
     }
