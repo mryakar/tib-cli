@@ -79,4 +79,22 @@ class SpecSchemaSpec extends Specification {
       additionalProperties: false,
     ]
   }
+
+  def "the default of #record.simpleName.#component.name in the schema is the one the record takes"() {
+    given:
+    Object resolved = record.getDeclaredConstructor(record.recordComponents*.type as Class[])
+        .newInstance(new Object[record.recordComponents.length])
+
+    expect:
+    String.valueOf(component.accessor.invoke(resolved)) == component.getAnnotation(Doc).defaultValue()
+
+    where:
+    [record, component] << [Spec, Entity, Id, Field, Relation, Options].collectMany { type ->
+      type.recordComponents.findAll {
+        !it.getAnnotation(Doc).defaultValue().empty
+      }.collect {
+        [type, it]
+      }
+    }
+  }
 }

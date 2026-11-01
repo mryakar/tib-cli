@@ -15,7 +15,6 @@
  */
 package me.yakar.tib.spec;
 
-/** A field of an entity, with the column that holds it. */
 @Doc("A field of the entity, with the column that holds it.")
 public record Field(
     @Doc(

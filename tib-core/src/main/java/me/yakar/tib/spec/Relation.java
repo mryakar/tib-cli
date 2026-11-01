@@ -15,7 +15,6 @@
  */
 package me.yakar.tib.spec;
 
-/** A relation from an entity to another, held by a column on the declaring entity's table. */
 @Doc("A relation to another entity, held by a column of this entity's table.")
 public record Relation(
     @Doc(value = "The kind of the relation.", required = true) RelationKind kind,
