@@ -53,10 +53,8 @@ abstract class JdkModules : DefaultTask() {
   @TaskAction
   fun list() {
     val jdk = javaLauncher.get().metadata.installationPath
-    val version = javaLauncher.get().metadata.languageVersion.asInt()
-    // jdeps reads the classes of all the jars from one directory, as the class path they form.
-    // Given the jars themselves, it would treat each one that has a module descriptor as a module
-    // and stop when the descriptor requires a module it cannot find on the class path.
+    // jdeps reads the classes from one directory: given the jars, it would read each jar with a
+    // descriptor as a module.
     val classes = temporaryDir.resolve("classes")
     fileSystemOperations.delete { delete(classes) }
     fileSystemOperations.copy {
@@ -70,11 +68,11 @@ abstract class JdkModules : DefaultTask() {
     val out = ByteArrayOutputStream()
     execOperations.exec {
       executable(jdk.file("bin/jdeps").asFile)
-      args("--ignore-missing-deps", "--multi-release", version.toString())
+      args("-q", "--ignore-missing-deps")
       args("--print-module-deps", classes.absolutePath)
       standardOutput = out
     }
-    val modules = out.toString().lines().last { it.isNotBlank() }.split(',').map { it.trim() }
+    val modules = out.toString().trim().split(',')
     output.get().asFile.writeText(modules.joinToString("\n", postfix = "\n"))
   }
 }
