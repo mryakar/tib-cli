@@ -88,8 +88,7 @@ public class TibApplication implements CommandLineRunner, ExitCodeGenerator {
     // The arguments are tib's, not settings of Spring.
     application.setAddCommandLineProperties(false);
     int exitCode = SpringApplication.exit(application.run(args));
-    // Through a stream rather than an if: System.exit never returns, so the coverage tool could
-    // not see a plain call to it executed.
+    // Not an if: coverage cannot count a System.exit call, which never returns.
     IntStream.of(exitCode).filter(code -> code != 0).forEach(System::exit);
   }
 }
