@@ -109,7 +109,6 @@ val jpackageAppImage =
     // silently when there is none, such as from the portable zip before its script was run.
     StartupCacheScript.JVM_OPTIONS.forEach { options.addAll("--java-options", it) }
     options.addAll("--java-options", "-XX:AOTCache=\$APPDIR/${StartupCacheScript.CACHE}")
-    options.addAll("--java-options", "-Xlog:aot=off,cds=off")
   }
 
 // The image that the packages ship: jpackage's, with the script that builds the start-up cache,

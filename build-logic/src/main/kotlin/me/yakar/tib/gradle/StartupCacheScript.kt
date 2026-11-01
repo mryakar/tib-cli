@@ -21,24 +21,23 @@ import java.io.File
  * Writes, next to the jars of a jpackage application image, the script that builds the start-up
  * cache of the application: the AOT cache of the JDK, which the launcher loads on every run.
  *
- * The cache is bound to the class path it was built with, so the script builds it where the
- * application is installed, with the class path that the launcher's configuration names, in the
- * same order. The installers run the script when they install the application.
- *
- * The script records a training run and then assembles the cache from it, in two steps: the JDK's
- * one-step `-XX:AOTCacheOutput` relaunches the JVM through `JAVA_TOOL_OPTIONS`, which prints a
- * "Picked up" line that would end up in the output of the installation.
+ * The cache fits only the class path it was built with, so the installers run the script where they
+ * install the application, with the launcher's class path in its order. The script records a
+ * training run, then creates the cache from it.
  */
 object StartupCacheScript {
 
   /** The name of the cache file, next to the jars; the launcher names it in its options. */
   const val CACHE = "tib.aot"
 
-  /** The JVM options the launcher runs with; the cache is built with the same ones. */
-  val JVM_OPTIONS = listOf("-XX:+UseCompactObjectHeaders")
+  /**
+   * The JVM options the launcher runs with; the cache is built with the same ones. The JVM says
+   * nothing about the cache, which is missing until the script has run.
+   */
+  val JVM_OPTIONS = listOf("-XX:+UseCompactObjectHeaders", "-Xlog:aot=off,cds=off")
 
-  /** Writes the script for one platform and returns it. */
-  fun write(appDirectory: File, launcherName: String, windows: Boolean): File {
+  /** Writes the script for one platform. */
+  fun write(appDirectory: File, launcherName: String, windows: Boolean) {
     val configuration = appDirectory.resolve("$launcherName.cfg").readLines()
     val mainClass =
       configuration.single { it.startsWith("app.mainclass=") }.substringAfter('=').trim()
@@ -46,56 +45,55 @@ object StartupCacheScript {
       configuration
         .filter { it.startsWith("app.classpath=") }
         .map { it.substringAfter('=').trim().removePrefix("\$APPDIR").trimStart('/', '\\') }
-    val script =
-      if (windows) {
-        appDirectory.resolve("startup-cache.cmd").apply {
-          writeText(
-            """
-            |@echo off
-            |rem Builds the start-up cache of $launcherName next to its jars. The installer runs it;
-            |rem run it yourself after unpacking the portable zip.
-            |set "app=%~dp0"
-            |set "app=%app:~0,-1%"
-            |set "java=%app%\..\runtime\bin\java.exe"
-            |set "cp=${jars.joinToString(";") { "%app%\\$it" }}"
-            |"%java%" ${JVM_OPTIONS.joinToString(" ")} -Xlog:aot=off,cds=off ^
-            |  -XX:AOTMode=record -XX:AOTConfiguration="%app%\$CACHE.config" ^
-            |  -cp "%cp%" $mainClass --version >nul || exit /b 1
-            |"%java%" ${JVM_OPTIONS.joinToString(" ")} -Xlog:aot=off,cds=off ^
-            |  -XX:AOTMode=create -XX:AOTConfiguration="%app%\$CACHE.config" -XX:AOTCache="%app%\$CACHE" ^
-            |  -cp "%cp%" >nul
-            |set "result=%errorlevel%"
-            |del /q "%app%\$CACHE.config" 2>nul
-            |exit /b %result%
-            |"""
-              .trimMargin()
-              .replace("\n", "\r\n"),
-          )
-        }
-      } else {
-        appDirectory.resolve("startup-cache.sh").apply {
-          writeText(
-            """
-            |#!/bin/sh
-            |# Builds the start-up cache of $launcherName next to its jars. The package's installation
-            |# runs it; run it yourself after unpacking the portable zip.
-            |set -e
-            |app=$(cd "$(dirname "$0")" && pwd)
-            |java="${'$'}app/../runtime/bin/java"
-            |cp="${jars.joinToString(":") { "\$app/$it" }}"
-            |trap 'rm -f "${'$'}app/$CACHE.config"' EXIT
-            |"${'$'}java" ${JVM_OPTIONS.joinToString(" ")} -Xlog:aot=off,cds=off \
-            |  -XX:AOTMode=record -XX:AOTConfiguration="${'$'}app/$CACHE.config" \
-            |  -cp "${'$'}cp" $mainClass --version >/dev/null
-            |"${'$'}java" ${JVM_OPTIONS.joinToString(" ")} -Xlog:aot=off,cds=off \
-            |  -XX:AOTMode=create -XX:AOTConfiguration="${'$'}app/$CACHE.config" -XX:AOTCache="${'$'}app/$CACHE" \
-            |  -cp "${'$'}cp" >/dev/null
-            |"""
-              .trimMargin(),
-          )
-          setExecutable(true, false)
-        }
+    val options = JVM_OPTIONS.joinToString(" ")
+    if (windows) {
+      appDirectory
+        .resolve("startup-cache.cmd")
+        .writeText(
+          """
+          |@echo off
+          |rem Builds the start-up cache of $launcherName next to its jars. The installer runs it;
+          |rem run it yourself after unpacking the portable zip.
+          |set "app=%~dp0"
+          |set "app=%app:~0,-1%"
+          |set "java=%app%\..\runtime\bin\java.exe"
+          |set "cp=${jars.joinToString(";") { "%app%\\$it" }}"
+          |"%java%" $options ^
+          |  -XX:AOTMode=record -XX:AOTConfiguration="%app%\$CACHE.config" ^
+          |  -cp "%cp%" $mainClass --version >nul || (del /q "%app%\$CACHE.config" 2>nul & exit /b 1)
+          |"%java%" $options ^
+          |  -XX:AOTMode=create -XX:AOTConfiguration="%app%\$CACHE.config" -XX:AOTCache="%app%\$CACHE" ^
+          |  -cp "%cp%" >nul
+          |set "result=%errorlevel%"
+          |del /q "%app%\$CACHE.config" 2>nul
+          |exit /b %result%
+          |"""
+            .trimMargin()
+            .replace("\n", "\r\n"),
+        )
+    } else {
+      appDirectory.resolve("startup-cache.sh").apply {
+        writeText(
+          """
+          |#!/bin/sh
+          |# Builds the start-up cache of $launcherName next to its jars. The package's installation
+          |# runs it; run it yourself after unpacking the portable zip.
+          |set -e
+          |app=$(cd "$(dirname "$0")" && pwd)
+          |java="${'$'}app/../runtime/bin/java"
+          |cp="${jars.joinToString(":") { "\$app/$it" }}"
+          |trap 'rm -f "${'$'}app/$CACHE.config"' EXIT
+          |"${'$'}java" $options \
+          |  -XX:AOTMode=record -XX:AOTConfiguration="${'$'}app/$CACHE.config" \
+          |  -cp "${'$'}cp" $mainClass --version >/dev/null
+          |"${'$'}java" $options \
+          |  -XX:AOTMode=create -XX:AOTConfiguration="${'$'}app/$CACHE.config" -XX:AOTCache="${'$'}app/$CACHE" \
+          |  -cp "${'$'}cp" >/dev/null
+          |"""
+            .trimMargin(),
+        )
+        setExecutable(true, false)
       }
-    return script
+    }
   }
 }
