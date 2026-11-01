@@ -64,7 +64,7 @@ class StateSpec extends Specification {
   def "the state file changes only on purpose, and tib reads it back"() {
     given:
     String snapshot = Files.readString(SNAPSHOTS.resolve('state.yaml'))
-    Path actual = Path.of('build', 'snapshots', 'state.yaml')
+    Path actual = Path.of(System.getProperty('tib.snapshots.actual'), 'state.yaml')
     Files.createDirectories(actual.parent)
     Files.writeString(actual, state.yaml())
 
