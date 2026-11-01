@@ -55,7 +55,7 @@ final class EntityGenerator implements Generator {
     String name = entity.name();
     tree.own(directory + name + "Generated.java", render("entity/generated_java.jte", entity));
     tree.once(directory + name + ".java", render("entity/entity_java.jte", entity));
-    tree.own(directory + name + "Repository.java", render("entity/repository_java.jte", entity));
+    tree.once(directory + name + "Repository.java", render("entity/repository_java.jte", entity));
     if (entity.dto()) {
       tree.own(directory + name + "Dto.java", render("entity/dto_java.jte", entity));
     }
