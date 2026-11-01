@@ -190,11 +190,6 @@
           "description": "Whether the queries of the entity are paginated.",
           "type": "boolean",
           "default": true
-        },
-        "events": {
-          "description": "Whether changes of the entity are published as events.",
-          "type": "boolean",
-          "default": false
         }
       },
       "additionalProperties": false

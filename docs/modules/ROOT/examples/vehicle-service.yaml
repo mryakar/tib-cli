@@ -17,4 +17,3 @@ entities:
     fields:
       - { name: code, column: DEPOT_CODE, type: String, length: 8, nullable: false, unique: true }
       - { name: openedOn, type: LocalDate }
-    options: { events: true }

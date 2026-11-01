@@ -21,19 +21,16 @@ public record Options(
     @Doc(value = "Whether the entity gets a mapper between it and its DTOs.", defaultValue = "true")
         Boolean mapper,
     @Doc(value = "Whether the queries of the entity are paginated.", defaultValue = "true")
-        Boolean pagination,
-    @Doc(value = "Whether changes of the entity are published as events.", defaultValue = "false")
-        Boolean events) {
+        Boolean pagination) {
 
   public Options {
     dto = dto == null || dto;
     mapper = mapper == null || mapper;
     pagination = pagination == null || pagination;
-    events = events != null && events;
   }
 
   /** The options an entity gets when the spec gives none. */
   static Options defaults() {
-    return new Options(null, null, null, null);
+    return new Options(null, null, null);
   }
 }
