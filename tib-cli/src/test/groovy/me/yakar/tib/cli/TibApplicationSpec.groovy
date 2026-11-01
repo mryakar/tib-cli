@@ -16,11 +16,23 @@
 package me.yakar.tib.cli
 
 import java.lang.management.ManagementFactory
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
+import me.yakar.tib.cli.Tib.Result
 import me.yakar.tib.cli.docs.CommandFactory
 import spock.lang.Specification
+import spock.lang.TempDir
 
 class TibApplicationSpec extends Specification {
+
+  @TempDir
+  Path dir
+
+  Process process
+
+  def cleanup() {
+    process?.destroyForcibly()
+  }
 
   def "runs the command and keeps its exit code"() {
     given:
@@ -44,49 +56,48 @@ class TibApplicationSpec extends Specification {
 
   def "the application prints its version and exits with 0"() {
     when:
-    Process process = start('--version')
-    String output = process.inputStream.text.trim()
+    Result result = start('--version')
 
     then:
-    process.waitFor(2, TimeUnit.MINUTES)
-    process.exitValue() == 0
-    output == 'tib ' + System.getProperty('tib.version')
+    result.exitCode() == 0
+    result.out() == "tib ${System.getProperty('tib.version')}\n"
   }
 
   def "the arguments do not configure Spring"() {
     when:
-    Process process = start('--spring.main.banner-mode=console', '--version')
-    String output = process.inputStream.text.trim()
+    Result result = start('--spring.main.banner-mode=console', '--version')
 
     then:
-    process.waitFor(2, TimeUnit.MINUTES)
-    process.exitValue() == 0
-    output == 'tib ' + System.getProperty('tib.version')
+    result.exitCode() == 0
+    result.out() == "tib ${System.getProperty('tib.version')}\n"
   }
 
   def "the application exits with the exit code of the command"() {
     when:
-    Process process = start('--no-such-option')
-    String output = process.inputStream.text
+    Result result = start('--no-such-option')
 
     then:
-    process.waitFor(2, TimeUnit.MINUTES)
-    process.exitValue() == 2
+    result.exitCode() == 2
     // Contains, not starts with: on some consoles picocli colors the message.
-    output.contains("Unknown option: '--no-such-option'")
+    result.err().contains("Unknown option: '--no-such-option'")
   }
 
   /**
-   * Starts the application in a JVM of its own, as a user would, on the class path of this test.
-   * The JaCoCo agent of this JVM, if any, goes with it, so that the coverage counts main().
+   * Runs the application in a JVM of its own, as a user would, on the class path of this test.
+   * The JaCoCo agent of this JVM, if any, goes with it, so that the coverage counts main(). The
+   * output goes to files, so that a child that hangs cannot block the test before the timeout.
    */
-  private static Process start(String... args) {
+  private Result start(String... args) {
     List<String> command = [ProcessHandle.current().info().command().orElseThrow()]
     command.addAll(ManagementFactory.runtimeMXBean.inputArguments.findAll {
       it.startsWith('-javaagent:')
     })
     command.addAll(['-cp', System.getProperty('java.class.path'), TibApplication.name])
     command.addAll(args)
-    new ProcessBuilder(command).redirectErrorStream(true).start()
+    File out = dir.resolve('out.txt').toFile()
+    File err = dir.resolve('err.txt').toFile()
+    process = new ProcessBuilder(command).redirectOutput(out).redirectError(err).start()
+    assert process.waitFor(2, TimeUnit.MINUTES): 'the application did not end within 2 minutes'
+    new Result(process.exitValue(), out.text.replace('\r\n', '\n'), err.text.replace('\r\n', '\n'))
   }
 }

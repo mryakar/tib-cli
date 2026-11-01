@@ -15,25 +15,19 @@
  */
 package me.yakar.tib.cli
 
+import me.yakar.tib.cli.Tib.Result
 import me.yakar.tib.spec.SpecSchema
-import me.yakar.tib.cli.docs.CommandFactory
-import picocli.CommandLine
 import spock.lang.Specification
 
 class SchemaCommandSpec extends Specification {
 
-  StringWriter out = new StringWriter()
-  CommandLine tib = TibApplication.commandLine(new CommandFactory('1.2.3'))
-  .setOut(new PrintWriter(out))
-  .setColorScheme(CommandLine.Help.defaultColorScheme(CommandLine.Help.Ansi.OFF))
-
   def "tib schema prints the JSON Schema of the spec"() {
     when:
-    int exitCode = tib.execute('schema')
+    Result result = new Tib().run('schema')
 
     then:
-    exitCode == 0
-    out.toString() == SpecSchema.json()
-    out.toString().startsWith('{\n  "$schema": "https://json-schema.org/draft/2020-12/schema"')
+    result.exitCode() == 0
+    result.out() == SpecSchema.json()
+    result.out().startsWith('{\n  "$schema": "https://json-schema.org/draft/2020-12/schema"')
   }
 }

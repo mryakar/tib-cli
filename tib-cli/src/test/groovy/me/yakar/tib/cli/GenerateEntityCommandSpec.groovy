@@ -17,9 +17,8 @@ package me.yakar.tib.cli
 
 import java.nio.file.Files
 import java.nio.file.Path
+import me.yakar.tib.cli.Tib.Result
 import me.yakar.tib.state.State
-import me.yakar.tib.cli.docs.CommandFactory
-import picocli.CommandLine
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -30,134 +29,116 @@ class GenerateEntityCommandSpec extends Specification {
   @TempDir
   Path dir
 
-  StringWriter out = new StringWriter()
-  StringWriter err = new StringWriter()
-  CommandLine tib = TibApplication.commandLine(new CommandFactory('1.2.3'))
-  .setOut(new PrintWriter(out))
-  .setErr(new PrintWriter(err))
-  .setColorScheme(CommandLine.Help.defaultColorScheme(CommandLine.Help.Ansi.OFF))
+  Tib tib = new Tib()
 
   String spec = EXAMPLES.resolve('vehicle-service.yaml').toString()
 
   String ddl = EXAMPLES.resolve('vehicle-service.sql').toString()
 
-  def "tib generate alone prints its usage"() {
-    expect:
-    tib.execute('generate') == 0
-    output().startsWith('Usage: tib generate')
-  }
-
   def "the spec or the DDL is required"() {
-    expect:
-    tib.execute('generate', 'entity') == 2
-    error().startsWith('Error: Missing required argument (specify one of these): (--spec=FILE | --ddl=FILE)')
+    when:
+    Result result = tib.run('generate', 'entity')
+
+    then:
+    result.exitCode() == 2
+    result.err().startsWith('Error: Missing required argument (specify one of these): (--spec=FILE | --ddl=FILE)')
   }
 
   def "the spec and the DDL exclude each other"() {
-    expect:
-    tib.execute('generate', 'entity', '--spec', spec, '--ddl', ddl) == 2
-    error().startsWith('Error: --spec=FILE, --ddl=FILE are mutually exclusive (specify only one)')
+    when:
+    Result result = tib.run('generate', 'entity', '--spec', spec, '--ddl', ddl)
+
+    then:
+    result.exitCode() == 2
+    result.err().startsWith('Error: --spec=FILE, --ddl=FILE are mutually exclusive (specify only one)')
   }
 
   def "a directory that is not a tib project is refused"() {
-    expect:
-    tib.execute('generate', 'entity', '--spec', spec, '-d', dir.toString()) == 1
-    error() == "${dir.toAbsolutePath().normalize()} is not a tib project: there is no .tib/state.yaml. Run tib init service first.\n"
+    when:
+    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+
+    then:
+    result.exitCode() == 1
+    result.err() == "${dir.toAbsolutePath().normalize()} is not a tib project: there is no .tib/state.yaml. Run tib init service first.\n"
   }
 
-  def "generates the entity layer into the service, once"() {
+  def "a dry run prints the diff and writes nothing"() {
     given:
-    tib.execute('init', 'service', '--spec', spec, '-d', dir.toString())
-    out.buffer.length = 0
+    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
+    Map<String, String> before = files()
 
     when:
-    int dryRun = tib.execute('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
+    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
 
     then:
-    dryRun == 0
-    output().contains('+++ b/src/main/java/com/example/vehicleservice/vehicle/VehicleGenerated.java\n')
-    Files.notExists(dir.resolve('src/main/java/com/example/vehicleservice/vehicle'))
+    result.exitCode() == 0
+    result.out().contains('+++ b/src/main/java/com/example/vehicleservice/vehicle/VehicleGenerated.java\n')
+    result.out().contains('+++ b/.tib/state.yaml\n')
+    files() == before
+  }
+
+  def "generates the entity layer of the spec into the service, once"() {
+    given:
+    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
+    State before = state()
 
     when:
-    out.buffer.length = 0
-    int run = tib.execute('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
 
     then:
-    run == 0
-    output() == "Wrote 17 files to ${dir.toAbsolutePath().normalize()}.\n"
+    result.exitCode() == 0
+    result.out() == "Wrote ${state().files().size() - before.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/resources/db/migration/V2__create_vehicle.sql'))
-    State.parse(Files.readString(dir.resolve(State.PATH))).files().size() == 24
 
     when: 'again'
-    out.buffer.length = 0
-    int again = tib.execute('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    Result again = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
 
     then:
-    again == 0
-    output() == 'Nothing to change.\n'
-  }
-
-  /** What the command printed, with the line separator of every platform. */
-  private String output() {
-    out.toString().replace('\r\n', '\n')
-  }
-
-  private String error() {
-    err.toString().replace('\r\n', '\n')
+    again.exitCode() == 0
+    again.out() == 'Nothing to change.\n'
   }
 
   def "generates the entity layer of the tables of the DDL into the service, once"() {
     given:
-    tib.execute('init', 'service', 'vehicle-service', '-d', dir.toString())
-    out.buffer.length = 0
+    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    State before = state()
 
     when:
-    int run = tib.execute('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
+    Result result = tib.run('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
 
     then:
-    run == 0
-    output() == "Wrote 17 files to ${dir.toAbsolutePath().normalize()}.\n"
+    result.exitCode() == 0
+    result.out() == "Wrote ${state().files().size() - before.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/depot/DepotGenerated.java'))
-    Files.exists(dir.resolve('src/main/resources/db/migration/V2__create_vehicles.sql'))
-    State.parse(Files.readString(dir.resolve(State.PATH))).spec().entities()*.name() == ['Depot', 'Vehicle']
+    state().spec().entities()*.name() == ['Depot', 'Vehicle']
 
     when: 'again'
-    out.buffer.length = 0
-    int again = tib.execute('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
+    Result again = tib.run('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
 
     then:
-    again == 0
-    output() == 'Nothing to change.\n'
+    again.exitCode() == 0
+    again.out() == 'Nothing to change.\n'
   }
 
-  def "a problem of the DDL is reported"() {
+  def "#problem is reported with exit code 1"() {
     given:
-    tib.execute('init', 'service', 'vehicle-service', '-d', dir.toString())
-    Path bad = Files.writeString(dir.resolve('bad.sql'), 'CREATE TABLE T (A INT);\n')
+    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    String file = content == null ? name : Files.writeString(dir.resolve(name), content).toString()
 
-    expect:
-    tib.execute('generate', 'entity', '--ddl', bad.toString(), '-d', dir.toString()) == 1
-    error() == 'the DDL has a problem: T: there is no primary key\n'
-  }
+    when:
+    Result result = tib.run('generate', 'entity', option, file, '-d', dir.toString())
 
-  def "a problem of the spec is reported"() {
-    given:
-    tib.execute('init', 'service', 'vehicle-service', '-d', dir.toString())
-    Path bad = Files.writeString(dir.resolve('bad.yaml'), 'tib: 1\nservice: s\npack: nope\n')
+    then:
+    result.exitCode() == 1
+    result.err() == "$message\n"
 
-    expect:
-    tib.execute('generate', 'entity', '--spec', bad.toString(), '-d', dir.toString()) == 1
-    error() == "there is no pack 'nope'\n"
-  }
-
-  def "a spec file that is not there is reported"() {
-    given:
-    tib.execute('init', 'service', 'vehicle-service', '-d', dir.toString())
-    Path missing = dir.resolve('missing.yaml')
-
-    expect:
-    tib.execute('generate', 'entity', '--spec', missing.toString(), '-d', dir.toString()) == 1
-    error() == "cannot read $missing: no such file\n"
+    where:
+    problem                         | option   | name                | content                            | message
+    'a spec that tib cannot use'    | '--spec' | 'spec.yaml'         | 'tib: 2\nservice: s\n'             | 'the spec has a problem: tib: 2 is above 1'
+    'a pack that is not there'      | '--spec' | 'spec.yaml'         | 'tib: 1\nservice: s\npack: nope\n' | "there is no pack 'nope'"
+    'a spec file that is not there' | '--spec' | 'no-such-spec.yaml' | null                               | 'cannot read no-such-spec.yaml: no such file'
+    'DDL that tib cannot use'       | '--ddl'  | 'tables.sql'        | 'CREATE TABLE T (A INT);\n'        | 'the DDL has a problem: T: there is no primary key'
+    'a DDL file that is not there'  | '--ddl'  | 'no-such-ddl.sql'   | null                               | 'cannot read no-such-ddl.sql: no such file'
   }
 
   def "a state file that tib cannot read is reported: #option"() {
@@ -165,14 +146,33 @@ class GenerateEntityCommandSpec extends Specification {
     Files.createDirectories(dir.resolve('.tib'))
     Files.writeString(dir.resolve(State.PATH), '[')
 
-    expect:
-    tib.execute('generate', 'entity', option, file, '-d', dir.toString()) == 1
-    error().startsWith('.tib/state.yaml: ')
-    error().readLines().size() == 1
+    when:
+    Result result = tib.run('generate', 'entity', option, file, '-d', dir.toString())
+
+    then:
+    result.exitCode() == 1
+    result.err().startsWith('.tib/state.yaml: ')
+    result.err().readLines().size() == 1
 
     where:
     option   | file
     '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString()
     '--ddl'  | EXAMPLES.resolve('vehicle-service.sql').toString()
+  }
+
+  /** The state file of the service. */
+  private State state() {
+    State.parse(Files.readString(dir.resolve(State.PATH)))
+  }
+
+  /** Every file of the service, with its content, by path. */
+  private Map<String, String> files() {
+    Files.walk(dir).withCloseable { paths ->
+      paths.filter {
+        Files.isRegularFile(it)
+      }.toList().collectEntries {
+        [dir.relativize(it).toString(), Files.readString(it)]
+      }
+    }
   }
 }

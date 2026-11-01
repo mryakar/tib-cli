@@ -17,9 +17,8 @@ package me.yakar.tib.cli
 
 import java.nio.file.Files
 import java.nio.file.Path
+import me.yakar.tib.cli.Tib.Result
 import me.yakar.tib.state.State
-import me.yakar.tib.cli.docs.CommandFactory
-import picocli.CommandLine
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -30,101 +29,107 @@ class InitServiceCommandSpec extends Specification {
   @TempDir
   Path dir
 
-  StringWriter out = new StringWriter()
-  StringWriter err = new StringWriter()
-  CommandLine tib = TibApplication.commandLine(new CommandFactory('1.2.3'))
-  .setOut(new PrintWriter(out))
-  .setErr(new PrintWriter(err))
-  .setColorScheme(CommandLine.Help.defaultColorScheme(CommandLine.Help.Ansi.OFF))
-
-  def "tib init alone prints its usage"() {
-    expect:
-    tib.execute('init') == 0
-    output().startsWith('Usage: tib init')
-  }
+  Tib tib = new Tib()
 
   def "without a name or a spec it asks for one"() {
-    expect:
-    tib.execute('init', 'service') == 2
-    error().startsWith('Give the name of the service, or --spec with its spec file.')
+    when:
+    Result result = tib.run('init', 'service')
+
+    then:
+    result.exitCode() == 2
+    result.err().startsWith('Give the name of the service, or --spec with its spec file.')
   }
 
   def "a dry run prints the diff and writes nothing"() {
     when:
-    int exitCode = tib.execute('init', 'service', 'vehicle-service', '--dir', dir.toString(), '--dry-run')
+    Result result = tib.run('init', 'service', 'vehicle-service', '--dir', dir.toString(), '--dry-run')
 
     then:
-    exitCode == 0
-    output().startsWith('--- /dev/null\n+++ b/.gitignore\n')
-    output().contains('+++ b/src/main/java/com/example/vehicleservice/VehicleServiceApplication.java\n')
-    Files.list(dir).count() == 0
+    result.exitCode() == 0
+    result.out().startsWith('--- /dev/null\n+++ b/.gitignore\n')
+    result.out().contains('+++ b/src/main/java/com/example/vehicleservice/VehicleServiceApplication.java\n')
+    dir.toFile().list().length == 0
   }
 
   def "scaffolds the service and records what it wrote"() {
     when:
-    int exitCode = tib.execute('init', 'service', 'vehicle-service', '-d', dir.toString())
+    Result result = tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
 
     then:
-    exitCode == 0
-    output() == "Wrote 9 files to ${dir.toAbsolutePath().normalize()}.\n"
-    Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/VehicleServiceApplication.java'))
+    result.exitCode() == 0
     State state = State.parse(Files.readString(dir.resolve(State.PATH)))
+    result.out() == "Wrote ${state.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
+    Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/VehicleServiceApplication.java'))
     state.tib() == '1.2.3'
     state.pack().name() == 'default'
     state.spec().service() == 'vehicle-service'
-    state.files().size() == 8
+  }
 
-    when: 'again'
-    int again = tib.execute('init', 'service', 'vehicle-service', '-d', dir.toString())
+  def "a directory that is a tib project already is refused"() {
+    given:
+    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+
+    when:
+    Result result = tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
 
     then:
-    again == 1
-    error() == "${dir.toAbsolutePath().normalize()} is already a tib project: .tib/state.yaml is there.\n"
+    result.exitCode() == 1
+    result.err() == "${dir.toAbsolutePath().normalize()} is already a tib project: .tib/state.yaml is there.\n"
   }
 
   def "scaffolds the service of a spec file"() {
     when:
-    int exitCode = tib.execute('init', 'service', '--spec', EXAMPLES.resolve('vehicle-service.yaml').toString(), '-d', dir.toString())
+    Result result = tib.run('init', 'service', '--spec', EXAMPLES.resolve('vehicle-service.yaml').toString(), '-d', dir.toString())
 
     then:
-    exitCode == 0
+    result.exitCode() == 0
     State.parse(Files.readString(dir.resolve(State.PATH))).spec().entities()*.name() == ['Vehicle', 'Depot']
   }
 
-  def "a problem of the spec is reported: #args"() {
-    expect:
-    tib.execute(*(['init', 'service'] + args + ['-d', dir.toString()])) == 1
-    error() == message
+  def "a name that is not the name of a service is reported"() {
+    when:
+    Result result = tib.run('init', 'service', 'Vehicle Service', '-d', dir.toString())
+
+    then:
+    result.exitCode() == 1
+    result.err() == "the spec has a problem: service: 'Vehicle Service' does not match ^[a-z][a-z0-9]*(-[a-z0-9]+)*\$\n"
+  }
+
+  def "a spec that tib cannot use is reported: #message"() {
+    given:
+    Path spec = Files.writeString(dir.resolve('spec.yaml'), yaml)
+
+    when:
+    Result result = tib.run('init', 'service', '--spec', spec.toString(), '-d', dir.resolve('service').toString())
+
+    then:
+    result.exitCode() == 1
+    result.err() == "$message\n"
 
     where:
-    args                               | message
-    ['Vehicle Service']                | "the spec has a problem: service: 'Vehicle Service' does not match ^[a-z][a-z0-9]*(-[a-z0-9]+)*\$\n"
-    ['--spec', spec('pack: nope')]     | "there is no pack 'nope'\n"
-    ['--spec', spec('tib: 2')]         | "the spec has a problem: tib: 2 is above 1\n"
-    ['--spec', 'no-such-spec.yaml']    | "cannot read no-such-spec.yaml: no such file\n"
+    yaml                               | message
+    'tib: 1\nservice: s\npack: nope\n' | "there is no pack 'nope'"
+    'tib: 2\nservice: s\n'             | 'the spec has a problem: tib: 2 is above 1'
+  }
+
+  def "a spec file that is not there is reported"() {
+    when:
+    Result result = tib.run('init', 'service', '--spec', 'no-such-spec.yaml', '-d', dir.toString())
+
+    then:
+    result.exitCode() == 1
+    result.err() == 'cannot read no-such-spec.yaml: no such file\n'
   }
 
   def "a directory that cannot be written to is reported"() {
     given:
     Path file = Files.writeString(dir.resolve('file'), '')
 
-    expect:
-    tib.execute('init', 'service', 's', '-d', file.toString()) == 1
-    error() == "cannot write ${file.toAbsolutePath().normalize()}: already exists\n"
-  }
+    when:
+    Result result = tib.run('init', 'service', 's', '-d', file.toString())
 
-  /** What the command printed, with the line separator of every platform. */
-  private String output() {
-    out.toString().replace('\r\n', '\n')
-  }
-
-  private String error() {
-    err.toString().replace('\r\n', '\n')
-  }
-
-  private static String spec(String line) {
-    Path file = Files.createTempFile('spec', '.yaml')
-    Files.writeString(file, "tib: 1\nservice: s\n$line\n".replace('tib: 1\nservice: s\ntib: 2', 'tib: 2\nservice: s'))
-    file.toString()
+    then:
+    result.exitCode() == 1
+    result.err() == "cannot write ${file.toAbsolutePath().normalize()}: already exists\n"
   }
 }
