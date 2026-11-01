@@ -43,6 +43,7 @@ jobs:
           tib --version
           sudo apt-get remove -y tib
           if [[ -e /usr/bin/tib ]]; then echo "/usr/bin/tib is still there" >&2; exit 1; fi
+          if [[ -e /opt/tib ]]; then find /opt/tib >&2; echo "/opt/tib is still there" >&2; exit 1; fi
       - name: Install the .msi and run tib
         if: runner.os == 'Windows'
         shell: pwsh
@@ -55,10 +56,12 @@ jobs:
           $env:Path = $machinePath
           tib --version
           if ($LASTEXITCODE -ne 0) { throw "tib --version exited with $LASTEXITCODE" }
+          $installDir = Split-Path (Get-Command tib).Source
           $uninstall = Start-Process msiexec -ArgumentList "/x `"$msi`" /qn" -Wait -PassThru
           if ($uninstall.ExitCode -ne 0) { throw "uninstall exited with $($uninstall.ExitCode)" }
           $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
           if ($machinePath -like '*\tib*') { throw "the uninstaller left tib on the PATH: $machinePath" }
+          if (Test-Path $installDir) { Get-ChildItem -Recurse $installDir; throw "the uninstaller left $installDir" }
       - name: Unpack the portable zip and run tib
         run: |
           mkdir portable && cd portable
