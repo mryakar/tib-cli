@@ -24,7 +24,6 @@ import picocli.CommandLine.Spec;
 @Component
 @Command(
     name = "init",
-    mixinStandardHelpOptions = true,
     description = "Scaffolds a new project.",
     subcommands = InitServiceCommand.class)
 public class InitCommand implements Runnable {

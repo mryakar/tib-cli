@@ -42,7 +42,6 @@ import picocli.CommandLine.Parameters;
 @Component
 @Command(
     name = "service",
-    mixinStandardHelpOptions = true,
     description = "Scaffolds a new Spring Boot service, from its name or its spec file.")
 public class InitServiceCommand implements Callable<Integer> {
 

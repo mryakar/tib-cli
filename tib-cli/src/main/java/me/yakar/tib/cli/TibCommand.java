@@ -18,6 +18,7 @@ package me.yakar.tib.cli;
 import org.springframework.stereotype.Component;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
+import picocli.CommandLine.ScopeType;
 import picocli.CommandLine.Spec;
 
 /** The top-level {@code tib} command. Without a subcommand it prints its usage. */
@@ -26,6 +27,7 @@ import picocli.CommandLine.Spec;
     name = "tib",
     mixinStandardHelpOptions = true,
     versionProvider = TibVersion.class,
+    scope = ScopeType.INHERIT,
     description = "The idempotent boilerplate tool: scaffolding for Spring Boot services.",
     subcommands = {InitCommand.class, GenerateCommand.class, SchemaCommand.class})
 public class TibCommand implements Runnable {

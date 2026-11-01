@@ -43,7 +43,6 @@ import picocli.CommandLine.Option;
 @Component
 @Command(
     name = "entity",
-    mixinStandardHelpOptions = true,
     description =
         "Generates the entity layer of the entities of the spec, or of the tables of DDL.")
 public class GenerateEntityCommand implements Callable<Integer> {
