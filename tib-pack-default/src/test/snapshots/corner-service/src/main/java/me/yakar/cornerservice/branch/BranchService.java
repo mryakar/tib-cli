@@ -32,13 +32,13 @@ public class BranchService {
 
   public BranchDto create(BranchDto dto) {
     Branch branch = new Branch();
-    apply(dto, branch);
+    mapper.update(dto, branch);
     return mapper.toDto(branches.save(branch));
   }
 
   public BranchDto update(Long id, BranchDto dto) {
     Branch branch = find(id);
-    apply(dto, branch);
+    mapper.update(dto, branch);
     return mapper.toDto(branch);
   }
 
@@ -50,10 +50,5 @@ public class BranchService {
     return branches
         .findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no branch " + id));
-  }
-
-  private void apply(BranchDto dto, Branch branch) {
-    mapper.update(dto, branch);
-    branch.setParent(dto.parentId() == null ? null : branches.getReferenceById(dto.parentId()));
   }
 }
