@@ -127,6 +127,10 @@ class SpecReaderSpec extends Specification {
     field('{ name: order, type: Integer }')                                     | "entities[0].fields[0].column: 'ORDER' is a reserved word in SQL; give the field a column"
     entity('relations:\n      - { kind: manyToOne, target: Vehicle, field: package }') | "entities[0].relations[0].field: 'package' is a Java keyword"
     entity('relations:\n      - { kind: manyToOne, target: Vehicle, column: user }') | "entities[0].relations[0].column: 'user' is a reserved word in SQL; give the relation a column"
+    relations('A: [B]', 'B: [A]')                                                | "entities[0].relations[0].target: 'B' refers back to 'A'; a cycle of relations is not supported"
+    relations('A: [B]', 'B: [C]', 'C: [A]')                                      | "entities[0].relations[0].target: 'B' refers back to 'A'; a cycle of relations is not supported"
+    relations('A: [A, B]', 'B: [C]', 'C: [B]')                                   | "entities[1].relations[0].target: 'C' refers back to 'B'; a cycle of relations is not supported"
+    relations('A: [B, B]', 'B: [C, A]', 'C: [A]')                                | "entities[0].relations[0].target: 'B' refers back to 'A'; a cycle of relations is not supported"
   }
 
   def "several problems are reported together, the structure before the meaning"() {
@@ -187,6 +191,34 @@ class SpecReaderSpec extends Specification {
     e.message == "cannot read $file: no such file"
     e.problems() == [e.message]
     e.cause instanceof NoSuchFileException
+  }
+
+  def "relations that close no cycle are accepted"() {
+    expect:
+    SpecReader.parse(relations('A: [B, B, A]', 'B: []', 'C: [B, D]', 'D: [B]')).entities().size() == 4
+  }
+
+  def "every cycle of relations is reported once"() {
+    when:
+    SpecReader.parse(relations('A: [B, C]', 'B: [A]', 'C: [A]'))
+
+    then:
+    SpecException e = thrown()
+    e.problems() == [
+      "entities[0].relations[0].target: 'B' refers back to 'A'; a cycle of relations is not supported",
+      "entities[0].relations[1].target: 'C' refers back to 'A'; a cycle of relations is not supported",
+    ]
+  }
+
+  /** A spec of entities, each given as its name and the targets of its relations: {@code A: [B]}. */
+  private static String relations(String... entities) {
+    'tib: 1\nservice: s\nentities:\n' + entities.collect { String entity ->
+      String name = entity.substring(0, entity.indexOf(':'))
+      List<String> targets = entity.substring(entity.indexOf('[') + 1, entity.indexOf(']')).split(',')*.trim().findAll()
+      "  - name: $name\n    relations:\n" + targets.withIndex().collect { String target, int i ->
+        "      - { kind: manyToOne, target: $target, field: to$i }\n"
+      }.join('') + (targets ? '' : '      []\n')
+    }.join('')
   }
 
   private static String entity(String body) {

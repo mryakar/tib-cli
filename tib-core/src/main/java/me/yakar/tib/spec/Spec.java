@@ -15,9 +15,13 @@
  */
 package me.yakar.tib.spec;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -46,6 +50,11 @@ public record Spec(
 
   /** The version of the spec format that this build reads. */
   public static final int VERSION = 1;
+
+  // The marks of an entity while the relations are followed for cycles.
+  private static final int NEW = 0;
+  private static final int VISITING = 1;
+  private static final int DONE = 2;
 
   public Spec {
     group = group == null ? "com.example" : group;
@@ -100,5 +109,56 @@ public record Spec(
     for (int i = 0; i < entities.size(); i++) {
       entities.get(i).check(problems, "entities[" + i + "]", names);
     }
+    Map<String, Integer> indexes = new HashMap<>();
+    for (int i = 0; i < entities.size(); i++) {
+      indexes.putIfAbsent(entities.get(i).name(), i);
+    }
+    int[] marks = new int[entities.size()];
+    Map<String, String> cycles = new LinkedHashMap<>();
+    for (int i = 0; i < entities.size(); i++) {
+      if (marks[i] == NEW) {
+        visit(i, indexes, marks, new ArrayList<>(), cycles);
+      }
+    }
+    cycles.forEach(problems::add);
+  }
+
+  /**
+   * Follows the relations of the entity, depth first, and keeps each cycle they close by the path
+   * of the relation that leaves the entity where the cycle starts. A relation of an entity to
+   * itself is no cycle.
+   *
+   * @param path the relations followed to the entity, each as the index of its entity and its own
+   */
+  private void visit(
+      int entity,
+      Map<String, Integer> indexes,
+      int[] marks,
+      List<int[]> path,
+      Map<String, String> cycles) {
+    marks[entity] = VISITING;
+    List<Relation> relations = entities.get(entity).relations();
+    for (int i = 0; i < relations.size(); i++) {
+      Integer target = indexes.get(relations.get(i).target());
+      if (target == null || target == entity) {
+        continue;
+      }
+      path.add(new int[] {entity, i});
+      if (marks[target] == VISITING) {
+        int[] start = path.stream().filter(step -> step[0] == target).findFirst().orElseThrow();
+        Entity from = entities.get(start[0]);
+        cycles.putIfAbsent(
+            "entities[" + start[0] + "].relations[" + start[1] + "].target",
+            "'"
+                + from.relations().get(start[1]).target()
+                + "' refers back to '"
+                + from.name()
+                + "'; a cycle of relations is not supported");
+      } else if (marks[target] == NEW) {
+        visit(target, indexes, marks, path, cycles);
+      }
+      path.remove(path.size() - 1);
+    }
+    marks[entity] = DONE;
   }
 }
