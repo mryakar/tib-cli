@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// The command line: picocli commands wired as Spring beans, and the application that the packages
+// The command line: picocli commands that Spring Boot runs, and the application that the packages
 // ship. Its Spring Boot version is the CLI's own runtime, not the one of the projects it generates.
 import me.yakar.tib.gradle.JPackage
 import me.yakar.tib.gradle.JPackageImage
