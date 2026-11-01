@@ -99,7 +99,7 @@ public final class DdlReader {
     }
     Map<String, Entity> known = new LinkedHashMap<>();
     for (Entity entity : service.entities()) {
-      known.putIfAbsent(key(entity.table()), entity);
+      known.put(key(entity.table()), entity);
     }
     Map<String, String> names = new HashMap<>();
     known.forEach((table, entity) -> names.put(table, entity.name()));

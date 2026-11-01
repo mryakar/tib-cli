@@ -17,6 +17,7 @@ package me.yakar.tib.spec;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 @Doc("An entity: a table and the class mapped to it.")
@@ -57,12 +58,20 @@ public record Entity(
     id.check(problems, path + ".id");
     Set<String> members = new HashSet<>();
     members.add(id.field());
+    // The columns, in upper case: SQL names are the same in any case.
+    Set<String> columns = new HashSet<>();
+    columns.add(Names.sql(id.field()));
+    if (audit) {
+      columns.addAll(List.of(CREATED_AT, UPDATED_AT));
+    }
     for (int i = 0; i < fields.size(); i++) {
       Field field = fields.get(i);
       String fieldPath = path + ".fields[" + i + "]";
       field.check(problems, fieldPath);
       if (!members.add(field.name())) {
         problems.add(fieldPath + ".name", "'" + field.name() + "' is already a member");
+      } else {
+        column(problems, fieldPath, field.column(), columns);
       }
     }
     for (int i = 0; i < relations.size(); i++) {
@@ -73,7 +82,16 @@ public record Entity(
       }
       if (!members.add(relation.field())) {
         problems.add(relationPath + ".field", "'" + relation.field() + "' is already a member");
+      } else {
+        column(problems, relationPath, relation.column(), columns);
       }
+    }
+  }
+
+  /** The column of a member, which no other member of the entity may have. */
+  private static void column(Problems problems, String path, String column, Set<String> columns) {
+    if (!columns.add(column.toUpperCase(Locale.ROOT))) {
+      problems.add(path + ".column", "'" + column + "' is already a column");
     }
   }
 }

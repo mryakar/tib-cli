@@ -112,6 +112,11 @@ class SpecReaderSpec extends Specification {
     'tib: 1\nservice: s\nentities:\n  - { audit: true }'                         | 'entities[0].name: required'
     entity('relations:\n      - { kind: manyToOne }')                           | 'entities[0].relations[0].target: required'
     field('{ name: n, type: String, column: "plate number" }')                  | "entities[0].fields[0].column: 'plate number' does not match ${Names.SQL}"
+    field('{ name: key, type: Long, column: id }')                              | "entities[0].fields[0].column: 'id' is already a column"
+    entity('fields:\n      - { name: a, type: Long }\n      - { name: b, type: Long, column: A }') | "entities[0].fields[1].column: 'A' is already a column"
+    entity('audit: true\n    fields:\n      - { name: createdAt, type: Instant }') | "entities[0].fields[0].column: 'CREATED_AT' is already a column"
+    entity('fields:\n      - { name: selfId, type: Long }\n    relations:\n      - { kind: manyToOne, target: Vehicle }\n      - { kind: manyToOne, target: Vehicle, field: other, column: SELF_ID }') | "entities[0].relations[1].column: 'SELF_ID' is already a column"
+    'tib: 1\nservice: s\nentities:\n  - name: Car\n    table: VEHICLE\n  - name: Vehicle' | "entities[1].table: 'VEHICLE' is already a table"
   }
 
   def "several problems are reported together, the structure before the meaning"() {
