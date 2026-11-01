@@ -19,15 +19,25 @@ import java.util.stream.IntStream;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
+import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
+import org.springframework.context.annotation.ComponentScan;
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
+import picocli.spring.boot.autoconfigure.PicocliAutoConfiguration;
 
 /**
  * The application that the packages ship. Spring Boot starts, runs the {@code tib} command with
- * picocli, and the process exits with the command's exit code.
+ * picocli, and the process exits with the command's exit code. Only the auto-configuration that the
+ * command line needs is imported: the factory of the commands, and the placeholders of the version.
  */
-@SpringBootApplication
+@SpringBootConfiguration
+@ComponentScan
+@ImportAutoConfiguration({
+  PicocliAutoConfiguration.class,
+  PropertyPlaceholderAutoConfiguration.class
+})
 public class TibApplication implements CommandLineRunner, ExitCodeGenerator {
 
   private final IFactory factory;
