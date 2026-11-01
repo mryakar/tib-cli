@@ -12,5 +12,12 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+  data:
+    web:
+      pageable:
+        serialization-mode: via-dto
+  mvc:
+    problemdetails:
+      enabled: true
   flyway:
     enabled: true
