@@ -58,6 +58,13 @@ class NamesSpec extends Specification {
     'Quizzes'    | 'Quizz'
     'Branches'   | 'Branch'
     'Wishes'     | 'Wish'
+    'Statuses'   | 'Status'
+    'Buses'      | 'Bus'
+    'Campuses'   | 'Campus'
+    'Viruses'    | 'Virus'
+    'Houses'     | 'House'
+    'Causes'     | 'Cause'
+    'uses'       | 'use'
     'Address'    | 'Address'
     'Status'     | 'Status'
     'Analysis'   | 'Analysis'
@@ -78,6 +85,7 @@ class NamesSpec extends Specification {
     'dish'    | 'dishes'
     'entry'   | 'entries'
     'day'     | 'days'
+    'y'       | 'ys'
   }
 
   def "the member name of #type is #member"() {
@@ -98,5 +106,33 @@ class NamesSpec extends Specification {
     member        | property
     'plateNumber' | 'PlateNumber'
     'x'           | 'X'
+  }
+
+  def "the singular of the plural of #name is #name"() {
+    expect:
+    Names.singular(Names.plural(name)) == name
+
+    where:
+    name << [
+      'vehicle',
+      'depot',
+      'branch',
+      'note',
+      'tag',
+      'plain',
+      'category',
+      'address',
+      'box',
+      'quiz',
+      'dish',
+      'entry',
+      'day',
+      'status',
+      'bus',
+      'campus',
+      'virus',
+      'house',
+      'cause',
+    ]
   }
 }

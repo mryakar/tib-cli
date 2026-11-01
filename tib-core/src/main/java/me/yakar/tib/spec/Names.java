@@ -68,7 +68,8 @@ public final class Names {
       return name + "es";
     }
     if (name.endsWith("y")
-        && !"aeiou".contains(name.substring(name.length() - 2, name.length() - 1))) {
+        && name.length() > 1
+        && "aeiou".indexOf(name.charAt(name.length() - 2)) < 0) {
       return name.substring(0, name.length() - 1) + "ies";
     }
     return name + "s";
@@ -93,11 +94,18 @@ public final class Names {
   }
 
   /**
-   * The singular of a name, by the rules of {@link #plural}: {@code Depots} is {@code Depot},
-   * {@code Branches} is {@code Branch}; a name that does not end as a plural is one already, as
-   * {@code Status} is.
+   * The singular of a name, by the common rules of English: {@code Depots} is {@code Depot}, {@code
+   * Branches} is {@code Branch}, {@code Statuses} is {@code Status}, {@code Houses} is {@code
+   * House}; a name that does not end as a plural is one already, as {@code Status} is. English is
+   * not that regular, so some names come out wrong, as {@code Movies}, which is {@code Movy}; the
+   * spec can name such an entity itself.
    */
   public static String singular(String name) {
+    if (name.endsWith("uses")) {
+      // After a consonant it is the plural of -us, as in Statuses; else of -use, as in Houses.
+      boolean us = name.length() > 4 && "aeiou".indexOf(name.charAt(name.length() - 5)) < 0;
+      return name.substring(0, name.length() - (us ? 2 : 1));
+    }
     if (name.endsWith("ies")) {
       return name.substring(0, name.length() - 3) + "y";
     }
