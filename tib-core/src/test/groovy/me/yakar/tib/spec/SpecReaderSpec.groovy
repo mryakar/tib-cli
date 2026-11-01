@@ -117,6 +117,16 @@ class SpecReaderSpec extends Specification {
     entity('audit: true\n    fields:\n      - { name: createdAt, type: Instant }') | "entities[0].fields[0].column: 'CREATED_AT' is already a column"
     entity('fields:\n      - { name: selfId, type: Long }\n    relations:\n      - { kind: manyToOne, target: Vehicle }\n      - { kind: manyToOne, target: Vehicle, field: other, column: SELF_ID }') | "entities[0].relations[1].column: 'SELF_ID' is already a column"
     'tib: 1\nservice: s\nentities:\n  - name: Car\n    table: VEHICLE\n  - name: Vehicle' | "entities[1].table: 'VEHICLE' is already a table"
+    'tib: 1\nservice: int'                                                      | "service: 'int' makes the package 'int', which is a Java keyword"
+    'tib: 1\nservice: s\ngroup: com.new'                                        | "group: 'com.new' has 'new', which is a Java keyword"
+    'tib: 1\nservice: s\nentities:\n  - name: Class'                           | "entities[0].name: 'Class' makes the package 'class', which is a Java keyword"
+    'tib: 1\nservice: s\nentities:\n  - name: User'                            | "entities[0].table: 'USER' is a reserved word in SQL; give the entity a table"
+    entity('id: { field: int }')                                                | "entities[0].id.field: 'int' is a Java keyword"
+    entity('id: { field: user }')                                               | "entities[0].id.field: the column 'USER' is a reserved word in SQL; give the identifier another field"
+    field('{ name: class, type: String }')                                      | "entities[0].fields[0].name: 'class' is a Java keyword"
+    field('{ name: order, type: Integer }')                                     | "entities[0].fields[0].column: 'ORDER' is a reserved word in SQL; give the field a column"
+    entity('relations:\n      - { kind: manyToOne, target: Vehicle, field: package }') | "entities[0].relations[0].field: 'package' is a Java keyword"
+    entity('relations:\n      - { kind: manyToOne, target: Vehicle, column: user }') | "entities[0].relations[0].column: 'user' is a reserved word in SQL; give the relation a column"
   }
 
   def "several problems are reported together, the structure before the meaning"() {

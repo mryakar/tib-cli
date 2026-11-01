@@ -40,4 +40,15 @@ public record Relation(
     column = column == null && field != null ? Names.sql(field) + "_ID" : column;
     nullable = nullable == null || nullable;
   }
+
+  void check(Problems problems, String path) {
+    if (Names.isKeyword(field)) {
+      problems.add(path + ".field", "'" + field + "' is a Java keyword");
+    }
+    if (Names.isReserved(column)) {
+      problems.add(
+          path + ".column",
+          "'" + column + "' is a reserved word in SQL; give the relation a column");
+    }
+  }
 }

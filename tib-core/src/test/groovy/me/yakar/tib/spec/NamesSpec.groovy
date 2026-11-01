@@ -135,4 +135,31 @@ class NamesSpec extends Specification {
       'cause',
     ]
   }
+
+  def "#name is a Java keyword: #keyword"() {
+    expect:
+    Names.isKeyword(name) == keyword
+
+    where:
+    name      | keyword
+    'class'   | true
+    'int'     | true
+    'null'    | true
+    '_'       | true
+    'record'  | false
+    'vehicle' | false
+  }
+
+  def "#name is a reserved word in SQL: #reserved"() {
+    expect:
+    Names.isReserved(name) == reserved
+
+    where:
+    name      | reserved
+    'ORDER'   | true
+    'user'    | true
+    'Group'   | true
+    'COUNT'   | false
+    'VEHICLE' | false
+  }
 }
