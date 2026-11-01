@@ -129,6 +129,20 @@ class GenerateEntityCommandSpec extends Specification {
     again.out() == 'Nothing to change.\n'
   }
 
+  def "a run that changes only the state file writes one file"() {
+    given: 'a service that an older tib scaffolded, and a spec without entities'
+    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    Path empty = Files.writeString(dir.resolve('spec.yaml'), 'tib: 1\nservice: vehicle-service\n')
+
+    when:
+    Result result = new Tib('1.2.4').run('generate', 'entity', '--spec', empty.toString(), '-d', dir.toString())
+
+    then:
+    result.exitCode() == 0
+    result.out() == "Wrote 1 file to ${dir.toAbsolutePath().normalize()}.\n"
+    state().tib() == '1.2.4'
+  }
+
   def "#problem is reported with exit code 1"() {
     given:
     tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
