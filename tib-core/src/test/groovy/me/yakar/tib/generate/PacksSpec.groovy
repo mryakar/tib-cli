@@ -15,13 +15,12 @@
  */
 package me.yakar.tib.generate
 
-import me.yakar.tib.tree.Tree
 import spock.lang.Specification
 
 class PacksSpec extends Specification {
 
-  Pack one = pack('one', '1.0.0')
-  Pack two = pack('two', '2.0.0')
+  Pack one = new TestPack('one', '1.0.0')
+  Pack two = new TestPack('two', '2.0.0')
 
   def "finds a pack by its name, and by its version when the reference pins it"() {
     expect:
@@ -51,22 +50,5 @@ class PacksSpec extends Specification {
 
     then:
     thrown(PackException)
-  }
-
-  static Pack pack(String name, String version) {
-    new Pack() {
-          String name() {
-            name
-          }
-          String version() {
-            version
-          }
-          Generator init() {
-            { Project project, Tree tree -> } as Generator
-          }
-          Generator entity() {
-            init()
-          }
-        }
   }
 }

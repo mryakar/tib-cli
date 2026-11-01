@@ -29,7 +29,7 @@ class GenerationSpec extends Specification {
   @TempDir
   Path dir
 
-  Pack pack = PacksSpec.pack('p', '1')
+  Pack pack = new TestPack('p', '1')
   Project project = Project.of(new Spec(1, 's', null, 'p', null))
   Generator generator = { Project p, Tree tree ->
     tree.own('Generated.java', 'class Generated {}\n')
