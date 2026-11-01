@@ -33,6 +33,8 @@ import picocli.CommandLine.Option;
 /** The options of a command that generates into a service, and the end of its run. */
 public final class GenerationOptions {
 
+  private static final String NOTHING_TO_CHANGE = "Nothing to change.";
+
   @CommandLine.Spec(CommandLine.Spec.Target.MIXEE)
   private CommandSpec commandSpec;
 
@@ -60,20 +62,24 @@ public final class GenerationOptions {
 
   /**
    * Runs the generator that the function picks from the pack of the service, then prints the diff
-   * of a dry run, or writes the files and says how many.
+   * of a dry run, or writes the files and says how many. A dry run that changes nothing says so on
+   * the standard error, so that its output stays an empty diff.
    */
   int generate(Spec service, Function<Pack, Generator> generator, Tree tree) {
     Generation.run(
         new Project(service), Packs.find(service.pack()), generator, version.version(), tree);
     PrintWriter out = commandSpec.commandLine().getOut();
+    int files = tree.changes().size();
     if (dryRun) {
       out.print(tree.diff());
       out.flush();
+      if (files == 0) {
+        commandSpec.commandLine().getErr().println(NOTHING_TO_CHANGE);
+      }
       return ExitCode.OK;
     }
-    int files = tree.changes().size();
     if (files == 0) {
-      out.println("Nothing to change.");
+      out.println(NOTHING_TO_CHANGE);
       return ExitCode.OK;
     }
     tree.apply();
