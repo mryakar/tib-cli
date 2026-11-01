@@ -41,7 +41,7 @@ public class DepotService {
   public DepotDto update(UUID id, DepotDto dto) {
     Depot depot = find(id);
     mapper.update(dto, depot);
-    return mapper.toDto(depot);
+    return mapper.toDto(depots.saveAndFlush(depot));
   }
 
   public void delete(UUID id) {
