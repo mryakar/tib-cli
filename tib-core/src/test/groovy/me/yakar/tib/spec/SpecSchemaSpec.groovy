@@ -49,7 +49,7 @@ class SpecSchemaSpec extends Specification {
     schema.validate(Files.readString(EXAMPLES.resolve('vehicle-service.yaml')), InputFormat.YAML).empty
   }
 
-  def "the schema refuses what the reader refuses: #yaml"() {
+  def "the schema refuses a spec of the wrong structure: #yaml"() {
     expect:
     !schema.validate(yaml, InputFormat.YAML).empty
 

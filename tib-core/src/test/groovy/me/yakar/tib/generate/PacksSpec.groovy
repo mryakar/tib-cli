@@ -28,7 +28,7 @@ class PacksSpec extends Specification {
     Packs.find('two@2.0.0', [one, two]).is(two)
   }
 
-  def "a pack that is not there: #reference"() {
+  def "a pack that is not there is refused: #reference"() {
     when:
     Packs.find(reference, [one, two])
 
@@ -40,7 +40,7 @@ class PacksSpec extends Specification {
     reference << ['three', 'two@1.0.0']
   }
 
-  def "finds the packs on the class path"() {
+  def "finds the packs on the class path, and only those"() {
     expect:
     Packs.find('test') instanceof TestPack
     Packs.find('test@0') instanceof TestPack

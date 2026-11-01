@@ -19,7 +19,7 @@ import spock.lang.Specification
 
 class UnifiedDiffSpec extends Specification {
 
-  def "a new file"() {
+  def "a new file is all additions"() {
     expect:
     UnifiedDiff.of('a/b.txt', null, 'one\ntwo\n') == '''\
 --- /dev/null
@@ -30,7 +30,7 @@ class UnifiedDiffSpec extends Specification {
 '''
   }
 
-  def "a changed line in the middle, with three lines of context"() {
+  def "a changed line in the middle has three lines of context"() {
     given:
     String before = (1..10).collect { "line $it" }.join('\n') + '\n'
     String after = before.replace('line 5', 'five')
@@ -114,7 +114,7 @@ class UnifiedDiffSpec extends Specification {
 '''
   }
 
-  def "a file emptied, and an empty file filled"() {
+  def "emptying or filling a file is one hunk"() {
     expect:
     UnifiedDiff.of('f', 'a\n', '') == '--- a/f\n+++ b/f\n@@ -1 +0,0 @@\n-a\n'
     UnifiedDiff.of('f', '', 'a\n') == '--- a/f\n+++ b/f\n@@ -0,0 +1 @@\n+a\n'
