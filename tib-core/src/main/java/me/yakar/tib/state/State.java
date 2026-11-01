@@ -60,7 +60,7 @@ public record State(Tib tib, PackRef pack, Spec spec, List<File> files) {
 
   /** The state file of the project in the tree, if tib ran on it before. */
   public static Optional<State> in(Tree tree) {
-    return tree.read(PATH).map(State::read);
+    return tree.read(PATH).map(State::parse);
   }
 
   /** The state as YAML. */
@@ -69,7 +69,7 @@ public record State(Tib tib, PackRef pack, Spec spec, List<File> files) {
   }
 
   /** The state read from its YAML, with its spec checked as a spec file is. */
-  public static State read(String yaml) {
+  public static State parse(String yaml) {
     State state;
     try {
       state = YAML.readValue(yaml, State.class);

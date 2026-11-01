@@ -67,7 +67,7 @@ class InitServiceCommandSpec extends Specification {
     exitCode == 0
     output() == "Wrote 9 files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/VehicleServiceApplication.java'))
-    State state = State.read(Files.readString(dir.resolve(State.PATH)))
+    State state = State.parse(Files.readString(dir.resolve(State.PATH)))
     state.tib().version() == '1.2.3'
     state.pack().name() == 'default'
     state.spec().service() == 'vehicle-service'
@@ -87,7 +87,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     exitCode == 0
-    State.read(Files.readString(dir.resolve(State.PATH))).spec().entities()*.name() == ['Vehicle', 'Depot']
+    State.parse(Files.readString(dir.resolve(State.PATH))).spec().entities()*.name() == ['Vehicle', 'Depot']
   }
 
   def "a problem of the spec is reported: #args"() {

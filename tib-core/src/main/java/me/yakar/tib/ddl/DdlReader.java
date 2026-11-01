@@ -77,7 +77,7 @@ public final class DdlReader {
 
   private DdlReader() {}
 
-  /** Reads the DDL file into the spec of the service, as {@link #read(String, Spec)} does. */
+  /** Reads the DDL file into the spec of the service, as {@link #parse(String, Spec)} does. */
   public static Spec read(Path file, Spec service) {
     String ddl;
     try {
@@ -85,7 +85,7 @@ public final class DdlReader {
     } catch (IOException e) {
       throw new DdlException(file, e);
     }
-    return read(ddl, service);
+    return parse(ddl, service);
   }
 
   /**
@@ -93,7 +93,7 @@ public final class DdlReader {
    * the same table in the spec, and keeps its name, its options and the names of the fields and
    * relations of the same columns; the entities of the other tables come after those of the spec.
    */
-  public static Spec read(String ddl, Spec service) {
+  public static Spec parse(String ddl, Spec service) {
     List<String> problems = new ArrayList<>();
     Map<String, Table> tables = tables(ddl, problems);
     if (tables.isEmpty() && problems.isEmpty()) {

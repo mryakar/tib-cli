@@ -85,7 +85,7 @@ class GenerateEntityCommandSpec extends Specification {
     run == 0
     output() == "Wrote 17 files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/resources/db/migration/V2__create_vehicle.sql'))
-    State.read(Files.readString(dir.resolve(State.PATH))).files().size() == 24
+    State.parse(Files.readString(dir.resolve(State.PATH))).files().size() == 24
 
     when: 'again'
     out.buffer.length = 0
@@ -118,7 +118,7 @@ class GenerateEntityCommandSpec extends Specification {
     output() == "Wrote 17 files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/depot/DepotGenerated.java'))
     Files.exists(dir.resolve('src/main/resources/db/migration/V2__create_vehicles.sql'))
-    State.read(Files.readString(dir.resolve(State.PATH))).spec().entities()*.name() == ['Depot', 'Vehicle']
+    State.parse(Files.readString(dir.resolve(State.PATH))).spec().entities()*.name() == ['Depot', 'Vehicle']
 
     when: 'again'
     out.buffer.length = 0

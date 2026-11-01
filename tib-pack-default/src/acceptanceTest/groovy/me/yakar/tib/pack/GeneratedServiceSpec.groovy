@@ -73,7 +73,7 @@ class GeneratedServiceSpec extends Specification {
     where:
     input  | spec
     'spec' | SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
-    'DDL'  | DdlReader.read(EXAMPLES.resolve('vehicle-service.sql'), SpecReader.read('tib: 1\nservice: vehicle-service\n'))
+    'DDL'  | DdlReader.read(EXAMPLES.resolve('vehicle-service.sql'), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
   }
 
   /**
