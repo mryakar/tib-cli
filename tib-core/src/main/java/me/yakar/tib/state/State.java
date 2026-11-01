@@ -16,9 +16,11 @@
 package me.yakar.tib.state;
 
 import java.util.List;
+import java.util.Optional;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.tree.Owner;
+import me.yakar.tib.tree.Tree;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.cfg.EnumFeature;
@@ -55,6 +57,11 @@ public record State(Tib tib, PackRef pack, Spec spec, List<File> files) {
 
   public State {
     files = files == null ? List.of() : List.copyOf(files);
+  }
+
+  /** The state file of the project in the tree, if tib ran on it before. */
+  public static Optional<State> in(Tree tree) {
+    return tree.read(PATH).map(State::read);
   }
 
   /** The state as YAML. */

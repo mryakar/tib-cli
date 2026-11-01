@@ -17,6 +17,7 @@ package me.yakar.tib.cli;
 
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import me.yakar.tib.TibException;
 import me.yakar.tib.ddl.DdlReader;
@@ -96,7 +97,8 @@ public class GenerateEntityCommand implements Callable<Integer> {
     PrintWriter err = commandSpec.commandLine().getErr();
     try {
       Tree tree = Tree.at(dir);
-      if (!tree.exists(State.PATH)) {
+      Optional<State> state = State.in(tree);
+      if (state.isEmpty()) {
         err.println(
             tree.root()
                 + " is not a tib project: there is no "
@@ -107,10 +109,10 @@ public class GenerateEntityCommand implements Callable<Integer> {
       Spec service =
           input.spec != null
               ? SpecReader.read(input.spec)
-              : DdlReader.read(input.ddl, State.read(tree.read(State.PATH).orElseThrow()).spec());
+              : DdlReader.read(input.ddl, state.get().spec());
       Project project = Project.of(service);
       Pack pack = Packs.find(service.pack());
-      Generation.run(project, pack, pack.entity(), version.version(), tree);
+      Generation.run(project, pack, Pack::entity, version.version(), tree);
       return Outcome.report(tree, dryRun, out);
     } catch (TibException e) {
       err.println(e.getMessage());

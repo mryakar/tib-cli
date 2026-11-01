@@ -98,7 +98,7 @@ public class InitServiceCommand implements Callable<Integer> {
         err.println(tree.root() + " is already a tib project: " + State.PATH + " is there.");
         return 1;
       }
-      Generation.run(project, pack, pack.init(), version.version(), tree);
+      Generation.run(project, pack, Pack::init, version.version(), tree);
       return Outcome.report(tree, dryRun, out);
     } catch (TibException e) {
       err.println(e.getMessage());

@@ -19,8 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
-import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Function;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Change;
 import me.yakar.tib.tree.Tree;
@@ -34,15 +34,19 @@ public final class Generation {
   private Generation() {}
 
   /**
-   * Runs the generator and stages the state file; the tree holds the result until it is applied.
+   * Runs the generator that the function picks from the pack, and stages the state file; the tree
+   * holds the result until it is applied.
    */
   public static void run(
-      Project project, Pack pack, Generator generator, String tibVersion, Tree tree) {
-    generator.generate(project, tree);
+      Project project,
+      Pack pack,
+      Function<Pack, Generator> generator,
+      String tibVersion,
+      Tree tree) {
     TreeMap<String, State.File> files = new TreeMap<>();
-    tree.read(State.PATH)
-        .map(State::read)
+    State.in(tree)
         .ifPresent(previous -> previous.files().forEach(file -> files.put(file.path(), file)));
+    generator.apply(pack).generate(project, tree);
     for (Change change : tree.changes()) {
       files.put(
           change.path(), new State.File(change.path(), change.owner(), sha256(change.after())));
@@ -69,10 +73,5 @@ public final class Generation {
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException(e);
     }
-  }
-
-  /** The state file of the project, if tib ran on it before. */
-  public static Optional<State> state(Tree tree) {
-    return tree.read(State.PATH).map(State::read);
   }
 }

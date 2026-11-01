@@ -15,33 +15,76 @@
  */
 package me.yakar.tib.state
 
-import me.yakar.tib.spec.Entity
+import java.nio.file.Files
+import java.nio.file.Path
 import me.yakar.tib.spec.Names
-import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.SpecException
+import me.yakar.tib.spec.SpecReader
 import me.yakar.tib.tree.Owner
+import me.yakar.tib.tree.Tree
 import spock.lang.Specification
+import spock.lang.TempDir
 
 class StateSpec extends Specification {
 
+  static final Path SNAPSHOTS = Path.of(System.getProperty('tib.snapshots'))
+
+  @TempDir
+  Path dir
+
+  /** A state whose spec sets every value, so that every key of the file is in it. */
   State state = new State(
   new State.Tib('0.1.0', 1),
   new State.PackRef('default', '0.1.0'),
-  new Spec(1, 'vehicle-service', null, null, [new Entity('Vehicle', null, null, null, null, null, null)]),
+  SpecReader.read('''\
+      tib: 1
+      service: vehicle-service
+      group: me.yakar
+      pack: default@0.1.0
+      entities:
+        - name: Depot
+          table: DEPOTS
+          id: { field: key, type: UUID, strategy: uuid }
+        - name: Vehicle
+          id: { type: Long, strategy: sequence }
+          fields:
+            - { name: plateNumber, column: PLATE, type: String, length: 16, nullable: false, unique: true }
+            - { name: price, type: BigDecimal, precision: 12, scale: 2 }
+          relations:
+            - { kind: manyToOne, target: Depot, field: home, column: HOME_ID, nullable: false }
+          audit: true
+          options: { dto: false, mapper: false, pagination: false, events: true }
+      '''.stripIndent()),
   [
     new State.File('AGENTS.md', Owner.GENERATOR, 'abc'),
-    new State.File('build.gradle.kts', Owner.DEVELOPER, 'def')
+    new State.File('build.gradle.kts', Owner.DEVELOPER, 'def'),
+    new State.File('gradle/libs.versions.toml', Owner.SHARED, '012')
   ])
 
-  def "the state is YAML that tib reads back"() {
+  def "the state file changes only on purpose, and tib reads it back"() {
+    given:
+    String snapshot = Files.readString(SNAPSHOTS.resolve('state.yaml'))
+    Path actual = Path.of('build', 'snapshots', 'state.yaml')
+    Files.createDirectories(actual.parent)
+    Files.writeString(actual, state.yaml())
+
+    expect: "if not, the new state file is in $actual, to be copied over the snapshot on purpose"
+    state.yaml() == snapshot
+    State.read(snapshot) == state
+  }
+
+  def "the state of a project is in its tree, if tib ran on it before"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    expect:
+    State.in(tree).empty
+
     when:
-    String yaml = state.yaml()
+    tree.own(State.PATH, state.yaml())
 
     then:
-    yaml.startsWith('tib:\n  version: 0.1.0\n  spec: 1\npack:\n  name: default\n  version: 0.1.0\nspec:\n  tib: 1\n  service: vehicle-service\n')
-    yaml.contains('      type: Long\n      strategy: identity\n')
-    yaml.contains('files:\n- path: AGENTS.md\n  owner: generator\n  sha256: abc\n')
-    State.read(yaml) == state
+    State.in(tree) == Optional.of(state)
   }
 
   def "a state without files has none"() {
