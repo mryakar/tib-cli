@@ -36,7 +36,6 @@ import me.yakar.tib.spec.Names;
 import me.yakar.tib.spec.Relation;
 import me.yakar.tib.spec.RelationKind;
 import me.yakar.tib.spec.Spec;
-import me.yakar.tib.spec.SpecReader;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
@@ -124,8 +123,8 @@ public final class DdlReader {
             merged.add(entity);
           }
         });
-    return SpecReader.check(
-        new Spec(service.tib(), service.service(), service.group(), service.pack(), merged));
+    return new Spec(service.tib(), service.service(), service.group(), service.pack(), merged)
+        .check();
   }
 
   /** The tables that the DDL creates, by their keys, with the keys that it adds to them. */

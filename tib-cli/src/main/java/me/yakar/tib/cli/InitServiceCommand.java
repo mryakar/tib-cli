@@ -90,7 +90,7 @@ public class InitServiceCommand implements Callable<Integer> {
       Spec service =
           spec != null
               ? SpecReader.read(spec)
-              : SpecReader.check(new Spec(Spec.VERSION, name, null, null, null));
+              : new Spec(Spec.VERSION, name, null, null, null).check();
       Project project = Project.of(service);
       Pack pack = Packs.find(service.pack());
       Tree tree = Tree.at(dir);
