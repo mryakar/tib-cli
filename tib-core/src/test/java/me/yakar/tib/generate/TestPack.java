@@ -1,5 +1,5 @@
 /*
- * Copyright $YEAR the original author or authors.
+ * Copyright 2026 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,29 @@ package me.yakar.tib.generate;
 
 import me.yakar.tib.tree.Tree;
 
-/** A pack that the tests of the engine find on the class path. */
+/** A pack that the tests of the engine find on the class path, or build with a name of theirs. */
 public final class TestPack implements Pack {
+
+  private final String name;
+  private final String version;
+
+  public TestPack() {
+    this("test", "0");
+  }
+
+  public TestPack(String name, String version) {
+    this.name = name;
+    this.version = version;
+  }
 
   @Override
   public String name() {
-    return "test";
+    return name;
   }
 
   @Override
   public String version() {
-    return "0";
+    return version;
   }
 
   @Override
