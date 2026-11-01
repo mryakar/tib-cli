@@ -1,7 +1,7 @@
 # Builds the documentation site from this repository: the pages under docs/ and the command
 # reference that the build generates from the commands themselves. The main branch is the version
-# called main and each release tag vX.Y.Z the version X.Y.Z. The Collector extension generates the
-# reference of each version from its own commit (see antora.yml).
+# called main and each release tag vX.Y.Z the version X.Y.Z; pre-release tags are left out. The
+# Collector extension generates the reference of each version from its own commit (see antora.yml).
 antora:
   extensions:
     - '@antora/collector-extension'
@@ -13,7 +13,7 @@ content:
   sources:
     - url: ..
       branches: HEAD
-      tags: v*
+      tags: [v*, '!v*-*']
       start_path: docs
       version:
         v(?<version>+({0..9}).+({0..9}).+({0..9})): $<version>
