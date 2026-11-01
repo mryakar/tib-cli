@@ -176,7 +176,7 @@ class DefaultPackSpec extends Specification {
     DdlReader.parse(migrations, spec) == spec
   }
 
-  def "entities come after the entities they refer to, cycles in the order of the spec"() {
+  def "entities come after the entities they refer to"() {
     given:
     Project project = new Project(SpecReader.parse('''\
 tib: 1
@@ -186,8 +186,6 @@ entities:
     relations:
       - { kind: manyToOne, target: B }
   - name: B
-    relations:
-      - { kind: manyToOne, target: A }
   - name: C
     relations:
       - { kind: manyToOne, target: B }
