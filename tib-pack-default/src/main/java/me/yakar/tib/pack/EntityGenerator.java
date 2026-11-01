@@ -15,9 +15,6 @@
  */
 package me.yakar.tib.pack;
 
-import gg.jte.ContentType;
-import gg.jte.TemplateEngine;
-import gg.jte.output.StringOutput;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -44,8 +41,6 @@ final class EntityGenerator implements Generator {
 
   static final String MIGRATIONS = "src/main/resources/db/migration";
 
-  private static final TemplateEngine TEMPLATES =
-      TemplateEngine.createPrecompiled(ContentType.Plain);
   private static final Pattern VERSION = Pattern.compile("/V(\\d+)__");
 
   @Override
@@ -112,8 +107,6 @@ final class EntityGenerator implements Generator {
   }
 
   private static String render(String template, EntityModel entity) {
-    StringOutput output = new StringOutput();
-    TEMPLATES.render(template, Map.of("entity", entity), output);
-    return output.toString();
+    return Templates.render(template, Map.of("entity", entity));
   }
 }
