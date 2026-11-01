@@ -22,8 +22,8 @@ import me.yakar.tib.tree.Tree;
 
 /**
  * Generates a new service: the build, the application, its configuration, a test and a main against
- * a database in a container, and the notes for agents. Everything but the notes is written once and
- * is the developer's from then on.
+ * a database in a container, and the notes for agents. Every file is written once and is the
+ * developer's from then on.
  */
 final class InitGenerator implements Generator {
 
@@ -53,7 +53,7 @@ final class InitGenerator implements Generator {
     tree.once(
         tests + "/Test" + project.applicationClass() + ".java",
         render("init/test_application_java.jte", project));
-    tree.own("AGENTS.md", render("init/agents_md.jte", project));
+    tree.once("AGENTS.md", render("init/agents_md.jte", project));
   }
 
   private String render(String template, Project project) {
