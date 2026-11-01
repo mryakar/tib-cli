@@ -39,7 +39,7 @@ public class BranchService {
   public BranchDto update(Long id, BranchDto dto) {
     Branch branch = find(id);
     mapper.update(dto, branch);
-    return mapper.toDto(branch);
+    return mapper.toDto(branches.saveAndFlush(branch));
   }
 
   public void delete(Long id) {

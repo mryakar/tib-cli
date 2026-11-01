@@ -43,7 +43,7 @@ public class ${entity.name()}Service {
   public ${entity.name()}Dto update(${entity.idType()} id, ${entity.name()}Dto dto) {
     ${entity.name()} ${entity.variable()} = find(id);
     mapper.update(dto, ${entity.variable()});
-    return mapper.toDto(${entity.variable()});
+    return mapper.toDto(${entity.plural()}.saveAndFlush(${entity.variable()}));
   }
 
   public void delete(${entity.idType()} id) {

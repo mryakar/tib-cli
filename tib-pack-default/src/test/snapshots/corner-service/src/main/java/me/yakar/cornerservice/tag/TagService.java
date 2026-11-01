@@ -40,7 +40,7 @@ public class TagService {
   public TagDto update(Long id, TagDto dto) {
     Tag tag = find(id);
     mapper.update(dto, tag);
-    return mapper.toDto(tag);
+    return mapper.toDto(tags.saveAndFlush(tag));
   }
 
   public void delete(Long id) {

@@ -40,7 +40,7 @@ public class VehicleService {
   public VehicleDto update(Long id, VehicleDto dto) {
     Vehicle vehicle = find(id);
     mapper.update(dto, vehicle);
-    return mapper.toDto(vehicle);
+    return mapper.toDto(vehicles.saveAndFlush(vehicle));
   }
 
   public void delete(Long id) {
