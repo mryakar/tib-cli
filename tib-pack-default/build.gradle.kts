@@ -61,11 +61,13 @@ val windows = System.getProperty("os.name").startsWith("Windows")
 testing {
   suites {
     register<JvmTestSuite>("acceptanceTest") {
-      description = "Generates the example service and builds it with Gradle."
+      description = "Generates the example services and builds them with Gradle."
       dependencies {
         implementation(project())
         implementation(project(":tib-core"))
       }
+      // The corner spec, which the unit tests compare with its snapshot, is built here too.
+      sources { resources.srcDir("src/test/resources") }
       targets.all {
         testTask.configure {
           shouldRunAfter(tasks.test)

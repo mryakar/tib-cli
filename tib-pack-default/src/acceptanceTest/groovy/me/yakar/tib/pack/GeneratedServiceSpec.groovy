@@ -35,7 +35,6 @@ import spock.lang.TempDir
 class GeneratedServiceSpec extends Specification {
 
   static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
-  static final Path SNAPSHOTS = Path.of(System.getProperty('tib.snapshots'))
   static final String GRADLEW = System.getProperty('tib.gradlew')
   static final boolean LINUX = System.getProperty('os.name') == 'Linux'
 
@@ -84,7 +83,7 @@ class GeneratedServiceSpec extends Specification {
     'example spec'    | SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
     'example DDL'     | DdlReader.read(EXAMPLES.resolve('vehicle-service.sql'), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
     // The corner spec is a resource of the unit tests, next to their snapshots.
-    'corner spec'     | SpecReader.read(SNAPSHOTS.resolveSibling('resources/me/yakar/tib/pack/corner-service.yaml'))
+    'corner spec'     | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text)
   }
 
   /**
