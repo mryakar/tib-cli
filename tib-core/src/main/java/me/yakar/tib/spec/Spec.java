@@ -30,7 +30,12 @@ import java.util.Set;
  */
 @Doc("The spec of a service: the service, its group, its pack and its entities.")
 public record Spec(
-    @Doc(value = "The version of the spec format; 1.", required = true, minimum = 1) Integer tib,
+    @Doc(
+            value = "The version of the spec format; " + Spec.VERSION + ".",
+            required = true,
+            minimum = Spec.VERSION,
+            maximum = Spec.VERSION)
+        Integer tib,
     @Doc(
             value = "The name of the service, in lower case words joined with hyphens.",
             required = true,
@@ -91,9 +96,6 @@ public record Spec(
       problems.add(
           "service",
           "'" + service + "' makes the package '" + packageName + "', which is a Java keyword");
-    }
-    if (tib != VERSION) {
-      problems.add("tib", "this build reads version " + VERSION);
     }
     Set<String> names = new HashSet<>();
     // The tables, in upper case: SQL names are the same in any case.

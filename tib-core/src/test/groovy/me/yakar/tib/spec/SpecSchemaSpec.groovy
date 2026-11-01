@@ -56,6 +56,7 @@ class SpecSchemaSpec extends Specification {
     where:
     yaml << [
       'service: s',
+      'tib: 2\nservice: s',
       'tib: 0\nservice: s',
       'tib: 1\nservice: Vehicle Service',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x, type: Strng }',
