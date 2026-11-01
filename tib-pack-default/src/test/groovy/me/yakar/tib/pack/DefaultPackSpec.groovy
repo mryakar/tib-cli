@@ -91,11 +91,9 @@ class DefaultPackSpec extends Specification {
       'DepotDto.java',
       'DepotGenerated.java',
       'DepotMapper.java',
-      'DepotRepository.java',
       'VehicleDto.java',
       'VehicleGenerated.java',
       'VehicleMapper.java',
-      'VehicleRepository.java',
     ]
     snapshot('vehicle-service', changes)
   }
