@@ -197,7 +197,8 @@ tasks.register<Sync>("packages") {
 }
 
 // Documentation. The command reference of the site is generated from the commands themselves, as
-// the man page that picocli-codegen writes. Antora runs antoraContent for each version of the site.
+// the man page that picocli-codegen writes, and the properties of the spec file and its schema from
+// the records of the spec. Antora runs antoraContent for each version of the site.
 val docs =
   sourceSets.create("docs") {
     compileClasspath += sourceSets.main.get().output + configurations.runtimeClasspath.get()
@@ -229,10 +230,16 @@ val commandReference =
       },
     )
     // The man pages link to each other by file name; Antora resolves such a link from the root
-    // of the pages, so the links get the directory of the reference pages.
+    // of the pages, so the links get the directory of the reference pages. The heading of the exit
+    // codes loses the colon of the help text.
     doLast {
       pages.get().asFile.listFiles()!!.forEach { page ->
-        page.writeText(page.readText().replace("xref:tib-", "xref:./tib-"))
+        page.writeText(
+          page
+            .readText()
+            .replace("xref:tib-", "xref:./tib-")
+            .replace("== Exit codes:", "== Exit codes"),
+        )
       }
     }
   }
@@ -248,10 +255,22 @@ val schemaAttachment =
     argumentProviders.add(CommandLineArgumentProvider { listOf(file.get().asFile.absolutePath) })
   }
 
+val specReference =
+  tasks.register<JavaExec>("specReference") {
+    description = "Writes the properties of the spec file as tables for the documentation site."
+    group = "documentation"
+    classpath = docs.runtimeClasspath
+    mainClass = "me.yakar.tib.cli.docs.SpecReference"
+    val file = layout.buildDirectory.file("docs/spec/spec-properties.adoc")
+    outputs.file(file)
+    argumentProviders.add(CommandLineArgumentProvider { listOf(file.get().asFile.absolutePath) })
+  }
+
 tasks.register<Sync>("antoraContent") {
   description = "Assembles the generated files of the documentation in an Antora module."
   group = "documentation"
   from(commandReference) { into("modules/ROOT/partials/commands") }
+  from(specReference) { into("modules/ROOT/partials") }
   from(schemaAttachment) { into("modules/ROOT/attachments") }
   into(layout.buildDirectory.dir("docs/antora"))
 }
