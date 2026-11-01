@@ -76,6 +76,24 @@ class GenerationSpec extends Specification {
     state.files()[1].sha256() == Generation.sha256('class Service {}\n')
   }
 
+  def "a file of the developer's that was removed after a run does not come back"() {
+    given:
+    Tree first = Tree.at(dir)
+    Generation.run(project, pack, { generator }, '1.2.3', first)
+    first.apply()
+    Files.delete(dir.resolve('Service.java'))
+
+    when:
+    Tree second = Tree.at(dir)
+    Generation.run(project, pack, { generator }, '1.2.4', second)
+
+    then: 'it stays on record as it was written'
+    second.changes()*.path() == ['.tib/state.yaml']
+    State state = State.in(second).get()
+    state.files()*.path() == ['Generated.java', 'Service.java']
+    state.files()[1].sha256() == Generation.sha256('class Service {}\n')
+  }
+
   def "the hash is the SHA-256 in hex"() {
     expect:
     Generation.sha256('') == 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'

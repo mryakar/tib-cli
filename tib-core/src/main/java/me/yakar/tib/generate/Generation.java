@@ -35,7 +35,8 @@ public final class Generation {
 
   /**
    * Runs the generator that the function picks from the pack, and stages the state file; the tree
-   * holds the result until it is applied.
+   * holds the result until it is applied. The generator stages no file of the developer's that an
+   * earlier run wrote.
    */
   public static void run(
       Project project,
@@ -46,6 +47,7 @@ public final class Generation {
     TreeMap<String, State.File> files = new TreeMap<>();
     State.in(tree)
         .ifPresent(previous -> previous.files().forEach(file -> files.put(file.path(), file)));
+    tree.writtenBefore(files.keySet());
     generator.apply(pack).generate(project, tree);
     for (Change change : tree.changes()) {
       files.put(

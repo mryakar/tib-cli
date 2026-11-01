@@ -227,4 +227,18 @@ class TreeSpec extends Specification {
     tree.exists('f')
     tree.changes().empty
   }
+
+  def "a file of the developer's that tib wrote before is not staged again, even when it is gone"() {
+    given:
+    Tree tree = Tree.at(project)
+    tree.writtenBefore(['./src/Service.java', 'Generated.java'])
+
+    when:
+    tree.once('src/Service.java', 'class Service {}\n')
+    tree.once('src/Controller.java', 'class Controller {}\n')
+    tree.own('Generated.java', 'class Generated {}\n')
+
+    then:
+    tree.changes()*.path() == ['Generated.java', 'src/Controller.java']
+  }
 }
