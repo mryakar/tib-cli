@@ -70,11 +70,6 @@ public final class DdlReader {
   /** The suffix of the column of a relation, after the name of the relation. */
   private static final Pattern ID_SUFFIX = Pattern.compile("(?i)(.)_ID$");
 
-  /** The columns that an audited entity's table has, in the default pack. */
-  private static final String CREATED_AT = "CREATED_AT";
-
-  private static final String UPDATED_AT = "UPDATED_AT";
-
   private DdlReader() {}
 
   /** Reads the DDL file into the spec of the service, as {@link #parse(String, Spec)} does. */
@@ -250,8 +245,8 @@ public final class DdlReader {
       }
       Column key = column(primaryKey.get(0));
       Id id = key.id(name, known, problems);
-      Column created = column(CREATED_AT);
-      Column updated = column(UPDATED_AT);
+      Column created = column(Entity.CREATED_AT);
+      Column updated = column(Entity.UPDATED_AT);
       boolean audit = created != null && updated != null && created.instant() && updated.instant();
       List<Field> fields = new ArrayList<>();
       List<Relation> relations = new ArrayList<>();

@@ -35,10 +35,15 @@ public record Entity(
     @Doc("The fields of the entity.") List<Field> fields,
     @Doc("The relations of the entity to others.") List<Relation> relations,
     @Doc(
-            value = "Whether the entity records when and by whom it was created and changed.",
+            value =
+                "Whether the entity records when it was created and last changed, in the columns"
+                    + " CREATED_AT and UPDATED_AT.",
             defaultValue = "false")
         Boolean audit,
     @Doc("What is generated for the entity.") Options options) {
+
+  /** The columns of an audited entity. */
+  public static final String CREATED_AT = "CREATED_AT", UPDATED_AT = "UPDATED_AT";
 
   public Entity {
     table = table == null && name != null ? Names.sql(name) : table;

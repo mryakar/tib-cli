@@ -231,7 +231,7 @@
           }
         },
         "audit": {
-          "description": "Whether the entity records when and by whom it was created and changed.",
+          "description": "Whether the entity records when it was created and last changed, in the columns CREATED_AT and UPDATED_AT.",
           "type": "boolean",
           "default": false
         },
