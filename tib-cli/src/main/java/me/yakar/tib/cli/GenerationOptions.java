@@ -83,7 +83,7 @@ public final class GenerationOptions {
       return ExitCode.OK;
     }
     tree.apply();
-    out.println("Wrote " + files + " files to " + tree.root() + ".");
+    out.println("Wrote " + files + (files == 1 ? " file" : " files") + " to " + tree.root() + ".");
     return ExitCode.OK;
   }
 
