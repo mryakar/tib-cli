@@ -48,27 +48,30 @@ testing {
 // -PtestJavaVersion runs the tests on another JVM, such as the one the packages embed.
 val testJavaVersion = providers.gradleProperty("testJavaVersion").map(String::toInt).orElse(21)
 
-// The tests read the examples of the documentation and, in a module that has them, the snapshots
-// of what it generates; they write what they generate under build/snapshots/<task>.
+// The tests read the examples of the documentation. The unit tests of a module that has snapshots
+// of what it generates also read them, and write what they generate under build/snapshots/test.
 tasks.withType<Test>().configureEach {
   javaLauncher = javaToolchains.launcherFor {
     languageVersion = testJavaVersion.map(JavaLanguageVersion::of)
   }
   val examples = layout.settingsDirectory.dir("docs/modules/ROOT/examples")
-  val snapshots = layout.projectDirectory.dir("src/test/snapshots").takeIf { it.asFile.isDirectory }
-  val actual = layout.buildDirectory.dir("snapshots/$name")
+  val snapshots =
+    layout.projectDirectory.dir("src/test/snapshots").takeIf {
+      name == "test" && it.asFile.isDirectory
+    }
+  val actual = snapshots?.let { layout.buildDirectory.dir("snapshots/$name") }
   inputs.dir(examples).withPropertyName("examples").withPathSensitivity(PathSensitivity.RELATIVE)
   snapshots?.let {
     inputs.dir(it).withPropertyName("snapshots").withPathSensitivity(PathSensitivity.RELATIVE)
   }
-  outputs.dir(actual).withPropertyName("actualSnapshots")
+  actual?.let { outputs.dir(it).withPropertyName("actualSnapshots") }
   // As arguments, the absolute paths are no inputs, so the cached results fit any checkout.
   jvmArgumentProviders.add(
     CommandLineArgumentProvider {
       listOfNotNull(
         "-Dtib.examples=${examples.asFile.absolutePath}",
         snapshots?.let { "-Dtib.snapshots=${it.asFile.absolutePath}" },
-        "-Dtib.snapshots.actual=${actual.get().asFile.absolutePath}",
+        actual?.let { "-Dtib.snapshots.actual=${it.get().asFile.absolutePath}" },
       )
     },
   )
