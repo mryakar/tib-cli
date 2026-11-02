@@ -72,10 +72,27 @@ public class GenerateEntityCommand implements Callable<Integer> {
               + State.PATH
               + ". Run tib init service first.");
     }
-    Spec service =
-        input.spec != null
-            ? SpecReader.read(input.spec)
-            : DdlReader.read(input.ddl, state.get().spec());
+    Spec project = state.get().spec();
+    if (input.spec == null) {
+      return options.generate(DdlReader.read(input.ddl, project), Pack::entity, tree);
+    }
+    Spec service = SpecReader.read(input.spec);
+    if (!service.service().equals(project.service())) {
+      return options.refuse(
+          input.spec
+              + " is the spec of "
+              + service.service()
+              + "; this project is "
+              + project.service());
+    }
+    if (!service.group().equals(project.group())) {
+      return options.refuse(
+          input.spec
+              + " is the spec of a service in "
+              + service.group()
+              + "; this project is in "
+              + project.group());
+    }
     return options.generate(service, Pack::entity, tree);
   }
 }
