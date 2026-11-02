@@ -7,6 +7,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-02
+
 ### Added
 
 - `tib --version` prints the version, also after a subcommand, as in `tib init --version`.
@@ -90,3 +92,6 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   banner or the logging.
 - A process started from the portable zip on Linux no longer fails for want of `jspawnhelper`'s
   execute bit.
+
+[Unreleased]: https://github.com/mryakar/tib-cli/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/mryakar/tib-cli/releases/tag/v0.1.0
