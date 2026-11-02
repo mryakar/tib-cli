@@ -17,6 +17,7 @@ package me.yakar.tib.tree;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -31,6 +32,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 /**
  * The files of a project as a run of tib sees them: the directory on disk, with the changes of the
@@ -39,6 +41,10 @@ import java.util.function.UnaryOperator;
  * so a second run of the same generation stages nothing.
  */
 public final class Tree {
+
+  /** The attributes of a file that the file replacing it keeps, of those the file system has. */
+  private static final List<String> KEPT =
+      Stream.of("posix:permissions").filter(Tree::supported).toList();
 
   private final Path root;
   private final SortedMap<String, Change> changes = new TreeMap<>();
@@ -140,10 +146,10 @@ public final class Tree {
   }
 
   /**
-   * Writes the staged changes to disk. Every file is first written next to its target, and then
-   * moved over it in one step, so a file is either the old one or the new one, never half written;
-   * when a write fails, the files written next to their targets are removed. Afterwards nothing is
-   * staged.
+   * Writes the staged changes to disk. Every file is first written next to its target, as {@code
+   * <name>.tib.tmp} with the permissions of a new file or of the file it replaces, and then moved
+   * over it in one step, so a file is either the old one or the new one, never half written; when a
+   * write fails, the files written next to their targets are removed. Afterwards nothing is staged.
    */
   public void apply() {
     // The files written next to their targets, by target, in the order of the paths.
@@ -156,9 +162,12 @@ public final class Tree {
         target = file.getParent();
         Files.createDirectories(target);
         target = file;
-        Path staging = Files.createTempFile(file.getParent(), ".tib-", ".tmp");
+        Path staging = file.resolveSibling(file.getFileName() + ".tib.tmp");
+        Files.deleteIfExists(staging);
+        Files.createFile(staging);
         staged.put(file, staging);
         Files.writeString(staging, change.after());
+        keep(file, staging, KEPT);
       }
       for (Map.Entry<Path, Path> entry : staged.entrySet()) {
         target = entry.getKey();
@@ -174,6 +183,20 @@ public final class Tree {
       throw new TreeException("write", target, e);
     }
     changes.clear();
+  }
+
+  /** Gives the file written next to its target the attributes of the target, if it is there. */
+  static void keep(Path file, Path staging, List<String> attributes) throws IOException {
+    if (Files.isRegularFile(file)) {
+      for (String attribute : attributes) {
+        Files.setAttribute(staging, attribute, Files.getAttribute(file, attribute));
+      }
+    }
+  }
+
+  private static boolean supported(String attribute) {
+    String view = attribute.substring(0, attribute.indexOf(':'));
+    return FileSystems.getDefault().supportedFileAttributeViews().contains(view);
   }
 
   private void stage(String key, String after, Owner owner) {

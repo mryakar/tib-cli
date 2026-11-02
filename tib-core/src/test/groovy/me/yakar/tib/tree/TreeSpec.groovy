@@ -15,8 +15,12 @@
  */
 package me.yakar.tib.tree
 
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.FileTime
+import java.nio.file.attribute.PosixFilePermissions
+import spock.lang.Requires
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -208,7 +212,7 @@ class TreeSpec extends Specification {
     and: 'no file was written next to its target, and the change stays staged'
     Files.walk(project).withCloseable { paths ->
       paths.noneMatch {
-        it.fileName.toString().startsWith('.tib-')
+        it.fileName.toString().endsWith('.tib.tmp')
       }
     }
     Files.readString(project.resolve('b/c/d')) == 'd'
@@ -261,5 +265,55 @@ class TreeSpec extends Specification {
       'db/migration/deeper/V1__a.sql'
     ]
     tree.recorded('db/none') == []
+  }
+
+  @Requires({ FileSystems.default.supportedFileAttributeViews().contains('posix') })
+  def "a new file gets the permissions of any new file, and a replaced file keeps its own"() {
+    given:
+    Files.writeString(project.resolve('run.sh'), 'echo a\n')
+    Files.setPosixFilePermissions(project.resolve('run.sh'), PosixFilePermissions.fromString('rwxr-xr-x'))
+    Tree tree = Tree.at(project)
+    tree.own('run.sh', 'echo b\n')
+    tree.own('src/A.java', 'class A {}\n')
+
+    when:
+    tree.apply()
+
+    then:
+    Files.readString(project.resolve('run.sh')) == 'echo b\n'
+    PosixFilePermissions.toString(Files.getPosixFilePermissions(project.resolve('run.sh'))) == 'rwxr-xr-x'
+    Files.getPosixFilePermissions(project.resolve('src/A.java')) == Files.getPosixFilePermissions(Files.createFile(project.resolve('src/new')))
+  }
+
+  def "a file written next to its target gets the attributes of the target, when it is there"() {
+    given:
+    FileTime time = FileTime.fromMillis(86_400_000)
+    Path file = Files.writeString(project.resolve('a.txt'), 'a\n')
+    Files.setLastModifiedTime(file, time)
+    Path staging = Files.writeString(project.resolve('a.txt.tib.tmp'), 'b\n')
+    Path other = Files.writeString(project.resolve('b.txt.tib.tmp'), 'b\n')
+    FileTime otherTime = Files.getLastModifiedTime(other)
+
+    when:
+    Tree.keep(file, staging, ['basic:lastModifiedTime'])
+    Tree.keep(project.resolve('b.txt'), other, ['basic:lastModifiedTime'])
+
+    then:
+    Files.getLastModifiedTime(staging) == time
+    Files.getLastModifiedTime(other) == otherTime
+  }
+
+  def "a file written next to its target before is replaced"() {
+    given:
+    Files.writeString(project.resolve('a.txt.tib.tmp'), 'left\n')
+    Tree tree = Tree.at(project)
+    tree.own('a.txt', 'a\n')
+
+    when:
+    tree.apply()
+
+    then:
+    Files.readString(project.resolve('a.txt')) == 'a\n'
+    Files.notExists(project.resolve('a.txt.tib.tmp'))
   }
 }
