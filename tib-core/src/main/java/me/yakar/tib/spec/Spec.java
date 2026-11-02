@@ -25,8 +25,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * The spec of a service: what tib generates, resolved. Read from a YAML file, it carries the
- * defaults for what the file left out, so that the same spec means the same thing everywhere.
+ * Read from a YAML file, the spec carries the defaults for what the file left out, so that the same
+ * spec means the same thing everywhere.
  */
 @Doc("The spec of a service: the service, its group, its pack and its entities.")
 public record Spec(

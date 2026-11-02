@@ -15,10 +15,6 @@
  */
 package me.yakar.tib.spec;
 
-/**
- * The identifier of an entity. Without one in the spec, an entity gets a {@code Long} named {@code
- * id} that the database assigns.
- */
 @Doc("The identifier of the entity.")
 public record Id(
     @Doc(value = "The name of the field.", pattern = Names.MEMBER, defaultValue = "id")
