@@ -73,7 +73,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A string literal in DDL, such as a comment that says `not null`, no longer changes its column.
 - A file written once that you removed stays removed on the next run.
 - A new migration is numbered after timestamp, dotted and nested versions too.
-- The answer to an update carries the times that the database has after it.
+- The answer to a create or an update carries the times that the database has after it.
 - The generated mapper sets the relations, so a relation added to the spec later is set and a
   removed one leaves no code that does not compile.
 - A `String` without a length gets 255 in its column annotation and its validation too, not only

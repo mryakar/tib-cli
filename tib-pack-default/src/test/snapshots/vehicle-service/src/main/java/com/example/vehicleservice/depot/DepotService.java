@@ -35,7 +35,7 @@ public class DepotService {
   public DepotDto create(DepotDto dto) {
     Depot depot = new Depot();
     mapper.update(dto, depot);
-    return mapper.toDto(depots.save(depot));
+    return mapper.toDto(depots.saveAndFlush(depot));
   }
 
   public DepotDto update(UUID id, DepotDto dto) {

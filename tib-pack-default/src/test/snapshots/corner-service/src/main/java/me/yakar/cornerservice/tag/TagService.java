@@ -34,7 +34,7 @@ public class TagService {
   public TagDto create(TagDto dto) {
     Tag tag = new Tag();
     mapper.update(dto, tag);
-    return mapper.toDto(tags.save(tag));
+    return mapper.toDto(tags.saveAndFlush(tag));
   }
 
   public TagDto update(Long id, TagDto dto) {

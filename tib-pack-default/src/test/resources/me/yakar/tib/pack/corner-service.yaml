@@ -1,12 +1,13 @@
-# The corners of the entity layer: a sequence identifier, a one-to-one relation, a relation to
-# itself and two relations to one target, an entity without DTOs, one without a mapper, one without
-# pagination, one with nothing to import, and every type.
+# The corners of the entity layer: an audited entity with a sequence identifier, a one-to-one
+# relation, a relation to itself and two relations to one target, an entity without DTOs, one
+# without a mapper, one without pagination, one with nothing to import, and every type.
 tib: 1
 service: corner-service
 group: me.yakar
 entities:
   - name: Branch
     id: { strategy: sequence }
+    audit: true
     fields:
       - { name: code, type: String, nullable: false }
       - { name: count, type: Long }
