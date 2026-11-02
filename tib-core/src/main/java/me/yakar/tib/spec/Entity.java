@@ -15,9 +15,12 @@
  */
 package me.yakar.tib.spec;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 @Doc("An entity: a table and the class mapped to it.")
@@ -54,7 +57,7 @@ public record Entity(
     options = options == null ? Options.defaults() : options;
   }
 
-  void check(Problems problems, String path, Set<String> entityNames) {
+  void check(Problems problems, String path, Map<String, Entity> entities) {
     String packageName = name.toLowerCase(Locale.ROOT);
     if (Names.isKeyword(packageName)) {
       problems.add(
@@ -66,7 +69,20 @@ public record Entity(
           path + ".table", "'" + table + "' is a reserved word in SQL; give the entity a table");
     }
     id.check(problems, path + ".id");
-    Set<String> members = new HashSet<>();
+    // The members that the generated code has whatever the spec says, each with its problem.
+    Map<String, String> generated = new HashMap<>();
+    if (!id.field().equals("id")) {
+      generated.put(
+          "id", "'id' is already a member: the accessors of the identifier are getId and setId");
+    }
+    if (audit) {
+      generated.put("createdAt", "'createdAt' is already a member of an audited entity");
+      generated.put("updatedAt", "'updatedAt' is already a member of an audited entity");
+    }
+    if (generated.containsKey(id.field())) {
+      problems.add(path + ".id.field", generated.get(id.field()));
+    }
+    Set<String> members = new HashSet<>(generated.keySet());
     members.add(id.field());
     // The columns, in upper case: SQL names are the same in any case.
     Set<String> columns = new HashSet<>();
@@ -79,24 +95,46 @@ public record Entity(
       String fieldPath = path + ".fields[" + i + "]";
       field.check(problems, fieldPath);
       if (!members.add(field.name())) {
-        problems.add(fieldPath + ".name", "'" + field.name() + "' is already a member");
+        problems.add(fieldPath + ".name", taken(field.name(), generated));
       } else {
         column(problems, fieldPath, field.column(), columns);
       }
     }
+    // The relations whose field is a member of its own, by path.
+    Map<String, Relation> accepted = new LinkedHashMap<>();
     for (int i = 0; i < relations.size(); i++) {
       Relation relation = relations.get(i);
       String relationPath = path + ".relations[" + i + "]";
       relation.check(problems, relationPath);
-      if (!entityNames.contains(relation.target())) {
+      if (!entities.containsKey(relation.target())) {
         problems.add(relationPath + ".target", "there is no entity '" + relation.target() + "'");
       }
       if (!members.add(relation.field())) {
-        problems.add(relationPath + ".field", "'" + relation.field() + "' is already a member");
+        problems.add(relationPath + ".field", taken(relation.field(), generated));
       } else {
+        accepted.put(relationPath, relation);
         column(problems, relationPath, relation.column(), columns);
       }
     }
+    // The DTO holds the identifier of a relation's target in a member of its own: depotId.
+    accepted.forEach(
+        (relationPath, relation) -> {
+          Entity target = entities.get(relation.target());
+          if (target != null) {
+            String member = relation.field() + Names.property(target.id().field());
+            if (!members.add(member)) {
+              problems.add(
+                  relationPath + ".field",
+                  "'"
+                      + member
+                      + "', which holds the identifier of the target, is already a member");
+            }
+          }
+        });
+  }
+
+  private static String taken(String member, Map<String, String> generated) {
+    return generated.getOrDefault(member, "'" + member + "' is already a member");
   }
 
   /** The column of a member, which no other member of the entity may have. */

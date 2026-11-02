@@ -47,6 +47,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   PostgreSQL reserves as tables and columns.
 - The spec refuses a cycle of relations between entities; a relation of an entity to itself is
   allowed.
+- The spec refuses a member that the generated code has already: `id` when the identifier has
+  another field, `createdAt` and `updatedAt` in an audited entity, and the DTO's member for the
+  target of a relation, as in `depotId`.
 - The JSON Schema gives `tib` a maximum of 1, and a later version is refused as `tib: 2 is above 1`.
 - The `events` option of an entity is gone, and a spec that sets it is refused.
 - The `tib` key of the state file is the version of tib that wrote it, as in `tib: 0.1.0`.

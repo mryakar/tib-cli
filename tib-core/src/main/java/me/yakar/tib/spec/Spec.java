@@ -97,12 +97,13 @@ public record Spec(
           "service",
           "'" + service + "' makes the package '" + packageName + "', which is a Java keyword");
     }
-    Set<String> names = new HashSet<>();
+    // The entities by name; the first one of a name.
+    Map<String, Entity> names = new HashMap<>();
     // The tables, in upper case: SQL names are the same in any case.
     Set<String> tables = new HashSet<>();
     for (int i = 0; i < entities.size(); i++) {
       Entity entity = entities.get(i);
-      if (!names.add(entity.name())) {
+      if (names.putIfAbsent(entity.name(), entity) != null) {
         problems.add("entities[" + i + "].name", "'" + entity.name() + "' is already an entity");
       } else if (!tables.add(entity.table().toUpperCase(Locale.ROOT))) {
         problems.add("entities[" + i + "].table", "'" + entity.table() + "' is already a table");
