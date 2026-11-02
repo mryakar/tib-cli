@@ -71,11 +71,17 @@ final class EntityGenerator implements Generator {
   }
 
   /**
-   * The migration that creates the table: the one already there, or the next major version after
-   * the versioned migrations there.
+   * The migration that creates the table: the one tib wrote before, there or not, so that a
+   * migration the developer removed or renamed stays so; else the one there; else the next major
+   * version after the versioned migrations there.
    */
   private static String migration(Tree tree, EntityModel entity) {
     String suffix = "__create_" + entity.table().toLowerCase(Locale.ROOT) + ".sql";
+    for (String migration : tree.recorded(MIGRATIONS)) {
+      if (migration.endsWith(suffix)) {
+        return migration;
+      }
+    }
     long latest = 0;
     for (String migration : tree.list(MIGRATIONS)) {
       if (migration.endsWith(suffix)) {

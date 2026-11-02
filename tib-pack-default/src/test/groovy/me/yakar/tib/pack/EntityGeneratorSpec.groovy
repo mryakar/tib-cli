@@ -91,4 +91,28 @@ entities:
     then:
     tree.changes()*.path().every { !it.endsWith('.sql') }
   }
+
+  def "the migration of a table that tib wrote before is not written again, also when it is #how"() {
+    given:
+    onDisk.each { path ->
+      Path file = dir.resolve(EntityGenerator.MIGRATIONS).resolve(path)
+      Files.createDirectories(file.parent)
+      Files.writeString(file, '-- mine\n')
+    }
+    Tree tree = Tree.at(dir)
+    tree.writtenBefore(['V0__create_b.sql', 'V1__create_a.sql'].collect {
+      "${EntityGenerator.MIGRATIONS}/${it}".toString()
+    })
+
+    when:
+    new EntityGenerator().generate(new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n')), tree)
+
+    then:
+    tree.changes()*.path().every { !it.endsWith('.sql') }
+
+    where:
+    how       | onDisk
+    'gone'    | ['V2__x.sql']
+    'renamed' | ['V1__a.sql']
+  }
 }

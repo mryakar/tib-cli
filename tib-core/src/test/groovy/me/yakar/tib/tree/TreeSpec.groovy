@@ -241,4 +241,25 @@ class TreeSpec extends Specification {
     then:
     tree.changes()*.path() == ['Generated.java', 'src/Controller.java']
   }
+
+  def "lists the files under a directory that tib wrote before, there or not, in order"() {
+    given:
+    Files.createDirectories(project.resolve('db/migration'))
+    Files.writeString(project.resolve('db/migration/V3__c.sql'), '')
+    Tree tree = Tree.at(project)
+    tree.writtenBefore([
+      'db/migration/V2__b.sql',
+      './db/migration/deeper/V1__a.sql',
+      'db/other.sql',
+      'db/migration/V1__a.sql'
+    ])
+
+    expect:
+    tree.recorded('db/migration') == [
+      'db/migration/V1__a.sql',
+      'db/migration/V2__b.sql',
+      'db/migration/deeper/V1__a.sql'
+    ]
+    tree.recorded('db/none') == []
+  }
 }
