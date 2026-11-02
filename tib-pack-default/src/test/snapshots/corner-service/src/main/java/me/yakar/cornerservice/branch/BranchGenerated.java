@@ -14,6 +14,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 /** The columns of BRANCH, as the spec names them; {@link Branch} is the entity. */
 @MappedSuperclass
@@ -52,6 +54,14 @@ public abstract class BranchGenerated {
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "PARENT_ID", unique = true)
   private Branch parent;
+
+  @CreationTimestamp
+  @Column(name = "CREATED_AT", nullable = false, updatable = false)
+  private Instant createdAt;
+
+  @UpdateTimestamp
+  @Column(name = "UPDATED_AT", nullable = false)
+  private Instant updatedAt;
 
   public Long getId() {
     return id;
@@ -131,5 +141,13 @@ public abstract class BranchGenerated {
 
   public void setParent(Branch parent) {
     this.parent = parent;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
+  public Instant getUpdatedAt() {
+    return updatedAt;
   }
 }

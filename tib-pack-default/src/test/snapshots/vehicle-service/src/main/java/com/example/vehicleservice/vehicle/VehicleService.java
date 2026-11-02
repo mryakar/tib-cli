@@ -34,7 +34,7 @@ public class VehicleService {
   public VehicleDto create(VehicleDto dto) {
     Vehicle vehicle = new Vehicle();
     mapper.update(dto, vehicle);
-    return mapper.toDto(vehicles.save(vehicle));
+    return mapper.toDto(vehicles.saveAndFlush(vehicle));
   }
 
   public VehicleDto update(Long id, VehicleDto dto) {

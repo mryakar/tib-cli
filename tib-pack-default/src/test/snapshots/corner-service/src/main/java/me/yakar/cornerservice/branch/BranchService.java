@@ -33,7 +33,7 @@ public class BranchService {
   public BranchDto create(BranchDto dto) {
     Branch branch = new Branch();
     mapper.update(dto, branch);
-    return mapper.toDto(branches.save(branch));
+    return mapper.toDto(branches.saveAndFlush(branch));
   }
 
   public BranchDto update(Long id, BranchDto dto) {

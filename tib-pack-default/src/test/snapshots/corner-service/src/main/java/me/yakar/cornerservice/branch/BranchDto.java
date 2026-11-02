@@ -10,7 +10,7 @@ import java.util.UUID;
 
 /**
  * A branch as the API shows and takes it; a relation is the identifier of its target.
- * The identifier is read only; the service ignores it.
+ * The identifier and the audit times are read only; the service ignores them.
  */
 public record BranchDto(
     Long id,
@@ -22,4 +22,6 @@ public record BranchDto(
     UUID token,
     BigDecimal ratio,
     BigDecimal amount,
-    Long parentId) {}
+    Long parentId,
+    Instant createdAt,
+    Instant updatedAt) {}

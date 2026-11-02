@@ -37,7 +37,7 @@ public class ${entity.name()}Service {
   public ${entity.name()}Dto create(${entity.name()}Dto dto) {
     ${entity.name()} ${entity.variable()} = new ${entity.name()}();
     mapper.update(dto, ${entity.variable()});
-    return mapper.toDto(${entity.plural()}.save(${entity.variable()}));
+    return mapper.toDto(${entity.plural()}.saveAndFlush(${entity.variable()}));
   }
 
   public ${entity.name()}Dto update(${entity.idType()} id, ${entity.name()}Dto dto) {

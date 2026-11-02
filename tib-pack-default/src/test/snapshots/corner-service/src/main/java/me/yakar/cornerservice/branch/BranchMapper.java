@@ -24,10 +24,12 @@ public class BranchMapper {
         branch.getToken(),
         branch.getRatio(),
         branch.getAmount(),
-        branch.getParent() == null ? null : branch.getParent().getId());
+        branch.getParent() == null ? null : branch.getParent().getId(),
+        branch.getCreatedAt(),
+        branch.getUpdatedAt());
   }
 
-  /** Copies the DTO onto the entity, all but its identifier. */
+  /** Copies the DTO onto the entity, all but its identifier and its audit times. */
   public void update(BranchDto dto, Branch branch) {
     branch.setCode(dto.code());
     branch.setCount(dto.count());
