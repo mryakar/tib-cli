@@ -98,6 +98,10 @@ the spec has 2 problems:
   entities[0].fields[0].name: 'class' is a Java keyword
 ----
 
+With DDL, the way out is to rename the table or the column in the DDL; a column named like a Java
+keyword can also keep its name when the spec of the service gives its field another one, as in
+`{ name: kind, type: String, column: class }`, which the field of the column then keeps.
+
 == The spec of the service
 
 The entity of a table takes the place of the entity of the same table in the spec of the service,
