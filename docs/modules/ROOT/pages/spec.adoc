@@ -74,6 +74,10 @@ schema does not hold. A problem names the value it is about, as in
   identifier has another field, since its accessors are always `getId` and `setId`; `createdAt`
   and `updatedAt` in an audited entity; and the member of the DTO that holds the target of a
   relation, the relation's field followed by the target's identifier field, as in `depotId`.
+* An entity is not named like a type that the generated code imports, such as `Entity`, `Table`,
+  `Column`, `Id`, `Service`, `Component`, `Page`, `Pageable`, `List`, `Instant`, `UUID`,
+  `BigDecimal`, `LocalDate` or `LocalDateTime`. tib does not check this one, and the generated
+  code would not compile.
 * No name becomes a Java keyword: not a field, an identifier or the field of a relation (`class`),
   not a part of the group (`com.new`), not the service's name without its hyphens, and not the
   name of an entity in lower case, which is its package (`Class`).
