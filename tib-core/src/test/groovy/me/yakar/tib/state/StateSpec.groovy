@@ -18,7 +18,6 @@ package me.yakar.tib.state
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.spec.Names
-import me.yakar.tib.spec.SpecException
 import me.yakar.tib.spec.SpecReader
 import me.yakar.tib.tree.Owner
 import me.yakar.tib.tree.Tree
@@ -110,12 +109,12 @@ class StateSpec extends Specification {
     'files: []\n'                         | '.tib/state.yaml: spec: required'
   }
 
-  def "the spec in the state is checked as a spec"() {
+  def "the spec in the state is checked as a spec, and its problem is one of the state file"() {
     when:
     State.parse('spec:\n  tib: 1\n  service: Vehicle Service\n')
 
     then:
-    SpecException e = thrown()
-    e.problems() == ["service: 'Vehicle Service' does not match ${Names.SERVICE}"]
+    StateException e = thrown()
+    e.message == ".tib/state.yaml: the spec has a problem: service: 'Vehicle Service' does not match ${Names.SERVICE}"
   }
 }
