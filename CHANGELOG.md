@@ -36,7 +36,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The migration of an entity indexes the column of each many-to-one relation.
 - `tib generate entity --ddl` reads the entities from the tables of SQL DDL: the `CREATE TABLE`
   statements and the keys that `ALTER TABLE` adds.
-- A second run of the same command changes nothing and prints `Nothing to change.`; no file is
+- Running `tib generate entity` again changes nothing and prints `Nothing to change.`; no file is
   ever left half written.
 
 ### Changed
