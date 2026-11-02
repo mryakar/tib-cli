@@ -79,6 +79,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A `String` without a length gets 255 in its column annotation and its validation too, not only
   in its migration.
 - A failed run leaves no staging files behind.
+- A file that tib writes gets the permissions of any new file, not `rw-------`, and a file it
+  replaces keeps its own.
 - An argument of tib no longer reaches the configuration of Spring, so it cannot switch on the
   banner or the logging.
 - A process started from the portable zip on Linux no longer fails for want of `jspawnhelper`'s
