@@ -21,13 +21,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
@@ -44,7 +42,7 @@ public final class Tree {
 
   private final Path root;
   private final SortedMap<String, Change> changes = new TreeMap<>();
-  private final Set<String> writtenBefore = new HashSet<>();
+  private final SortedSet<String> writtenBefore = new TreeSet<>();
 
   private Tree(Path root) {
     this.root = root;
@@ -121,6 +119,12 @@ public final class Tree {
   /** Tells the tree the files that tib wrote to the project in earlier runs. */
   public void writtenBefore(Collection<String> paths) {
     paths.forEach(path -> writtenBefore.add(key(path)));
+  }
+
+  /** The paths under the directory, at any depth, that tib wrote in earlier runs, there or not. */
+  public List<String> recorded(String directory) {
+    String prefix = key(directory) + "/";
+    return writtenBefore.stream().filter(path -> path.startsWith(prefix)).toList();
   }
 
   /** The changes staged so far, by path. */
