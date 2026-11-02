@@ -158,10 +158,30 @@ class GenerateEntityCommandSpec extends Specification {
     where:
     problem                         | option   | name                | content                            | message
     'a spec that tib cannot use'    | '--spec' | 'spec.yaml'         | 'tib: 2\nservice: s\n'             | 'the spec has a problem: tib: 2 is above 1'
-    'a pack that is not there'      | '--spec' | 'spec.yaml'         | 'tib: 1\nservice: s\npack: nope\n' | "there is no pack 'nope'"
+    'a pack that is not there'      | '--spec' | 'spec.yaml'         | 'tib: 1\nservice: vehicle-service\npack: nope\n' | "there is no pack 'nope'"
     'a spec file that is not there' | '--spec' | 'no-such-spec.yaml' | null                               | 'cannot read no-such-spec.yaml: no such file'
     'DDL that tib cannot use'       | '--ddl'  | 'tables.sql'        | 'CREATE TABLE T (A INT);\n'        | 'the DDL has a problem: T: there is no primary key'
     'a DDL file that is not there'  | '--ddl'  | 'no-such-ddl.sql'   | null                               | 'cannot read no-such-ddl.sql: no such file'
+  }
+
+  def "the spec of another #what is refused, and nothing is written"() {
+    given:
+    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    String file = Files.writeString(dir.resolve('spec.yaml'), content).toString()
+    String before = Files.readString(dir.resolve(State.PATH))
+
+    when:
+    Result result = tib.run('generate', 'entity', '--spec', file, '-d', dir.toString())
+
+    then:
+    result.exitCode() == 1
+    result.err() == "$file $message\n"
+    Files.readString(dir.resolve(State.PATH)) == before
+
+    where:
+    what      | content                                                    | message
+    'service' | 'tib: 1\nservice: fleet-service\n'                         | 'is the spec of fleet-service; this project is vehicle-service'
+    'group'   | 'tib: 1\nservice: vehicle-service\ngroup: com.acme\n'      | 'is the spec of a service in com.acme; this project is in com.example'
   }
 
   def "a state file that tib cannot read is reported: #option, #state"() {

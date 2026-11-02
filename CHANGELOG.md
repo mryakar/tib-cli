@@ -66,6 +66,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A run that writes one file says `Wrote 1 file`.
 - A file that cannot be read or written, an empty spec and a broken state file are reported in
   one line, as in `cannot read spec.yaml: no such file`, with exit code 1.
+- `tib generate entity --spec` refuses the spec of another service or group than the project's,
+  as in `spec.yaml is the spec of fleet-service; this project is vehicle-service`, with exit code
+  1.
 - A problem of the spec that the state file records names the state file, as in
   `.tib/state.yaml: the spec has a problem: ...`.
 
