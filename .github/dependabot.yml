@@ -21,6 +21,9 @@ updates:
       - dependency-name: org.springframework.boot:spring-boot-gradle-plugin
         update-types: [version-update:semver-major]
     groups:
+      # The Spring Boot of the generated services changes the snapshots; its update comes alone.
+      generated-stack:
+        patterns: ["org.springframework.boot:spring-boot-gradle-plugin"]
       gradle:
         patterns: ["*"]
   - package-ecosystem: github-actions

@@ -38,6 +38,9 @@ Antora runs the documentation tasks of the build itself and writes the site to `
   its DDL and from the corner spec of the snapshots, and builds each with Gradle; where Docker runs
   Linux containers, the build includes the service's test against PostgreSQL in a container,
   elsewhere it compiles the service and its test.
+- An update of the Spring Boot that the default pack generates comes in a pull request of its
+  own: it also needs the snapshots under `tib-pack-default/src/test/snapshots` updated, from what
+  the test writes under `tib-pack-default/build/snapshots/test`, and the acceptance test green.
 
 ## Design rules
 
