@@ -70,6 +70,10 @@ schema does not hold. A problem names the value it is about, as in
   identifier, fields and relations, a name of its own and a column of its own. Tables and columns
   are compared in any case; the columns of an audited entity include `CREATED_AT` and
   `UPDATED_AT`.
+* No member takes a name that the generated code gives a member of its own: `id` when the
+  identifier has another field, since its accessors are always `getId` and `setId`; `createdAt`
+  and `updatedAt` in an audited entity; and the member of the DTO that holds the target of a
+  relation, the relation's field followed by the target's identifier field, as in `depotId`.
 * No name becomes a Java keyword: not a field, an identifier or the field of a relation (`class`),
   not a part of the group (`com.new`), not the service's name without its hyphens, and not the
   name of an entity in lower case, which is its package (`Class`).
