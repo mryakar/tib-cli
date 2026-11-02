@@ -164,23 +164,24 @@ class GenerateEntityCommandSpec extends Specification {
     'a DDL file that is not there'  | '--ddl'  | 'no-such-ddl.sql'   | null                               | 'cannot read no-such-ddl.sql: no such file'
   }
 
-  def "a state file that tib cannot read is reported: #option"() {
+  def "a state file that tib cannot read is reported: #option, #state"() {
     given:
     Files.createDirectories(dir.resolve('.tib'))
-    Files.writeString(dir.resolve(State.PATH), '[')
+    Files.writeString(dir.resolve(State.PATH), state)
 
     when:
     Result result = tib.run('generate', 'entity', option, file, '-d', dir.toString())
 
     then:
     result.exitCode() == 1
-    result.err().startsWith('.tib/state.yaml: ')
+    result.err().startsWith(message)
     result.err().readLines().size() == 1
 
     where:
-    option   | file
-    '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString()
-    '--ddl'  | EXAMPLES.resolve('vehicle-service.sql').toString()
+    option   | file                                                | state                                  | message
+    '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString() | '['                                    | '.tib/state.yaml: '
+    '--ddl'  | EXAMPLES.resolve('vehicle-service.sql').toString()  | '['                                    | '.tib/state.yaml: '
+    '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString() | 'spec:\n  tib: 1\n  service: int\n' | ".tib/state.yaml: the spec has a problem: service: 'int' makes the package 'int'"
   }
 
   /** The state file of the service. */

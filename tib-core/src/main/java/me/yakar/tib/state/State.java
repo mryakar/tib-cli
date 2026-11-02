@@ -18,6 +18,7 @@ package me.yakar.tib.state;
 import java.util.List;
 import java.util.Optional;
 import me.yakar.tib.spec.Spec;
+import me.yakar.tib.spec.SpecException;
 import me.yakar.tib.tree.Owner;
 import me.yakar.tib.tree.Tree;
 import tools.jackson.core.JacksonException;
@@ -67,7 +68,10 @@ public record State(String tib, PackRef pack, Spec spec, List<File> files) {
     return YAML.writeValueAsString(this);
   }
 
-  /** The state read from its YAML, with its spec checked as a spec file is. */
+  /**
+   * The state read from its YAML, with its spec checked as a spec file is; a problem of that spec
+   * is a problem of the state file.
+   */
   public static State parse(String yaml) {
     State state;
     try {
@@ -78,7 +82,11 @@ public record State(String tib, PackRef pack, Spec spec, List<File> files) {
     if (state == null || state.spec() == null) {
       throw new StateException(PATH + ": spec: required");
     }
-    state.spec().check();
+    try {
+      state.spec().check();
+    } catch (SpecException e) {
+      throw new StateException(PATH + ": " + e.getMessage());
+    }
     return state;
   }
 }
