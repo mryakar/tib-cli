@@ -96,6 +96,19 @@ $ tib generate entity --spec vehicle-service.yaml
 Nothing to change.
 ----
 
+In a git repository, tib writes only when the files of the service that git tracks have no
+uncommitted changes, so that what tib changed can be told apart from what you changed. Commit or
+stash yours first; `--allow-dirty` writes anyway, and `--dry-run` writes nothing, so it always
+runs. Files that git does not track, such as a new spec file, do not count:
+
+[source,bash]
+----
+$ tib generate entity --spec vehicle-service.yaml
+/home/you/vehicle-service has changes that are not committed:
+   M src/main/java/com/example/vehicleservice/vehicle/Vehicle.java
+Commit or stash them first, so that the changes of tib can be told apart, or run again with --allow-dirty.
+----
+
 The entities may come from the tables of SQL DDL instead, which tib adds to the spec of the
 service; xref:ddl.adoc[] says what it reads:
 
