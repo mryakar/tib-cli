@@ -84,6 +84,47 @@ public record FieldModel(Field field) {
     return validation.toString();
   }
 
+  /**
+   * A value of the field for the tests, as Java: the first or the second, which differ. A String
+   * fits its length, and a BigDecimal its precision and scale, so that it reads back as it was.
+   */
+  String sample(int variant) {
+    return switch (field.type()) {
+      case STRING -> {
+        String text = variant == 1 ? "One" : "Two";
+        yield "\"" + text.substring(0, Math.min(text.length(), length())) + "\"";
+      }
+      case INTEGER -> String.valueOf(variant);
+      case LONG -> variant + "L";
+      case BIG_DECIMAL -> "new BigDecimal(\"" + decimal(variant) + "\")";
+      case BOOLEAN -> String.valueOf(variant == 1);
+      case LOCAL_DATE -> "LocalDate.of(2026, 1, " + variant + ")";
+      case LOCAL_DATE_TIME -> "LocalDateTime.of(2026, 1, " + variant + ", 12, 0)";
+      case INSTANT -> "Instant.parse(\"2026-01-0" + variant + "T12:00:00Z\")";
+      case UUID -> uuid(variant);
+    };
+  }
+
+  /** A UUID for the tests, as Java. */
+  static String uuid(int variant) {
+    return "UUID.fromString(\"00000000-0000-0000-0000-00000000000" + variant + "\")";
+  }
+
+  /**
+   * The text of a BigDecimal for the tests, with the scale of the column: {@code 1.00}, or {@code
+   * 0.01} when the precision leaves no digit before the point.
+   */
+  private String decimal(int variant) {
+    int scale = field.scale() == null ? 0 : field.scale();
+    if (scale == 0) {
+      return String.valueOf(variant);
+    }
+    if (field.precision() != null && field.precision() == scale) {
+      return "0." + "0".repeat(scale - 1) + variant;
+    }
+    return variant + "." + "0".repeat(scale);
+  }
+
   /** The definition of the column in SQL. */
   String sql() {
     StringBuilder sql =
