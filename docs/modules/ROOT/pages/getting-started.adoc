@@ -70,7 +70,7 @@ $ tib generate entity --spec vehicle-service.yaml --dry-run
 +++ b/.tib/state.yaml
 ...
 $ tib generate entity --spec vehicle-service.yaml
-Wrote 17 files to /home/you/vehicle-service.
+Wrote 23 files to /home/you/vehicle-service.
 ----
 
 For `Vehicle` that is, in the package `com.example.vehicleservice.vehicle`: `VehicleGenerated`,
@@ -78,6 +78,13 @@ the mapped superclass with the columns, `VehicleDto` and `VehicleMapper`, writte
 `Vehicle`, the entity for your code, `VehicleRepository`, and `VehicleService` and
 `VehicleController`, a CRUD API under `/api/vehicles`, written once; and the Flyway migration
 `V2__create_vehicle.sql`, written once and numbered after the migrations already there.
+
+Its tests come with it, written once, in the same package under `src/test/java`:
+`VehicleRepositoryTests` saves and reads a vehicle, `VehicleApiTests` calls every operation of
+the API over HTTP, both against PostgreSQL in a container, and `VehicleServiceTests` tests the
+service with its repository and mapper mocked. They fill the entity with sample values that fit
+its columns; `./gradlew build` runs them. An entity without a service and a controller, because
+its spec turns off its DTO or its mapper, gets the repository test only.
 
 Run it again after a change of the spec: the files written on every run follow the spec, and the
 files written once stay yours, also when you delete one. A run that would change nothing says so,
@@ -110,7 +117,7 @@ run of tib replaces it. A file of yours that was removed stays removed:
 [source,bash]
 ----
 $ tib status
-vehicle-service: tib 0.1.0, pack default 0.1.0, 2 entities, 25 files.
+vehicle-service: tib 0.1.0, pack default 0.1.0, 2 entities, 31 files.
 edited   src/main/java/com/example/vehicleservice/vehicle/VehicleMapper.java
 removed  src/main/java/com/example/vehicleservice/vehicle/VehicleService.java
 

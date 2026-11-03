@@ -7,7 +7,8 @@ The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.
 - `tib init service` scaffolds a Spring Boot 3 service with JPA, PostgreSQL, Flyway and
   Testcontainers, from its name or from a spec file.
 - `tib generate entity` adds the entity layer of the spec's entities, or of the tables of SQL DDL:
-  the entity, repository, DTO, mapper, service, controller and Flyway migration.
+  the entity, repository, DTO, mapper, service, controller and Flyway migration, with tests of
+  the repository, the service and the API.
 - `--dry-run` shows the diff and writes nothing; running `tib generate entity` again changes
   nothing and prints `Nothing to change.`. Every generated file says in its first line who owns
   it: the generator or you.

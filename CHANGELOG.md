@@ -9,6 +9,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `tib generate entity` writes the tests of every entity, once, next to it under `src/test/java`:
+  a test of its repository and one of its API over HTTP, both against PostgreSQL in a container,
+  and a test of its service with the repository and the mapper mocked. An entity without a service
+  gets the test of its repository only.
 - `tib status` says which of the files that tib wrote into a service are no longer as it wrote
   them: a file of tib's that was edited or is missing, which tib replaces on its next run, and a
   file of yours that was removed. It exits with 1 when a file of tib's differs, so that a build
