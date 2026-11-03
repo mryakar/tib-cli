@@ -16,7 +16,6 @@
 package me.yakar.tib.cli;
 
 import java.nio.file.Path;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import me.yakar.tib.ddl.DdlReader;
 import me.yakar.tib.generate.Pack;
@@ -64,15 +63,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
   @Override
   public Integer call() {
     Tree tree = options.tree();
-    Optional<State> state = State.in(tree);
-    if (state.isEmpty()) {
-      return options.refuse(
-          tree.root()
-              + " is not a tib project: there is no "
-              + State.PATH
-              + ". Run tib init service first.");
-    }
-    Spec project = state.get().spec();
+    Spec project = State.of(tree).spec();
     if (input.spec == null) {
       return options.generate(DdlReader.read(input.ddl, project), Pack::entity, tree);
     }
