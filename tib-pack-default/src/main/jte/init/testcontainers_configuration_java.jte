@@ -13,7 +13,7 @@ import org.testcontainers.utility.DockerImageName;
 
 /** The database that the tests run against: PostgreSQL in a container. */
 @TestConfiguration(proxyBeanMethods = false)
-class TestcontainersConfiguration {
+public class TestcontainersConfiguration {
 
   @Bean
   @ServiceConnection
