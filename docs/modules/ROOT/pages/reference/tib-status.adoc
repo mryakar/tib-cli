@@ -1,0 +1,5 @@
+= tib status
+:description: The tib status command and its options.
+
+// The sections come from the man page that the build generates from the command (picocli-codegen).
+include::partial$commands/tib-status.adoc[tags=picocli-generated-man-section-synopsis;picocli-generated-man-section-description;picocli-generated-man-section-options;picocli-generated-man-section-arguments;picocli-generated-man-section-commands;picocli-generated-man-section-exit-status]

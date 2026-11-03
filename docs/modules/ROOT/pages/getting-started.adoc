@@ -103,5 +103,20 @@ Each generated file says in its first line what tib does with it on later runs. 
 once* is yours from then on; one *written on every run*, such as `VehicleGenerated.java`, is
 replaced by tib, so it is not to be edited.
 
+`tib status` says which of them are no longer as tib wrote them. A file of tib's that was edited
+or is missing is a problem, and makes it exit with 1, so that a build can check for it; the next
+run of tib replaces it. A file of yours that was removed stays removed:
+
+[source,bash]
+----
+$ tib status
+vehicle-service: tib 0.1.0, pack default 0.1.0, 2 entities, 25 files.
+edited   src/main/java/com/example/vehicleservice/vehicle/VehicleMapper.java
+removed  src/main/java/com/example/vehicleservice/vehicle/VehicleService.java
+
+An edited file is written by tib on every run: its next run replaces it.
+A removed file was yours: tib does not write it again.
+----
+
 `tib --help` lists the commands, and `tib <command> --help` the options of one. Every command and
 option is also in the xref:reference/tib.adoc[reference].
