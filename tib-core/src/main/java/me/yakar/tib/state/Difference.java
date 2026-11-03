@@ -1,0 +1,42 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package me.yakar.tib.state;
+
+import java.util.Locale;
+
+/**
+ * A file that tib wrote and that is no longer as it wrote it.
+ *
+ * @param path the path of the file in the project
+ */
+public record Difference(String path, Kind kind) {
+
+  /** How the file differs from what tib wrote. */
+  public enum Kind {
+    /** A file of the generator's was edited; the next run of tib replaces it. */
+    EDITED,
+    /** A file of the generator's, or a shared file, is not there; tib needs it. */
+    MISSING,
+    /** A file of the developer's was removed; tib does not write it again. */
+    REMOVED;
+
+    /** The name in the output of tib. */
+    @Override
+    public String toString() {
+      return name().toLowerCase(Locale.ROOT);
+    }
+  }
+}

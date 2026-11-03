@@ -118,6 +118,67 @@ class StateSpec extends Specification {
     e.message == ".tib/state.yaml: the spec has a problem: service: 'Vehicle Service' does not match ${Names.SERVICE}"
   }
 
+  def "the state of a tree without one says that it is not a tib project"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    State.of(tree)
+
+    then:
+    StateException e = thrown()
+    e.message == "${tree.root()} is not a tib project: there is no .tib/state.yaml. Run tib init service first."
+
+    when:
+    tree.own(State.PATH, state.yaml())
+
+    then:
+    State.of(tree) == state
+  }
+
+  def "the differences are the files of tib that were edited or are missing, and the files of the developer that were removed"() {
+    given:
+    Map<String, Owner> owners = [
+      'Edited.java'    : Owner.GENERATOR,
+      'Kept.java'      : Owner.GENERATOR,
+      'Missing.java'   : Owner.GENERATOR,
+      'Mine.java'      : Owner.DEVELOPER,
+      'Removed.java'   : Owner.DEVELOPER,
+      'Shared.toml'    : Owner.SHARED,
+      'SharedGone.toml': Owner.SHARED
+    ]
+    State written = new State('0.1.0', state.pack(), state.spec(), owners.collect { path, owner ->
+      State.File.of(path, owner, "$path\n")
+    })
+    owners.keySet().each { Files.writeString(dir.resolve(it), "$it\n") }
+    ['Edited.java', 'Mine.java', 'Shared.toml'].each {
+      Files.writeString(dir.resolve(it), 'edited\n')
+    }
+    ['Missing.java', 'Removed.java', 'SharedGone.toml'].each { Files.delete(dir.resolve(it)) }
+
+    expect:
+    written.differences(Tree.at(dir)) == [
+      new Difference('Edited.java', Difference.Kind.EDITED),
+      new Difference('Missing.java', Difference.Kind.MISSING),
+      new Difference('Removed.java', Difference.Kind.REMOVED),
+      new Difference('SharedGone.toml', Difference.Kind.MISSING)
+    ]
+  }
+
+  def "a state whose files are as tib wrote them has no differences"() {
+    given:
+    State written = new State('0.1.0', state.pack(), state.spec(), [State.File.of('A.java', Owner.GENERATOR, 'class A {}\n')])
+    Files.writeString(dir.resolve('A.java'), 'class A {}\n')
+
+    expect:
+    written.differences(Tree.at(dir)) == []
+  }
+
+  def "a kind of difference is named in lower case"() {
+    expect:
+    Difference.Kind.values()*.toString() == ['edited', 'missing', 'removed']
+  }
+
   def "the hash is the SHA-256 in hex"() {
     expect:
     State.File.of('a', Owner.GENERATOR, '').sha256() == 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
