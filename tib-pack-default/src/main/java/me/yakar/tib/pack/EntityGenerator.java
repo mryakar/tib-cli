@@ -31,8 +31,8 @@ import me.yakar.tib.spec.Relation;
 import me.yakar.tib.tree.Tree;
 
 /**
- * Generates the entity layer of every entity of the spec, each entity after the entities it refers
- * to, so that its migration can reference their tables.
+ * Generates the entity layer of every entity of the spec, with its tests, each entity after the
+ * entities it refers to, so that its migration can reference their tables.
  */
 final class EntityGenerator implements Generator {
 
@@ -55,6 +55,7 @@ final class EntityGenerator implements Generator {
 
   private static void generateEntity(EntityModel entity, Tree tree) {
     String directory = entity.directory() + "/";
+    String tests = entity.testDirectory() + "/";
     String name = entity.name();
     tree.own(directory + name + "Generated.java", render("entity/generated_java.jte", entity));
     tree.once(directory + name + ".java", render("entity/entity_java.jte", entity));
@@ -68,6 +69,13 @@ final class EntityGenerator implements Generator {
       tree.once(directory + name + "Controller.java", render("entity/controller_java.jte", entity));
     }
     tree.once(migration(tree, entity), render("entity/migration_sql.jte", entity));
+    tree.once(
+        tests + name + "RepositoryTests.java", render("entity/repository_tests_java.jte", entity));
+    if (entity.layer()) {
+      tree.once(
+          tests + name + "ServiceTests.java", render("entity/service_tests_java.jte", entity));
+      tree.once(tests + name + "ApiTests.java", render("entity/api_tests_java.jte", entity));
+    }
   }
 
   /**

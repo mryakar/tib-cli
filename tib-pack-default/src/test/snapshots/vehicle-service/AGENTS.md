@@ -28,4 +28,6 @@ The entities come from a spec. To add or change one, change the spec and run
 with `--dry-run`, tib shows what it would change and changes nothing.
 
 For an entity `X`, its code goes in `X`, never in `XGenerated`: `XGenerated`, `XDto` and `XMapper`
-are tib's; `X`, `XRepository`, `XService`, `XController` and the migration are yours.
+are tib's; `X`, `XRepository`, `XService`, `XController` and the migration are yours, and so are
+their tests: `XRepositoryTests` and `XApiTests` against PostgreSQL in a container, and
+`XServiceTests` with the repository and the mapper mocked.
