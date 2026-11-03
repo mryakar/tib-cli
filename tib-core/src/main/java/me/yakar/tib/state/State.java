@@ -15,6 +15,10 @@
  */
 package me.yakar.tib.state;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import me.yakar.tib.spec.Spec;
@@ -52,7 +56,13 @@ public record State(String tib, PackRef pack, Spec spec, List<File> files) {
   public record PackRef(String name, String version) {}
 
   /** A file that tib wrote, with its owner and the SHA-256 of its content when it was written. */
-  public record File(String path, Owner owner, String sha256) {}
+  public record File(String path, Owner owner, String sha256) {
+
+    /** The file as tib writes it, with the hash of its content. */
+    public static File of(String path, Owner owner, String content) {
+      return new File(path, owner, State.sha256(content));
+    }
+  }
 
   public State {
     files = files == null ? List.of() : List.copyOf(files);
@@ -88,5 +98,20 @@ public record State(String tib, PackRef pack, Spec spec, List<File> files) {
       throw new StateException(PATH + ": " + e.getMessage());
     }
     return state;
+  }
+
+  /** The SHA-256 of a text, in hex. */
+  static String sha256(String text) {
+    return digest("SHA-256", text);
+  }
+
+  static String digest(String algorithm, String text) {
+    try {
+      return HexFormat.of()
+          .formatHex(
+              MessageDigest.getInstance(algorithm).digest(text.getBytes(StandardCharsets.UTF_8)));
+    } catch (NoSuchAlgorithmException e) {
+      throw new IllegalStateException(e);
+    }
   }
 }

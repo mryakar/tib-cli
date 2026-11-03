@@ -15,10 +15,6 @@
  */
 package me.yakar.tib.generate;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
 import java.util.TreeMap;
 import java.util.function.Function;
 import me.yakar.tib.state.State;
@@ -50,8 +46,7 @@ public final class Generation {
     tree.writtenBefore(files.keySet());
     generator.apply(pack).generate(project, tree);
     for (Change change : tree.changes()) {
-      files.put(
-          change.path(), new State.File(change.path(), change.owner(), sha256(change.after())));
+      files.put(change.path(), State.File.of(change.path(), change.owner(), change.after()));
     }
     State state =
         new State(
@@ -60,20 +55,5 @@ public final class Generation {
             project.spec(),
             files.values().stream().toList());
     tree.own(State.PATH, state.yaml());
-  }
-
-  /** The SHA-256 of a text, in hex. */
-  static String sha256(String text) {
-    return digest("SHA-256", text);
-  }
-
-  static String digest(String algorithm, String text) {
-    try {
-      return HexFormat.of()
-          .formatHex(
-              MessageDigest.getInstance(algorithm).digest(text.getBytes(StandardCharsets.UTF_8)));
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException(e);
-    }
   }
 }

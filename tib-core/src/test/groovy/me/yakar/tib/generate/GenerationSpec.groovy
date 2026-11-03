@@ -54,7 +54,7 @@ class GenerationSpec extends Specification {
     state.spec() == project.spec()
     state.files()*.path() == ['Generated.java', 'Service.java']
     state.files()*.owner() == [Owner.GENERATOR, Owner.DEVELOPER]
-    state.files()[0].sha256() == Generation.sha256('class Generated {}\n')
+    state.files()[0] == State.File.of('Generated.java', Owner.GENERATOR, 'class Generated {}\n')
   }
 
   def "a later run keeps the files of the earlier ones in the state"() {
@@ -73,7 +73,7 @@ class GenerationSpec extends Specification {
     State state = State.in(second).get()
     state.tib() == '1.2.4'
     state.files()*.path() == ['Generated.java', 'Service.java', 'test.txt']
-    state.files()[1].sha256() == Generation.sha256('class Service {}\n')
+    state.files()[1] == State.File.of('Service.java', Owner.DEVELOPER, 'class Service {}\n')
   }
 
   def "a file of the developer's that was removed after a run does not come back"() {
@@ -91,19 +91,6 @@ class GenerationSpec extends Specification {
     second.changes()*.path() == ['.tib/state.yaml']
     State state = State.in(second).get()
     state.files()*.path() == ['Generated.java', 'Service.java']
-    state.files()[1].sha256() == Generation.sha256('class Service {}\n')
-  }
-
-  def "the hash is the SHA-256 in hex"() {
-    expect:
-    Generation.sha256('') == 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
-  }
-
-  def "an algorithm that the runtime does not have is an IllegalStateException"() {
-    when:
-    Generation.digest('NO-SUCH', 'x')
-
-    then:
-    thrown(IllegalStateException)
+    state.files()[1] == State.File.of('Service.java', Owner.DEVELOPER, 'class Service {}\n')
   }
 }
