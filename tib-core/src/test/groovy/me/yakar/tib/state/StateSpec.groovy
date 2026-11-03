@@ -117,4 +117,17 @@ class StateSpec extends Specification {
     StateException e = thrown()
     e.message == ".tib/state.yaml: the spec has a problem: service: 'Vehicle Service' does not match ${Names.SERVICE}"
   }
+
+  def "the hash is the SHA-256 in hex"() {
+    expect:
+    State.File.of('a', Owner.GENERATOR, '').sha256() == 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
+  }
+
+  def "an algorithm that the runtime does not have is an IllegalStateException"() {
+    when:
+    State.digest('NO-SUCH', 'x')
+
+    then:
+    thrown(IllegalStateException)
+  }
 }
