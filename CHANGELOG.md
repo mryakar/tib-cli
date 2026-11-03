@@ -9,6 +9,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `tib init service` and `tib generate entity` refuse to write into a service whose files that git
+  tracks have uncommitted changes, so that the changes of tib can be told apart; `--allow-dirty`
+  writes anyway, with a warning. Untracked files, and a dry run, are not refused.
 - `tib generate entity` writes the tests of every entity, once, next to it under `src/test/java`:
   a test of its repository and one of its API over HTTP, both against PostgreSQL in a container,
   and a test of its service with the repository and the mapper mocked. An entity without a service

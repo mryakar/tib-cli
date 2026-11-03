@@ -17,12 +17,14 @@ package me.yakar.tib.cli;
 
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.function.Function;
 import me.yakar.tib.generate.Generation;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Pack;
 import me.yakar.tib.generate.Packs;
 import me.yakar.tib.generate.Project;
+import me.yakar.tib.git.Git;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.tree.Tree;
 import picocli.CommandLine;
@@ -34,6 +36,9 @@ import picocli.CommandLine.Option;
 public final class GenerationOptions {
 
   private static final String NOTHING_TO_CHANGE = "Nothing to change.";
+
+  /** The uncommitted changes that a message lists; it counts the others. */
+  private static final int LISTED = 10;
 
   @CommandLine.Spec(CommandLine.Spec.Target.MIXEE)
   private CommandSpec commandSpec;
@@ -49,6 +54,13 @@ public final class GenerationOptions {
       description = "Print what would be written, as a diff, and write nothing.")
   private boolean dryRun;
 
+  @Option(
+      names = "--allow-dirty",
+      description =
+          "Write also when files of the service that git tracks have changes that are not"
+              + " committed.")
+  private boolean allowDirty;
+
   private final TibVersion version;
 
   public GenerationOptions(TibVersion version) {
@@ -63,7 +75,9 @@ public final class GenerationOptions {
   /**
    * Runs the generator that the function picks from the pack of the service, then prints the diff
    * of a dry run, or writes the files and says how many. A dry run that changes nothing says so on
-   * the standard error, so that its output stays an empty diff.
+   * the standard error, so that its output stays an empty diff. A run that would write into a
+   * service whose tracked files have uncommitted changes is refused, so that the changes of tib can
+   * be told apart from them, unless the dirty tree is allowed.
    */
   int generate(Spec service, Function<Pack, Generator> generator, Tree tree) {
     Generation.run(
@@ -82,9 +96,39 @@ public final class GenerationOptions {
       out.println(NOTHING_TO_CHANGE);
       return ExitCode.OK;
     }
+    List<String> uncommitted = Git.uncommitted(tree.root());
+    if (!uncommitted.isEmpty()) {
+      if (!allowDirty) {
+        return refuse(
+            uncommitted(tree, uncommitted)
+                + "Commit or stash them first, so that the changes of tib can be told apart, or run"
+                + " again with --allow-dirty.");
+      }
+      PrintWriter err = commandSpec.commandLine().getErr();
+      err.print(uncommitted(tree, uncommitted));
+      err.println("tib writes anyway, as --allow-dirty asks.");
+    }
     tree.apply();
     out.println("Wrote " + files + (files == 1 ? " file" : " files") + " to " + tree.root() + ".");
     return ExitCode.OK;
+  }
+
+  /** The uncommitted changes of the service, a line each, the first ones of many. */
+  private static String uncommitted(Tree tree, List<String> changes) {
+    StringBuilder message =
+        new StringBuilder(
+            tree.root() + " has changes that are not committed:" + System.lineSeparator());
+    changes.stream()
+        .limit(LISTED)
+        .forEach(change -> message.append("  ").append(change).append(System.lineSeparator()));
+    if (changes.size() > LISTED) {
+      message
+          .append("  and ")
+          .append(changes.size() - LISTED)
+          .append(" more")
+          .append(System.lineSeparator());
+    }
+    return message.toString();
   }
 
   /** Says why the command does not run. */

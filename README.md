@@ -9,6 +9,8 @@ The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.
 - `tib generate entity` adds the entity layer of the spec's entities, or of the tables of SQL DDL:
   the entity, repository, DTO, mapper, service, controller and Flyway migration, with tests of
   the repository, the service and the API.
+- In a git repository, tib writes only into a service whose tracked files are committed, unless
+  `--allow-dirty` says so.
 - `--dry-run` shows the diff and writes nothing; running `tib generate entity` again changes
   nothing and prints `Nothing to change.`. Every generated file says in its first line who owns
   it: the generator or you.
