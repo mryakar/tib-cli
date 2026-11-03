@@ -14,6 +14,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   file of yours that was removed. It exits with 1 when a file of tib's differs, so that a build
   can check it.
 
+### Changed
+
+- `TestcontainersConfiguration` of a new service is public, so that the tests of the entities in
+  their own packages can import it. In a service scaffolded by 0.1.0, make it public before
+  running `tib generate entity` again, or the new tests do not compile.
+
 ## [0.1.0] - 2026-11-02
 
 ### Added
