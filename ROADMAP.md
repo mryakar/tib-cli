@@ -16,8 +16,8 @@ Out of scope for the MVP: several services at once, the frontend, migrations for
 table, upgrades, the assistant, native images, a DSL of its own, and more than one stack.
 
 What is done today: `tib init service`, and `tib generate entity` from a spec or from DDL, with
-`--dry-run`, the state file, the owner of every file and `AGENTS.md`; the packages for Linux and
-Windows; the documentation site. The test skeletons, `tib status` and the first release follow.
+`--dry-run`, the state file, the owner of every file and `AGENTS.md`; `tib status`; the packages
+for Linux and Windows; the documentation site; the first release. The test skeletons follow.
 
 ## Next
 

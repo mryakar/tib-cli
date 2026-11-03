@@ -7,6 +7,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `tib status` says which of the files that tib wrote into a service are no longer as it wrote
+  them: a file of tib's that was edited or is missing, which tib replaces on its next run, and a
+  file of yours that was removed. It exits with 1 when a file of tib's differs, so that a build
+  can check it.
+
 ## [0.1.0] - 2026-11-02
 
 ### Added

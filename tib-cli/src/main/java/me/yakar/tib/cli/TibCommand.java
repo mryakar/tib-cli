@@ -31,5 +31,10 @@ import picocli.CommandLine.ScopeType;
       "1:The spec, the DDL, the pack or the project has a problem; the message says which.",
       "2:The command line is wrong."
     },
-    subcommands = {InitCommand.class, GenerateCommand.class, SchemaCommand.class})
+    subcommands = {
+      InitCommand.class,
+      GenerateCommand.class,
+      StatusCommand.class,
+      SchemaCommand.class
+    })
 public class TibCommand {}
