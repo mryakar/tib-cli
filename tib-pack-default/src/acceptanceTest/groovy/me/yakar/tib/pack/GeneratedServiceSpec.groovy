@@ -71,9 +71,19 @@ class GeneratedServiceSpec extends Specification {
     assert gradle.exitValue() == 0 : Files.readString(log)
     String classes = project.packagePath() + '/' + project.applicationClass()
     Files.exists(dir.resolve("build/classes/java/main/${classes}.class"))
-    Files.exists(dir.resolve("build/classes/java/test/${classes}Tests.class"))
     Files.exists(dir.resolve("build/classes/java/test/${project.packagePath()}/Test${project.applicationClass()}.class"))
-    !docker || Files.readString(dir.resolve("build/test-results/test/TEST-${project.basePackage()}.${project.applicationClass()}Tests.xml")).contains('failures="0"')
+
+    and: 'every test of the service compiles, and with Docker, passes'
+    List<String> tests = tests(dir)
+    tests.contains("${classes}Tests".toString())
+    tests.size() > 1
+    tests.each { test ->
+      assert Files.exists(dir.resolve("build/classes/java/test/${test}.class")) : test
+      if (docker) {
+        String result = Files.readString(dir.resolve("build/test-results/test/TEST-${test.replace('/', '.')}.xml"))
+        assert result.contains('failures="0"') && result.contains('errors="0"') && !result.contains('tests="0"') : test
+      }
+    }
 
     cleanup:
     gradle?.destroyForcibly()
@@ -84,6 +94,16 @@ class GeneratedServiceSpec extends Specification {
     'example DDL'     | DdlReader.read(EXAMPLES.resolve('vehicle-service.sql'), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
     // The corner spec is a resource of the unit tests, next to their snapshots.
     'corner spec'     | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text)
+  }
+
+  /** The test classes of the service, as paths without their extension: the files that end in Tests. */
+  private static List<String> tests(Path service) {
+    Path sources = service.resolve('src/test/java')
+    Files.walk(sources).withCloseable { paths ->
+      paths.filter { it.fileName.toString().endsWith('Tests.java') }.collect {
+        sources.relativize(it).toString().replace('\\', '/') - '.java'
+      }.sort()
+    }
   }
 
   /**
