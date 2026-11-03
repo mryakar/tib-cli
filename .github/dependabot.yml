@@ -17,6 +17,12 @@ updates:
       # google-java-format 1.37 fails under Spotless 8.10 with NoSuchMethodError; move up with Spotless.
       - dependency-name: com.google.googlejavaformat:google-java-format
         versions: [">=1.37.0"]
+      # Jackson is the version that the CLI's Spring Boot manages; it moves with Spring Boot.
+      - dependency-name: tools.jackson:jackson-bom
+      # json-schema-validator 3 brings Jackson 3.2 into the tests, past the CLI's Jackson; it moves
+      # when Spring Boot manages Jackson 3.2.
+      - dependency-name: com.networknt:json-schema-validator
+        update-types: [version-update:semver-major]
       # The default pack generates Spring Boot 3 services; a major version changes what it generates.
       - dependency-name: org.springframework.boot:spring-boot-gradle-plugin
         update-types: [version-update:semver-major]
