@@ -56,11 +56,11 @@ public final class Git {
       try (BufferedReader output = process.inputReader(StandardCharsets.UTF_8)) {
         changes = output.lines().toList();
       }
-      return process.waitFor() == 0 ? changes : List.of();
+      // Not interrupted, as reading the output is not: git answers at once, and waitFor of a
+      // process
+      // that ended may or may not see an interruption, depending on the platform and on timing.
+      return process.onExit().join().exitValue() == 0 ? changes : List.of();
     } catch (IOException e) {
-      return List.of();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
       return List.of();
     }
   }
