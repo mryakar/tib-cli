@@ -2,6 +2,13 @@ tib: 0.1.0
 pack:
   name: default
   version: 0.1.0
+inputs:
+- kind: spec
+  path: vehicle-service.yaml
+  sha256: 345
+- kind: ddl
+  path: ../db/vehicle.sql
+  sha256: 678
 spec:
   tib: 1
   service: vehicle-service

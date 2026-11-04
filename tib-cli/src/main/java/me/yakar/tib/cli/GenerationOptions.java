@@ -81,7 +81,12 @@ public final class GenerationOptions {
    */
   int generate(Spec service, Function<Pack, Generator> generator, Tree tree) {
     Generation.run(
-        new Project(service), Packs.find(service.pack()), generator, version.version(), tree);
+        new Project(service),
+        List.of(),
+        Packs.find(service.pack()),
+        generator,
+        version.version(),
+        tree);
     PrintWriter out = commandSpec.commandLine().getOut();
     int files = tree.changes().size();
     if (dryRun) {

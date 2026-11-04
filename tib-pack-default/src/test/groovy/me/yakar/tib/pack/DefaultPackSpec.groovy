@@ -132,8 +132,8 @@ class DefaultPackSpec extends Specification {
     Tree first = Tree.at(dir)
     Tree second = Tree.at(other)
     [first, second].each { tree ->
-      Generation.run(new Project(spec), new DefaultPack(), { it.init() }, '0.0.0', tree)
-      Generation.run(new Project(spec), new DefaultPack(), { it.entity() }, '0.0.0', tree)
+      Generation.run(new Project(spec), [], new DefaultPack(), { it.init() }, '0.0.0', tree)
+      Generation.run(new Project(spec), [], new DefaultPack(), { it.entity() }, '0.0.0', tree)
     }
 
     then:
