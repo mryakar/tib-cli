@@ -61,16 +61,20 @@ class GitSpec extends Specification {
     Git.uncommitted(repository, 'no-such-git') == []
   }
 
-  def "an interrupted question has no answer, and the thread stays interrupted"() {
+  def "an interrupted thread gets the answer, and stays interrupted"() {
     given:
     git('init', '-q')
+    Files.writeString(repository.resolve('A.java'), 'class A {}\n')
+    git('add', '.')
+    git('commit', '-q', '-m', 'a')
+    Files.writeString(repository.resolve('A.java'), 'class A { int edited; }\n')
 
     when:
     Thread.currentThread().interrupt()
     List<String> changes = Git.uncommitted(repository)
 
     then:
-    changes == []
+    changes == [' M A.java']
     Thread.interrupted()
   }
 
