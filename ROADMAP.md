@@ -30,3 +30,4 @@ These come after the MVP, in no fixed order:
   database.
 - A default pack on Spring Boot 4.
 - The Gradle wrapper in the generated service.
+- A notice from `tib status` when a spec file or the DDL changed after tib read it.

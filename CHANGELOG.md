@@ -9,6 +9,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- The state file records the spec files and the DDL that the spec of the service was read from,
+  under `inputs`, each with its path relative to the service and the SHA-256 of its content when
+  tib read it. A file read again takes the place of its earlier record. tib 0.1.0 does not read a
+  state file with `inputs`.
 - `tib init service` and `tib generate entity` refuse to write into a service whose files that git
   tracks have uncommitted changes, so that the changes of tib can be told apart; `--allow-dirty`
   writes anyway, with a warning. Untracked files, and a dry run, are not refused.

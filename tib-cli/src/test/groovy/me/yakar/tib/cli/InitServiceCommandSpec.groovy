@@ -72,6 +72,7 @@ class InitServiceCommandSpec extends Specification {
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/VehicleServiceApplication.java'))
     state.tib() == '1.2.3'
     state.pack().name() == 'default'
+    state.inputs() == []
     state.spec().service() == 'vehicle-service'
   }
 
@@ -93,7 +94,24 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    State.parse(Files.readString(dir.resolve(State.PATH))).spec().entities()*.name() == ['Vehicle', 'Depot']
+    State state = State.parse(Files.readString(dir.resolve(State.PATH)))
+    state.spec().entities()*.name() == ['Vehicle', 'Depot']
+    state.inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, EXAMPLES.resolve('vehicle-service.yaml'))]
+  }
+
+  def "the spec file is recorded with its path relative to the service"() {
+    given:
+    Path service = Files.createDirectories(dir.resolve('vehicle-service'))
+    Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), dir.resolve('vehicle-service.yaml'))
+
+    when:
+    Result result = tib.run('init', 'service', '--spec', dir.resolve('vehicle-service.yaml').toString(), '-d', service.toString())
+
+    then:
+    result.exitCode() == 0
+    State.Input input = State.parse(Files.readString(service.resolve(State.PATH))).inputs()[0]
+    input.kind() == State.Input.Kind.SPEC
+    input.path() == '../vehicle-service.yaml'
   }
 
   def "a name that is not the name of a service is reported"() {

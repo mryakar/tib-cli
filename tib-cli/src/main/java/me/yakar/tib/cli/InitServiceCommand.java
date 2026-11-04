@@ -16,6 +16,7 @@
 package me.yakar.tib.cli;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.Callable;
 import me.yakar.tib.generate.Pack;
 import me.yakar.tib.spec.Spec;
@@ -58,15 +59,20 @@ public class InitServiceCommand implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    Spec service =
-        input.spec != null
-            ? SpecReader.read(input.spec)
-            : new Spec(Spec.VERSION, input.name, null, null, null).check();
+    Spec service;
+    List<State.Input> inputs;
+    if (input.spec != null) {
+      service = SpecReader.read(input.spec);
+      inputs = List.of(options.input(State.Input.Kind.SPEC, input.spec));
+    } else {
+      service = new Spec(Spec.VERSION, input.name, null, null, null).check();
+      inputs = List.of();
+    }
     Tree tree = options.tree();
     if (tree.exists(State.PATH)) {
       return options.refuse(
           tree.root() + " is already a tib project: " + State.PATH + " is there.");
     }
-    return options.generate(service, Pack::init, tree);
+    return options.generate(service, inputs, Pack::init, tree);
   }
 }
