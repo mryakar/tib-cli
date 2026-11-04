@@ -35,6 +35,10 @@ class StateSpec extends Specification {
   State state = new State(
   '0.1.0',
   new State.PackRef('default', '0.1.0'),
+  [
+    new State.Input(State.Input.Kind.SPEC, 'vehicle-service.yaml', '345'),
+    new State.Input(State.Input.Kind.DDL, '../db/vehicle.sql', '678')
+  ],
   SpecReader.parse('''\
       tib: 1
       service: vehicle-service
@@ -86,9 +90,11 @@ class StateSpec extends Specification {
     State.in(tree) == Optional.of(state)
   }
 
-  def "a state without files has none"() {
+  def "a state without inputs or files has none"() {
     expect:
-    State.parse('spec:\n  tib: 1\n  service: s\n').files() == []
+    State state = State.parse('spec:\n  tib: 1\n  service: s\n')
+    state.inputs() == []
+    state.files() == []
   }
 
   def "a state that tib cannot read is refused: '#yaml'"() {
@@ -147,7 +153,7 @@ class StateSpec extends Specification {
       'Shared.toml'    : Owner.SHARED,
       'SharedGone.toml': Owner.SHARED
     ]
-    State written = new State('0.1.0', state.pack(), state.spec(), owners.collect { path, owner ->
+    State written = new State('0.1.0', state.pack(), [], state.spec(), owners.collect { path, owner ->
       State.File.of(path, owner, "$path\n")
     })
     owners.keySet().each { Files.writeString(dir.resolve(it), "$it\n") }
@@ -167,7 +173,7 @@ class StateSpec extends Specification {
 
   def "a state whose files are as tib wrote them has no differences"() {
     given:
-    State written = new State('0.1.0', state.pack(), state.spec(), [State.File.of('A.java', Owner.GENERATOR, 'class A {}\n')])
+    State written = new State('0.1.0', state.pack(), [], state.spec(), [State.File.of('A.java', Owner.GENERATOR, 'class A {}\n')])
     Files.writeString(dir.resolve('A.java'), 'class A {}\n')
 
     expect:
@@ -179,6 +185,40 @@ class StateSpec extends Specification {
     Difference.Kind.values()*.toString() == ['edited', 'missing', 'removed']
   }
 
+  def "an input is kept with its path relative to the service and the hash of its content"() {
+    given:
+    Path service = Files.createDirectories(dir.resolve('services/vehicle'))
+    Path db = Files.createDirectories(dir.resolve('db'))
+    Files.writeString(service.resolve('spec.yaml'), '')
+    Files.writeString(db.resolve('vehicle.sql'), 'CREATE TABLE V (ID BIGINT);\n')
+
+    expect:
+    State.Input.of(State.Input.Kind.SPEC, service, service.resolve('spec.yaml')) ==
+        new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
+    State.Input.of(State.Input.Kind.DDL, service, service.resolve('../../db/./vehicle.sql')).path() == '../../db/vehicle.sql'
+    State.Input.of(State.Input.Kind.DDL, service, db.resolve('vehicle.sql')).sha256() ==
+        State.sha256('CREATE TABLE V (ID BIGINT);\n')
+  }
+
+  def "an input on another root than the service keeps its whole path"() {
+    expect: 'a relative path stands for one on another root, as on another drive, which only some systems have'
+    State.Input.path(dir, Path.of('db', 'vehicle.sql')) == 'db/vehicle.sql'
+  }
+
+  def "an input that cannot be read cannot be kept"() {
+    when:
+    State.Input.of(State.Input.Kind.SPEC, dir, dir.resolve('missing.yaml'))
+
+    then:
+    StateException e = thrown()
+    e.message == "cannot read ${dir.resolve('missing.yaml')}: no such file"
+  }
+
+  def "a kind of input is named in lower case"() {
+    expect:
+    State.Input.Kind.values()*.toString() == ['spec', 'ddl']
+  }
+
   def "the hash is the SHA-256 in hex"() {
     expect:
     State.File.of('a', Owner.GENERATOR, '').sha256() == 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
@@ -186,7 +226,7 @@ class StateSpec extends Specification {
 
   def "an algorithm that the runtime does not have is an IllegalStateException"() {
     when:
-    State.digest('NO-SUCH', 'x')
+    State.digest('NO-SUCH', new byte[0])
 
     then:
     thrown(IllegalStateException)

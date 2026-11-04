@@ -15,13 +15,20 @@
  */
 package me.yakar.tib.state;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecException;
 import me.yakar.tib.tree.Owner;
@@ -34,12 +41,12 @@ import tools.jackson.dataformat.yaml.YAMLWriteFeature;
 
 /**
  * What tib keeps in the project about what it generated: the version of tib and the pack it ran
- * with, the resolved spec, and every file it wrote with its owner and the hash of its content. The
- * file is {@value #PATH}; tib writes it, nobody edits it.
+ * with, the files that the spec was read from, the resolved spec, and every file it wrote with its
+ * owner and the hash of its content. The file is {@value #PATH}; tib writes it, nobody edits it.
  *
  * @param tib the version of tib that wrote the state
  */
-public record State(String tib, PackRef pack, Spec spec, List<File> files) {
+public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, List<File> files) {
 
   /** The path of the state file in a project. */
   public static final String PATH = ".tib/state.yaml";
@@ -56,6 +63,59 @@ public record State(String tib, PackRef pack, Spec spec, List<File> files) {
   /** The pack that generated the files. */
   public record PackRef(String name, String version) {}
 
+  /**
+   * A file that the spec of the service was read from, with the SHA-256 of its content when it was
+   * read.
+   *
+   * @param path the path of the file, relative to the service when it can be, with forward slashes
+   */
+  public record Input(Kind kind, String path, String sha256) {
+
+    /** What the file is. */
+    public enum Kind {
+      /** A spec file. */
+      SPEC,
+      /** SQL DDL. */
+      DDL;
+
+      /** The name in the state file. */
+      @Override
+      public String toString() {
+        return name().toLowerCase(Locale.ROOT);
+      }
+    }
+
+    /**
+     * The file as it is now, with its path relative to the directory of the service.
+     *
+     * @throws StateException when the file cannot be read
+     */
+    public static Input of(Kind kind, Path service, Path file) {
+      Path absolute = file.toAbsolutePath().normalize();
+      byte[] content;
+      try {
+        content = Files.readAllBytes(absolute);
+      } catch (IOException e) {
+        throw new StateException("read", file, e);
+      }
+      return new Input(
+          kind, path(service.toAbsolutePath().normalize(), absolute), State.sha256(content));
+    }
+
+    /**
+     * The path of the file relative to the service, with forward slashes; a file on another root
+     * than the service, as on another drive, keeps its whole path.
+     */
+    static String path(Path service, Path file) {
+      Path path =
+          Objects.equals(service.getRoot(), file.getRoot()) ? service.relativize(file) : file;
+      return Objects.toString(path.getRoot(), "").replace('\\', '/')
+          + StreamSupport.stream(path.spliterator(), false)
+              .map(Path::toString)
+              .collect(Collectors.joining("/"));
+    }
+  }
+
   /** A file that tib wrote, with its owner and the SHA-256 of its content when it was written. */
   public record File(String path, Owner owner, String sha256) {
 
@@ -66,6 +126,7 @@ public record State(String tib, PackRef pack, Spec spec, List<File> files) {
   }
 
   public State {
+    inputs = inputs == null ? List.of() : List.copyOf(inputs);
     files = files == null ? List.of() : List.copyOf(files);
   }
 
@@ -143,14 +204,17 @@ public record State(String tib, PackRef pack, Spec spec, List<File> files) {
 
   /** The SHA-256 of a text, in hex. */
   static String sha256(String text) {
-    return digest("SHA-256", text);
+    return sha256(text.getBytes(StandardCharsets.UTF_8));
   }
 
-  static String digest(String algorithm, String text) {
+  /** The SHA-256 of bytes, in hex. */
+  static String sha256(byte[] bytes) {
+    return digest("SHA-256", bytes);
+  }
+
+  static String digest(String algorithm, byte[] bytes) {
     try {
-      return HexFormat.of()
-          .formatHex(
-              MessageDigest.getInstance(algorithm).digest(text.getBytes(StandardCharsets.UTF_8)));
+      return HexFormat.of().formatHex(MessageDigest.getInstance(algorithm).digest(bytes));
     } catch (NoSuchAlgorithmException e) {
       throw new IllegalStateException(e);
     }

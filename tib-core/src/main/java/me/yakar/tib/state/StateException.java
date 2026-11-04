@@ -15,15 +15,21 @@
  */
 package me.yakar.tib.state;
 
+import java.io.IOException;
 import java.io.Serial;
+import java.nio.file.Path;
 import me.yakar.tib.TibException;
 
-/** A state file that tib cannot read. */
+/** A state file that tib cannot read, or a file that it cannot keep in the state. */
 public class StateException extends TibException {
 
   @Serial private static final long serialVersionUID = 1L;
 
   StateException(String message) {
     super(message);
+  }
+
+  StateException(String verb, Path file, IOException cause) {
+    super(verb, file, cause);
   }
 }
