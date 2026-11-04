@@ -26,6 +26,7 @@ import me.yakar.tib.generate.Packs;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.git.Git;
 import me.yakar.tib.spec.Spec;
+import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
 import picocli.CommandLine;
 import picocli.CommandLine.ExitCode;
@@ -72,17 +73,24 @@ public final class GenerationOptions {
     return Tree.at(dir);
   }
 
+  /** The file that the spec of the service is read from, as the state keeps it. */
+  State.Input input(State.Input.Kind kind, Path file) {
+    return State.Input.of(kind, dir, file);
+  }
+
   /**
    * Runs the generator that the function picks from the pack of the service, then prints the diff
    * of a dry run, or writes the files and says how many. A dry run that changes nothing says so on
    * the standard error, so that its output stays an empty diff. A run that would write into a
    * service whose tracked files have uncommitted changes is refused, so that the changes of tib can
-   * be told apart from them, unless the dirty tree is allowed.
+   * be told apart from them, unless the dirty tree is allowed. The inputs are the files that the
+   * spec of the service was read from.
    */
-  int generate(Spec service, Function<Pack, Generator> generator, Tree tree) {
+  int generate(
+      Spec service, List<State.Input> inputs, Function<Pack, Generator> generator, Tree tree) {
     Generation.run(
         new Project(service),
-        List.of(),
+        inputs,
         Packs.find(service.pack()),
         generator,
         version.version(),

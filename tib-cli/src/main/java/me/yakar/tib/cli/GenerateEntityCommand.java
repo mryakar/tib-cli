@@ -16,6 +16,7 @@
 package me.yakar.tib.cli;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.Callable;
 import me.yakar.tib.ddl.DdlReader;
 import me.yakar.tib.generate.Pack;
@@ -65,7 +66,11 @@ public class GenerateEntityCommand implements Callable<Integer> {
     Tree tree = options.tree();
     Spec project = State.of(tree).spec();
     if (input.spec == null) {
-      return options.generate(DdlReader.read(input.ddl, project), Pack::entity, tree);
+      return options.generate(
+          DdlReader.read(input.ddl, project),
+          List.of(options.input(State.Input.Kind.DDL, input.ddl)),
+          Pack::entity,
+          tree);
     }
     Spec service = SpecReader.read(input.spec);
     if (!service.service().equals(project.service())) {
@@ -84,6 +89,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
               + "; this project is in "
               + project.group());
     }
-    return options.generate(service, Pack::entity, tree);
+    return options.generate(
+        service, List.of(options.input(State.Input.Kind.SPEC, input.spec)), Pack::entity, tree);
   }
 }

@@ -37,7 +37,17 @@ Wrote 10 files to /home/you/vehicle-service.
 ----
 
 The tenth file is `.tib/state.yaml`: what tib generated, with the spec it generated it from and
-every file with its owner. Commit it with the service.
+every file with its owner. Commit it with the service. When the spec comes from a file, a spec
+file or DDL, the state file also names that file, relative to the service, with the hash of its
+content when tib read it:
+
+[source,yaml]
+----
+inputs:
+- kind: spec
+  path: vehicle-service.yaml
+  sha256: 9f2c...
+----
 
 The service comes without the Gradle wrapper. With Gradle 9 installed, `gradle wrapper` adds it;
 from then on `./gradlew build` builds the service and runs its test, which wants Docker, and

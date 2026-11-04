@@ -94,9 +94,10 @@ class GenerateEntityCommandSpec extends Specification {
     when: 'again'
     Result again = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
 
-    then:
+    then: 'the spec is on record once'
     again.exitCode() == 0
     again.out() == 'Nothing to change.\n'
+    state().inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(spec))]
 
     when: 'again, as a dry run'
     Result dryRun = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
@@ -120,6 +121,7 @@ class GenerateEntityCommandSpec extends Specification {
     result.out() == "Wrote ${state().files().size() - before.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/depot/DepotGenerated.java'))
     state().spec().entities()*.name() == ['Depot', 'Vehicle']
+    state().inputs() == [State.Input.of(State.Input.Kind.DDL, dir, Path.of(ddl))]
 
     when: 'again'
     Result again = tib.run('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
@@ -141,6 +143,28 @@ class GenerateEntityCommandSpec extends Specification {
     result.exitCode() == 0
     result.out() == "Wrote 1 file to ${dir.toAbsolutePath().normalize()}.\n"
     state().tib() == '1.2.4'
+    state().inputs()*.path() == ['spec.yaml']
+  }
+
+  def "the files that the spec was read from are recorded, each once, with their last content"() {
+    given:
+    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    Path schema = Files.writeString(dir.resolve('schema.sql'), Files.readString(Path.of(ddl)))
+    tib.run('generate', 'entity', '--ddl', schema.toString(), '-d', dir.toString())
+    Path specFile = Files.writeString(dir.resolve('spec.yaml'), 'tib: 1\nservice: vehicle-service\n')
+    tib.run('generate', 'entity', '--spec', specFile.toString(), '-d', dir.toString())
+
+    when: 'the DDL changes, and is read again'
+    Files.writeString(schema, Files.readString(schema) + '\nCREATE TABLE DRIVER (ID BIGINT PRIMARY KEY);\n')
+    Result result = tib.run('generate', 'entity', '--ddl', schema.toString(), '-d', dir.toString())
+
+    then:
+    result.exitCode() == 0
+    state().inputs() == [
+      State.Input.of(State.Input.Kind.DDL, dir, schema),
+      State.Input.of(State.Input.Kind.SPEC, dir, specFile)
+    ]
+    state().inputs()*.path() == ['schema.sql', 'spec.yaml']
   }
 
   def "#problem is reported with exit code 1"() {
