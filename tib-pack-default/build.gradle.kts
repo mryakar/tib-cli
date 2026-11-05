@@ -36,16 +36,23 @@ jte {
   trimControlStructures = true
 }
 
-// The versions of the generated stack come from the version catalog, where Dependabot sees them.
+// The pack ships with tib and has its version. The versions of the generated stack come from the
+// version catalog, where Dependabot sees them.
+val tibVersion = version.toString()
+
 tasks.processResources {
-  val stack =
+  val properties =
     mapOf(
+      "version" to tibVersion,
       "boot" to libs.versions.generated.spring.boot.get(),
       "postgres" to libs.versions.generated.postgres.get(),
     )
-  inputs.properties(stack)
-  filesMatching("**/pack.properties") { expand(stack) }
+  inputs.properties(properties)
+  filesMatching("**/pack.properties") { expand(properties) }
 }
+
+// The tests compare the version of the pack with the version of the build.
+tasks.test { systemProperty("tib.version", tibVersion) }
 
 // Coverage leaves out the classes that jte generates from the templates.
 tasks.withType<JacocoReportBase>().configureEach {
