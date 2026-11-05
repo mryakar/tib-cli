@@ -8,6 +8,7 @@ groovy = "5.1.3"
 # The version that the CLI's Spring Boot manages; the engine takes it from here.
 jackson = "3.1.7"
 jacoco = "0.8.15"
+jreleaser = "1.26.0"
 json-schema-validator = "2.0.8"
 jsqlparser = "5.4"
 jte = "3.2.4"
@@ -34,11 +35,12 @@ picocli-spring-boot-starter = { module = "info.picocli:picocli-spring-boot-start
 spring-boot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
 spring-boot-starter = { module = "org.springframework.boot:spring-boot-starter" }
 
-# Declared as libraries only so that Dependabot updates their versions; the build reads the
-# versions: the tools that it runs, and the Spring Boot of the generated projects.
+# Declared as libraries only so that Dependabot updates their versions; the build and the release
+# workflow read the versions: the tools that they run, and the Spring Boot of the generated projects.
 generated-spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "generated-spring-boot" }
 google-java-format = { module = "com.google.googlejavaformat:google-java-format", version.ref = "google-java-format" }
 jacoco-agent = { module = "org.jacoco:org.jacoco.agent", version.ref = "jacoco" }
+jreleaser-tool-provider = { module = "org.jreleaser:jreleaser-tool-provider", version.ref = "jreleaser" }
 ktfmt = { module = "org.jetbrains.kotlinx:ktfmt", version.ref = "ktfmt" }
 spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }
 
