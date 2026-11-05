@@ -44,7 +44,18 @@ class DefaultPackSpec extends Specification {
   static final Spec VEHICLES = SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
 
   /** The corners of the entity layer that the example service does not reach. */
-  static final Spec CORNERS = SpecReader.parse(DefaultPackSpec.getResource('corner-service.yaml').text)
+  static final String CORNER_SPEC = DefaultPackSpec.getResource('corner-service.yaml').text
+  static final Spec CORNERS = SpecReader.parse(CORNER_SPEC)
+
+  /**
+   * The corner spec as its migrations read back. Two types do not come back as the spec gives them:
+   * a BigDecimal with a precision and no scale is NUMERIC(10, 0), which reads back as a Long, and a
+   * String without a length is VARCHAR(255), which reads back with that length.
+   */
+  static final Spec CORNERS_READ_BACK = SpecReader.parse(CORNER_SPEC
+  .replace('{ name: amount, type: BigDecimal, precision: 10 }', '{ name: amount, type: Long }')
+  .replace('type: String, nullable: false }', 'type: String, length: 255, nullable: false }')
+  .replace('{ name: label, type: String }', '{ name: label, type: String, length: 255 }'))
 
   /** The first line of a generated file, without its comment marks, starts with one of these. */
   static final Map<Owner, List<String>> HEADERS = [
@@ -166,18 +177,23 @@ class DefaultPackSpec extends Specification {
     'corner-service'  | CORNERS
   }
 
-  def "a second run on the generated service changes nothing"() {
+  def "a second run on the generated service changes nothing: #name"() {
     given:
-    generate(VEHICLES, dir).apply()
+    generate(spec, dir).apply()
 
     expect:
-    generate(VEHICLES, dir).changes().empty
+    generate(spec, dir).changes().empty
+
+    where:
+    name              | spec
+    'vehicle-service' | VEHICLES
+    'corner-service'  | CORNERS
   }
 
-  def "the migrations of the example service read back into its spec"() {
+  def "the migrations of the service read back into its spec: #name"() {
     given:
     Tree tree = Tree.at(dir)
-    new DefaultPack().entity().generate(new Project(VEHICLES), tree)
+    new DefaultPack().entity().generate(new Project(spec), tree)
 
     when:
     String migrations = tree.list(EntityGenerator.MIGRATIONS).collect {
@@ -185,7 +201,12 @@ class DefaultPackSpec extends Specification {
     }.join('\n')
 
     then:
-    DdlReader.parse(migrations, VEHICLES) == VEHICLES
+    DdlReader.parse(migrations, spec) == readBack
+
+    where:
+    name              | spec     | readBack
+    'vehicle-service' | VEHICLES | VEHICLES
+    'corner-service'  | CORNERS  | CORNERS_READ_BACK
   }
 
   /** The service of the spec with its entities, staged in a tree at the directory. */
