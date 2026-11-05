@@ -34,9 +34,16 @@ class ${entity.name()}RepositoryTests {
     entityManager.clear();
 
     ${entity.name()} found = ${entity.plural()}.findById(${entity.variable()}.getId()).orElseThrow();
-    @for(var assertion : entity.foundAssertions())
-    ${assertion}
+    @for(var field : entity.fields())
+    assertThat(found.get${field.property()}()).isEqualTo(${field.sample(1)});
     @endfor
+    @for(var relation : entity.requiredRelations())
+    assertThat(found.get${relation.property()}().getId()).isEqualTo(${relation.target().variable()}.getId());
+    @endfor
+    @if(entity.audited())
+    assertThat(found.getCreatedAt()).isNotNull();
+    assertThat(found.getUpdatedAt()).isNotNull();
+    @endif
   }
   @if(entity.unique())<%-- keeps the blank line below --%>
 
@@ -52,8 +59,11 @@ class ${entity.name()}RepositoryTests {
 
   private ${model.name()} new${model.name()}() {
     ${model.name()} ${model.variable()} = new ${model.name()}();
-    @for(var setter : model.sampleSetters())
-    ${setter}
+    @for(var field : model.fields())
+    ${model.variable()}.set${field.property()}(${field.sample(1)});
+    @endfor
+    @for(var relation : model.requiredRelations())
+    ${model.variable()}.set${relation.property()}(${relation.target().variable()});
     @endfor
     return ${model.variable()};
   }
@@ -61,8 +71,11 @@ class ${entity.name()}RepositoryTests {
 
   private ${entity.name()} new${entity.name()}() {
     ${entity.name()} ${entity.variable()} = new ${entity.name()}();
-    @for(var setter : entity.sampleSetters())
-    ${setter}
+    @for(var field : entity.fields())
+    ${entity.variable()}.set${field.property()}(${field.sample(1)});
+    @endfor
+    @for(var relation : entity.requiredRelations())
+    ${entity.variable()}.set${relation.property()}(${relation.target().variable()});
     @endfor
     return ${entity.variable()};
   }

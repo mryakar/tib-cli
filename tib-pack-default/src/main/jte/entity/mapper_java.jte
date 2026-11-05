@@ -1,6 +1,8 @@
 @import gg.jte.support.ForSupport
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
+<%-- Whether the arguments of the DTO end with the fields: no relation and no audit times follow. --%>
+!{boolean endsWithFields = entity.relations().isEmpty() && !entity.audited();}
 // Written by tib on every run. Do not edit: your changes would be lost.
 package ${entity.packageName()};
 
@@ -22,9 +24,17 @@ public class ${entity.name()}Mapper {
   @endif
   public ${entity.name()}Dto toDto(${entity.name()} ${entity.variable()}) {
     return new ${entity.name()}Dto(
-        @for(var argument : ForSupport.of(entity.dtoArguments()))
-        ${argument.get()}${argument.isLast() ? ");" : ","}
+        ${entity.variable()}.getId()${entity.fields().isEmpty() && endsWithFields ? ");" : ","}
+        @for(var field : ForSupport.of(entity.fields()))
+        ${entity.variable()}.get${field.get().property()}()${field.isLast() && endsWithFields ? ");" : ","}
         @endfor
+        @for(var relation : ForSupport.of(entity.relations()))
+        ${entity.variable()}.get${relation.get().property()}() == null ? null : ${entity.variable()}.get${relation.get().property()}().getId()${relation.isLast() && !entity.audited() ? ");" : ","}
+        @endfor
+        @if(entity.audited())
+        ${entity.variable()}.getCreatedAt(),
+        ${entity.variable()}.getUpdatedAt());
+        @endif
   }
 
   /** Copies the DTO onto the entity, all but its identifier@if(entity.audited()) and its audit times@endif. */

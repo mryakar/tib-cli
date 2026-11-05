@@ -88,7 +88,7 @@ public record FieldModel(Field field) {
    * A value of the field for the tests, as Java: the first or the second, which differ. A String
    * fits its length, and a BigDecimal its precision and scale, so that it reads back as it was.
    */
-  String sample(int variant) {
+  public String sample(int variant) {
     return switch (field.type()) {
       case STRING -> {
         String text = variant == 1 ? "One" : "Two";
