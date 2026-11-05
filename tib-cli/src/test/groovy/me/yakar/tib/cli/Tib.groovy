@@ -15,6 +15,7 @@
  */
 package me.yakar.tib.cli
 
+import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Tree
@@ -32,6 +33,17 @@ class Tib {
   /** The state file of the service, as a tib newer than those of the tests reads it. */
   static State state(Path service) {
     State.of(Tree.at(service), '9.9.9')
+  }
+
+  /** Every file of the service, with its content, by path; git's own files are not the service's. */
+  static Map<String, String> files(Path service) {
+    Files.walk(service).withCloseable { paths ->
+      paths.filter {
+        Files.isRegularFile(it) && !service.relativize(it).startsWith('.git')
+      }.toList().collectEntries {
+        [service.relativize(it).toString(), Files.readString(it)]
+      }
+    }
   }
 
   private final String version
