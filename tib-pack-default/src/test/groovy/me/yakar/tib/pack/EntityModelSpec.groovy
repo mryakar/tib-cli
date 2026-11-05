@@ -16,7 +16,6 @@
 package me.yakar.tib.pack
 
 import me.yakar.tib.generate.Project
-import me.yakar.tib.spec.Entity
 import me.yakar.tib.spec.SpecReader
 import spock.lang.Specification
 
@@ -82,13 +81,8 @@ class EntityModelSpec extends Specification {
     2         | 2     | ', precision: 2, scale: 2'    | ['0.01', '0.02']
   }
 
-  /** The models of the entities of the spec, by name, built as the generator builds them. */
+  /** The models of the entities of the spec, by name. */
   private static Map<String, EntityModel> models(String entities) {
-    Project project = new Project(SpecReader.parse("tib: 1\nservice: s\n$entities"))
-    Map<String, EntityModel> models = [:]
-    for (Entity entity : EntityGenerator.ordered(project.spec().entities())) {
-      models[entity.name()] = new EntityModel(project, entity, models)
-    }
-    models
+    EntityGenerator.models(new Project(SpecReader.parse("tib: 1\nservice: s\n$entities")))
   }
 }

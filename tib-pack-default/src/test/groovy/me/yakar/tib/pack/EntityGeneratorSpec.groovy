@@ -52,11 +52,7 @@ entities:
 
   def "the migration of a new table comes after the migrations there: #existing"() {
     given:
-    existing.each { path ->
-      Path file = dir.resolve(EntityGenerator.MIGRATIONS).resolve(path)
-      Files.createDirectories(file.parent)
-      Files.writeString(file, '-- mine\n')
-    }
+    existing.each { writeMigration(it) }
     Tree tree = Tree.at(dir)
 
     when:
@@ -80,9 +76,7 @@ entities:
 
   def "the migration of a table that has one is not written again"() {
     given:
-    Path file = dir.resolve(EntityGenerator.MIGRATIONS).resolve('V2__create_a.sql')
-    Files.createDirectories(file.parent)
-    Files.writeString(file, '-- mine\n')
+    writeMigration('V2__create_a.sql')
     Tree tree = Tree.at(dir)
 
     when:
@@ -94,11 +88,7 @@ entities:
 
   def "the migration of a table that tib wrote before is not written again, also when it is #how"() {
     given:
-    onDisk.each { path ->
-      Path file = dir.resolve(EntityGenerator.MIGRATIONS).resolve(path)
-      Files.createDirectories(file.parent)
-      Files.writeString(file, '-- mine\n')
-    }
+    onDisk.each { writeMigration(it) }
     Tree tree = Tree.at(dir)
     tree.writtenBefore(['V0__create_b.sql', 'V1__create_a.sql'].collect {
       "${EntityGenerator.MIGRATIONS}/${it}".toString()
@@ -114,5 +104,12 @@ entities:
     how       | onDisk
     'gone'    | ['V2__x.sql']
     'renamed' | ['V1__a.sql']
+  }
+
+  /** A migration of the developer's at the path, under the migrations of the service. */
+  private void writeMigration(String path) {
+    Path file = dir.resolve(EntityGenerator.MIGRATIONS).resolve(path)
+    Files.createDirectories(file.parent)
+    Files.writeString(file, '-- mine\n')
   }
 }
