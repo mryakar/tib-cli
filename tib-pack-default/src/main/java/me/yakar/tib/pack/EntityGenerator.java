@@ -66,16 +66,14 @@ final class EntityGenerator implements Generator {
     if (entity.dto()) {
       tree.own(directory + name + "Dto.java", render("entity/dto_java.jte", entity));
     }
-    if (entity.layer()) {
-      tree.own(directory + name + "Mapper.java", render("entity/mapper_java.jte", entity));
-      tree.once(directory + name + "Service.java", render("entity/service_java.jte", entity));
-      tree.once(directory + name + "Controller.java", render("entity/controller_java.jte", entity));
-    }
     tree.once(migration(tree, entity), render("entity/migration_sql.jte", entity));
     tree.once(
         tests + name + "RepositoryTests.java",
         renderTests("entity/repository_tests_java.jte", entity));
     if (entity.layer()) {
+      tree.own(directory + name + "Mapper.java", render("entity/mapper_java.jte", entity));
+      tree.once(directory + name + "Service.java", render("entity/service_java.jte", entity));
+      tree.once(directory + name + "Controller.java", render("entity/controller_java.jte", entity));
       tree.once(
           tests + name + "ServiceTests.java", renderTests("entity/service_tests_java.jte", entity));
       tree.once(tests + name + "ApiTests.java", renderTests("entity/api_tests_java.jte", entity));

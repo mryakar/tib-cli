@@ -28,6 +28,12 @@ import me.yakar.tib.generate.Pack;
  */
 public final class DefaultPack implements Pack {
 
+  /** The root of the sources of the generated service. */
+  static final String MAIN = "src/main/java/";
+
+  /** The root of the tests of the generated service. */
+  static final String TEST = "src/test/java/";
+
   private final Properties properties =
       load(DefaultPack.class.getResourceAsStream("pack.properties"));
 

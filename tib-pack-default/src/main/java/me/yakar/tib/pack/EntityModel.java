@@ -32,6 +32,12 @@ import me.yakar.tib.spec.Names;
  */
 public final class EntityModel {
 
+  /**
+   * How many identifiers Hibernate takes from a sequence at a time: the increment of the sequence,
+   * which Hibernate checks when it starts.
+   */
+  private static final int ALLOCATION_SIZE = 50;
+
   private final Project project;
   private final Entity entity;
   private final List<FieldModel> fields;
@@ -77,9 +83,14 @@ public final class EntityModel {
     return Names.member(entity.name());
   }
 
-  /** The name of the collection, for the path of the API: {@code vehicles}. */
+  /** The name of the collection: {@code vehicles}. */
   public String plural() {
     return Names.plural(variable());
+  }
+
+  /** The path of the API: {@code /api/vehicles}. */
+  public String path() {
+    return "/api/" + plural();
   }
 
   public String table() {
@@ -93,12 +104,12 @@ public final class EntityModel {
 
   /** The directory of the package, relative to the project. */
   String directory() {
-    return "src/main/java/" + packageName().replace('.', '/');
+    return DefaultPack.MAIN + packageName().replace('.', '/');
   }
 
   /** The directory of the package's tests, relative to the project. */
   String testDirectory() {
-    return "src/test/java/" + packageName().replace('.', '/');
+    return DefaultPack.TEST + packageName().replace('.', '/');
   }
 
   public String idField() {
@@ -114,6 +125,11 @@ public final class EntityModel {
     return entity.id().type().toString();
   }
 
+  /** Whether the identifier is a UUID. */
+  boolean uuid() {
+    return entity.id().type() == IdType.UUID;
+  }
+
   public boolean idSequence() {
     return entity.id().strategy() == IdStrategy.SEQUENCE;
   }
@@ -121,6 +137,11 @@ public final class EntityModel {
   /** The database sequence of a sequence identifier. */
   public String sequence() {
     return entity.table() + "_SEQ";
+  }
+
+  /** The increment of the sequence: the allocation size of its generator. */
+  public int sequenceIncrement() {
+    return ALLOCATION_SIZE;
   }
 
   public boolean audited() {
@@ -211,7 +232,9 @@ public final class EntityModel {
                   + variable()
                   + "\", sequenceName = \""
                   + sequence()
-                  + "\", allocationSize = 50)");
+                  + "\", allocationSize = "
+                  + ALLOCATION_SIZE
+                  + ")");
       case UUID -> List.of("@Id", "@GeneratedValue(strategy = GenerationType.UUID)");
     };
   }
@@ -228,10 +251,8 @@ public final class EntityModel {
 
   public String dtoImports() {
     SortedSet<String> imports = typeImports();
+    relationIdImports(imports);
     for (RelationModel relation : relations) {
-      if (relation.target().entity().id().type() == IdType.UUID) {
-        imports.add("java.util.UUID");
-      }
       if (!relation.nullable()) {
         imports.add("jakarta.validation.constraints.NotNull");
       }
@@ -352,12 +373,19 @@ public final class EntityModel {
   // Imports.
 
   /** The import of the identifier's type, if it needs one. */
-  private SortedSet<String> idImports() {
+  SortedSet<String> idImports() {
     SortedSet<String> imports = new TreeSet<>();
-    if (entity.id().type() == IdType.UUID) {
+    if (uuid()) {
       imports.add("java.util.UUID");
     }
     return imports;
+  }
+
+  /** The import of the type of the identifiers of the relations' targets, if they need one. */
+  void relationIdImports(SortedSet<String> imports) {
+    if (relations.stream().anyMatch(relation -> relation.target().uuid())) {
+      imports.add("java.util.UUID");
+    }
   }
 
   /** The imports of the identifier's type and of the fields' types. */

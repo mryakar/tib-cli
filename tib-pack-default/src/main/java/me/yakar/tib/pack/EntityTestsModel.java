@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import me.yakar.tib.spec.IdType;
 import me.yakar.tib.spec.Names;
 
 /**
@@ -52,11 +51,6 @@ public record EntityTestsModel(EntityModel entity) {
         targets.add(target);
       }
     }
-  }
-
-  /** The entities that an entity of this one needs, each before the ones it needs. */
-  public List<EntityModel> reversedRequiredTargets() {
-    return requiredTargets().reversed();
   }
 
   /** The name of the collection as a type: {@code Vehicles}. */
@@ -134,33 +128,25 @@ public record EntityTestsModel(EntityModel entity) {
 
   /** An identifier for the tests, as Java. */
   public String sampleId() {
-    return entity.entity().id().type() == IdType.UUID ? FieldModel.uuid(1) : "1L";
+    return entity.uuid() ? FieldModel.uuid(1) : "1L";
   }
 
   /** An identifier that no entity has, as Java. */
   public String unknownId() {
-    return entity.entity().id().type() == IdType.UUID ? "UUID.randomUUID()" : "Long.MAX_VALUE";
+    return entity.uuid() ? "UUID.randomUUID()" : "Long.MAX_VALUE";
   }
 
   public String repositoryTestsImports() {
     SortedSet<String> statics = new TreeSet<>();
     statics.add("org.assertj.core.api.Assertions.assertThat");
-    SortedSet<String> imports = sampleImports();
-    imports.add(entity.project().basePackage() + ".TestcontainersConfiguration");
-    targetImports(imports);
-    if (!requiredTargets().isEmpty()) {
-      imports.add("org.junit.jupiter.api.BeforeEach");
-    }
+    SortedSet<String> imports = containerTestsImports();
     if (unique()) {
       statics.add("org.assertj.core.api.Assertions.assertThatThrownBy");
       imports.add("org.springframework.dao.DataIntegrityViolationException");
     }
-    imports.add("org.junit.jupiter.api.Test");
-    imports.add("org.springframework.beans.factory.annotation.Autowired");
     imports.add("org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase");
     imports.add("org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest");
     imports.add("org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager");
-    imports.add("org.springframework.context.annotation.Import");
     return staticImports(statics) + EntityModel.imports(imports);
   }
 
@@ -173,11 +159,7 @@ public record EntityTestsModel(EntityModel entity) {
     statics.add("org.mockito.Mockito.verify");
     statics.add("org.mockito.Mockito.when");
     SortedSet<String> imports = entity.typeImports();
-    for (RelationModel relation : entity.relations()) {
-      if (relation.target().entity().id().type() == IdType.UUID) {
-        imports.add("java.util.UUID");
-      }
-    }
+    entity.relationIdImports(imports);
     imports.add("java.util.Optional");
     imports.add("org.junit.jupiter.api.Test");
     imports.add("org.junit.jupiter.api.extension.ExtendWith");
@@ -192,22 +174,12 @@ public record EntityTestsModel(EntityModel entity) {
   public String apiTestsImports() {
     SortedSet<String> statics = new TreeSet<>();
     statics.add("org.assertj.core.api.Assertions.assertThat");
-    SortedSet<String> imports = sampleImports();
-    imports.add(entity.project().basePackage() + ".TestcontainersConfiguration");
-    targetImports(imports);
-    if (!requiredTargets().isEmpty()) {
-      imports.add("org.junit.jupiter.api.BeforeEach");
-    }
-    if (entity.entity().id().type() == IdType.UUID) {
-      imports.add("java.util.UUID");
-    }
+    SortedSet<String> imports = containerTestsImports();
+    imports.addAll(entity.idImports());
     imports.add("com.fasterxml.jackson.databind.JsonNode");
     imports.add("org.junit.jupiter.api.AfterEach");
-    imports.add("org.junit.jupiter.api.Test");
-    imports.add("org.springframework.beans.factory.annotation.Autowired");
     imports.add("org.springframework.boot.test.context.SpringBootTest");
     imports.add("org.springframework.boot.test.web.client.TestRestTemplate");
-    imports.add("org.springframework.context.annotation.Import");
     imports.add("org.springframework.http.HttpEntity");
     imports.add("org.springframework.http.HttpMethod");
     imports.add("org.springframework.http.HttpStatus");
@@ -223,21 +195,25 @@ public record EntityTestsModel(EntityModel entity) {
     }
   }
 
-  /** The imports of the sample values of this entity and of the entities it needs. */
-  private SortedSet<String> sampleImports() {
+  /**
+   * The imports of a test against PostgreSQL in a container: the sample values of this entity and
+   * of the entities it needs, those entities and their repositories, and what saves them first.
+   */
+  private SortedSet<String> containerTestsImports() {
     SortedSet<String> imports = EntityModel.fieldImports(entity.fields());
     for (EntityModel target : requiredTargets()) {
       imports.addAll(EntityModel.fieldImports(target.fields()));
-    }
-    return imports;
-  }
-
-  /** The imports of the entities that this one needs, and of their repositories. */
-  private void targetImports(SortedSet<String> imports) {
-    for (EntityModel target : requiredTargets()) {
       imports.add(target.packageName() + "." + target.name());
       imports.add(target.packageName() + "." + target.name() + "Repository");
     }
+    if (!requiredTargets().isEmpty()) {
+      imports.add("org.junit.jupiter.api.BeforeEach");
+    }
+    imports.add(entity.project().basePackage() + ".TestcontainersConfiguration");
+    imports.add("org.junit.jupiter.api.Test");
+    imports.add("org.springframework.beans.factory.annotation.Autowired");
+    imports.add("org.springframework.context.annotation.Import");
+    return imports;
   }
 
   /** The static import statements, and a blank line after them. */
