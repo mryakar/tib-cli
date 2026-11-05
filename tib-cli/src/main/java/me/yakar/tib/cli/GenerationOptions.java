@@ -79,9 +79,11 @@ public final class GenerationOptions {
     return State.of(tree, version.version());
   }
 
-  /** The file that the spec of the service is read from, as the state keeps it. */
-  State.Input input(State.Input.Kind kind, Path file) {
-    return State.Input.of(kind, dir, file);
+  /**
+   * The file that the spec of the service is read from, with its content, as the state keeps it.
+   */
+  State.Input input(State.Input.Kind kind, Path file, String content) {
+    return State.Input.of(kind, dir, file, content);
   }
 
   /**

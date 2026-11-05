@@ -97,7 +97,7 @@ class GenerateEntityCommandSpec extends Specification {
     then: 'the spec is on record once'
     again.exitCode() == 0
     again.out() == 'Nothing to change.\n'
-    state().inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(spec))]
+    state().inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(spec), Files.readString(Path.of(spec)))]
 
     when: 'again, as a dry run'
     Result dryRun = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
@@ -121,7 +121,7 @@ class GenerateEntityCommandSpec extends Specification {
     result.out() == "Wrote ${state().files().size() - before.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/depot/DepotGenerated.java'))
     state().spec().entities()*.name() == ['Depot', 'Vehicle']
-    state().inputs() == [State.Input.of(State.Input.Kind.DDL, dir, Path.of(ddl))]
+    state().inputs() == [State.Input.of(State.Input.Kind.DDL, dir, Path.of(ddl), Files.readString(Path.of(ddl)))]
 
     when: 'again'
     Result again = tib.run('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
@@ -161,8 +161,8 @@ class GenerateEntityCommandSpec extends Specification {
     then:
     result.exitCode() == 0
     state().inputs() == [
-      State.Input.of(State.Input.Kind.DDL, dir, schema),
-      State.Input.of(State.Input.Kind.SPEC, dir, specFile)
+      State.Input.of(State.Input.Kind.DDL, dir, schema, Files.readString(schema)),
+      State.Input.of(State.Input.Kind.SPEC, dir, specFile, Files.readString(specFile))
     ]
     state().inputs()*.path() == ['schema.sql', 'spec.yaml']
   }

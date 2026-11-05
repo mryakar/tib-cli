@@ -96,7 +96,9 @@ class InitServiceCommandSpec extends Specification {
     result.exitCode() == 0
     State state = State.parse(Files.readString(dir.resolve(State.PATH)), '1.2.4')
     state.spec().entities()*.name() == ['Vehicle', 'Depot']
-    state.inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, EXAMPLES.resolve('vehicle-service.yaml'))]
+    state.inputs() == [
+      State.Input.of(State.Input.Kind.SPEC, dir, EXAMPLES.resolve('vehicle-service.yaml'), Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
+    ]
   }
 
   def "the spec file is recorded with its path relative to the service"() {

@@ -68,14 +68,16 @@ public class GenerateEntityCommand implements Callable<Integer> {
     State state = options.state(tree);
     Spec project = state.spec();
     if (input.spec == null) {
+      String ddl = State.Input.read(input.ddl);
       return options.generate(
           Optional.of(state),
-          DdlReader.read(input.ddl, project),
-          List.of(options.input(State.Input.Kind.DDL, input.ddl)),
+          DdlReader.parse(ddl, project),
+          List.of(options.input(State.Input.Kind.DDL, input.ddl, ddl)),
           Pack::entity,
           tree);
     }
-    Spec service = SpecReader.read(input.spec);
+    String yaml = State.Input.read(input.spec);
+    Spec service = SpecReader.parse(yaml);
     if (!service.service().equals(project.service())) {
       return options.refuse(
           input.spec
@@ -95,7 +97,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
     return options.generate(
         Optional.of(state),
         service,
-        List.of(options.input(State.Input.Kind.SPEC, input.spec)),
+        List.of(options.input(State.Input.Kind.SPEC, input.spec, yaml)),
         Pack::entity,
         tree);
   }
