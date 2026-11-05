@@ -60,6 +60,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A run whose spec no longer has an entity forgets the files of tib's that it generated for that
   entity, instead of keeping them in the state file for good. They stay on disk as they are, yours
   to delete, and `tib status` no longer reports them.
+- `tib init service --spec` in a directory that is a tib project already says so, instead of
+  reporting a problem of the spec first.
 
 ## [0.1.0] - 2026-11-02
 
