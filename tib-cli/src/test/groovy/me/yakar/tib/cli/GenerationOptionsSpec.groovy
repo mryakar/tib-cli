@@ -28,10 +28,12 @@ class GenerationOptionsSpec extends Specification {
   @TempDir
   Path dir
 
+  @TempDir
+  Path copy
+
   Tib tib = new Tib()
 
   String spec = EXAMPLES.resolve('vehicle-service.yaml').toString()
-
 
   def "a service whose tracked files have uncommitted changes is refused, and nothing is written"() {
     given:
@@ -59,6 +61,26 @@ class GenerationOptionsSpec extends Specification {
     then:
     dryRun.exitCode() == 0
     dryRun.out().contains('+++ b/.tib/state.yaml\n')
+    Tib.files(dir) == before
+  }
+
+  def "the diff of a dry run is a patch that git applies, with the result of a real run"() {
+    given: 'a committed service, and a copy of it, each with the spec in it'
+    [dir, copy].each {
+      tib.run('init', 'service', 'vehicle-service', '-d', it.toString())
+      Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), it.resolve('spec.yaml'))
+    }
+    committed()
+
+    when: 'the diff of a dry run is applied to the service, and the copy is generated into'
+    Result dryRun = tib.run('generate', 'entity', '--spec', dir.resolve('spec.yaml').toString(), '-d', dir.toString(), '--dry-run')
+    Files.writeString(dir.resolve('.git/tib.diff'), dryRun.out())
+    git('apply', '--check', '.git/tib.diff')
+    git('apply', '.git/tib.diff')
+    tib.run('generate', 'entity', '--spec', copy.resolve('spec.yaml').toString(), '-d', copy.toString())
+
+    then:
+    Tib.files(dir) == Tib.files(copy)
   }
 
   def "with --allow-dirty, a service with uncommitted changes is written, with a warning"() {
