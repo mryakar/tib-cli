@@ -57,12 +57,19 @@ public record Entity(
     options = options == null ? Options.defaults() : options;
   }
 
+  /**
+   * The segment of the package of the entity, under the package of the service: the name in lower
+   * case, as in {@code vehicle}.
+   */
+  public String packageSegment() {
+    return name.toLowerCase(Locale.ROOT);
+  }
+
   void check(Problems problems, String path, Map<String, Entity> entities) {
-    String packageName = name.toLowerCase(Locale.ROOT);
-    if (Names.isKeyword(packageName)) {
+    if (Names.isKeyword(packageSegment())) {
       problems.add(
           path + ".name",
-          "'" + name + "' makes the package '" + packageName + "', which is a Java keyword");
+          "'" + name + "' makes the package '" + packageSegment() + "', which is a Java keyword");
     }
     if (Names.isReserved(table)) {
       problems.add(

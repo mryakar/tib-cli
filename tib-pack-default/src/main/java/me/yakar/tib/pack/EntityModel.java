@@ -17,7 +17,6 @@ package me.yakar.tib.pack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -85,7 +84,7 @@ public final class EntityModel {
 
   /** The package of the entity's classes: one per entity, under the base package. */
   public String packageName() {
-    return project.basePackage() + "." + entity.name().toLowerCase(Locale.ROOT);
+    return project.basePackage() + "." + entity.packageSegment();
   }
 
   /** The directory of the package, relative to the project. */
