@@ -1,5 +1,4 @@
 @import me.yakar.tib.pack.EntityModel
-@import me.yakar.tib.spec.Entity
 @param EntityModel entity
 package ${entity.packageName()};
 
@@ -26,11 +25,11 @@ public abstract class ${entity.name()}Generated {
   @endfor
   @if(entity.audited())
   @CreationTimestamp
-  @Column(name = "${Entity.CREATED_AT}", nullable = false, updatable = false)
+  @Column(name = "${entity.createdAt()}", nullable = false, updatable = false)
   private Instant createdAt;
 
   @UpdateTimestamp
-  @Column(name = "${Entity.UPDATED_AT}", nullable = false)
+  @Column(name = "${entity.updatedAt()}", nullable = false)
   private Instant updatedAt;
 
   @endif

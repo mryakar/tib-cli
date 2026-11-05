@@ -17,6 +17,7 @@ package me.yakar.tib.pack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -136,7 +137,7 @@ public final class EntityModel {
 
   /** The database sequence of a sequence identifier. */
   public String sequence() {
-    return entity.table() + "_SEQ";
+    return entity.table() + inCaseOfTable("_SEQ");
   }
 
   /** The increment of the sequence: the allocation size of its generator. */
@@ -146,6 +147,26 @@ public final class EntityModel {
 
   public boolean audited() {
     return entity.audit();
+  }
+
+  /** The column of the time an audited entity was created. */
+  public String createdAt() {
+    return inCaseOfTable(Entity.CREATED_AT);
+  }
+
+  /** The column of the time an audited entity was last changed. */
+  public String updatedAt() {
+    return inCaseOfTable(Entity.UPDATED_AT);
+  }
+
+  /**
+   * A name, in upper case, that tib adds to the table, in the case of the table: in lower case when
+   * the table has no upper-case letter.
+   */
+  private String inCaseOfTable(String name) {
+    return entity.table().chars().anyMatch(Character::isUpperCase)
+        ? name
+        : name.toLowerCase(Locale.ROOT);
   }
 
   /** Whether the list of the entities comes in pages. */
@@ -346,6 +367,11 @@ public final class EntityModel {
     return relations.stream().filter(relation -> !relation.oneToOne()).toList();
   }
 
+  /** The index of the column of a relation. */
+  public String index(RelationModel relation) {
+    return entity.table() + "_" + relation.column() + inCaseOfTable("_IDX");
+  }
+
   /** The definitions of the columns of the table. */
   public List<String> columns() {
     List<String> columns = new ArrayList<>();
@@ -357,8 +383,8 @@ public final class EntityModel {
       columns.add(relation.sql());
     }
     if (entity.audit()) {
-      columns.add(Entity.CREATED_AT + " TIMESTAMP WITH TIME ZONE NOT NULL");
-      columns.add(Entity.UPDATED_AT + " TIMESTAMP WITH TIME ZONE NOT NULL");
+      columns.add(createdAt() + " TIMESTAMP WITH TIME ZONE NOT NULL");
+      columns.add(updatedAt() + " TIMESTAMP WITH TIME ZONE NOT NULL");
     }
     return columns;
   }

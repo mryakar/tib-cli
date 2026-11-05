@@ -39,6 +39,30 @@ class EntityModelSpec extends Specification {
     models.A.requiredRelations()*.field() == ['b', 'other']
   }
 
+  def "the names that tib adds to a table follow its case: #table"() {
+    given:
+    EntityModel model = models("""\
+      entities:
+        - name: B
+        - name: A
+          table: $table
+          id: { strategy: sequence }
+          audit: true
+          relations:
+            - { kind: manyToOne, target: B, column: $column }
+      """.stripIndent()).A
+
+    expect:
+    [model.sequence(), model.createdAt(), model.updatedAt(), model.index(model.relations()[0])] == names
+
+    where:
+    table      | column   | names
+    'VEHICLES' | 'B_ID'   | ['VEHICLES_SEQ', 'CREATED_AT', 'UPDATED_AT', 'VEHICLES_B_ID_IDX']
+    'Vehicles' | 'b_id'   | ['Vehicles_SEQ', 'CREATED_AT', 'UPDATED_AT', 'Vehicles_b_id_IDX']
+    'vehicles' | 'b_id'   | ['vehicles_seq', 'created_at', 'updated_at', 'vehicles_b_id_idx']
+    'v_2'      | 'B_ID'   | ['v_2_seq', 'created_at', 'updated_at', 'v_2_B_ID_idx']
+  }
+
   def "a sample BigDecimal fits the precision and the scale of its column: #precision, #scale"() {
     given:
     FieldModel field = models("entities:\n  - name: A\n    fields: [{ name: amount, type: BigDecimal$size }]\n").A.fields()[0]
