@@ -16,7 +16,8 @@ case "$1" in
 DESKTOP_COMMANDS_UNINSTALL
 LAUNCHER_AS_SERVICE_COMMANDS_UNINSTALL
         rm -f /usr/bin/APPLICATION_PACKAGE
-        rm -f /opt/APPLICATION_PACKAGE/lib/app/tib.aot
+        # The start-up cache, named after the launcher (StartupCacheScript.CACHE).
+        rm -f /opt/APPLICATION_PACKAGE/lib/app/APPLICATION_PACKAGE.aot
     ;;
 
     failed-upgrade)
