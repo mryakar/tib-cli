@@ -5,5 +5,10 @@
   "devDependencies": {
     "@antora/collector-extension": "1.0.3",
     "antora": "3.2.1"
+  },
+  "overrides": {
+    "@antora/collector-extension": {
+      "js-yaml": "~4.3.2"
+    }
   }
 }
