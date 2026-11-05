@@ -56,6 +56,10 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   /** The path of the state file in a project. */
   public static final String PATH = ".tib/state.yaml";
 
+  /** The first line of the state file. */
+  private static final String HEADER =
+      "# Written by tib on every run. Do not edit: your changes would be lost.\n";
+
   /** A version of tib, as in {@code 0.2.0} or {@code 0.2.0-SNAPSHOT}. */
   private static final Pattern VERSION =
       Pattern.compile("(\\d{1,9})\\.(\\d{1,9})\\.(\\d{1,9})(?:\\D.*)?");
@@ -194,9 +198,9 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     return List.copyOf(differences);
   }
 
-  /** The state as YAML. */
+  /** The state as YAML, after a comment that says who writes it. */
   public String yaml() {
-    return YAML.writeValueAsString(this);
+    return HEADER + YAML.writeValueAsString(this);
   }
 
   /**
