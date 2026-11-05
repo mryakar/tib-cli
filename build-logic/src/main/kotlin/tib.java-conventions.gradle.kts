@@ -87,8 +87,6 @@ tasks.withType<JacocoReportBase>().configureEach {
   executionData(*tests.toTypedArray())
 }
 
-tasks.jacocoTestReport { reports { xml.required = true } }
-
 // Every instruction, branch and line of a module is covered, or the build fails.
 tasks.jacocoTestCoverageVerification {
   violationRules {
