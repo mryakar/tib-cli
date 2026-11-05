@@ -82,10 +82,16 @@ contain only related changes. CI checks every commit message in a pull request.
 
 ## Releases
 
-The maintainer releases a version from a `vX.Y.Z` tag that matches `gradle.properties` and has a
-section in [CHANGELOG.md](CHANGELOG.md). The release workflow builds the packages, drafts the
-GitHub Release with them, their checksums and signatures, and the maintainer publishes it. The
-APT repository on GitHub Pages picks up the `.deb` of every published release.
+Between two releases, `gradle.properties` has the version of the next release with `-SNAPSHOT`,
+as in `version=0.3.0-SNAPSHOT`, and the site shows the documentation of `main` as a prerelease.
+
+A release starts with a pull request of its own that sets `version=X.Y.Z` in `gradle.properties`,
+gives the `[Unreleased]` section of [CHANGELOG.md](CHANGELOG.md) the version and the date, and
+sets the versions that the getting-started page prints. The maintainer then releases the version
+from a `vX.Y.Z` tag that matches `gradle.properties` and has a section in the changelog. The
+release workflow builds the packages, drafts the GitHub Release with them, their checksums and
+signatures, and the maintainer publishes it. The APT repository on GitHub Pages picks up the
+`.deb` of every published release. After the release, a commit sets `version=X.Y+1.0-SNAPSHOT`.
 
 ## License
 
