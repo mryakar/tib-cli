@@ -25,9 +25,15 @@ public interface Pack {
 
   String version();
 
-  /** The generator of a new service. */
+  /**
+   * The generator of a new service. It writes its files once, for the developer, and owns none: the
+   * runs of {@link #entity()} that follow would forget them.
+   */
   Generator init();
 
-  /** The generator of the entity layer of the entities of the spec. */
+  /**
+   * The generator of the entity layer of the entities of the spec. It runs on every {@code
+   * generate}, so it owns every file that tib keeps in step with the spec.
+   */
   Generator entity();
 }
