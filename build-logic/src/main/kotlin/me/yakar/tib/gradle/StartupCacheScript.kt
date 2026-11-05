@@ -28,7 +28,7 @@ import java.io.File
 object StartupCacheScript {
 
   /** The name of the cache file, next to the jars; the launcher names it in its options. */
-  const val CACHE = "tib.aot"
+  fun cache(launcherName: String) = "$launcherName.aot"
 
   /**
    * The JVM options the launcher runs with; the cache is built with the same ones. The JVM says
@@ -46,6 +46,7 @@ object StartupCacheScript {
         .filter { it.startsWith("app.classpath=") }
         .map { it.substringAfter('=').trim().removePrefix("\$APPDIR").trimStart('/', '\\') }
     val options = JVM_OPTIONS.joinToString(" ")
+    val cache = cache(launcherName)
     if (windows) {
       appDirectory
         .resolve("startup-cache.cmd")
@@ -59,13 +60,13 @@ object StartupCacheScript {
           |set "java=%app%\..\runtime\bin\java.exe"
           |set "cp=${jars.joinToString(";") { "%app%\\$it" }}"
           |"%java%" $options ^
-          |  -XX:AOTMode=record -XX:AOTConfiguration="%app%\$CACHE.config" ^
-          |  -cp "%cp%" $mainClass --version >nul || (del /q "%app%\$CACHE.config" 2>nul & exit /b 1)
+          |  -XX:AOTMode=record -XX:AOTConfiguration="%app%\$cache.config" ^
+          |  -cp "%cp%" $mainClass --version >nul || (del /q "%app%\$cache.config" 2>nul & exit /b 1)
           |"%java%" $options ^
-          |  -XX:AOTMode=create -XX:AOTConfiguration="%app%\$CACHE.config" -XX:AOTCache="%app%\$CACHE" ^
+          |  -XX:AOTMode=create -XX:AOTConfiguration="%app%\$cache.config" -XX:AOTCache="%app%\$cache" ^
           |  -cp "%cp%" >nul
           |set "result=%errorlevel%"
-          |del /q "%app%\$CACHE.config" 2>nul
+          |del /q "%app%\$cache.config" 2>nul
           |exit /b %result%
           |"""
             .trimMargin()
@@ -82,12 +83,12 @@ object StartupCacheScript {
           |app=$(cd "$(dirname "$0")" && pwd)
           |java="${'$'}app/../runtime/bin/java"
           |cp="${jars.joinToString(":") { "\$app/$it" }}"
-          |trap 'rm -f "${'$'}app/$CACHE.config"' EXIT
+          |trap 'rm -f "${'$'}app/$cache.config"' EXIT
           |"${'$'}java" $options \
-          |  -XX:AOTMode=record -XX:AOTConfiguration="${'$'}app/$CACHE.config" \
+          |  -XX:AOTMode=record -XX:AOTConfiguration="${'$'}app/$cache.config" \
           |  -cp "${'$'}cp" $mainClass --version >/dev/null
           |"${'$'}java" $options \
-          |  -XX:AOTMode=create -XX:AOTConfiguration="${'$'}app/$CACHE.config" -XX:AOTCache="${'$'}app/$CACHE" \
+          |  -XX:AOTMode=create -XX:AOTConfiguration="${'$'}app/$cache.config" -XX:AOTCache="${'$'}app/$cache" \
           |  -cp "${'$'}cp" >/dev/null
           |"""
             .trimMargin(),

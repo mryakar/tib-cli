@@ -98,7 +98,10 @@ val jpackageAppImage =
     // The launcher loads the start-up cache that the installers build (see StartupCacheScript),
     // silently when there is none, such as from the portable zip before its script was run.
     StartupCacheScript.JVM_OPTIONS.forEach { options.addAll("--java-options", it) }
-    options.addAll("--java-options", "-XX:AOTCache=\$APPDIR/${StartupCacheScript.CACHE}")
+    options.addAll(
+      "--java-options",
+      "-XX:AOTCache=\$APPDIR/${StartupCacheScript.cache(launcherName)}",
+    )
   }
 
 // The image that the packages ship: jpackage's, with the script that builds the start-up cache,
