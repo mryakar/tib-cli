@@ -6,14 +6,15 @@ With tib xref:install.adoc[installed], check that it answers:
 [source,bash]
 ----
 $ tib --version
-tib 0.1.0
+tib 0.2.0
 ----
 
 == A new service
 
 `tib init service` scaffolds a Spring Boot service: its Gradle build, the application class and
 its configuration, a test and a test application that run it against PostgreSQL in a container,
-and `AGENTS.md`, the notes for whoever, or whatever, works on the service next. First see what it
+a `.gitattributes` that keeps the line feeds of its text files on every platform, and
+`AGENTS.md`, the notes for whoever, or whatever, works on the service next. First see what it
 would write, as a diff, without writing anything:
 
 [source,bash]
@@ -21,10 +22,11 @@ would write, as a diff, without writing anything:
 $ mkdir vehicle-service && cd vehicle-service
 $ tib init service vehicle-service --dry-run
 --- /dev/null
-+++ b/.gitignore
-@@ -0,0 +1,8 @@
++++ b/.gitattributes
+@@ -0,0 +1,3 @@
 +# Written by tib when the service was created; it is yours from then on.
-+.gradle/
++# Text files keep their line feeds on every platform, as tib wrote them and compares them.
++* text=auto eol=lf
 ...
 ----
 
@@ -33,21 +35,11 @@ Then write it:
 [source,bash]
 ----
 $ tib init service vehicle-service
-Wrote 10 files to /home/you/vehicle-service.
+Wrote 11 files to /home/you/vehicle-service.
 ----
 
-The tenth file is `.tib/state.yaml`: what tib generated, with the spec it generated it from and
-every file with its owner. Commit it with the service. When the spec comes from a file, a spec
-file or DDL, the state file also names that file, relative to the service, with the hash of its
-content when tib read it:
-
-[source,yaml]
-----
-inputs:
-- kind: spec
-  path: vehicle-service.yaml
-  sha256: 9f2c...
-----
+The eleventh file is `.tib/state.yaml`: what tib generated, with the spec it generated it from and
+every file with its owner. Commit it with the service; xref:state.adoc[] says what it holds.
 
 The service comes without the Gradle wrapper. With Gradle 9 installed, `gradle wrapper` adds it;
 from then on `./gradlew build` builds the service and runs its test, which wants Docker, and
@@ -96,6 +88,24 @@ service with its repository and mapper mocked. They fill the entity with sample 
 its columns; `./gradlew build` runs them. An entity without a service and a controller, because
 its spec turns off its DTO or its mapper, gets the repository test only.
 
+The state file now also names the spec file that the entities came from, relative to the service,
+with the hash of its content when tib read it:
+
+[source,yaml]
+----
+# Written by tib on every run. Do not edit: your changes would be lost.
+tib: 0.2.0
+pack:
+  name: default
+  version: 0.2.0
+inputs:
+- kind: spec
+  path: vehicle-service.yaml
+  sha256: 574dbfdaa1431ba5e7301ba45d919128b46f13e705ed5e6dab2b1f5421afcbfe
+spec:
+  ...
+----
+
 Run it again after a change of the spec: the files written on every run follow the spec, and the
 files written once stay yours, also when you delete one. A run that would change nothing says so,
 and changes nothing:
@@ -108,14 +118,17 @@ Nothing to change.
 
 In a git repository, tib writes only when the files of the service that git tracks have no
 uncommitted changes, so that what tib changed can be told apart from what you changed. Commit or
-stash yours first; `--allow-dirty` writes anyway, and `--dry-run` writes nothing, so it always
-runs. Files that git does not track, such as a new spec file, do not count:
+stash yours first, the change of a spec file that git tracks included; `--allow-dirty` writes
+anyway, and `--dry-run` writes nothing, so it always runs. Files that git does not track, such as
+a new spec file, do not count. After a change of the committed spec, with an edit of `Vehicle.java`
+not committed either:
 
 [source,bash]
 ----
 $ tib generate entity --spec vehicle-service.yaml
 /home/you/vehicle-service has changes that are not committed:
    M src/main/java/com/example/vehicleservice/vehicle/Vehicle.java
+   M vehicle-service.yaml
 Commit or stash them first, so that the changes of tib can be told apart, or run again with --allow-dirty.
 ----
 
@@ -134,17 +147,18 @@ once* is yours from then on; one *written on every run*, such as `VehicleGenerat
 replaced by tib, so it is not to be edited.
 
 `tib status` says which of them are no longer as tib wrote them. A file of tib's that was edited
-or is missing is a problem, and makes it exit with 1, so that a build can check for it; the next
-run of tib replaces it. A file of yours that was removed stays removed:
+or is missing is a problem, and makes it exit with 1, so that a build can check for it:
+`git checkout` restores it, or the next run of tib writes it again, with `--allow-dirty` while the
+change is not committed. A file of yours that was removed stays removed:
 
 [source,bash]
 ----
 $ tib status
-vehicle-service: tib 0.1.0, pack default 0.1.0, 2 entities, 31 files.
+vehicle-service: tib 0.2.0, pack default 0.2.0, 2 entities, 32 files.
 edited   src/main/java/com/example/vehicleservice/vehicle/VehicleMapper.java
 removed  src/main/java/com/example/vehicleservice/vehicle/VehicleService.java
 
-An edited file is written by tib on every run: its next run replaces it.
+An edited file is written by tib on every run: git checkout restores it, or the next run of tib replaces it, with --allow-dirty while the edit is not committed.
 A removed file was yours: tib does not write it again.
 ----
 
