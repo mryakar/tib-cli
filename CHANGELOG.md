@@ -46,7 +46,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Breaking: the default pack has the version of the tib it ships with, so that its version changes
   when what it generates can change. A spec that pins `pack: default@0.1.0` is refused by this
   version with `there is no pack 'default@0.1.0'`; pin the version of the tib you run, or write
-  `pack: default`.
+  `pack: default`. The pin is in `pack:` of the spec file. A service that
+  `tib generate entity --ddl` added entities to also has it in the spec inside `.tib/state.yaml`:
+  change the `pack:` line under `spec:` there once, by hand; a run with `--spec` would forget the
+  files of the entities that the spec file lacks.
 - `TestcontainersConfiguration` of a new service is public, so that the tests of the entities in
   their own packages can import it. In a service scaffolded by 0.1.0, make it public before
   running `tib generate entity` again, or the new tests do not compile.
