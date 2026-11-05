@@ -344,7 +344,7 @@ public final class DdlReader {
      * sequence, or a UUID.
      */
     Id id(String table, Map<String, String> members, List<String> problems) {
-      String field = members.getOrDefault(key(name), Names.member(Names.type(name)));
+      String field = member(members, name);
       if (is(FieldType.UUID)) {
         return new Id(field, IdType.UUID, IdStrategy.UUID);
       }
@@ -370,7 +370,7 @@ public final class DdlReader {
             path + ": the type " + SqlType.text(definition.getColDataType()) + " is not supported");
         return null;
       }
-      String field = members.getOrDefault(key(name), Names.member(Names.type(name)));
+      String field = member(members, name);
       return new Field(
           field,
           name,
@@ -387,15 +387,21 @@ public final class DdlReader {
      * after the column without {@code _ID}.
      */
     Relation relation(String target, Map<String, String> members) {
-      String field =
-          members.getOrDefault(
-              key(name), Names.member(Names.type(ID_SUFFIX.matcher(name).replaceFirst("$1"))));
+      String field = member(members, ID_SUFFIX.matcher(name).replaceFirst("$1"));
       return new Relation(
           unique ? RelationKind.ONE_TO_ONE : RelationKind.MANY_TO_ONE,
           target,
           field,
           name,
           !notNull);
+    }
+
+    /**
+     * The name of the member of the column: the one the spec gives it, or one derived from the
+     * name.
+     */
+    private String member(Map<String, String> members, String derivedFrom) {
+      return members.getOrDefault(key(name), Names.member(Names.type(derivedFrom)));
     }
   }
 }
