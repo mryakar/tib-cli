@@ -43,6 +43,19 @@ class StatusCommandSpec extends Specification {
     result.err() == "${dir.toAbsolutePath().normalize()} is not a tib project: there is no .tib/state.yaml\n"
   }
 
+  def "a state file that a newer tib wrote is refused"() {
+    given:
+    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+
+    when:
+    Result result = new Tib('1.2.2').run('status', '-d', dir.toString())
+
+    then:
+    result.exitCode() == 1
+    result.out() == ''
+    result.err() == '.tib/state.yaml was written by tib 1.2.3, which is newer than this tib 1.2.2; upgrade tib\n'
+  }
+
   def "a service whose files are as tib wrote them"() {
     given:
     tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
@@ -161,6 +174,6 @@ class StatusCommandSpec extends Specification {
 
   /** The state file of the service. */
   private State state() {
-    State.parse(Files.readString(dir.resolve(State.PATH)))
+    State.parse(Files.readString(dir.resolve(State.PATH)), '1.2.4')
   }
 }

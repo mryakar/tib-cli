@@ -48,7 +48,7 @@ class GenerationSpec extends Specification {
     tree.changes()*.owner() == [Owner.GENERATOR, Owner.GENERATOR, Owner.DEVELOPER]
 
     and:
-    State state = State.in(tree).get()
+    State state = State.in(tree, '1.2.4').get()
     state.tib() == '1.2.3'
     state.pack() == new State.PackRef('p', '1')
     state.inputs() == []
@@ -71,7 +71,7 @@ class GenerationSpec extends Specification {
 
     then: 'the developer file is not staged again, but stays on record as it was written'
     second.changes()*.path() == ['.tib/state.yaml', 'test.txt']
-    State state = State.in(second).get()
+    State state = State.in(second, '1.2.4').get()
     state.tib() == '1.2.4'
     state.files()*.path() == ['Generated.java', 'Service.java', 'test.txt']
     state.files()[1] == State.File.of('Service.java', Owner.DEVELOPER, 'class Service {}\n')
@@ -90,7 +90,7 @@ class GenerationSpec extends Specification {
 
     then: 'it stays on record as it was written'
     second.changes()*.path() == ['.tib/state.yaml']
-    State state = State.in(second).get()
+    State state = State.in(second, '1.2.4').get()
     state.files()*.path() == ['Generated.java', 'Service.java']
     state.files()[1] == State.File.of('Service.java', Owner.DEVELOPER, 'class Service {}\n')
   }
@@ -110,6 +110,6 @@ class GenerationSpec extends Specification {
     Generation.run(project, [other, changed], pack, { generator }, '1.2.3', second)
 
     then:
-    State.in(second).get().inputs() == [changed, ddl, other]
+    State.in(second, '1.2.4').get().inputs() == [changed, ddl, other]
   }
 }

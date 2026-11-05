@@ -47,7 +47,7 @@ public final class Generation {
       Tree tree) {
     LinkedHashMap<String, State.Input> read = new LinkedHashMap<>();
     TreeMap<String, State.File> files = new TreeMap<>();
-    State.in(tree)
+    State.in(tree, tibVersion)
         .ifPresent(
             previous -> {
               previous.inputs().forEach(input -> read.put(input.path(), input));

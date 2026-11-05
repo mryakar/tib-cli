@@ -24,6 +24,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   them: a file of tib's that was edited or is missing, which tib replaces on its next run, and a
   file of yours that was removed. It exits with 1 when a file of tib's differs, so that a build
   can check it.
+- A state file that a newer tib wrote is refused, with `.tib/state.yaml was written by tib 0.3.0,
+  which is newer than this tib 0.2.0; upgrade tib`, instead of being read by an older tib and its
+  older pack.
 
 ### Changed
 

@@ -318,7 +318,7 @@ class GenerateEntityCommandSpec extends Specification {
 
   /** The state file of the service. */
   private State state() {
-    State.parse(Files.readString(dir.resolve(State.PATH)))
+    State.parse(Files.readString(dir.resolve(State.PATH)), '1.2.4')
   }
 
   /** Every file of the service, with its content, by path; git's own files are not the service's. */

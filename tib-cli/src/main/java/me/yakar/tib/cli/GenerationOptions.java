@@ -73,6 +73,11 @@ public final class GenerationOptions {
     return Tree.at(dir);
   }
 
+  /** The state file of the service, as this tib reads it. */
+  State state(Tree tree) {
+    return State.of(tree, version.version());
+  }
+
   /** The file that the spec of the service is read from, as the state keeps it. */
   State.Input input(State.Input.Kind kind, Path file) {
     return State.Input.of(kind, dir, file);

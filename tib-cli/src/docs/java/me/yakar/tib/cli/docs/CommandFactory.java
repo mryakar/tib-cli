@@ -16,6 +16,7 @@
 package me.yakar.tib.cli.docs;
 
 import me.yakar.tib.cli.GenerationOptions;
+import me.yakar.tib.cli.StatusCommand;
 import me.yakar.tib.cli.TibVersion;
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
@@ -44,6 +45,9 @@ public final class CommandFactory implements IFactory {
     }
     if (cls == GenerationOptions.class) {
       return cls.cast(new GenerationOptions(new TibVersion(version)));
+    }
+    if (cls == StatusCommand.class) {
+      return cls.cast(new StatusCommand(new TibVersion(version)));
     }
     return CommandLine.defaultFactory().create(cls);
   }
