@@ -35,6 +35,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   running `tib generate entity` again, or the new tests do not compile.
 - `.tib/state.yaml` starts with a comment that says that tib writes it on every run and that it
   is not to be edited, as the other files of tib's say who owns them.
+- The names that tib adds to a table whose name has no upper-case letter are in lower case too:
+  the audit columns `created_at` and `updated_at`, the sequence `<table>_seq` and the index
+  `<table>_<column>_idx`, as in a service read from DDL in lower case.
 
 ### Fixed
 

@@ -13,6 +13,6 @@ CREATE TABLE ${entity.table()} (
 @if(!entity.indexed().isEmpty())<%-- keeps the blank line below --%>
 
 @for(var relation : entity.indexed())
-CREATE INDEX ${entity.table()}_${relation.column()}_IDX ON ${entity.table()} (${relation.column()});
+CREATE INDEX ${entity.index(relation)} ON ${entity.table()} (${relation.column()});
 @endfor
 @endif
