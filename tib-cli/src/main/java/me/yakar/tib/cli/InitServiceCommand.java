@@ -56,21 +56,23 @@ public class InitServiceCommand implements Callable<Integer> {
     Path spec;
   }
 
+  @Mixin private ServiceDirectory directory;
+
   @Mixin private GenerationOptions options;
 
   @Override
   public Integer call() {
+    Tree tree = directory.tree();
     Spec service;
     List<State.Input> inputs;
     if (input.spec != null) {
       String yaml = State.Input.read(input.spec);
       service = SpecReader.parse(yaml);
-      inputs = List.of(options.input(State.Input.Kind.SPEC, input.spec, yaml));
+      inputs = List.of(State.Input.of(State.Input.Kind.SPEC, tree.root(), input.spec, yaml));
     } else {
       service = new Spec(Spec.VERSION, input.name, null, null, null).check();
       inputs = List.of();
     }
-    Tree tree = options.tree();
     if (tree.exists(State.PATH)) {
       return options.refuse(
           tree.root() + " is already a tib project: " + State.PATH + " is there.");

@@ -16,7 +16,6 @@
 package me.yakar.tib.cli;
 
 import java.io.PrintWriter;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 import me.yakar.tib.state.Difference;
@@ -25,8 +24,8 @@ import me.yakar.tib.tree.Tree;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ExitCode;
+import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
-import picocli.CommandLine.Option;
 
 /** {@code tib status}: what tib generated into a service, and which of its files differ. */
 @Command(
@@ -46,22 +45,12 @@ public class StatusCommand implements Callable<Integer> {
 
   @CommandLine.Spec private CommandSpec commandSpec;
 
-  @Option(
-      names = {"-d", "--dir"},
-      paramLabel = "DIR",
-      description = "The directory of the service; the current one by default.")
-  private Path dir = Path.of(".");
-
-  private final TibVersion version;
-
-  StatusCommand(TibVersion version) {
-    this.version = version;
-  }
+  @Mixin private ServiceDirectory directory;
 
   @Override
   public Integer call() {
-    Tree tree = Tree.at(dir);
-    State state = State.of(tree, version.version());
+    Tree tree = directory.tree();
+    State state = directory.state(tree);
     List<Difference> differences = state.differences(tree);
     PrintWriter out = commandSpec.commandLine().getOut();
     int entities = state.spec().entities().size();
@@ -75,9 +64,9 @@ public class StatusCommand implements Callable<Integer> {
             + " "
             + state.pack().version()
             + ", "
-            + count(entities, "entity", "entities")
+            + ServiceDirectory.count(entities, "entity", "entities")
             + ", "
-            + count(files, "file", "files")
+            + ServiceDirectory.count(files, "file", "files")
             + ".");
     if (differences.isEmpty()) {
       out.println("Every file of tib's is as it wrote it.");
@@ -103,9 +92,5 @@ public class StatusCommand implements Callable<Integer> {
       case MISSING -> "A missing file is one that tib needs: its next run writes it again.";
       case REMOVED -> "A removed file was yours: tib does not write it again.";
     };
-  }
-
-  private static String count(int count, String one, String many) {
-    return count + " " + (count == 1 ? one : many);
   }
 }
