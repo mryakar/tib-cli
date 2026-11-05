@@ -54,6 +54,16 @@ class GitSpec extends Specification {
     Git.uncommitted(service) == [' M service/Edited.java', 'M  service/Staged.java']
   }
 
+  def "a path with letters outside ASCII is as it is on disk"() {
+    given:
+    Files.writeString(repository.resolve('Şube.java'), 'class Şube {}\n')
+    commit()
+    Files.writeString(repository.resolve('Şube.java'), 'class Şube { int edited; }\n')
+
+    expect:
+    Git.uncommitted(repository) == [' M Şube.java']
+  }
+
   def "without git to ask, there are none"() {
     expect:
     Git.uncommitted(repository, 'no-such-git') == []
