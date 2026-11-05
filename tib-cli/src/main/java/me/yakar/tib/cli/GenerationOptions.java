@@ -75,22 +75,25 @@ public final class GenerationOptions {
       List<State.Input> inputs,
       Function<Pack, Generator> generator,
       Tree tree) {
-    Generation.run(
-        previous,
-        new Project(service),
-        inputs,
-        Packs.find(service.pack()),
-        generator,
-        version.version(),
-        tree);
+    List<String> forgotten =
+        Generation.run(
+            previous,
+            new Project(service),
+            inputs,
+            Packs.find(service.pack()),
+            generator,
+            version.version(),
+            tree);
     PrintWriter out = commandSpec.commandLine().getOut();
+    PrintWriter err = commandSpec.commandLine().getErr();
     int files = tree.changes().size();
     if (dryRun) {
       out.print(tree.diff());
       out.flush();
       if (files == 0) {
-        commandSpec.commandLine().getErr().println(NOTHING_TO_CHANGE);
+        err.println(NOTHING_TO_CHANGE);
       }
+      forgotten(err, forgotten);
       return ExitCode.OK;
     }
     if (files == 0) {
@@ -106,14 +109,23 @@ public final class GenerationOptions {
             "Commit or stash them first, so that the changes of tib can be told apart, or run"
                 + " again with --allow-dirty.");
       }
-      PrintWriter err = commandSpec.commandLine().getErr();
       err.println(uncommitted(tree, uncommitted));
       err.println("tib writes anyway, as --allow-dirty asks.");
     }
     tree.apply();
     out.println(
         "Wrote " + ServiceDirectory.count(files, "file", "files") + " to " + tree.root() + ".");
+    forgotten(err, forgotten);
     return ExitCode.OK;
+  }
+
+  /** Names the files of tib's that the run forgot, as the spec no longer generates them. */
+  private static void forgotten(PrintWriter err, List<String> paths) {
+    if (!paths.isEmpty()) {
+      err.println("tib no longer generates these files from the spec, and forgets them:");
+      paths.forEach(path -> err.println("  " + path));
+      err.println("Delete them: tib status no longer checks them.");
+    }
   }
 
   /** The uncommitted changes of the service, a line each, the first ones of many. */

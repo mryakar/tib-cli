@@ -109,6 +109,46 @@ class GenerateEntityCommandSpec extends Specification {
     dryRun.err() == 'Nothing to change.\n'
   }
 
+  def "the files of an entity that left the spec are forgotten, and named to be deleted"() {
+    given:
+    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
+    tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    String depot = Files.writeString(dir.resolve('depot.yaml'), Files.readString(Path.of(spec))
+        .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, '')).toString()
+    String vehicle = 'src/main/java/com/example/vehicleservice/vehicle/'
+    String notice = """\
+      tib no longer generates these files from the spec, and forgets them:
+        ${vehicle}VehicleDto.java
+        ${vehicle}VehicleGenerated.java
+        ${vehicle}VehicleMapper.java
+      Delete them: tib status no longer checks them.
+      """.stripIndent()
+
+    when:
+    Result dryRun = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString(), '--dry-run')
+
+    then:
+    dryRun.exitCode() == 0
+    dryRun.out().contains("-- path: ${vehicle}VehicleDto.java\n")
+    dryRun.err() == notice
+
+    when:
+    Result result = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString())
+
+    then:
+    result.exitCode() == 0
+    result.out().startsWith('Wrote ')
+    result.err() == notice
+    !state().files()*.path().any { it.startsWith(vehicle + 'VehicleGenerated') }
+
+    when: 'again'
+    Result again = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString())
+
+    then: 'they are forgotten once'
+    again.out() == 'Nothing to change.\n'
+    again.err() == ''
+  }
+
   def "generates the entity layer of the tables of the DDL into the service, once"() {
     given:
     tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
