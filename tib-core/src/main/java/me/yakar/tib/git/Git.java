@@ -29,8 +29,7 @@ public final class Git {
   /**
    * The files under the directory that git tracks and whose changes are not committed, staged or
    * not, as {@code git status --porcelain} prints them: {@code " M path"}, the path from the root
-   * of the repository. None when the directory is not in a repository, or there is no git to ask:
-   * then there is nothing that git could tell apart from the changes of tib.
+   * of the repository. None when the directory is not in a repository, or there is no git to ask.
    */
   public static List<String> uncommitted(Path directory) {
     return uncommitted(directory, "git");
@@ -58,8 +57,7 @@ public final class Git {
       try (BufferedReader output = process.inputReader(StandardCharsets.UTF_8)) {
         changes = output.lines().toList();
       }
-      // Waits without interruption, as reading the output does: git answers at once, and waitFor
-      // of an ended process may or may not see an interruption, by platform and by timing.
+      // onExit, not waitFor: an interrupted thread still gets git's answer.
       return process.onExit().join().exitValue() == 0 ? changes : List.of();
     } catch (IOException e) {
       return List.of();
