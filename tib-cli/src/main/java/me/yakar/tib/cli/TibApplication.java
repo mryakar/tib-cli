@@ -17,43 +17,15 @@ package me.yakar.tib.cli;
 
 import java.util.stream.IntStream;
 import me.yakar.tib.TibException;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.ExitCodeGenerator;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.SpringBootConfiguration;
-import org.springframework.boot.autoconfigure.ImportAutoConfiguration;
-import org.springframework.boot.autoconfigure.context.PropertyPlaceholderAutoConfiguration;
-import org.springframework.context.annotation.ComponentScan;
 import picocli.CommandLine;
 import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.IFactory;
 import picocli.CommandLine.ParseResult;
-import picocli.spring.boot.autoconfigure.PicocliAutoConfiguration;
 
-/**
- * The application that the packages ship. Spring Boot starts, runs the {@code tib} command with
- * picocli, and the process exits with the command's exit code. Only the auto-configuration that the
- * command line needs is imported: the factory of the commands, and the placeholders of the version.
- */
-@SpringBootConfiguration
-@ComponentScan
-@ImportAutoConfiguration({
-  PicocliAutoConfiguration.class,
-  PropertyPlaceholderAutoConfiguration.class
-})
-public class TibApplication implements CommandLineRunner, ExitCodeGenerator {
+/** The application that the packages ship: runs the {@code tib} command and exits with its code. */
+public final class TibApplication {
 
-  private final IFactory factory;
-  private int exitCode;
-
-  public TibApplication(IFactory factory) {
-    this.factory = factory;
-  }
-
-  @Override
-  public void run(String... args) {
-    exitCode = commandLine(factory).execute(args);
-  }
+  private TibApplication() {}
 
   /** The {@code tib} command, with its subcommands built by the factory. */
   static CommandLine commandLine(IFactory factory) {
@@ -74,20 +46,9 @@ public class TibApplication implements CommandLineRunner, ExitCodeGenerator {
     throw e;
   }
 
-  @Override
-  public int getExitCode() {
-    return exitCode;
-  }
-
-  /**
-   * A run that succeeds ends when this method returns; one that fails ends the process with the
-   * exit code of the command.
-   */
+  /** Runs tib; a run that fails ends the process with the exit code of the command. */
   public static void main(String[] args) {
-    SpringApplication application = new SpringApplication(TibApplication.class);
-    // The arguments are tib's, not settings of Spring.
-    application.setAddCommandLineProperties(false);
-    int exitCode = SpringApplication.exit(application.run(args));
+    int exitCode = commandLine(new CommandFactory()).execute(args);
     // Not an if: coverage cannot count a System.exit call, which never returns.
     IntStream.of(exitCode).filter(code -> code != 0).forEach(System::exit);
   }

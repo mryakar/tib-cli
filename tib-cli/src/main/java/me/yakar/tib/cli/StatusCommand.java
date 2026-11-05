@@ -54,7 +54,7 @@ public class StatusCommand implements Callable<Integer> {
 
   private final TibVersion version;
 
-  public StatusCommand(TibVersion version) {
+  StatusCommand(TibVersion version) {
     this.version = version;
   }
 
