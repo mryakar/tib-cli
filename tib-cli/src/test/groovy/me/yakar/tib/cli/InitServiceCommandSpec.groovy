@@ -15,6 +15,8 @@
  */
 package me.yakar.tib.cli
 
+import static me.yakar.tib.cli.Tib.EXAMPLES
+
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.cli.Tib.Result
@@ -23,8 +25,6 @@ import spock.lang.Specification
 import spock.lang.TempDir
 
 class InitServiceCommandSpec extends Specification {
-
-  static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
 
   @TempDir
   Path dir
@@ -67,7 +67,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    State state = State.parse(Files.readString(dir.resolve(State.PATH)), '1.2.4')
+    State state = Tib.state(dir)
     result.out() == "Wrote ${state.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/VehicleServiceApplication.java'))
     state.tib() == '1.2.3'
@@ -101,7 +101,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    State state = State.parse(Files.readString(dir.resolve(State.PATH)), '1.2.4')
+    State state = Tib.state(dir)
     state.spec().entities()*.name() == ['Vehicle', 'Depot']
     state.inputs() == [
       State.Input.of(State.Input.Kind.SPEC, dir, EXAMPLES.resolve('vehicle-service.yaml'), Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
@@ -118,7 +118,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    State.Input input = State.parse(Files.readString(service.resolve(State.PATH)), '1.2.4').inputs()[0]
+    State.Input input = Tib.state(service).inputs()[0]
     input.kind() == State.Input.Kind.SPEC
     input.path() == '../vehicle-service.yaml'
   }

@@ -15,6 +15,8 @@
  */
 package me.yakar.tib.cli
 
+import static me.yakar.tib.cli.Tib.EXAMPLES
+
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.cli.Tib.Result
@@ -23,8 +25,6 @@ import spock.lang.Specification
 import spock.lang.TempDir
 
 class StatusCommandSpec extends Specification {
-
-  static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
 
   static final String ENTITY = 'src/main/java/com/example/vehicleservice/vehicle/'
 
@@ -116,7 +116,7 @@ class StatusCommandSpec extends Specification {
     then:
     result.exitCode() == 1
     result.out() == """\
-      vehicle-service: tib 1.2.3, pack default 0.1.0, 2 entities, ${state().files().size()} files.
+      vehicle-service: tib 1.2.3, pack default 0.1.0, 2 entities, ${Tib.state(dir).files().size()} files.
       removed  ${ENTITY}VehicleController.java
       missing  ${ENTITY}VehicleDto.java
       edited   ${ENTITY}VehicleGenerated.java
@@ -192,10 +192,5 @@ class StatusCommandSpec extends Specification {
     tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
     tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
     spec
-  }
-
-  /** The state file of the service. */
-  private State state() {
-    State.parse(Files.readString(dir.resolve(State.PATH)), '1.2.4')
   }
 }

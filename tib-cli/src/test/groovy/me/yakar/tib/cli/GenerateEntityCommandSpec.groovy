@@ -15,6 +15,8 @@
  */
 package me.yakar.tib.cli
 
+import static me.yakar.tib.cli.Tib.EXAMPLES
+
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.cli.Tib.Result
@@ -23,8 +25,6 @@ import spock.lang.Specification
 import spock.lang.TempDir
 
 class GenerateEntityCommandSpec extends Specification {
-
-  static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
 
   @TempDir
   Path dir
@@ -82,14 +82,14 @@ class GenerateEntityCommandSpec extends Specification {
   def "generates the entity layer of the spec into the service, once"() {
     given:
     tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
-    State before = state()
+    State before = Tib.state(dir)
 
     when:
     Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
 
     then:
     result.exitCode() == 0
-    result.out() == "Wrote ${state().files().size() - before.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
+    result.out() == "Wrote ${Tib.state(dir).files().size() - before.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/resources/db/migration/V2__create_vehicle.sql'))
 
     when: 'again'
@@ -98,7 +98,7 @@ class GenerateEntityCommandSpec extends Specification {
     then: 'the spec is on record once'
     again.exitCode() == 0
     again.out() == 'Nothing to change.\n'
-    state().inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(spec), Files.readString(Path.of(spec)))]
+    Tib.state(dir).inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(spec), Files.readString(Path.of(spec)))]
 
     when: 'again, as a dry run'
     Result dryRun = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
@@ -139,7 +139,7 @@ class GenerateEntityCommandSpec extends Specification {
     result.exitCode() == 0
     result.out().startsWith('Wrote ')
     result.err() == notice
-    !state().files()*.path().any { it.startsWith(vehicle + 'VehicleGenerated') }
+    !Tib.state(dir).files()*.path().any { it.startsWith(vehicle + 'VehicleGenerated') }
 
     when: 'again'
     Result again = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString())
@@ -152,17 +152,17 @@ class GenerateEntityCommandSpec extends Specification {
   def "generates the entity layer of the tables of the DDL into the service, once"() {
     given:
     tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
-    State before = state()
+    State before = Tib.state(dir)
 
     when:
     Result result = tib.run('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
 
     then:
     result.exitCode() == 0
-    result.out() == "Wrote ${state().files().size() - before.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
+    result.out() == "Wrote ${Tib.state(dir).files().size() - before.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/depot/DepotGenerated.java'))
-    state().spec().entities()*.name() == ['Depot', 'Vehicle']
-    state().inputs() == [State.Input.of(State.Input.Kind.DDL, dir, Path.of(ddl), Files.readString(Path.of(ddl)))]
+    Tib.state(dir).spec().entities()*.name() == ['Depot', 'Vehicle']
+    Tib.state(dir).inputs() == [State.Input.of(State.Input.Kind.DDL, dir, Path.of(ddl), Files.readString(Path.of(ddl)))]
 
     when: 'again'
     Result again = tib.run('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
@@ -183,8 +183,8 @@ class GenerateEntityCommandSpec extends Specification {
     then:
     result.exitCode() == 0
     result.out() == "Wrote 1 file to ${dir.toAbsolutePath().normalize()}.\n"
-    state().tib() == '1.2.4'
-    state().inputs()*.path() == ['spec.yaml']
+    Tib.state(dir).tib() == '1.2.4'
+    Tib.state(dir).inputs()*.path() == ['spec.yaml']
   }
 
   def "the files that the spec was read from are recorded, each once, with their last content"() {
@@ -201,11 +201,11 @@ class GenerateEntityCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    state().inputs() == [
+    Tib.state(dir).inputs() == [
       State.Input.of(State.Input.Kind.DDL, dir, schema, Files.readString(schema)),
       State.Input.of(State.Input.Kind.SPEC, dir, specFile, Files.readString(specFile))
     ]
-    state().inputs()*.path() == ['schema.sql', 'spec.yaml']
+    Tib.state(dir).inputs()*.path() == ['schema.sql', 'spec.yaml']
   }
 
   def "#problem is reported with exit code 1"() {
@@ -357,10 +357,6 @@ class GenerateEntityCommandSpec extends Specification {
     assert process.waitFor() == 0 : process.errorStream.text
   }
 
-  /** The state file of the service. */
-  private State state() {
-    State.parse(Files.readString(dir.resolve(State.PATH)), '1.2.4')
-  }
 
   /** Every file of the service, with its content, by path; git's own files are not the service's. */
   private Map<String, String> files() {
