@@ -80,6 +80,26 @@ tasks.withType<Test>().configureEach {
   )
 }
 
+// ./gradlew test updateSnapshots --continue: the snapshots become what the unit tests wrote, and
+// git diff shows the change. Copied by hand, as Gradle's copies leave out .gitignore files.
+val snapshotsDir = layout.projectDirectory.dir("src/test/snapshots").asFile
+
+if (snapshotsDir.isDirectory) {
+  tasks.register("updateSnapshots") {
+    group = "verification"
+    description = "Replaces the snapshots with what the unit tests wrote."
+    mustRunAfter(tasks.test)
+    val actual = layout.buildDirectory.dir("snapshots/test")
+    val expected = snapshotsDir
+    doLast {
+      val written = actual.get().asFile
+      check(written.isDirectory) { "$written is missing: run the unit tests first" }
+      expected.deleteRecursively()
+      written.copyRecursively(expected)
+    }
+  }
+}
+
 jacoco { toolVersion = version("jacoco") }
 
 // Coverage counts every test suite; executionData(tasks) adds no task dependency, so dependsOn
