@@ -19,7 +19,7 @@ content:
         v(?<version>+({0..9}).+({0..9}).+({0..9})): $<version>
         '*': main
 # The latest release is under tib/latest/, so that a link to it stays the same from one release to
-# the next; main is a prerelease (see antoraContent), so it is never the latest.
+# the next; main is a prerelease between releases (see antoraContent), so it is not the latest.
 urls:
   latest_version_segment: latest
 ui:
