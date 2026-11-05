@@ -63,8 +63,7 @@ class GenerateEntityCommandSpec extends Specification {
 
     then:
     result.exitCode() == 1
-    result.err().contains('is not a tib project')
-    result.err().endsWith('\nRun tib init service first.\n')
+    result.err() == "${dir.toAbsolutePath().normalize()} is not a tib project: there is no .tib/state.yaml\nRun tib init service first.\n"
   }
 
   def "a dry run prints the diff and writes nothing"() {

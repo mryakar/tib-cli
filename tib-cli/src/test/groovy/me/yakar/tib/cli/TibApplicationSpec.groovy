@@ -79,8 +79,8 @@ class TibApplicationSpec extends Specification {
 
     then:
     result.exitCode() == 2
-    // Contains, not starts with: on some consoles picocli colors the message.
-    result.err().contains("Unknown option: '--no-such-option'")
+    result.out() == ''
+    result.err().contains('Usage: tib ')
   }
 
   /**
