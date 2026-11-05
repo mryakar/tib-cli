@@ -2,6 +2,7 @@
 * xref:getting-started.adoc[]
 * xref:spec.adoc[]
 * xref:ddl.adoc[]
+* xref:state.adoc[]
 * Reference
 ** xref:reference/tib.adoc[]
 ** xref:reference/tib-init.adoc[]
