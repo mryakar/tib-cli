@@ -16,8 +16,10 @@ Out of scope for the MVP: several services at once, the frontend, migrations for
 table, upgrades, the assistant, native images, a DSL of its own, and more than one stack.
 
 What is done today: `tib init service`, and `tib generate entity` from a spec or from DDL, with
-`--dry-run`, the state file, the owner of every file and `AGENTS.md`; the tests of every entity;
-`tib status`; the packages for Linux and Windows; the documentation site; the first release.
+`--dry-run`, the state file, which names the spec files and the DDL that the spec came from, the
+owner of every file and `AGENTS.md`; the tests of every entity; `tib status`; writing only into a
+service whose changes are committed; the packages for Linux and Windows; the documentation site;
+the first release.
 
 ## Next
 
@@ -31,3 +33,7 @@ These come after the MVP, in no fixed order:
 - A default pack on Spring Boot 4.
 - The Gradle wrapper in the generated service.
 - A notice from `tib status` when a spec file or the DDL changed after tib read it.
+- The generated Java formatted with google-java-format by the default pack, so that a formatter
+  run on the service leaves the files of tib's as tib wrote them.
+- One builder of sample entities per entity, which the generated tests share.
+- PostgreSQL 18 for the generated services.
