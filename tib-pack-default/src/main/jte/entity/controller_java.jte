@@ -5,7 +5,7 @@ package ${entity.packageName()};
 
 ${entity.controllerImports()}/** The API of ${entity.plural()}. */
 @RestController
-@RequestMapping("/api/${entity.plural()}")
+@RequestMapping("${entity.path()}")
 public class ${entity.name()}Controller {
 
   private final ${entity.name()}Service service;

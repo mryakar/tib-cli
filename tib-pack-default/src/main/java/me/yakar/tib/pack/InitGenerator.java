@@ -35,8 +35,8 @@ final class InitGenerator implements Generator {
 
   @Override
   public void generate(Project project, Tree tree) {
-    String sources = "src/main/java/" + project.packagePath();
-    String tests = "src/test/java/" + project.packagePath();
+    String sources = DefaultPack.MAIN + project.packagePath();
+    String tests = DefaultPack.TEST + project.packagePath();
     tree.once("settings.gradle.kts", render("init/settings_gradle_kts.jte", project));
     tree.once("build.gradle.kts", render("init/build_gradle_kts.jte", project));
     tree.once(".gitignore", render("init/gitignore.jte", project));

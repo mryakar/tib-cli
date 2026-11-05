@@ -50,7 +50,6 @@ class EntityTestsModelSpec extends Specification {
 
     expect:
     tests.A.requiredTargets()*.name() == ['C', 'B']
-    tests.A.reversedRequiredTargets()*.name() == ['B', 'C']
   }
 
   def "two entities with the same values break a constraint when #what"() {

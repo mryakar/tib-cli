@@ -3,7 +3,7 @@
 @import me.yakar.tib.pack.EntityTestsModel
 @param EntityTestsModel tests
 !{EntityModel entity = tests.entity();}
-!{String path = "/api/" + entity.plural();}
+!{String path = entity.path();}
 !{String dto = entity.name() + "Dto";}
 // Written by tib when the entity was created; it is yours from then on.
 package ${entity.packageName()};
@@ -35,7 +35,7 @@ class ${entity.name()}ApiTests {
   @AfterEach
   void deleteAll() {
     ${entity.plural()}.deleteAll();
-    @for(var target : tests.reversedRequiredTargets())
+    @for(var target : tests.requiredTargets().reversed())
     ${target.plural()}.deleteAll();
     @endfor
   }

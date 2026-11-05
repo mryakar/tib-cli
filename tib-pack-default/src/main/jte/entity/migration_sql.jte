@@ -3,7 +3,7 @@
 @param EntityModel entity
 -- Written by tib when the entity was created. A change of the schema is a new migration.
 @if(entity.idSequence())
-CREATE SEQUENCE ${entity.sequence()} START WITH 1 INCREMENT BY 50;
+CREATE SEQUENCE ${entity.sequence()} START WITH 1 INCREMENT BY ${entity.sequenceIncrement()};
 
 @endif
 CREATE TABLE ${entity.table()} (
