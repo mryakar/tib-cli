@@ -11,19 +11,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The state file records the spec files and the DDL that the spec of the service was read from,
   under `inputs`, each with its path relative to the service and the SHA-256 of its content when
-  tib read it. A file read again takes the place of its earlier record. tib 0.1.0 does not read a
-  state file with `inputs`.
-- `tib init service` and `tib generate entity` refuse to write into a service whose files that git
-  tracks have uncommitted changes, so that the changes of tib can be told apart; `--allow-dirty`
-  writes anyway, with a warning. Untracked files, and a dry run, are not refused.
+  tib read it. A file read again takes the place of its earlier record. A state file written by
+  this version cannot be read by tib 0.1.0.
 - `tib generate entity` writes the tests of every entity, once, next to it under `src/test/java`:
   a test of its repository and one of its API over HTTP, both against PostgreSQL in a container,
   and a test of its service with the repository and the mapper mocked. An entity without a service
   gets the test of its repository only.
 - `tib status` says which of the files that tib wrote into a service are no longer as it wrote
-  them: a file of tib's that was edited or is missing, which tib replaces on its next run, and a
-  file of yours that was removed. It exits with 1 when a file of tib's differs, so that a build
-  can check it.
+  them: a file of tib's that was edited or is missing, which `git checkout` restores, or the next
+  run of tib writes again, with `--allow-dirty` while the change is not committed; and a file of
+  yours that was removed. It exits with 1 when a file of tib's differs, so that a build can check
+  it.
 - A state file that a newer tib wrote is refused, with `.tib/state.yaml was written by tib 0.3.0,
   which is newer than this tib 0.2.0; upgrade tib`, instead of being read by an older tib and its
   older pack.
@@ -31,21 +29,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   platform, so that a clone on Windows with `core.autocrlf` does not make every file of tib's
   differ from what tib wrote. In a service scaffolded by 0.1.0, add `* text=auto eol=lf` to your
   `.gitattributes`.
+- A page of the documentation on the state file: its keys, the owners of a file, and which
+  versions of tib read it.
 
 ### Changed
 
-- **Breaking:** a bug in tib exits with 3, with its stack trace on the standard error; it exited
-  with 1, the code of a problem of the spec, the DDL, the pack or the project, and of `tib status`
-  finding a file of tib's edited. A script that treats every code other than 0 as a failure needs
-  no change.
+- Breaking: `tib init service` and `tib generate entity` refuse to write into a service whose
+  files that git tracks have uncommitted changes, so that the changes of tib can be told apart, and
+  exit with 1 where 0.1.0 wrote. Commit or stash your changes first, or pass `--allow-dirty`, which
+  writes as before, with a warning. Untracked files, and a dry run, are not refused.
+- Breaking: a bug in tib exits with 3, with its stack trace on the standard error; it exited with
+  1, the code of a problem of the spec, the DDL, the pack or the project, which `tib status` also
+  gives when a file of tib's differs. A script that treats every code other than 0 as a failure
+  needs no change.
+- Breaking: the default pack has the version of the tib it ships with, so that its version changes
+  when what it generates can change. A spec that pins `pack: default@0.1.0` is refused by this
+  version with `there is no pack 'default@0.1.0'`; pin the version of the tib you run, or write
+  `pack: default`.
 - `TestcontainersConfiguration` of a new service is public, so that the tests of the entities in
   their own packages can import it. In a service scaffolded by 0.1.0, make it public before
   running `tib generate entity` again, or the new tests do not compile.
 - `.tib/state.yaml` starts with a comment that says that tib writes it on every run and that it
   is not to be edited, as the other files of tib's say who owns them.
-- The default pack has the version of the tib it ships with, so that its version changes when what
-  it generates can change. A spec that pins `pack: default@0.1.0` is refused by this version with
-  `there is no pack 'default@0.1.0'`; pin the version of the tib you run, or write `pack: default`.
 - The `AGENTS.md` of a new service says what `tib status` does, that tib writes only into a
   service whose tracked files are committed, and that `XGenerated`, `XDto` and `XMapper` stay out
   of a code formatter.
