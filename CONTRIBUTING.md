@@ -89,9 +89,11 @@ A release starts with a pull request of its own that sets `version=X.Y.Z` in `gr
 gives the `[Unreleased]` section of [CHANGELOG.md](CHANGELOG.md) the version and the date, and
 sets the versions that the getting-started page prints. The maintainer then releases the version
 from a `vX.Y.Z` tag that matches `gradle.properties` and has a section in the changelog. The
-release workflow builds the packages, drafts the GitHub Release with them, their checksums and
-signatures, and the maintainer publishes it. The APT repository on GitHub Pages picks up the
-`.deb` of every published release. After the release, a commit sets `version=X.Y+1.0-SNAPSHOT`.
+release workflow builds the packages and drafts the GitHub Release with them, their checksums and
+signatures. Before the maintainer publishes it, a second pull request sets
+`version=X.Y+1.0-SNAPSHOT`: until that is merged, `main` is not a prerelease, and the site shows it
+as the latest version. The APT repository on GitHub Pages picks up the `.deb` of every published
+release.
 
 ## License
 
