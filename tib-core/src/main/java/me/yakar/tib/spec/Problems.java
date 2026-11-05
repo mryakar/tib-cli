@@ -17,7 +17,6 @@ package me.yakar.tib.spec;
 
 import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -93,10 +92,5 @@ final class Problems {
     } catch (ReflectiveOperationException e) {
       throw new IllegalStateException("cannot read " + component.getName(), e);
     }
-  }
-
-  /** The list as the model keeps it: never null, never changed. */
-  static <T> List<T> list(List<T> list) {
-    return list == null ? List.of() : Collections.unmodifiableList(new ArrayList<>(list));
   }
 }

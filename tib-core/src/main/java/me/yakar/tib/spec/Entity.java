@@ -51,8 +51,8 @@ public record Entity(
   public Entity {
     table = table == null && name != null ? Names.sql(name) : table;
     id = id == null ? Id.defaults() : id;
-    fields = Problems.list(fields);
-    relations = Problems.list(relations);
+    fields = Spec.list(fields);
+    relations = Spec.list(relations);
     audit = audit != null && audit;
     options = options == null ? Options.defaults() : options;
   }

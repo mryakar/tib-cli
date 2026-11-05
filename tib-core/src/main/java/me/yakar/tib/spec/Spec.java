@@ -16,6 +16,7 @@
 package me.yakar.tib.spec;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -64,7 +65,15 @@ public record Spec(
   public Spec {
     group = group == null ? "com.example" : group;
     pack = pack == null ? "default" : pack;
-    entities = Problems.list(entities);
+    entities = list(entities);
+  }
+
+  /**
+   * The list as the model keeps it: never null, never changed. A null item stays, for the check to
+   * report.
+   */
+  static <T> List<T> list(List<T> list) {
+    return list == null ? List.of() : Collections.unmodifiableList(new ArrayList<>(list));
   }
 
   /**
