@@ -35,7 +35,7 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 
 /** The options of a command that generates into a service, and the end of its run. */
-public final class GenerationOptions {
+final class GenerationOptions {
 
   private static final String NOTHING_TO_CHANGE = "Nothing to change.";
 
