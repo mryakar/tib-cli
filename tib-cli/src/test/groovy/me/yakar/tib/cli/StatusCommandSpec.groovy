@@ -135,6 +135,27 @@ class StatusCommandSpec extends Specification {
     again.exitCode() == 0
   }
 
+  def "the files of tib's of an entity that left the spec are no problem once deleted"() {
+    given:
+    String spec = generated()
+    Path depot = Files.writeString(dir.resolve('depot.yaml'), Files.readString(Path.of(spec))
+        .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, ''))
+    tib.run('generate', 'entity', '--spec', depot.toString(), '-d', dir.toString())
+    Files.walk(dir.resolve(ENTITY)).withCloseable { paths ->
+      paths.sorted(Comparator.reverseOrder()).forEach(Files::delete)
+    }
+
+    when:
+    Result result = tib.run('status', '-d', dir.toString())
+
+    then:
+    result.exitCode() == 0
+    result.out().readLines().drop(1).every {
+      it == '' || it.startsWith('removed ') || it.startsWith('A removed file')
+    }
+    result.out().contains("removed  ${ENTITY}Vehicle.java\n")
+  }
+
   def "the count of entities and files is #what"() {
     given:
     Files.createDirectories(dir.resolve('.tib'))

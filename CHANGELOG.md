@@ -65,8 +65,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the path from the root of the file, as in `files[2].owner` or `spec.entities[0].name`, the way a
   problem of a spec file does.
 - A run whose spec no longer has an entity forgets the files of tib's that it generated for that
-  entity, instead of keeping them in the state file for good. They stay on disk as they are, yours
-  to delete, and `tib status` no longer reports them.
+  entity, instead of keeping them in the state file for good, and names them on the standard
+  error. They stay on disk as they are, yours to delete, and `tib status` no longer reports them.
 - `tib init service --spec` in a directory that is a tib project already says so, instead of
   reporting a problem of the spec first.
 
