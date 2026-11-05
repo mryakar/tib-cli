@@ -2,8 +2,9 @@
 :description: The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.
 
 tib scaffolds Spring Boot services and adds to them: an entity layer from SQL DDL or a spec, with
-its repository, DTO, mapper, service, controller and migration. It runs again on the same project
-without breaking anything, and shows what it would change before it changes it. The
+its repository, DTO, mapper, service, controller and migration, and their tests. It runs again on
+the same project without breaking anything, shows what it would change before it changes it, and
+`tib status` says which of the files it wrote were changed since. The
 https://github.com/mryakar/tib-cli/blob/main/ROADMAP.md[roadmap] says what is done and what comes
 next.
 
@@ -13,4 +14,5 @@ next.
 * xref:getting-started.adoc[] scaffolds the first service.
 * xref:spec.adoc[] describes the YAML file that tells tib what to generate.
 * xref:ddl.adoc[] says how tib reads the tables of SQL DDL.
+* xref:state.adoc[] describes `.tib/state.yaml`, the record of what tib wrote into a service.
 * xref:reference/tib.adoc[] lists every command and option, generated from the commands themselves.
