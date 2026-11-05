@@ -43,9 +43,9 @@ Antora runs the documentation tasks of the build itself and writes the site to `
   elsewhere it compiles the service and its tests.
 - A change of a template, of the state file or of the schema of the spec changes the snapshots
   under `src/test/snapshots` of its module: `./gradlew test updateSnapshots --continue` replaces
-  them with what the tests wrote. Review the change with `git diff`, and commit the snapshots with
-  the change that made them, in a commit of its own. An update of the Spring Boot that the default
-  pack generates comes in a pull request of its own, with the acceptance test green.
+  them with what the tests wrote. Review the change with `git diff`; the change and its snapshots
+  go in one commit of their own. An update of the Spring Boot that the default pack generates
+  comes in a pull request of its own, with the acceptance test green.
 
 ## Design rules
 
