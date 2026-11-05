@@ -15,13 +15,24 @@
  */
 package me.yakar.tib.cli
 
+import java.nio.file.Path
+import me.yakar.tib.state.State
+import me.yakar.tib.tree.Tree
 import picocli.CommandLine
 
 /** Runs the tib command in this JVM, as the application does, with a version of the test's own. */
 class Tib {
 
+  /** The examples of the documentation: the spec and the DDL of a service. */
+  static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
+
   /** What a run printed, with the line separator of every platform, and its exit code. */
   record Result(int exitCode, String out, String err) {}
+
+  /** The state file of the service, as a tib newer than those of the tests reads it. */
+  static State state(Path service) {
+    State.of(Tree.at(service), '9.9.9')
+  }
 
   private final String version
 
