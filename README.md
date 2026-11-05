@@ -21,17 +21,9 @@ every command; the [roadmap](ROADMAP.md) says what is done and what comes next.
 
 ## Install
 
-Every package embeds its own Java runtime. On Debian and Ubuntu, from the APT repository:
-
-```bash
-curl -fsSL https://mryakar.github.io/tib-cli/apt/tib.gpg | sudo tee /usr/share/keyrings/tib.gpg >/dev/null
-echo "deb [signed-by=/usr/share/keyrings/tib.gpg] https://mryakar.github.io/tib-cli/apt stable main" | sudo tee /etc/apt/sources.list.d/tib.list
-sudo apt update && sudo apt install tib
-```
-
-On Windows, run the `.msi` of a [release](https://github.com/mryakar/tib-cli/releases). A
-portable zip for either platform needs no installation. The
-[install page](https://mryakar.github.io/tib-cli/tib/main/install.html) has the details.
+On Debian and Ubuntu from the APT repository, on Windows with the `.msi`, or from a portable zip,
+each with its own Java runtime: the
+[install page](https://mryakar.github.io/tib-cli/tib/latest/install.html) says how.
 
 ## Building
 
