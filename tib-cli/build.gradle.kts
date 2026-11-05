@@ -109,20 +109,14 @@ val shippedImage =
     description = "Prepares the application image that the packages ship."
     from(jpackageAppImage.map { it.destination })
     if (windows) {
-      exclude(
-        "tib/runtime/bin/jfr.exe",
-        "tib/runtime/bin/jrunscript.exe",
-        "tib/runtime/bin/keytool.exe",
-      )
+      exclude("$launcherName/runtime/bin/keytool.exe")
     } else {
       exclude(
-        "tib/lib/runtime/lib/libawt_xawt.so",
-        "tib/lib/runtime/lib/libsplashscreen.so",
-        "tib/lib/runtime/lib/libjsound.so",
-        "tib/lib/runtime/lib/libfontmanager.so",
-        "tib/lib/runtime/bin/jfr",
-        "tib/lib/runtime/bin/jrunscript",
-        "tib/lib/runtime/bin/keytool",
+        "$launcherName/lib/runtime/lib/libawt_xawt.so",
+        "$launcherName/lib/runtime/lib/libsplashscreen.so",
+        "$launcherName/lib/runtime/lib/libjsound.so",
+        "$launcherName/lib/runtime/lib/libfontmanager.so",
+        "$launcherName/lib/runtime/bin/keytool",
       )
     }
     into(layout.buildDirectory.dir("jpackage/image"))
@@ -236,27 +230,33 @@ val commandReference =
     }
   }
 
-val schemaAttachment =
-  tasks.register<JavaExec>("schemaAttachment") {
-    description = "Writes the JSON Schema of the spec file for the documentation site."
+// A task that runs a class of the documentation, which writes one file of the site.
+fun docsFile(name: String, text: String, mainClass: String, path: String) =
+  tasks.register<JavaExec>(name) {
+    description = text
     group = "documentation"
     classpath = docs.runtimeClasspath
-    mainClass = "me.yakar.tib.cli.docs.SchemaAttachment"
-    val file = layout.buildDirectory.file("docs/schema/tib-spec.schema.json")
+    this.mainClass = "me.yakar.tib.cli.docs.$mainClass"
+    val file = layout.buildDirectory.file(path)
     outputs.file(file)
     argumentProviders.add(CommandLineArgumentProvider { listOf(file.get().asFile.absolutePath) })
   }
 
+val schemaAttachment =
+  docsFile(
+    "schemaAttachment",
+    "Writes the JSON Schema of the spec file for the documentation site.",
+    "SchemaAttachment",
+    "docs/schema/tib-spec.schema.json",
+  )
+
 val specReference =
-  tasks.register<JavaExec>("specReference") {
-    description = "Writes the properties of the spec file as tables for the documentation site."
-    group = "documentation"
-    classpath = docs.runtimeClasspath
-    mainClass = "me.yakar.tib.cli.docs.SpecReference"
-    val file = layout.buildDirectory.file("docs/spec/spec-properties.adoc")
-    outputs.file(file)
-    argumentProviders.add(CommandLineArgumentProvider { listOf(file.get().asFile.absolutePath) })
-  }
+  docsFile(
+    "specReference",
+    "Writes the properties of the spec file as tables for the documentation site.",
+    "SpecReference",
+    "docs/spec/spec-properties.adoc",
+  )
 
 tasks.register<Sync>("antoraContent") {
   description = "Assembles the generated files of the documentation in an Antora module."

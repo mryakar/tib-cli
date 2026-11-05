@@ -100,6 +100,7 @@
     </DirectoryRef>
 
     <CustomAction Id="TibBuildStartupCache" Directory="INSTALLDIR" ExeCommand="cmd.exe /c &quot;&quot;[INSTALLDIR]app\startup-cache.cmd&quot;&quot;" Execute="deferred" Impersonate="no" Return="ignore" />
+    <!-- The start-up cache is named after the launcher (StartupCacheScript.CACHE). -->
     <CustomAction Id="TibRemoveStartupCache" Directory="INSTALLDIR" ExeCommand="cmd.exe /c del /q &quot;[INSTALLDIR]app\tib.aot&quot;" Execute="deferred" Impersonate="no" Return="ignore" />
 
     <CustomAction Id="JpSetARPINSTALLLOCATION" Property="ARPINSTALLLOCATION" Value="[INSTALLDIR]" />
