@@ -17,7 +17,13 @@ package me.yakar.tib.generate;
 
 import me.yakar.tib.tree.Tree;
 
-/** Generates files of a project into a tree. A pack provides the generators. */
+/**
+ * Generates files of a project into a tree. A pack provides the generators.
+ *
+ * <p>A run forgets every file that tib owned before and that the generator does not {@link Tree#own
+ * own} again, so a file that tib keeps in step with the spec is owned by the generator that runs on
+ * every {@code generate}.
+ */
 public interface Generator {
 
   void generate(Project project, Tree tree);

@@ -25,8 +25,8 @@ import me.yakar.tib.tree.Tree;
 
 /**
  * One run of a generator on a project: the generator stages its files in the tree, and then the
- * state file is staged, with every file the spec was ever read from and every file tib ever wrote
- * to the project.
+ * state file is staged, with every file the spec was ever read from and the files that tib wrote to
+ * the project, less the files of tib's that this run did not stage again.
  */
 public final class Generation {
 
