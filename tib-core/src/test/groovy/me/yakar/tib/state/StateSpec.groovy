@@ -209,7 +209,7 @@ class StateSpec extends Specification {
         State.sha256('CREATE TABLE V (ID BIGINT);\n')
   }
 
-  def "an input on another root than the service keeps its whole path"() {
+  def "a path without the root of the service keeps its whole path"() {
     expect: 'a relative path stands for one on another root, as on another drive, which only some systems have'
     State.Input.path(dir, Path.of('db', 'vehicle.sql')) == 'db/vehicle.sql'
   }
