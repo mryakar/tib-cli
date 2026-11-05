@@ -55,7 +55,7 @@ public final class SpecSchema {
   }
 
   /** The schema as the tree of its keywords. */
-  static Map<String, Object> schema() {
+  private static Map<String, Object> schema() {
     Map<String, Object> definitions = new LinkedHashMap<>();
     Map<String, Object> schema = new LinkedHashMap<>();
     schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
