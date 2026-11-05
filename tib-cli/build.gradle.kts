@@ -275,12 +275,16 @@ val componentVersion =
     doLast { file.get().asFile.writeText("prerelease: $prerelease\n") }
   }
 
-tasks.register<Sync>("antoraContent") {
-  description = "Assembles the generated files of the documentation in an Antora module."
-  group = "documentation"
-  from(componentVersion)
-  from(commandReference) { into("modules/ROOT/partials/commands") }
-  from(specReference) { into("modules/ROOT/partials") }
-  from(schemaAttachment) { into("modules/ROOT/attachments") }
-  into(layout.buildDirectory.dir("docs/antora"))
-}
+val antoraContent =
+  tasks.register<Sync>("antoraContent") {
+    description = "Assembles the generated files of the documentation in an Antora module."
+    group = "documentation"
+    from(componentVersion)
+    from(commandReference) { into("modules/ROOT/partials/commands") }
+    from(specReference) { into("modules/ROOT/partials") }
+    from(schemaAttachment) { into("modules/ROOT/attachments") }
+    into(layout.buildDirectory.dir("docs/antora"))
+  }
+
+// A pull request shows that the reference of the site still generates.
+tasks.check { dependsOn(antoraContent) }
