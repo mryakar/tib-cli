@@ -157,8 +157,11 @@ class ${entity.name()}ApiTests {
 
   private ${model.name()} new${model.name()}() {
     ${model.name()} ${model.variable()} = new ${model.name()}();
-    @for(var setter : model.sampleSetters())
-    ${setter}
+    @for(var field : model.fields())
+    ${model.variable()}.set${field.property()}(${field.sample(1)});
+    @endfor
+    @for(var relation : model.requiredRelations())
+    ${model.variable()}.set${relation.property()}(${relation.target().variable()});
     @endfor
     return ${model.variable()};
   }

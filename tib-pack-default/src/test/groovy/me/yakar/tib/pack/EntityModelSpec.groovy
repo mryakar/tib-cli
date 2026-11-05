@@ -52,7 +52,7 @@ class EntityModelSpec extends Specification {
     expect:
     models.A.requiredTargets()*.name() == ['C', 'B']
     models.A.reversedRequiredTargets()*.name() == ['B', 'C']
-    models.A.sampleSetters() == ['a.setB(b);', 'a.setOther(b);']
+    models.A.requiredRelations()*.field() == ['b', 'other']
   }
 
   def "two entities with the same values break a constraint when #what"() {

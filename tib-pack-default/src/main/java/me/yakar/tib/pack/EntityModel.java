@@ -266,25 +266,6 @@ public final class EntityModel {
     return imports(imports);
   }
 
-  /** The arguments of the DTO's constructor, from the entity. */
-  public List<String> dtoArguments() {
-    String it = variable();
-    List<String> arguments = new ArrayList<>();
-    arguments.add(it + ".getId()");
-    for (FieldModel field : fields) {
-      arguments.add(it + ".get" + field.property() + "()");
-    }
-    for (RelationModel relation : relations) {
-      String target = it + ".get" + relation.property() + "()";
-      arguments.add(target + " == null ? null : " + target + ".getId()");
-    }
-    if (entity.audit()) {
-      arguments.add(it + ".getCreatedAt()");
-      arguments.add(it + ".getUpdatedAt()");
-    }
-    return arguments;
-  }
-
   // The service.
 
   public String serviceImports() {
@@ -391,44 +372,6 @@ public final class EntityModel {
   /** The name of the collection as a type: {@code Vehicles}. */
   public String pluralType() {
     return Names.property(plural());
-  }
-
-  /**
-   * The statements that give a new entity, in its variable, the first sample values: every field,
-   * and each relation that is not nullable, to the variable of its target.
-   */
-  public List<String> sampleSetters() {
-    String it = variable();
-    List<String> setters = new ArrayList<>();
-    for (FieldModel field : fields) {
-      setters.add(it + ".set" + field.property() + "(" + field.sample(1) + ");");
-    }
-    for (RelationModel relation : requiredRelations()) {
-      setters.add(it + ".set" + relation.property() + "(" + relation.target().variable() + ");");
-    }
-    return setters;
-  }
-
-  /** The assertions on the entity in {@code found}: it has the first sample values. */
-  public List<String> foundAssertions() {
-    List<String> assertions = new ArrayList<>();
-    for (FieldModel field : fields) {
-      assertions.add(
-          "assertThat(found.get" + field.property() + "()).isEqualTo(" + field.sample(1) + ");");
-    }
-    for (RelationModel relation : requiredRelations()) {
-      assertions.add(
-          "assertThat(found.get"
-              + relation.property()
-              + "().getId()).isEqualTo("
-              + relation.target().variable()
-              + ".getId());");
-    }
-    if (entity.audit()) {
-      assertions.add("assertThat(found.getCreatedAt()).isNotNull();");
-      assertions.add("assertThat(found.getUpdatedAt()).isNotNull();");
-    }
-    return assertions;
   }
 
   /**
@@ -581,8 +524,11 @@ public final class EntityModel {
     return staticImports(statics) + imports(imports);
   }
 
-  /** The relations that are not nullable, but for one to itself, which has to be. */
-  private List<RelationModel> requiredRelations() {
+  /**
+   * The relations that are not nullable, but for one to itself, which has to be: a sample of the
+   * entity sets them to the samples of their targets.
+   */
+  public List<RelationModel> requiredRelations() {
     return relations.stream()
         .filter(relation -> !relation.nullable() && relation.target() != this)
         .toList();
