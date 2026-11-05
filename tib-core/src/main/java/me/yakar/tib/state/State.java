@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
@@ -31,10 +32,9 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecException;
+import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.tree.Owner;
 import me.yakar.tib.tree.Tree;
-import tools.jackson.core.JacksonException;
-import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.cfg.EnumFeature;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 import tools.jackson.dataformat.yaml.YAMLWriteFeature;
@@ -51,10 +51,9 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   /** The path of the state file in a project. */
   public static final String PATH = ".tib/state.yaml";
 
+  /** Writes the state; {@link SpecReader} reads it, as it reads a spec. */
   private static final YAMLMapper YAML =
       YAMLMapper.builder()
-          .enable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
-          .enable(EnumFeature.READ_ENUMS_USING_TO_STRING)
           .enable(EnumFeature.WRITE_ENUMS_USING_TO_STRING)
           .disable(YAMLWriteFeature.WRITE_DOC_START_MARKER)
           .enable(YAMLWriteFeature.MINIMIZE_QUOTES)
@@ -126,8 +125,15 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   }
 
   public State {
-    inputs = inputs == null ? List.of() : List.copyOf(inputs);
-    files = files == null ? List.of() : List.copyOf(files);
+    inputs = list(inputs);
+    files = list(files);
+  }
+
+  /**
+   * The list as the state keeps it: never null, never changed. A null item stays, for the check.
+   */
+  private static <T> List<T> list(List<T> list) {
+    return list == null ? List.of() : Collections.unmodifiableList(new ArrayList<>(list));
   }
 
   /** The state file of the project in the tree, if tib ran on it before. */
@@ -181,25 +187,66 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   }
 
   /**
-   * The state read from its YAML, with its spec checked as a spec file is; a problem of that spec
-   * is a problem of the state file.
+   * The state read from its YAML, with its spec checked as a spec file is. Every problem names the
+   * value it is about by its path from the root of the state file, as in {@code files[2].owner} or
+   * {@code spec.entities[0].name}.
+   *
+   * @throws StateException with every problem found
    */
   public static State parse(String yaml) {
     State state;
     try {
-      state = YAML.readValue(yaml, State.class);
-    } catch (JacksonException e) {
-      throw new StateException(PATH + ": " + e.getOriginalMessage());
-    }
-    if (state == null || state.spec() == null) {
-      throw new StateException(PATH + ": spec: required");
-    }
-    try {
-      state.spec().check();
+      state = SpecReader.parse(yaml, State.class, "state");
     } catch (SpecException e) {
-      throw new StateException(PATH + ": " + e.getMessage());
+      throw new StateException(e.problems());
+    }
+    List<String> problems = new ArrayList<>();
+    required(problems, "tib", state.tib());
+    if (state.pack() == null) {
+      problems.add("pack: required");
+    } else {
+      required(problems, "pack.name", state.pack().name());
+      required(problems, "pack.version", state.pack().version());
+    }
+    for (int i = 0; i < state.inputs().size(); i++) {
+      Input input = state.inputs().get(i);
+      if (input == null) {
+        problems.add("inputs[" + i + "]: missing");
+      } else {
+        required(problems, "inputs[" + i + "].kind", input.kind());
+        required(problems, "inputs[" + i + "].path", input.path());
+        required(problems, "inputs[" + i + "].sha256", input.sha256());
+      }
+    }
+    if (state.spec() == null) {
+      problems.add("spec: required");
+    } else {
+      try {
+        state.spec().check();
+      } catch (SpecException e) {
+        e.problems().forEach(problem -> problems.add("spec." + problem));
+      }
+    }
+    for (int i = 0; i < state.files().size(); i++) {
+      File file = state.files().get(i);
+      if (file == null) {
+        problems.add("files[" + i + "]: missing");
+      } else {
+        required(problems, "files[" + i + "].path", file.path());
+        required(problems, "files[" + i + "].owner", file.owner());
+        required(problems, "files[" + i + "].sha256", file.sha256());
+      }
+    }
+    if (!problems.isEmpty()) {
+      throw new StateException(problems);
     }
     return state;
+  }
+
+  private static void required(List<String> problems, String path, Object value) {
+    if (value == null) {
+      problems.add(path + ": required");
+    }
   }
 
   /** The SHA-256 of a text, in hex. */

@@ -148,7 +148,7 @@ class StatusCommandSpec extends Specification {
 
     then:
     result.exitCode() == 1
-    result.err().startsWith('.tib/state.yaml: ')
+    result.err().startsWith('the state file has a problem: state: ')
   }
 
   /** Scaffolds the example service and generates its entities; the spec file. */

@@ -222,10 +222,10 @@ class GenerateEntityCommandSpec extends Specification {
     result.err().readLines().size() == 1
 
     where:
-    option   | file                                                | state                                  | message
-    '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString() | '['                                    | '.tib/state.yaml: '
-    '--ddl'  | EXAMPLES.resolve('vehicle-service.sql').toString()  | '['                                    | '.tib/state.yaml: '
-    '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString() | 'spec:\n  tib: 1\n  service: int\n' | ".tib/state.yaml: the spec has a problem: service: 'int' makes the package 'int'"
+    option   | file                                                | state                                                                         | message
+    '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString() | '['                                                                           | 'the state file has a problem: state: '
+    '--ddl'  | EXAMPLES.resolve('vehicle-service.sql').toString()  | '['                                                                           | 'the state file has a problem: state: '
+    '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString() | 'tib: 1.2.3\npack: { name: default, version: 1 }\nspec:\n  tib: 1\n  service: int\n' | "the state file has a problem: spec.service: 'int' makes the package 'int'"
   }
 
   def "a service whose tracked files have uncommitted changes is refused, and nothing is written"() {
