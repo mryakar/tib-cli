@@ -35,7 +35,7 @@ spec: # <2>
 files:
 - path: .gitattributes
   owner: developer
-  sha256: 70b08f4e80caa15685acf7fc5217be7da9bcf7fd8b904e88b15d5dc839180525
+  sha256: a91782176fa82dba11a5728b019708208fec6862455a52b134ddc598e8444346
 ...
 - path: src/main/java/com/example/vehicleservice/vehicle/VehicleMapper.java
   owner: generator

@@ -27,8 +27,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   older pack.
 - `tib init service` writes a `.gitattributes` that keeps the line feeds of text files on every
   platform, so that a clone on Windows with `core.autocrlf` does not make every file of tib's
-  differ from what tib wrote. In a service scaffolded by 0.1.0, add `* text=auto eol=lf` to your
-  `.gitattributes`.
+  differ from what tib wrote, and keeps batch files such as `gradlew.bat` in CRLF, which cmd.exe
+  expects. In a service scaffolded by 0.1.0, add `* text=auto eol=lf`, `*.bat text eol=crlf` and
+  `*.cmd text eol=crlf`, in this order, to your `.gitattributes`.
 - A page of the documentation on the state file: its keys, the owners of a file, and which
   versions of tib read it.
 
