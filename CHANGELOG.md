@@ -31,6 +31,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   their own packages can import it. In a service scaffolded by 0.1.0, make it public before
   running `tib generate entity` again, or the new tests do not compile.
 
+### Fixed
+
+- A state file that lacks a value tib needs, such as the path or the owner of a file, is refused
+  with every problem it has instead of failing with a stack trace. Each problem names its value by
+  the path from the root of the file, as in `files[2].owner` or `spec.entities[0].name`, the way a
+  problem of a spec file does.
+
 ## [0.1.0] - 2026-11-02
 
 ### Added

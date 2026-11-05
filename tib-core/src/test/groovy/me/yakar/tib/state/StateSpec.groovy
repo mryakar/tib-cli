@@ -18,9 +18,11 @@ package me.yakar.tib.state
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.spec.Names
+import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.SpecReader
 import me.yakar.tib.tree.Owner
 import me.yakar.tib.tree.Tree
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -32,6 +34,7 @@ class StateSpec extends Specification {
   Path dir
 
   /** A state whose spec sets every value, so that every key of the file is in it. */
+  @Shared
   State state = new State(
   '0.1.0',
   new State.PackRef('default', '0.1.0'),
@@ -92,7 +95,7 @@ class StateSpec extends Specification {
 
   def "a state without inputs or files has none"() {
     expect:
-    State state = State.parse('spec:\n  tib: 1\n  service: s\n')
+    State state = State.parse('tib: 0.1.0\npack: { name: default, version: 0.1.0 }\nspec:\n  tib: 1\n  service: s\n')
     state.inputs() == []
     state.files() == []
   }
@@ -103,25 +106,61 @@ class StateSpec extends Specification {
 
     then:
     StateException e = thrown()
-    e.message.startsWith(message)
+    e.problems().size() == 1
+    e.problems()[0].startsWith(problem)
+    e.message == "the state file has a problem: ${e.problems()[0]}"
 
     where:
-    yaml                                  | message
-    '['                                   | '.tib/state.yaml: '
-    'tib: [1]\nspec:\n  tib: 1\n  service: s' | '.tib/state.yaml: '
-    'other: 1\n'                          | '.tib/state.yaml: '
-    ''                                    | '.tib/state.yaml: '
-    '---\n'                                | '.tib/state.yaml: spec: required'
-    'files: []\n'                         | '.tib/state.yaml: spec: required'
+    yaml                                            | problem
+    "tib: 'unterminated"                            | 'not YAML: '
+    '['                                             | 'state: '
+    ''                                              | 'state: the file is empty'
+    '---\n'                                         | 'state: the file is empty'
+    '- tib: 1'                                      | 'state: '
+    'tib: [1]\nspec:\n  tib: 1\n  service: s'       | 'tib: '
+    'other: 1\n'                                    | 'other: unknown property; the properties are files, inputs, pack, spec, tib'
+    'files:\n- { path: a, owner: me, sha256: x }\n' | "files[0].owner: 'me' is not one of generator, developer, shared"
+    'spec:\n  tib: 1\n  service: s\n  other: 1\n'   | 'spec.other: unknown property; the properties are entities, group, pack, service, tib'
   }
 
-  def "the spec in the state is checked as a spec, and its problem is one of the state file"() {
+  def "a state without a value that it needs is refused: #problem"() {
     when:
-    State.parse('spec:\n  tib: 1\n  service: Vehicle Service\n')
+    State.parse(with(values).yaml())
 
     then:
     StateException e = thrown()
-    e.message == ".tib/state.yaml: the spec has a problem: service: 'Vehicle Service' does not match ${Names.SERVICE}"
+    e.problems() == [problem]
+    e.message == "the state file has a problem: $problem"
+
+    where:
+    values                                                                   | problem
+    [tib: null]                                                              | 'tib: required'
+    [pack: null]                                                             | 'pack: required'
+    [pack: new State.PackRef(null, '0.1.0')]                                 | 'pack.name: required'
+    [pack: new State.PackRef('default', null)]                               | 'pack.version: required'
+    [inputs: [state.inputs()[0], new State.Input(null, 'a.sql', '1')]]       | 'inputs[1].kind: required'
+    [inputs: [new State.Input(State.Input.Kind.DDL, null, '1')]]             | 'inputs[0].path: required'
+    [inputs: [new State.Input(State.Input.Kind.DDL, 'a.sql', null)]]         | 'inputs[0].sha256: required'
+    [inputs: [null]]                                                         | 'inputs[0]: missing'
+    [spec: null]                                                             | 'spec: required'
+    [files: [new State.File(null, Owner.GENERATOR, '1')]]                    | 'files[0].path: required'
+    [files: [state.files()[0], new State.File('a', null, '1')]]              | 'files[1].owner: required'
+    [files: [new State.File('a', Owner.GENERATOR, null)]]                    | 'files[0].sha256: required'
+    [files: [state.files()[0], null]]                                        | 'files[1]: missing'
+  }
+
+  def "the spec in the state is checked as a spec, and each of its problems is one of the state file"() {
+    when:
+    State.parse(with(tib: null, spec: new Spec(1, 'Vehicle Service', 'Me', null, null)).yaml())
+
+    then:
+    StateException e = thrown()
+    e.problems() == [
+      'tib: required',
+      "spec.service: 'Vehicle Service' does not match ${Names.SERVICE}",
+      "spec.group: 'Me' does not match ${Names.GROUP}"
+    ]
+    e.message == "the state file has 3 problems:\n  ${e.problems().join('\n  ')}"
   }
 
   def "the state of a tree without one says that it is not a tib project"() {
@@ -239,5 +278,11 @@ class StateSpec extends Specification {
 
     then:
     thrown(IllegalStateException)
+  }
+
+  /** The state with the values of the map in place of its own. */
+  private State with(Map<String, Object> values) {
+    Map<String, Object> all = [tib: state.tib(), pack: state.pack(), inputs: state.inputs(), spec: state.spec(), files: state.files()] + values
+    new State(all.tib as String, all.pack as State.PackRef, all.inputs as List, all.spec as Spec, all.files as List)
   }
 }
