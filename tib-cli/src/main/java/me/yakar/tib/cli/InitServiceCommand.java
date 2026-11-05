@@ -63,8 +63,9 @@ public class InitServiceCommand implements Callable<Integer> {
     Spec service;
     List<State.Input> inputs;
     if (input.spec != null) {
-      service = SpecReader.read(input.spec);
-      inputs = List.of(options.input(State.Input.Kind.SPEC, input.spec));
+      String yaml = State.Input.read(input.spec);
+      service = SpecReader.parse(yaml);
+      inputs = List.of(options.input(State.Input.Kind.SPEC, input.spec, yaml));
     } else {
       service = new Spec(Spec.VERSION, input.name, null, null, null).check();
       inputs = List.of();

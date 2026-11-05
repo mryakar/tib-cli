@@ -102,20 +102,27 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     }
 
     /**
-     * The file as it is now, with its path relative to the directory of the service.
+     * The content of the file, as UTF-8, read once: what the spec is read from is what is hashed.
      *
      * @throws StateException when the file cannot be read
      */
-    public static Input of(Kind kind, Path service, Path file) {
-      Path absolute = file.toAbsolutePath().normalize();
-      byte[] content;
+    public static String read(Path file) {
       try {
-        content = Files.readAllBytes(absolute);
+        return Files.readString(file);
       } catch (IOException e) {
         throw new StateException("read", file, e);
       }
+    }
+
+    /**
+     * The file with the content that the spec was read from, with its path relative to the
+     * directory of the service.
+     */
+    public static Input of(Kind kind, Path service, Path file, String content) {
       return new Input(
-          kind, path(service.toAbsolutePath().normalize(), absolute), State.sha256(content));
+          kind,
+          path(service.toAbsolutePath().normalize(), file.toAbsolutePath().normalize()),
+          State.sha256(content));
     }
 
     /**
@@ -330,14 +337,9 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     }
   }
 
-  /** The SHA-256 of a text, in hex. */
+  /** The SHA-256 of a text in UTF-8, in hex. */
   static String sha256(String text) {
-    return sha256(text.getBytes(StandardCharsets.UTF_8));
-  }
-
-  /** The SHA-256 of bytes, in hex. */
-  static String sha256(byte[] bytes) {
-    return digest("SHA-256", bytes);
+    return digest("SHA-256", text.getBytes(StandardCharsets.UTF_8));
   }
 
   static String digest(String algorithm, byte[] bytes) {

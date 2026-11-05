@@ -17,6 +17,7 @@ package me.yakar.tib.state
 
 import java.nio.file.Files
 import java.nio.file.Path
+import java.security.MessageDigest
 import me.yakar.tib.spec.Names
 import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.SpecReader
@@ -355,16 +356,25 @@ class StateSpec extends Specification {
   def "an input is kept with its path relative to the service and the hash of its content"() {
     given:
     Path service = Files.createDirectories(dir.resolve('services/vehicle'))
-    Path db = Files.createDirectories(dir.resolve('db'))
-    Files.writeString(service.resolve('spec.yaml'), '')
-    Files.writeString(db.resolve('vehicle.sql'), 'CREATE TABLE V (ID BIGINT);\n')
 
     expect:
-    State.Input.of(State.Input.Kind.SPEC, service, service.resolve('spec.yaml')) ==
+    State.Input.of(State.Input.Kind.SPEC, service, service.resolve('spec.yaml'), '') ==
         new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
-    State.Input.of(State.Input.Kind.DDL, service, service.resolve('../../db/./vehicle.sql')).path() == '../../db/vehicle.sql'
-    State.Input.of(State.Input.Kind.DDL, service, db.resolve('vehicle.sql')).sha256() ==
-        State.sha256('CREATE TABLE V (ID BIGINT);\n')
+    State.Input.of(State.Input.Kind.DDL, service, service.resolve('../../db/./vehicle.sql'), '').path() == '../../db/vehicle.sql'
+  }
+
+  def "the content of an input is read once, and its hash is the hash of the bytes read"() {
+    given:
+    Path ddl = dir.resolve('vehicle.sql')
+    Files.write(ddl, 'CREATE TABLE ŞUBE (ID BIGINT);\n'.getBytes('UTF-8'))
+
+    when:
+    String content = State.Input.read(ddl)
+
+    then:
+    content == 'CREATE TABLE ŞUBE (ID BIGINT);\n'
+    State.Input.of(State.Input.Kind.DDL, dir, ddl, content).sha256() ==
+        MessageDigest.getInstance('SHA-256').digest(Files.readAllBytes(ddl)).encodeHex().toString()
   }
 
   def "a path without the root of the service keeps its whole path"() {
@@ -374,7 +384,7 @@ class StateSpec extends Specification {
 
   def "an input that cannot be read cannot be kept"() {
     when:
-    State.Input.of(State.Input.Kind.SPEC, dir, dir.resolve('missing.yaml'))
+    State.Input.read(dir.resolve('missing.yaml'))
 
     then:
     StateException e = thrown()
