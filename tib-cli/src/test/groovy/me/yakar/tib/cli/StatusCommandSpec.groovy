@@ -121,8 +121,8 @@ class StatusCommandSpec extends Specification {
       missing  ${ENTITY}VehicleDto.java
       edited   ${ENTITY}VehicleGenerated.java
 
-      An edited file is written by tib on every run: its next run replaces it.
-      A missing file is one that tib needs: its next run writes it again.
+      An edited file is written by tib on every run: git checkout restores it, or the next run of tib replaces it, with --allow-dirty while the edit is not committed.
+      A missing file is one that tib needs: git checkout restores it, or the next run of tib writes it again, with --allow-dirty while the deletion is not committed.
       A removed file was yours: tib does not write it again.
       """.stripIndent()
     result.err() == ''
