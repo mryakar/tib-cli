@@ -93,7 +93,8 @@ class TibApplicationSpec extends Specification {
     command.addAll(ManagementFactory.runtimeMXBean.inputArguments.findAll {
       it.startsWith('-javaagent:')
     })
-    command.addAll(['-cp', System.getProperty('java.class.path'), TibApplication.name])
+    // The test reads the output as text; on Windows picocli may take the child for a terminal.
+    command.addAll(['-Dpicocli.ansi=false', '-cp', System.getProperty('java.class.path'), TibApplication.name])
     command.addAll(args)
     File out = dir.resolve('out.txt').toFile()
     File err = dir.resolve('err.txt').toFile()
