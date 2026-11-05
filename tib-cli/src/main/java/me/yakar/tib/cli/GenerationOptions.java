@@ -66,11 +66,8 @@ public final class GenerationOptions {
   /**
    * Runs the generator that the function picks from the pack of the service, then prints the diff
    * of a dry run, or writes the files and says how many. A dry run that changes nothing says so on
-   * the standard error, so that its output stays an empty diff. A run that would write into a
-   * service whose tracked files have uncommitted changes is refused, so that the changes of tib can
-   * be told apart from them, unless the dirty tree is allowed. The previous state is the state file
-   * of the service, if there is one; the inputs are the files that the spec of the service was read
-   * from.
+   * the standard error. A run that would write into a service with uncommitted changes is refused
+   * unless {@code --allow-dirty}. The inputs are the files the spec was read from.
    */
   int generate(
       Optional<State> previous,
