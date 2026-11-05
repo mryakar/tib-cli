@@ -102,17 +102,28 @@ class DefaultPackSpec extends Specification {
   }
 
   def "generates the corners of the entity layer as the snapshot says"() {
-    given: 'a migration by hand, and a repeatable one'
-    Tree tree = Tree.at(dir)
-    Files.createDirectories(dir.resolve(EntityGenerator.MIGRATIONS))
-    Files.writeString(dir.resolve(EntityGenerator.MIGRATIONS).resolve('V3__by_hand.sql'), '-- mine\n')
-    Files.writeString(dir.resolve(EntityGenerator.MIGRATIONS).resolve('R__views.sql'), '-- repeatable\n')
-
     when:
-    new DefaultPack().entity().generate(new Project(CORNERS), tree)
+    List<Change> changes = corners(dir).changes()
 
     then:
-    snapshot('corner-service', tree.changes())
+    snapshot('corner-service', changes)
+  }
+
+  def "a machine in Turkish, where the upper case of i is not I, generates the same services"() {
+    given:
+    Locale locale = Locale.default
+    Locale.setDefault(Locale.forLanguageTag('tr-TR'))
+
+    when:
+    List<Change> vehicles = generate(VEHICLES, dir).changes()
+    List<Change> corners = corners(other).changes()
+
+    then:
+    snapshot('vehicle-service', vehicles)
+    snapshot('corner-service', corners)
+
+    cleanup:
+    Locale.setDefault(locale)
   }
 
   def "the first line of every generated file states its owner: #name"() {
@@ -184,6 +195,19 @@ class DefaultPackSpec extends Specification {
     Pack pack = new DefaultPack()
     pack.init().generate(project, tree)
     pack.entity().generate(project, tree)
+    return tree
+  }
+
+  /**
+   * The entities of the corner spec, staged in a tree at the directory, which has a migration by
+   * hand and a repeatable one.
+   */
+  private static Tree corners(Path dir) {
+    Path migrations = Files.createDirectories(dir.resolve(EntityGenerator.MIGRATIONS))
+    Files.writeString(migrations.resolve('V3__by_hand.sql'), '-- mine\n')
+    Files.writeString(migrations.resolve('R__views.sql'), '-- repeatable\n')
+    Tree tree = Tree.at(dir)
+    new DefaultPack().entity().generate(new Project(CORNERS), tree)
     return tree
   }
 
