@@ -85,6 +85,13 @@ tasks.withType<Test>().configureEach {
 val snapshotsDir = layout.projectDirectory.dir("src/test/snapshots").asFile
 
 if (snapshotsDir.isDirectory) {
+  // The tests run again when the snapshots are updated: a test restored from the build cache has no
+  // .gitignore or .gitattributes among what it wrote, as Gradle's default excludes leave them out.
+  val updating = gradle.startParameter.taskNames.any { it.endsWith("updateSnapshots") }
+  tasks.test {
+    outputs.cacheIf("the snapshots are not being updated") { !updating }
+    outputs.upToDateWhen { !updating }
+  }
   tasks.register("updateSnapshots") {
     group = "verification"
     description = "Replaces the snapshots with what the unit tests wrote."
