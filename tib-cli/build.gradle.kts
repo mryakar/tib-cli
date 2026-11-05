@@ -261,9 +261,24 @@ val specReference =
     "docs/spec/spec-properties.adoc",
   )
 
+// The Collector adds the antora.yml of the scanned directory to the version of the site. A build
+// between two releases, whose version ends in -SNAPSHOT, is a prerelease there: the site opens on
+// the latest release, and the version menu names main "main (prerelease)".
+val componentVersion =
+  tasks.register("componentVersion") {
+    description = "Writes whether the version of the documentation is a prerelease."
+    group = "documentation"
+    val prerelease = if (projectVersion.endsWith("-SNAPSHOT")) "'(prerelease)'" else "false"
+    val file = layout.buildDirectory.file("docs/component/antora.yml")
+    inputs.property("prerelease", prerelease)
+    outputs.file(file)
+    doLast { file.get().asFile.writeText("prerelease: $prerelease\n") }
+  }
+
 tasks.register<Sync>("antoraContent") {
   description = "Assembles the generated files of the documentation in an Antora module."
   group = "documentation"
+  from(componentVersion)
   from(commandReference) { into("modules/ROOT/partials/commands") }
   from(specReference) { into("modules/ROOT/partials") }
   from(schemaAttachment) { into("modules/ROOT/attachments") }
