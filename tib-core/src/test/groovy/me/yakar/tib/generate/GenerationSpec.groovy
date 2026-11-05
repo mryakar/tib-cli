@@ -41,14 +41,14 @@ class GenerationSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    Generation.run(project, [], pack, { generator }, '1.2.3', tree)
+    Generation.run(Optional.empty(), project, [], pack, { generator }, '1.2.3', tree)
 
     then:
     tree.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'Service.java']
     tree.changes()*.owner() == [Owner.GENERATOR, Owner.GENERATOR, Owner.DEVELOPER]
 
     and:
-    State state = State.in(tree, '1.2.4').get()
+    State state = State.in(tree, '1.2.3').get()
     state.tib() == '1.2.3'
     state.pack() == new State.PackRef('p', '1')
     state.inputs() == []
@@ -58,58 +58,40 @@ class GenerationSpec extends Specification {
     state.files()[0] == State.File.of('Generated.java', Owner.GENERATOR, 'class Generated {}\n')
   }
 
-  def "a later run keeps the files of the earlier ones in the state"() {
+  def "the state of a later run follows the previous one"() {
     given:
+    State.Input spec = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'a')
     Tree first = Tree.at(dir)
-    Generation.run(project, [], pack, { generator }, '1.2.3', first)
+    Generation.run(Optional.empty(), project, [spec], pack, { generator }, '1.2.3', first)
     first.apply()
-    Files.writeString(dir.resolve('Service.java'), 'class Service { int edited; }\n')
 
     when:
     Tree second = Tree.at(dir)
-    Generation.run(project, [], pack, Pack::entity, '1.2.4', second)
+    Generation.run(State.in(second, '1.2.4'), project, [], pack, Pack::entity, '1.2.4', second)
 
-    then: 'the developer file is not staged again, but stays on record as it was written'
+    then:
     second.changes()*.path() == ['.tib/state.yaml', 'test.txt']
     State state = State.in(second, '1.2.4').get()
     state.tib() == '1.2.4'
+    state.inputs() == [spec]
     state.files()*.path() == ['Generated.java', 'Service.java', 'test.txt']
-    state.files()[1] == State.File.of('Service.java', Owner.DEVELOPER, 'class Service {}\n')
   }
 
   def "a file of the developer's that was removed after a run does not come back"() {
     given:
     Tree first = Tree.at(dir)
-    Generation.run(project, [], pack, { generator }, '1.2.3', first)
+    Generation.run(Optional.empty(), project, [], pack, { generator }, '1.2.3', first)
     first.apply()
     Files.delete(dir.resolve('Service.java'))
 
     when:
     Tree second = Tree.at(dir)
-    Generation.run(project, [], pack, { generator }, '1.2.4', second)
+    Generation.run(State.in(second, '1.2.4'), project, [], pack, { generator }, '1.2.4', second)
 
     then: 'it stays on record as it was written'
     second.changes()*.path() == ['.tib/state.yaml']
     State state = State.in(second, '1.2.4').get()
     state.files()*.path() == ['Generated.java', 'Service.java']
     state.files()[1] == State.File.of('Service.java', Owner.DEVELOPER, 'class Service {}\n')
-  }
-
-  def "the inputs of a run take the place of those of the same path, and the others stay"() {
-    given:
-    State.Input spec = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'a')
-    State.Input ddl = new State.Input(State.Input.Kind.DDL, 'db/one.sql', 'b')
-    Tree first = Tree.at(dir)
-    Generation.run(project, [spec, ddl], pack, { generator }, '1.2.3', first)
-    first.apply()
-
-    when:
-    State.Input changed = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'c')
-    State.Input other = new State.Input(State.Input.Kind.DDL, '../db/two.sql', 'd')
-    Tree second = Tree.at(dir)
-    Generation.run(project, [other, changed], pack, { generator }, '1.2.3', second)
-
-    then:
-    State.in(second, '1.2.4').get().inputs() == [changed, ddl, other]
   }
 }

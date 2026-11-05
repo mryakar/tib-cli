@@ -203,6 +203,62 @@ class StateSpec extends Specification {
     '0.3.0'          | 'docs'           | false
   }
 
+  def "a first state has the inputs of its run and the files that it staged"() {
+    given:
+    Tree tree = Tree.at(dir)
+    tree.own('A.java', 'class A {}\n')
+    tree.once('B.java', 'class B {}\n')
+
+    when:
+    State next = State.next(Optional.empty(), '1.2.3', state.pack(), state.inputs(), state.spec(), tree)
+
+    then:
+    next == new State('1.2.3', state.pack(), state.inputs(), state.spec(), [
+      State.File.of('A.java', Owner.GENERATOR, 'class A {}\n'),
+      State.File.of('B.java', Owner.DEVELOPER, 'class B {}\n')
+    ])
+  }
+
+  def "the inputs of a run take the place of those of the same path, and the others stay"() {
+    given:
+    State.Input spec = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'a')
+    State.Input ddl = new State.Input(State.Input.Kind.DDL, 'db/one.sql', 'b')
+    State.Input changed = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'c')
+    State.Input other = new State.Input(State.Input.Kind.DDL, '../db/two.sql', 'd')
+
+    when:
+    State next = State.next(Optional.of(with(inputs: [spec, ddl])), '1.2.3', state.pack(), [other, changed], state.spec(), Tree.at(dir))
+
+    then:
+    next.inputs() == [changed, ddl, other]
+  }
+
+  def "the files that a run staged take the place of their records, and the other records stay"() {
+    given:
+    State previous = with(files: [
+      State.File.of('Mine.java', Owner.DEVELOPER, 'class Mine {}\n'),
+      State.File.of('Gen.java', Owner.GENERATOR, 'class Gen {}\n'),
+      State.File.of('libs.toml', Owner.SHARED, '[versions]\n')
+    ])
+    Tree tree = Tree.at(dir)
+    tree.writtenBefore(previous.files()*.path())
+    tree.own('Gen.java', 'class Gen { int x; }\n')
+    tree.once('Mine.java', 'class Mine { int x; }\n')
+    tree.own('New.java', 'class New {}\n')
+
+    when:
+    State next = State.next(Optional.of(previous), '1.2.4', state.pack(), [], state.spec(), tree)
+
+    then: "a file of the developer's that tib wrote before is not staged again, and keeps its record"
+    next.tib() == '1.2.4'
+    next.files() == [
+      State.File.of('Gen.java', Owner.GENERATOR, 'class Gen { int x; }\n'),
+      previous.files()[0],
+      State.File.of('New.java', Owner.GENERATOR, 'class New {}\n'),
+      previous.files()[2]
+    ]
+  }
+
   def "the state of a tree without one says that it is not a tib project"() {
     given:
     Tree tree = Tree.at(dir)
