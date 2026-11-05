@@ -52,10 +52,16 @@ public class StatusCommand implements Callable<Integer> {
       description = "The directory of the service; the current one by default.")
   private Path dir = Path.of(".");
 
+  private final TibVersion version;
+
+  public StatusCommand(TibVersion version) {
+    this.version = version;
+  }
+
   @Override
   public Integer call() {
     Tree tree = Tree.at(dir);
-    State state = State.of(tree);
+    State state = State.of(tree, version.version());
     List<Difference> differences = state.differences(tree);
     PrintWriter out = commandSpec.commandLine().getOut();
     int entities = state.spec().entities().size();

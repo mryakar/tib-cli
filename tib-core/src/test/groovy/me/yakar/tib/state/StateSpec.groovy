@@ -76,7 +76,7 @@ class StateSpec extends Specification {
 
     expect: "if not, the new state file is in $actual, to be copied over the snapshot on purpose"
     state.yaml() == snapshot
-    State.parse(snapshot) == state
+    State.parse(snapshot, '0.1.0') == state
   }
 
   def "the state of a project is in its tree, if tib ran on it before"() {
@@ -84,25 +84,25 @@ class StateSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     expect:
-    State.in(tree).empty
+    State.in(tree, '0.1.0').empty
 
     when:
     tree.own(State.PATH, state.yaml())
 
     then:
-    State.in(tree) == Optional.of(state)
+    State.in(tree, '0.1.0') == Optional.of(state)
   }
 
   def "a state without inputs or files has none"() {
     expect:
-    State state = State.parse('tib: 0.1.0\npack: { name: default, version: 0.1.0 }\nspec:\n  tib: 1\n  service: s\n')
+    State state = State.parse('tib: 0.1.0\npack: { name: default, version: 0.1.0 }\nspec:\n  tib: 1\n  service: s\n', '0.1.0')
     state.inputs() == []
     state.files() == []
   }
 
   def "a state that tib cannot read is refused: '#yaml'"() {
     when:
-    State.parse(yaml)
+    State.parse(yaml, '0.1.0')
 
     then:
     StateException e = thrown()
@@ -125,7 +125,7 @@ class StateSpec extends Specification {
 
   def "a state without a value that it needs is refused: #problem"() {
     when:
-    State.parse(with(values).yaml())
+    State.parse(with(values).yaml(), '0.1.0')
 
     then:
     StateException e = thrown()
@@ -151,7 +151,7 @@ class StateSpec extends Specification {
 
   def "the spec in the state is checked as a spec, and each of its problems is one of the state file"() {
     when:
-    State.parse(with(tib: null, spec: new Spec(1, 'Vehicle Service', 'Me', null, null)).yaml())
+    State.parse(with(tib: null, spec: new Spec(1, 'Vehicle Service', 'Me', null, null)).yaml(), '0.1.0')
 
     then:
     StateException e = thrown()
@@ -163,12 +163,39 @@ class StateSpec extends Specification {
     e.message == "the state file has 3 problems:\n  ${e.problems().join('\n  ')}"
   }
 
+  def "a state that a newer tib wrote is refused, before what this tib does not know is read"() {
+    when:
+    State.parse('tib: 0.3.0\npack: { name: default, version: 0.3.0 }\nformat: 2\nspec:\n  tib: 1\n  service: s\n', '0.2.0-SNAPSHOT')
+
+    then:
+    StateException e = thrown()
+    e.message == '.tib/state.yaml was written by tib 0.3.0, which is newer than this tib 0.2.0-SNAPSHOT; upgrade tib'
+    e.problems() == [e.message]
+  }
+
+  def "a version of tib is newer than another by its numbers, whatever its suffix: #version than #than"() {
+    expect:
+    State.newer(version, than) == newer
+
+    where:
+    version          | than             | newer
+    '0.3.0'          | '0.2.0'          | true
+    '0.10.0'         | '0.9.0'          | true
+    '1.0.0'          | '0.99.99'        | true
+    '0.2.1'          | '0.2.0-SNAPSHOT' | true
+    '0.2.0'          | '0.2.0-SNAPSHOT' | false
+    '0.2.0-SNAPSHOT' | '0.2.0'          | false
+    '0.1.0'          | '0.2.0'          | false
+    'docs'           | '0.2.0'          | false
+    '0.3.0'          | 'docs'           | false
+  }
+
   def "the state of a tree without one says that it is not a tib project"() {
     given:
     Tree tree = Tree.at(dir)
 
     when:
-    State.of(tree)
+    State.of(tree, '0.1.0')
 
     then:
     StateException e = thrown()
@@ -178,7 +205,7 @@ class StateSpec extends Specification {
     tree.own(State.PATH, state.yaml())
 
     then:
-    State.of(tree) == state
+    State.of(tree, '0.1.0') == state
   }
 
   def "the differences are the files of tib that were edited or are missing, and the files of the developer that were removed"() {

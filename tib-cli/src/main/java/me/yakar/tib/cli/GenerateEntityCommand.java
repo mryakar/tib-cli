@@ -64,7 +64,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
   @Override
   public Integer call() {
     Tree tree = options.tree();
-    Spec project = State.of(tree).spec();
+    Spec project = options.state(tree).spec();
     if (input.spec == null) {
       return options.generate(
           DdlReader.read(input.ddl, project),

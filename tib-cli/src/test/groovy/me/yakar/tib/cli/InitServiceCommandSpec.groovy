@@ -67,7 +67,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    State state = State.parse(Files.readString(dir.resolve(State.PATH)))
+    State state = State.parse(Files.readString(dir.resolve(State.PATH)), '1.2.4')
     result.out() == "Wrote ${state.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/VehicleServiceApplication.java'))
     state.tib() == '1.2.3'
@@ -94,7 +94,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    State state = State.parse(Files.readString(dir.resolve(State.PATH)))
+    State state = State.parse(Files.readString(dir.resolve(State.PATH)), '1.2.4')
     state.spec().entities()*.name() == ['Vehicle', 'Depot']
     state.inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, EXAMPLES.resolve('vehicle-service.yaml'))]
   }
@@ -109,7 +109,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    State.Input input = State.parse(Files.readString(service.resolve(State.PATH))).inputs()[0]
+    State.Input input = State.parse(Files.readString(service.resolve(State.PATH)), '1.2.4').inputs()[0]
     input.kind() == State.Input.Kind.SPEC
     input.path() == '../vehicle-service.yaml'
   }

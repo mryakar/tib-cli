@@ -22,13 +22,18 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecException;
@@ -50,6 +55,10 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
 
   /** The path of the state file in a project. */
   public static final String PATH = ".tib/state.yaml";
+
+  /** A version of tib, as in {@code 0.2.0} or {@code 0.2.0-SNAPSHOT}. */
+  private static final Pattern VERSION =
+      Pattern.compile("(\\d{1,9})\\.(\\d{1,9})\\.(\\d{1,9})(?:\\D.*)?");
 
   /** Writes the state; {@link SpecReader} reads it, as it reads a spec. */
   private static final YAMLMapper YAML =
@@ -136,18 +145,22 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     return list == null ? List.of() : Collections.unmodifiableList(new ArrayList<>(list));
   }
 
-  /** The state file of the project in the tree, if tib ran on it before. */
-  public static Optional<State> in(Tree tree) {
-    return tree.read(PATH).map(State::parse);
+  /**
+   * The state file of the project in the tree, if tib ran on it before, as {@link #parse(String,
+   * String)} reads it.
+   */
+  public static Optional<State> in(Tree tree, String tibVersion) {
+    return tree.read(PATH).map(yaml -> parse(yaml, tibVersion));
   }
 
   /**
-   * The state file of the project in the tree; a tree without one is not a tib project.
+   * The state file of the project in the tree, as {@link #parse(String, String)} reads it; a tree
+   * without one is not a tib project.
    *
    * @throws StateException when there is no state file
    */
-  public static State of(Tree tree) {
-    return in(tree)
+  public static State of(Tree tree, String tibVersion) {
+    return in(tree, tibVersion)
         .orElseThrow(
             () -> new StateException(tree.root() + " is not a tib project: there is no " + PATH));
   }
@@ -189,13 +202,25 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   /**
    * The state read from its YAML, with its spec checked as a spec file is. Every problem names the
    * value it is about by its path from the root of the state file, as in {@code files[2].owner} or
-   * {@code spec.entities[0].name}.
+   * {@code spec.entities[0].name}. A state that a newer tib wrote is refused.
    *
-   * @throws StateException with every problem found
+   * @param tibVersion the version of the tib that reads the state
+   * @throws StateException with every problem found, or when a newer tib wrote the state
    */
-  public static State parse(String yaml) {
+  public static State parse(String yaml, String tibVersion) {
     State state;
     try {
+      // The version first, alone: a newer tib may have written what this one does not know.
+      if (SpecReader.parse(yaml, Map.class, "state").get("tib") instanceof String written
+          && newer(written, tibVersion)) {
+        throw new StateException(
+            PATH
+                + " was written by tib "
+                + written
+                + ", which is newer than this tib "
+                + tibVersion
+                + "; upgrade tib");
+      }
       state = SpecReader.parse(yaml, State.class, "state");
     } catch (SpecException e) {
       throw new StateException(e.problems());
@@ -241,6 +266,20 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
       throw new StateException(problems);
     }
     return state;
+  }
+
+  /**
+   * Whether the version of tib is newer than the other one, by major, minor and patch; a suffix
+   * such as {@code -SNAPSHOT} does not count, and a text that is not a version is newer than none.
+   */
+  static boolean newer(String version, String than) {
+    Matcher a = VERSION.matcher(version);
+    Matcher b = VERSION.matcher(than);
+    return a.matches() && b.matches() && Arrays.compare(numbers(a), numbers(b)) > 0;
+  }
+
+  private static int[] numbers(Matcher version) {
+    return IntStream.rangeClosed(1, 3).map(i -> Integer.parseInt(version.group(i))).toArray();
   }
 
   private static void required(List<String> problems, String path, Object value) {
