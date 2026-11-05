@@ -40,15 +40,4 @@ class ProblemsSpec extends Specification {
     e.message == 'cannot read value'
     e.cause.cause instanceof UnsupportedOperationException
   }
-
-  def "the list of the model is never null and never changes"() {
-    expect:
-    Problems.list(null) == []
-
-    when:
-    Problems.list(['a']).add('b')
-
-    then:
-    thrown(UnsupportedOperationException)
-  }
 }

@@ -106,6 +106,17 @@ class SpecSpec extends Specification {
     ]
   }
 
+  def "the list of the model is never null and never changes"() {
+    expect:
+    Spec.list(null) == []
+
+    when:
+    Spec.list(['a']).add('b')
+
+    then:
+    thrown(UnsupportedOperationException)
+  }
+
   /** A spec of entities, each given as its name and the targets of its relations: {@code A: [B]}. */
   static String relations(String... entities) {
     'tib: 1\nservice: s\nentities:\n' + entities.collect { String entity ->
