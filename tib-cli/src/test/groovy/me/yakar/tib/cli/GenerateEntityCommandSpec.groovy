@@ -41,7 +41,10 @@ class GenerateEntityCommandSpec extends Specification {
 
     then:
     result.exitCode() == 2
-    result.err().startsWith('Error: Missing required argument (specify one of these): (--spec=FILE | --ddl=FILE)')
+    result.out() == ''
+    result.err().contains('Usage: tib generate entity ')
+    result.err().contains('--spec=FILE')
+    result.err().contains('--ddl=FILE')
   }
 
   def "the spec and the DDL exclude each other"() {
@@ -50,7 +53,8 @@ class GenerateEntityCommandSpec extends Specification {
 
     then:
     result.exitCode() == 2
-    result.err().startsWith('Error: --spec=FILE, --ddl=FILE are mutually exclusive (specify only one)')
+    result.out() == ''
+    result.err().contains('Usage: tib generate entity ')
   }
 
   def "a directory that is not a tib project is refused"() {

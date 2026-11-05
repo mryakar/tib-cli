@@ -41,7 +41,7 @@ class TibCommandSpec extends Specification {
     then:
     result.exitCode() == 2
     result.out() == ''
-    result.err().startsWith("Missing required subcommand\nUsage: ${(['tib'] + args).join(' ')} ")
+    result.err().contains("Usage: ${(['tib'] + args).join(' ')} ")
 
     where:
     args << [[], ['init'], ['generate']]

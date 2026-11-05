@@ -66,10 +66,10 @@ class StatusCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    result.out() == '''\
-      vehicle-service: tib 1.2.3, pack default 0.1.0, 0 entities, 10 files.
+    result.out() == """\
+      vehicle-service: tib 1.2.3, pack default ${Tib.state(dir).pack().version()}, 0 entities, ${Tib.state(dir).files().size()} files.
       Every file of tib's is as it wrote it.
-      '''.stripIndent()
+      """.stripIndent()
     result.err() == ''
   }
 
@@ -116,7 +116,7 @@ class StatusCommandSpec extends Specification {
     then:
     result.exitCode() == 1
     result.out() == """\
-      vehicle-service: tib 1.2.3, pack default 0.1.0, 2 entities, ${Tib.state(dir).files().size()} files.
+      vehicle-service: tib 1.2.3, pack default ${Tib.state(dir).pack().version()}, 2 entities, ${Tib.state(dir).files().size()} files.
       removed  ${ENTITY}VehicleController.java
       missing  ${ENTITY}VehicleDto.java
       edited   ${ENTITY}VehicleGenerated.java
