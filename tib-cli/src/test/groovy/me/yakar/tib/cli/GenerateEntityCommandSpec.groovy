@@ -66,7 +66,7 @@ class GenerateEntityCommandSpec extends Specification {
   def "a dry run prints the diff and writes nothing"() {
     given:
     tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
-    Map<String, String> before = files()
+    Map<String, String> before = Tib.files(dir)
 
     when:
     Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
@@ -76,7 +76,7 @@ class GenerateEntityCommandSpec extends Specification {
     result.out().contains('+++ b/src/main/java/com/example/vehicleservice/vehicle/VehicleGenerated.java\n')
     result.out().contains('+++ b/.tib/state.yaml\n')
     result.err() == ''
-    files() == before
+    Tib.files(dir) == before
   }
 
   def "generates the entity layer of the spec into the service, once"() {
@@ -267,105 +267,5 @@ class GenerateEntityCommandSpec extends Specification {
     '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString() | '['                                                                           | 'the state file has a problem: state: '
     '--ddl'  | EXAMPLES.resolve('vehicle-service.sql').toString()  | '['                                                                           | 'the state file has a problem: state: '
     '--spec' | EXAMPLES.resolve('vehicle-service.yaml').toString() | 'tib: 1.2.3\npack: { name: default, version: 1 }\nspec:\n  tib: 1\n  service: int\n' | "the state file has a problem: spec.service: 'int' makes the package 'int'"
-  }
-
-  def "a service whose tracked files have uncommitted changes is refused, and nothing is written"() {
-    given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
-    committed()
-    Files.writeString(dir.resolve('AGENTS.md'), 'mine\n')
-    Map<String, String> before = files()
-
-    when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
-
-    then:
-    result.exitCode() == 1
-    result.out() == ''
-    result.err() == """\
-      ${dir.toAbsolutePath().normalize()} has changes that are not committed:
-         M AGENTS.md
-      Commit or stash them first, so that the changes of tib can be told apart, or run again with --allow-dirty.
-      """.stripIndent()
-    files() == before
-
-    when: 'a dry run writes nothing anyway'
-    Result dryRun = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
-
-    then:
-    dryRun.exitCode() == 0
-    dryRun.out().contains('+++ b/.tib/state.yaml\n')
-  }
-
-  def "with --allow-dirty, a service with uncommitted changes is written, with a warning"() {
-    given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
-    committed()
-    (1..12).each { Files.writeString(dir.resolve("File${it}.txt"), 'x\n') }
-    git('add', '.')
-    git('commit', '-q', '-m', 'files')
-    (1..12).each { Files.writeString(dir.resolve("File${it}.txt"), 'y\n') }
-
-    when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--allow-dirty')
-
-    then:
-    result.exitCode() == 0
-    result.out().startsWith('Wrote ')
-    result.err().readLines() == [
-      "${dir.toAbsolutePath().normalize()} has changes that are not committed:".toString(),
-      *(['1', '10', '11', '12', '2', '3', '4', '5', '6', '7'].collect {
-        "   M File${it}.txt".toString()
-      }),
-      '  and 2 more',
-      'tib writes anyway, as --allow-dirty asks.'
-    ]
-  }
-
-  def "untracked files, and a run that changes nothing, are no reason to refuse"() {
-    given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
-    committed()
-    Files.writeString(dir.resolve('notes.txt'), 'untracked\n')
-
-    when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
-
-    then:
-    result.exitCode() == 0
-    result.out().startsWith('Wrote ')
-
-    when: 'the files of tib are not committed, and the run changes nothing'
-    Result again = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
-
-    then:
-    again.exitCode() == 0
-    again.out() == 'Nothing to change.\n'
-  }
-
-  /** Makes the service a git repository with everything in it committed. */
-  private void committed() {
-    git('init', '-q')
-    git('add', '.')
-    git('commit', '-q', '-m', 'service')
-  }
-
-  /** Runs git in the service, without the signing or the identity of the machine. */
-  private void git(String... args) {
-    Process process = (['git', '-c', 'user.name=tib', '-c', 'user.email=tib@example.com', '-c', 'commit.gpgsign=false'] + args.toList())
-    .execute(null, dir.toFile())
-    assert process.waitFor() == 0 : process.errorStream.text
-  }
-
-
-  /** Every file of the service, with its content, by path; git's own files are not the service's. */
-  private Map<String, String> files() {
-    Files.walk(dir).withCloseable { paths ->
-      paths.filter {
-        Files.isRegularFile(it) && !dir.relativize(it).startsWith('.git')
-      }.toList().collectEntries {
-        [dir.relativize(it).toString(), Files.readString(it)]
-      }
-    }
   }
 }
