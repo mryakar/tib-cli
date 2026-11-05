@@ -27,10 +27,25 @@ final class Templates {
 
   private Templates() {}
 
-  /** The text of the template with the parameters, by name. */
-  static String render(String template, Map<String, Object> parameters) {
+  /**
+   * The text of the file at the path: the header that says who owns it, as a comment of the file's
+   * kind, then the template with the parameters, by name.
+   */
+  static String render(
+      String path, String header, String template, Map<String, Object> parameters) {
     StringOutput output = new StringOutput();
     ENGINE.render(template, parameters, output);
-    return output.toString();
+    return comment(path, header) + "\n" + output;
+  }
+
+  /** The text as a comment of one line in the file at the path, by its extension. */
+  static String comment(String path, String text) {
+    return switch (path.substring(path.lastIndexOf('.') + 1)) {
+      case "java", "kts" -> "// " + text;
+      case "yaml", "gitignore" -> "# " + text;
+      case "sql" -> "-- " + text;
+      case "md" -> "<!-- " + text + " -->";
+      default -> throw new IllegalArgumentException("there is no comment in " + path);
+    };
   }
 }

@@ -3,7 +3,6 @@
 @param EntityModel entity
 <%-- Whether the arguments of the DTO end with the fields: no relation and no audit times follow. --%>
 !{boolean endsWithFields = entity.relations().isEmpty() && !entity.audited();}
-// Written by tib on every run. Do not edit: your changes would be lost.
 package ${entity.packageName()};
 
 ${entity.mapperImports()}/** Between the entity and its DTO@if(!entity.relations().isEmpty()); a relation is resolved by the identifier of its target@endif. */

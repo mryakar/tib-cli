@@ -27,6 +27,9 @@ import me.yakar.tib.tree.Tree;
  */
 final class InitGenerator implements Generator {
 
+  private static final String HEADER =
+      "Written by tib when the service was created; it is yours from then on.";
+
   private final DefaultPack pack;
 
   InitGenerator(DefaultPack pack) {
@@ -37,26 +40,35 @@ final class InitGenerator implements Generator {
   public void generate(Project project, Tree tree) {
     String sources = DefaultPack.MAIN + project.packagePath();
     String tests = DefaultPack.TEST + project.packagePath();
-    tree.once("settings.gradle.kts", render("init/settings_gradle_kts.jte", project));
-    tree.once("build.gradle.kts", render("init/build_gradle_kts.jte", project));
-    tree.once(".gitignore", render("init/gitignore.jte", project));
-    tree.once(
+    once(tree, "settings.gradle.kts", "init/settings_gradle_kts.jte", project);
+    once(tree, "build.gradle.kts", "init/build_gradle_kts.jte", project);
+    once(tree, ".gitignore", "init/gitignore.jte", project);
+    once(
+        tree,
         sources + "/" + project.applicationClass() + ".java",
-        render("init/application_java.jte", project));
-    tree.once("src/main/resources/application.yaml", render("init/application_yaml.jte", project));
-    tree.once(
+        "init/application_java.jte",
+        project);
+    once(tree, "src/main/resources/application.yaml", "init/application_yaml.jte", project);
+    once(
+        tree,
         tests + "/TestcontainersConfiguration.java",
-        render("init/testcontainers_configuration_java.jte", project));
-    tree.once(
+        "init/testcontainers_configuration_java.jte",
+        project);
+    once(
+        tree,
         tests + "/" + project.applicationClass() + "Tests.java",
-        render("init/application_tests_java.jte", project));
-    tree.once(
+        "init/application_tests_java.jte",
+        project);
+    once(
+        tree,
         tests + "/Test" + project.applicationClass() + ".java",
-        render("init/test_application_java.jte", project));
-    tree.once("AGENTS.md", render("init/agents_md.jte", project));
+        "init/test_application_java.jte",
+        project);
+    once(tree, "AGENTS.md", "init/agents_md.jte", project);
   }
 
-  private String render(String template, Project project) {
-    return Templates.render(template, Map.of("project", project, "pack", pack));
+  private void once(Tree tree, String path, String template, Project project) {
+    tree.once(
+        path, Templates.render(path, HEADER, template, Map.of("project", project, "pack", pack)));
   }
 }

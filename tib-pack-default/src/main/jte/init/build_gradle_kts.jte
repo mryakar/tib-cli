@@ -2,7 +2,6 @@
 @import me.yakar.tib.pack.DefaultPack
 @param Project project
 @param DefaultPack pack
-// Written by tib when the service was created; it is yours from then on.
 import org.springframework.boot.gradle.plugin.SpringBootPlugin
 
 plugins {

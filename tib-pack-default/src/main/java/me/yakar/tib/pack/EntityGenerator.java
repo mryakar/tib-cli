@@ -37,6 +37,18 @@ final class EntityGenerator implements Generator {
 
   static final String MIGRATIONS = "src/main/resources/db/migration";
 
+  /** The header of a file of tib's. */
+  private static final String EVERY_RUN =
+      "Written by tib on every run. Do not edit: your changes would be lost.";
+
+  /** The header of a file of the developer's. */
+  private static final String ONCE =
+      "Written by tib when the entity was created; it is yours from then on.";
+
+  /** The header of a migration, which is the developer's. */
+  private static final String MIGRATION =
+      "Written by tib when the entity was created. A change of the schema is a new migration.";
+
   /**
    * A versioned migration, at any depth: the major part of its version, as in V2__, V2.1__, V2_1__.
    */
@@ -57,27 +69,38 @@ final class EntityGenerator implements Generator {
   }
 
   private static void generateEntity(EntityModel entity, Tree tree) {
-    String directory = entity.directory() + "/";
-    String tests = entity.testDirectory() + "/";
-    String name = entity.name();
-    tree.own(directory + name + "Generated.java", render("entity/generated_java.jte", entity));
-    tree.once(directory + name + ".java", render("entity/entity_java.jte", entity));
-    tree.once(directory + name + "Repository.java", render("entity/repository_java.jte", entity));
+    String main = entity.directory() + "/" + entity.name();
+    String test = entity.testDirectory() + "/" + entity.name();
+    Map<String, Object> model = Map.of("entity", entity);
+    Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity));
+    String generated = EVERY_RUN + " Your code goes in " + entity.name() + ".";
+    own(tree, main + "Generated.java", generated, "entity/generated_java.jte", model);
+    once(tree, main + ".java", ONCE, "entity/entity_java.jte", model);
+    once(tree, main + "Repository.java", ONCE, "entity/repository_java.jte", model);
     if (entity.dto()) {
-      tree.own(directory + name + "Dto.java", render("entity/dto_java.jte", entity));
+      own(tree, main + "Dto.java", EVERY_RUN, "entity/dto_java.jte", model);
     }
-    tree.once(migration(tree, entity), render("entity/migration_sql.jte", entity));
-    tree.once(
-        tests + name + "RepositoryTests.java",
-        renderTests("entity/repository_tests_java.jte", entity));
+    once(tree, migration(tree, entity), MIGRATION, "entity/migration_sql.jte", model);
+    once(tree, test + "RepositoryTests.java", ONCE, "entity/repository_tests_java.jte", tests);
     if (entity.layer()) {
-      tree.own(directory + name + "Mapper.java", render("entity/mapper_java.jte", entity));
-      tree.once(directory + name + "Service.java", render("entity/service_java.jte", entity));
-      tree.once(directory + name + "Controller.java", render("entity/controller_java.jte", entity));
-      tree.once(
-          tests + name + "ServiceTests.java", renderTests("entity/service_tests_java.jte", entity));
-      tree.once(tests + name + "ApiTests.java", renderTests("entity/api_tests_java.jte", entity));
+      own(tree, main + "Mapper.java", EVERY_RUN, "entity/mapper_java.jte", model);
+      once(tree, main + "Service.java", ONCE, "entity/service_java.jte", model);
+      once(tree, main + "Controller.java", ONCE, "entity/controller_java.jte", model);
+      once(tree, test + "ServiceTests.java", ONCE, "entity/service_tests_java.jte", tests);
+      once(tree, test + "ApiTests.java", ONCE, "entity/api_tests_java.jte", tests);
     }
+  }
+
+  /** Writes a file of tib's: on every run. */
+  private static void own(
+      Tree tree, String path, String header, String template, Map<String, Object> parameters) {
+    tree.own(path, Templates.render(path, header, template, parameters));
+  }
+
+  /** Writes a file of the developer's: once. */
+  private static void once(
+      Tree tree, String path, String header, String template, Map<String, Object> parameters) {
+    tree.once(path, Templates.render(path, header, template, parameters));
   }
 
   /**
@@ -127,13 +150,5 @@ final class EntityGenerator implements Generator {
       }
     }
     done.add(name);
-  }
-
-  private static String render(String template, EntityModel entity) {
-    return Templates.render(template, Map.of("entity", entity));
-  }
-
-  private static String renderTests(String template, EntityModel entity) {
-    return Templates.render(template, Map.of("tests", new EntityTestsModel(entity)));
   }
 }
