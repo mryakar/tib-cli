@@ -37,10 +37,10 @@ import picocli.CommandLine.Parameters;
 public class InitServiceCommand implements Callable<Integer> {
 
   @ArgGroup(multiplicity = "1")
-  private Input input;
+  private Source source;
 
   /** Where the service comes from: its name, or its spec file. */
-  static class Input {
+  static class Source {
 
     @Parameters(
         arity = "1",
@@ -65,12 +65,12 @@ public class InitServiceCommand implements Callable<Integer> {
     Tree tree = directory.tree();
     Spec service;
     List<State.Input> inputs;
-    if (input.spec != null) {
-      String yaml = State.Input.read(input.spec);
+    if (source.spec != null) {
+      String yaml = State.Input.read(source.spec);
       service = SpecReader.parse(yaml);
-      inputs = List.of(State.Input.of(State.Input.Kind.SPEC, tree.root(), input.spec, yaml));
+      inputs = List.of(State.Input.of(State.Input.Kind.SPEC, tree.root(), source.spec, yaml));
     } else {
-      service = new Spec(Spec.VERSION, input.name, null, null, null).check();
+      service = new Spec(Spec.VERSION, source.name, null, null, null).check();
       inputs = List.of();
     }
     if (tree.exists(State.PATH)) {
