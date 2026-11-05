@@ -38,10 +38,10 @@ import picocli.CommandLine.Option;
 public class GenerateEntityCommand implements Callable<Integer> {
 
   @ArgGroup(multiplicity = "1")
-  private Input input;
+  private Source source;
 
   /** Where the entities come from: a spec file, or DDL. */
-  static class Input {
+  static class Source {
 
     @Option(
         names = "--spec",
@@ -69,20 +69,20 @@ public class GenerateEntityCommand implements Callable<Integer> {
     Tree tree = directory.tree();
     State state = directory.state(tree);
     Spec project = state.spec();
-    if (input.spec == null) {
-      String ddl = State.Input.read(input.ddl);
+    if (source.spec == null) {
+      String ddl = State.Input.read(source.ddl);
       return options.generate(
           Optional.of(state),
           DdlReader.parse(ddl, project),
-          List.of(State.Input.of(State.Input.Kind.DDL, tree.root(), input.ddl, ddl)),
+          List.of(State.Input.of(State.Input.Kind.DDL, tree.root(), source.ddl, ddl)),
           Pack::entity,
           tree);
     }
-    String yaml = State.Input.read(input.spec);
+    String yaml = State.Input.read(source.spec);
     Spec service = SpecReader.parse(yaml);
     if (!service.service().equals(project.service())) {
       return options.refuse(
-          input.spec
+          source.spec
               + " is the spec of "
               + service.service()
               + "; this project is "
@@ -90,7 +90,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
     }
     if (!service.group().equals(project.group())) {
       return options.refuse(
-          input.spec
+          source.spec
               + " is the spec of a service in "
               + service.group()
               + "; this project is in "
@@ -99,7 +99,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
     return options.generate(
         Optional.of(state),
         service,
-        List.of(State.Input.of(State.Input.Kind.SPEC, tree.root(), input.spec, yaml)),
+        List.of(State.Input.of(State.Input.Kind.SPEC, tree.root(), source.spec, yaml)),
         Pack::entity,
         tree);
   }
