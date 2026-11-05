@@ -33,6 +33,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `TestcontainersConfiguration` of a new service is public, so that the tests of the entities in
   their own packages can import it. In a service scaffolded by 0.1.0, make it public before
   running `tib generate entity` again, or the new tests do not compile.
+- `.tib/state.yaml` starts with a comment that says that tib writes it on every run and that it
+  is not to be edited, as the other files of tib's say who owns them.
 
 ### Fixed
 
