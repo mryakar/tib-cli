@@ -34,14 +34,15 @@ class TibApplicationSpec extends Specification {
     process?.destroyForcibly()
   }
 
-  def "a bug is reported with its stack trace, with exit code 3"() {
-    given: 'a command that fails with an exception that is not tib\'s'
+  def "a bug is reported with its stack trace, with exit code 3: #failure.class.simpleName"() {
+    given: 'a command that fails with a throwable that is not tib\'s'
+    Throwable thrown = failure
     CommandFactory commands = new CommandFactory(new TibVersion('1.2.3'))
     IFactory factory = { Class cls ->
       cls == SchemaCommand ? new SchemaCommand() {
             @Override
             void run() {
-              throw new IllegalStateException('a bug')
+              throw thrown
             }
           } : commands.create(cls)
     } as IFactory
@@ -49,16 +50,18 @@ class TibApplicationSpec extends Specification {
     StringWriter err = new StringWriter()
 
     when:
-    int exitCode = TibApplication.commandLine(factory)
+    int exitCode = TibApplication.run(TibApplication.commandLine(factory)
         .setOut(new PrintWriter(out))
-        .setErr(new PrintWriter(err))
-        .execute('schema')
+        .setErr(new PrintWriter(err)), 'schema')
 
     then:
     exitCode == 3
     out.toString() == ''
-    err.toString().startsWith('java.lang.IllegalStateException: a bug')
+    err.toString().startsWith("${failure.class.name}: a bug")
     err.toString().contains('\tat ')
+
+    where: 'picocli hands an exception to the handler, and lets an error through'
+    failure << [new IllegalStateException('a bug'), new StackOverflowError('a bug')]
   }
 
   def "the application prints its version and exits with 0"() {

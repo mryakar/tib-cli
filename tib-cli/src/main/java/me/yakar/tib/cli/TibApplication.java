@@ -49,9 +49,23 @@ public final class TibApplication {
     return BUG;
   }
 
+  /**
+   * Runs the command and returns its exit code. picocli hands only exceptions to {@link #report};
+   * an error, such as a {@link StackOverflowError}, is a bug too, printed with its stack trace,
+   * exit code 3.
+   */
+  static int run(CommandLine commandLine, String... args) {
+    try {
+      return commandLine.execute(args);
+    } catch (Throwable e) {
+      e.printStackTrace(commandLine.getErr());
+      return BUG;
+    }
+  }
+
   /** Runs tib; a run that fails ends the process with the exit code of the command. */
   public static void main(String[] args) {
-    int exitCode = commandLine(new CommandFactory()).execute(args);
+    int exitCode = run(commandLine(new CommandFactory()), args);
     // Not an if: coverage cannot count a System.exit call, which never returns.
     IntStream.of(exitCode).filter(code -> code != 0).forEach(System::exit);
   }
