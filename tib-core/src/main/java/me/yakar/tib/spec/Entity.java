@@ -86,7 +86,7 @@ public record Entity(
     members.add(id.field());
     // The columns, in upper case: SQL names are the same in any case.
     Set<String> columns = new HashSet<>();
-    columns.add(Names.sql(id.field()));
+    columns.add(id.column());
     if (audit) {
       columns.addAll(List.of(CREATED_AT, UPDATED_AT));
     }

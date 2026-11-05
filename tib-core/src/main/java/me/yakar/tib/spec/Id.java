@@ -31,6 +31,11 @@ public record Id(
     strategy = strategy == null ? IdStrategy.defaultFor(type) : strategy;
   }
 
+  /** The column of the identifier: the field in upper snake case. */
+  public String column() {
+    return Names.sql(field);
+  }
+
   /** The identifier an entity gets when the spec gives none. */
   static Id defaults() {
     return new Id(null, null, null);
@@ -40,11 +45,11 @@ public record Id(
     if (Names.isKeyword(field)) {
       problems.add(path + ".field", "'" + field + "' is a Java keyword");
     }
-    if (Names.isReserved(Names.sql(field))) {
+    if (Names.isReserved(column())) {
       problems.add(
           path + ".field",
           "the column '"
-              + Names.sql(field)
+              + column()
               + "' is a reserved word in SQL; give the identifier another field");
     }
     if (!strategy.fits(type)) {
