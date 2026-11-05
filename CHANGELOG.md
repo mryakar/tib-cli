@@ -42,6 +42,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The default pack has the version of the tib it ships with, so that its version changes when what
   it generates can change. A spec that pins `pack: default@0.1.0` is refused by this version with
   `there is no pack 'default@0.1.0'`; pin the version of the tib you run, or write `pack: default`.
+- The `AGENTS.md` of a new service says what `tib status` does, that tib writes only into a
+  service whose tracked files are committed, and that `XGenerated`, `XDto` and `XMapper` stay out
+  of a code formatter.
 - The names that tib adds to a table whose name has no upper-case letter are in lower case too:
   the audit columns `created_at` and `updated_at`, the sequence `<table>_seq` and the index
   `<table>_<column>_idx`, as in a service read from DDL in lower case.
