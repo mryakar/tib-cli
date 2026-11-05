@@ -37,6 +37,9 @@ class DefaultPackSpec extends Specification {
   static final Path SNAPSHOTS = Path.of(System.getProperty('tib.snapshots'))
   static final Path ACTUAL = Path.of(System.getProperty('tib.snapshots.actual'))
 
+  /** The version of tib that the build makes. */
+  static final String VERSION = System.getProperty('tib.version')
+
   /** The example service of the documentation. */
   static final Spec VEHICLES = SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
 
@@ -59,15 +62,15 @@ class DefaultPackSpec extends Specification {
   @TempDir
   Path other
 
-  def "the pack says what it is, and the engine finds it"() {
+  def "the pack says what it is, with the version of tib, and the engine finds it"() {
     given:
     DefaultPack pack = new DefaultPack()
 
     expect:
     pack.name() == 'default'
-    pack.version() == '0.1.0'
+    pack.version() == VERSION
     Packs.find('default') instanceof DefaultPack
-    Packs.find('default@0.1.0') instanceof DefaultPack
+    Packs.find("default@$VERSION") instanceof DefaultPack
   }
 
   def "the properties of the pack have to be readable"() {

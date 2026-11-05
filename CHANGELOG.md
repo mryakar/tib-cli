@@ -39,6 +39,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   running `tib generate entity` again, or the new tests do not compile.
 - `.tib/state.yaml` starts with a comment that says that tib writes it on every run and that it
   is not to be edited, as the other files of tib's say who owns them.
+- The default pack has the version of the tib it ships with, so that its version changes when what
+  it generates can change. A spec that pins `pack: default@0.1.0` is refused by this version with
+  `there is no pack 'default@0.1.0'`; pin the version of the tib you run, or write `pack: default`.
 - The names that tib adds to a table whose name has no upper-case letter are in lower case too:
   the audit columns `created_at` and `updated_at`, the sequence `<table>_seq` and the index
   `<table>_<column>_idx`, as in a service read from DDL in lower case.
