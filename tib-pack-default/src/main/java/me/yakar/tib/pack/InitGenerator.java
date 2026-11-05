@@ -43,6 +43,7 @@ final class InitGenerator implements Generator {
     once(tree, "settings.gradle.kts", "init/settings_gradle_kts.jte", project);
     once(tree, "build.gradle.kts", "init/build_gradle_kts.jte", project);
     once(tree, ".gitignore", "init/gitignore.jte", project);
+    once(tree, ".gitattributes", "init/gitattributes.jte", project);
     once(
         tree,
         sources + "/" + project.applicationClass() + ".java",

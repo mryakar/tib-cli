@@ -66,7 +66,7 @@ class StatusCommandSpec extends Specification {
     then:
     result.exitCode() == 0
     result.out() == '''\
-      vehicle-service: tib 1.2.3, pack default 0.1.0, 0 entities, 9 files.
+      vehicle-service: tib 1.2.3, pack default 0.1.0, 0 entities, 10 files.
       Every file of tib's is as it wrote it.
       '''.stripIndent()
     result.err() == ''
