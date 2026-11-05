@@ -38,9 +38,7 @@ class GitSpec extends Specification {
     Files.writeString(service.resolve('Staged.java'), 'class Staged {}\n')
     Files.writeString(service.resolve('Kept.java'), 'class Kept {}\n')
     Files.writeString(repository.resolve('Other.java'), 'class Other {}\n')
-    git('init', '-q')
-    git('add', '.')
-    git('commit', '-q', '-m', 'first')
+    commit()
 
     expect: 'a clean service has none'
     Git.uncommitted(service) == []
@@ -63,10 +61,8 @@ class GitSpec extends Specification {
 
   def "an interrupted thread gets the answer, and stays interrupted"() {
     given:
-    git('init', '-q')
     Files.writeString(repository.resolve('A.java'), 'class A {}\n')
-    git('add', '.')
-    git('commit', '-q', '-m', 'a')
+    commit()
     Files.writeString(repository.resolve('A.java'), 'class A { int edited; }\n')
 
     when:
@@ -78,10 +74,33 @@ class GitSpec extends Specification {
     Thread.interrupted()
   }
 
-  /** Runs git in the repository, without the signing or the identity of the machine. */
+  /** Makes the directory a repository and commits every file in it. */
+  private void commit() {
+    git('init', '-q')
+    git('add', '.')
+    git('commit', '-q', '-m', 'first')
+  }
+
+  /**
+   * Runs git in the repository, without the signing, the identity or the line endings of the
+   * machine.
+   */
   private void git(String... args) {
-    Process process = (['git', '-c', 'user.name=tib', '-c', 'user.email=tib@example.com', '-c', 'commit.gpgsign=false'] + args.toList())
+    Process process = ([
+      'git',
+      '-c',
+      'user.name=tib',
+      '-c',
+      'user.email=tib@example.com',
+      '-c',
+      'commit.gpgsign=false',
+      '-c',
+      'core.autocrlf=false'
+    ] + args.toList())
     .execute(null, repository.toFile())
-    assert process.waitFor() == 0 : process.errorStream.text
+    StringBuilder out = new StringBuilder()
+    StringBuilder err = new StringBuilder()
+    process.waitForProcessOutput(out, err)
+    assert process.exitValue() == 0 : err
   }
 }
