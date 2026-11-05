@@ -13,9 +13,9 @@ tib 0.2.0
 
 `tib init service` scaffolds a Spring Boot service: its Gradle build, the application class and
 its configuration, a test and a test application that run it against PostgreSQL in a container,
-a `.gitattributes` that keeps the line feeds of its text files on every platform, and
-`AGENTS.md`, the notes for whoever, or whatever, works on the service next. First see what it
-would write, as a diff, without writing anything:
+a `.gitattributes` that keeps the line feeds of its text files on every platform and the carriage
+returns of its batch files, and `AGENTS.md`, the notes for whoever, or whatever, works on the
+service next. First see what it would write, as a diff, without writing anything:
 
 [source,bash]
 ----
@@ -23,10 +23,13 @@ $ mkdir vehicle-service && cd vehicle-service
 $ tib init service vehicle-service --dry-run
 --- /dev/null
 +++ b/.gitattributes
-@@ -0,0 +1,3 @@
+@@ -0,0 +1,6 @@
 +# Written by tib when the service was created; it is yours from then on.
 +# Text files keep their line feeds on every platform, as tib wrote them and compares them.
 +* text=auto eol=lf
++# Batch files, such as gradlew.bat, keep the carriage returns that cmd.exe expects.
++*.bat text eol=crlf
++*.cmd text eol=crlf
 ...
 ----
 
