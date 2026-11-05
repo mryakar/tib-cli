@@ -35,13 +35,16 @@ class Tib {
     State.of(Tree.at(service), '9.9.9')
   }
 
-  /** Every file of the service, with its content, by path; git's own files are not the service's. */
+  /**
+   * Every file and directory of the service by path, with the content of each file; git's own files
+   * are not the service's.
+   */
   static Map<String, String> files(Path service) {
     Files.walk(service).withCloseable { paths ->
       paths.filter {
-        Files.isRegularFile(it) && !service.relativize(it).startsWith('.git')
+        it != service && !service.relativize(it).startsWith('.git')
       }.toList().collectEntries {
-        [service.relativize(it).toString(), Files.readString(it)]
+        [service.relativize(it).toString(), Files.isDirectory(it) ? 'a directory' : Files.readString(it)]
       }
     }
   }
