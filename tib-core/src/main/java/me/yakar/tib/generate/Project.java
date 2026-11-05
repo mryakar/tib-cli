@@ -39,7 +39,7 @@ public record Project(Spec spec) {
    * com.example.vehicleservice}.
    */
   public String basePackage() {
-    return spec.group() + "." + spec.service().replace("-", "");
+    return spec.group() + "." + spec.packageSegment();
   }
 
   /** The class that starts the service, as in {@code VehicleServiceApplication}. */

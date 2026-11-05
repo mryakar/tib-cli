@@ -68,6 +68,14 @@ public record Spec(
   }
 
   /**
+   * The segment of the packages that the service adds to its group: the name without hyphens, as in
+   * {@code vehicleservice}.
+   */
+  public String packageSegment() {
+    return service.replace("-", "");
+  }
+
+  /**
    * Checks the spec against its rules: the structure first, then what the values mean together.
    *
    * @return the spec
@@ -91,11 +99,14 @@ public record Spec(
         problems.add("group", "'" + group + "' has '" + segment + "', which is a Java keyword");
       }
     }
-    String packageName = service.replace("-", "");
-    if (Names.isKeyword(packageName)) {
+    if (Names.isKeyword(packageSegment())) {
       problems.add(
           "service",
-          "'" + service + "' makes the package '" + packageName + "', which is a Java keyword");
+          "'"
+              + service
+              + "' makes the package '"
+              + packageSegment()
+              + "', which is a Java keyword");
     }
     // The entities by name; the first one of a name.
     Map<String, Entity> names = new HashMap<>();
