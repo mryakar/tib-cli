@@ -23,11 +23,12 @@ content:
 urls:
   latest_version_segment: latest
 ui:
-  # One build of the default UI. To move to a newer one, take the job that
+  # One build of the default UI, kept here: GitLab keeps the artifacts of its jobs for a while only.
+  # To move to a newer one, download
   # https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
-  # redirects to.
+  # over this file and build the site.
   bundle:
-    url: https://gitlab.com/antora/antora-ui-default/-/jobs/15385706035/artifacts/raw/build/ui-bundle.zip
+    url: ./ui-bundle.zip
   # The default UI's header, with its placeholder menu replaced by links to the repository.
   supplemental_files: ./supplemental-ui
 output:

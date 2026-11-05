@@ -4,3 +4,5 @@
 # Batch files keep the carriage returns that cmd.exe expects.
 *.bat text eol=crlf
 *.cmd text eol=crlf
+# The UI bundle of the documentation site is a zip.
+*.zip binary
