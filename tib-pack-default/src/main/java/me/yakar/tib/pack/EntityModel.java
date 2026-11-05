@@ -103,7 +103,7 @@ public final class EntityModel {
   }
 
   public String idColumn() {
-    return Names.sql(entity.id().field());
+    return entity.id().column();
   }
 
   /** The Java type of the identifier: {@code Long} or {@code UUID}. */

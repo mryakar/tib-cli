@@ -183,7 +183,7 @@ public final class DdlReader {
   private static Map<String, String> members(Entity known) {
     Map<String, String> members = new HashMap<>();
     if (known != null) {
-      members.put(key(Names.sql(known.id().field())), known.id().field());
+      members.put(key(known.id().column()), known.id().field());
       known.fields().forEach(field -> members.put(key(field.column()), field.name()));
       known.relations().forEach(relation -> members.put(key(relation.column()), relation.field()));
     }
