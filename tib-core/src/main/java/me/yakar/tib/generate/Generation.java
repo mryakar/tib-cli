@@ -15,12 +15,10 @@
  */
 package me.yakar.tib.generate;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.TreeMap;
+import java.util.Optional;
 import java.util.function.Function;
 import me.yakar.tib.state.State;
-import me.yakar.tib.tree.Change;
 import me.yakar.tib.tree.Tree;
 
 /**
@@ -33,39 +31,32 @@ public final class Generation {
   private Generation() {}
 
   /**
-   * Runs the generator that the function picks from the pack, and stages the state file; the tree
-   * holds the result until it is applied. The generator stages no file of the developer's that an
-   * earlier run wrote. The inputs are the files that the spec of this run was read from; each takes
-   * the place of the input of the same path in the state, and the others are added after them.
+   * Runs the generator that the function picks from the pack, and stages the state file that {@link
+   * State#next} makes of the previous one; the tree holds the result until it is applied. The
+   * generator stages no file of the developer's that an earlier run wrote.
+   *
+   * @param previous the state file of the project, if tib ran on it before
+   * @param inputs the files that the spec of this run was read from
    */
   public static void run(
+      Optional<State> previous,
       Project project,
       List<State.Input> inputs,
       Pack pack,
       Function<Pack, Generator> generator,
       String tibVersion,
       Tree tree) {
-    LinkedHashMap<String, State.Input> read = new LinkedHashMap<>();
-    TreeMap<String, State.File> files = new TreeMap<>();
-    State.in(tree, tibVersion)
-        .ifPresent(
-            previous -> {
-              previous.inputs().forEach(input -> read.put(input.path(), input));
-              previous.files().forEach(file -> files.put(file.path(), file));
-            });
-    inputs.forEach(input -> read.put(input.path(), input));
-    tree.writtenBefore(files.keySet());
+    previous.ifPresent(
+        state -> tree.writtenBefore(state.files().stream().map(State.File::path).toList()));
     generator.apply(pack).generate(project, tree);
-    for (Change change : tree.changes()) {
-      files.put(change.path(), State.File.of(change.path(), change.owner(), change.after()));
-    }
-    State state =
-        new State(
+    State next =
+        State.next(
+            previous,
             tibVersion,
             new State.PackRef(pack.name(), pack.version()),
-            read.values().stream().toList(),
+            inputs,
             project.spec(),
-            files.values().stream().toList());
-    tree.own(State.PATH, state.yaml());
+            tree);
+    tree.own(State.PATH, next.yaml());
   }
 }

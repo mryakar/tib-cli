@@ -17,6 +17,7 @@ package me.yakar.tib.cli;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import me.yakar.tib.generate.Pack;
 import me.yakar.tib.spec.Spec;
@@ -73,6 +74,6 @@ public class InitServiceCommand implements Callable<Integer> {
       return options.refuse(
           tree.root() + " is already a tib project: " + State.PATH + " is there.");
     }
-    return options.generate(service, inputs, Pack::init, tree);
+    return options.generate(Optional.empty(), service, inputs, Pack::init, tree);
   }
 }

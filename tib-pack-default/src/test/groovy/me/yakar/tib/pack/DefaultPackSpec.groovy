@@ -24,6 +24,7 @@ import me.yakar.tib.generate.Packs
 import me.yakar.tib.generate.Project
 import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.SpecReader
+import me.yakar.tib.state.State
 import me.yakar.tib.tree.Change
 import me.yakar.tib.tree.Owner
 import me.yakar.tib.tree.Tree
@@ -132,8 +133,12 @@ class DefaultPackSpec extends Specification {
     Tree first = Tree.at(dir)
     Tree second = Tree.at(other)
     [first, second].each { tree ->
-      Generation.run(new Project(spec), [], new DefaultPack(), { it.init() }, '0.0.0', tree)
-      Generation.run(new Project(spec), [], new DefaultPack(), { it.entity() }, '0.0.0', tree)
+      Generation.run(Optional.empty(), new Project(spec), [], new DefaultPack(), {
+        it.init()
+      }, '0.0.0', tree)
+      Generation.run(Optional.of(State.of(tree, '0.0.0')), new Project(spec), [], new DefaultPack(), {
+        it.entity()
+      }, '0.0.0', tree)
     }
 
     then:

@@ -25,11 +25,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -38,6 +41,7 @@ import java.util.stream.StreamSupport;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecException;
 import me.yakar.tib.spec.SpecReader;
+import me.yakar.tib.tree.Change;
 import me.yakar.tib.tree.Owner;
 import me.yakar.tib.tree.Tree;
 import tools.jackson.databind.cfg.EnumFeature;
@@ -147,6 +151,36 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
    */
   private static <T> List<T> list(List<T> list) {
     return list == null ? List.of() : Collections.unmodifiableList(new ArrayList<>(list));
+  }
+
+  /**
+   * The state after a run that staged its files in the tree. The inputs of the run take the place
+   * of those of the same path in the previous state, and the others stay, in their order; every
+   * file that the run staged takes the place of the record of the same path, and the other records
+   * stay. The files are in the order of their paths.
+   *
+   * @param previous the state before the run, if tib ran on the project before
+   * @param tib the version of tib that ran
+   */
+  public static State next(
+      Optional<State> previous,
+      String tib,
+      PackRef pack,
+      List<Input> inputs,
+      Spec spec,
+      Tree tree) {
+    Map<String, Input> read = new LinkedHashMap<>();
+    SortedMap<String, File> written = new TreeMap<>();
+    previous.ifPresent(
+        state -> {
+          state.inputs().forEach(input -> read.put(input.path(), input));
+          state.files().forEach(file -> written.put(file.path(), file));
+        });
+    inputs.forEach(input -> read.put(input.path(), input));
+    for (Change change : tree.changes()) {
+      written.put(change.path(), File.of(change.path(), change.owner(), change.after()));
+    }
+    return new State(tib, pack, List.copyOf(read.values()), spec, List.copyOf(written.values()));
   }
 
   /**

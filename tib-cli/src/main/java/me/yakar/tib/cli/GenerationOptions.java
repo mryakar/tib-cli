@@ -18,6 +18,7 @@ package me.yakar.tib.cli;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import me.yakar.tib.generate.Generation;
 import me.yakar.tib.generate.Generator;
@@ -88,12 +89,18 @@ public final class GenerationOptions {
    * of a dry run, or writes the files and says how many. A dry run that changes nothing says so on
    * the standard error, so that its output stays an empty diff. A run that would write into a
    * service whose tracked files have uncommitted changes is refused, so that the changes of tib can
-   * be told apart from them, unless the dirty tree is allowed. The inputs are the files that the
-   * spec of the service was read from.
+   * be told apart from them, unless the dirty tree is allowed. The previous state is the state file
+   * of the service, if there is one; the inputs are the files that the spec of the service was read
+   * from.
    */
   int generate(
-      Spec service, List<State.Input> inputs, Function<Pack, Generator> generator, Tree tree) {
+      Optional<State> previous,
+      Spec service,
+      List<State.Input> inputs,
+      Function<Pack, Generator> generator,
+      Tree tree) {
     Generation.run(
+        previous,
         new Project(service),
         inputs,
         Packs.find(service.pack()),
