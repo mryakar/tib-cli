@@ -26,7 +26,7 @@ public record Difference(String path, Kind kind) {
 
   /** How the file differs from what tib wrote. */
   public enum Kind {
-    /** A file of the generator's was edited; the next run of tib replaces it. */
+    /** A file of the generator's was edited; git checkout, or the next run of tib, restores it. */
     EDITED,
     /** A file of the generator's, or a shared file, is not there; tib needs it. */
     MISSING,

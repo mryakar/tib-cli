@@ -32,8 +32,9 @@ import picocli.CommandLine.Model.CommandSpec;
     name = "status",
     description = {
       "Says which of the files that tib wrote into the service are no longer as it wrote them.",
-      "A file of tib's that was edited or is missing is a problem: tib replaces it on its next run."
-          + " A file of yours that was removed is not; tib does not write it again."
+      "A file of tib's that was edited or is missing is a problem: git checkout restores it, or the"
+          + " next run of tib writes it again, with --allow-dirty while the change is not"
+          + " committed. A file of yours that was removed is not; tib does not write it again."
     },
     exitCodeList = {
       "0:Every file of tib's is as it wrote it.",
@@ -89,8 +90,12 @@ public class StatusCommand implements Callable<Integer> {
 
   private static String explanation(Difference.Kind kind) {
     return switch (kind) {
-      case EDITED -> "An edited file is written by tib on every run: its next run replaces it.";
-      case MISSING -> "A missing file is one that tib needs: its next run writes it again.";
+      case EDITED ->
+          "An edited file is written by tib on every run: git checkout restores it, or the next"
+              + " run of tib replaces it, with --allow-dirty while the edit is not committed.";
+      case MISSING ->
+          "A missing file is one that tib needs: git checkout restores it, or the next run of tib"
+              + " writes it again, with --allow-dirty while the deletion is not committed.";
       case REMOVED -> "A removed file was yours: tib does not write it again.";
     };
   }
