@@ -16,20 +16,18 @@
 // Formats the Gradle build scripts and keeps their license headers, for the root project.
 plugins { id("com.diffplug.spotless") }
 
-val libs = versionCatalogs.named("libs")
+val ktfmtVersion = versionCatalogs.named("libs").findVersion("ktfmt").get().requiredVersion
+val licenseHeader = layout.settingsDirectory.file("gradle/spotless/license-header.txt")
 
 spotless {
   kotlin {
     target("build-logic/src/main/kotlin/**/*.kt")
-    ktfmt(libs.findVersion("ktfmt").get().requiredVersion).googleStyle()
-    licenseHeaderFile(layout.settingsDirectory.file("gradle/spotless/license-header.txt"))
+    ktfmt(ktfmtVersion).googleStyle()
+    licenseHeaderFile(licenseHeader)
   }
   kotlinGradle {
     target("*.gradle.kts", "*/*.gradle.kts", "build-logic/src/main/kotlin/*.gradle.kts")
-    ktfmt(libs.findVersion("ktfmt").get().requiredVersion).googleStyle()
-    licenseHeaderFile(
-      layout.settingsDirectory.file("gradle/spotless/license-header.txt"),
-      "(plugins|pluginManagement|dependencyResolutionManagement|//)",
-    )
+    ktfmt(ktfmtVersion).googleStyle()
+    licenseHeaderFile(licenseHeader, "(plugins|pluginManagement|dependencyResolutionManagement|//)")
   }
 }
