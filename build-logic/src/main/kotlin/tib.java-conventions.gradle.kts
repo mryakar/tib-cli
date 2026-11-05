@@ -27,10 +27,12 @@ val libs = versionCatalogs.named("libs")
 fun version(alias: String): String = libs.findVersion(alias).get().requiredVersion
 
 // Compiled for Java 21; runs on 21 and later.
-java { toolchain { languageVersion = JavaLanguageVersion.of(21) } }
+val javaVersion = 21
+
+java { toolchain { languageVersion = JavaLanguageVersion.of(javaVersion) } }
 
 tasks.withType<JavaCompile>().configureEach {
-  options.release = 21
+  options.release = javaVersion
   options.compilerArgs.addAll(listOf("-Xlint:all", "-Werror"))
 }
 
@@ -46,7 +48,8 @@ testing {
 }
 
 // -PtestJavaVersion runs the tests on another JVM, such as the one the packages embed.
-val testJavaVersion = providers.gradleProperty("testJavaVersion").map(String::toInt).orElse(21)
+val testJavaVersion =
+  providers.gradleProperty("testJavaVersion").map(String::toInt).orElse(javaVersion)
 
 // The tests read the examples of the documentation. The unit tests of a module that has snapshots
 // of what it generates also read them, and write what they generate under build/snapshots/test.
