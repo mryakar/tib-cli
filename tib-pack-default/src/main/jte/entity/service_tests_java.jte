@@ -1,21 +1,23 @@
 @import gg.jte.support.ForSupport
 @import me.yakar.tib.pack.EntityModel
-@param EntityModel entity
+@import me.yakar.tib.pack.EntityTestsModel
+@param EntityTestsModel tests
+!{EntityModel entity = tests.entity();}
 // Written by tib when the entity was created; it is yours from then on.
 package ${entity.packageName()};
 
-${entity.serviceTestsImports()}/** The use cases of ${entity.plural()}, with the repository and the mapper mocked. */
+${tests.serviceTestsImports()}/** The use cases of ${entity.plural()}, with the repository and the mapper mocked. */
 @ExtendWith(MockitoExtension.class)
 class ${entity.name()}ServiceTests {
 
-  private static final ${entity.idType()} ID = ${entity.sampleId()};
+  private static final ${entity.idType()} ID = ${tests.sampleId()};
 
   @Mock private ${entity.name()}Repository ${entity.plural()};
   @Mock private ${entity.name()}Mapper mapper;
   @InjectMocks private ${entity.name()}Service service;
 
   @Test
-  void gets${entity.article()}${entity.name()}() {
+  void gets${tests.article()}${entity.name()}() {
     ${entity.name()} ${entity.variable()} = new ${entity.name()}();
     ${entity.name()}Dto dto = dto();
     when(${entity.plural()}.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
@@ -35,7 +37,7 @@ class ${entity.name()}ServiceTests {
   }
 
   @Test
-  void creates${entity.article()}${entity.name()}FromItsDto() {
+  void creates${tests.article()}${entity.name()}FromItsDto() {
     ${entity.name()}Dto dto = dto();
     when(${entity.plural()}.saveAndFlush(any(${entity.name()}.class))).thenAnswer(call -> call.getArgument(0));
     when(mapper.toDto(any(${entity.name()}.class))).thenReturn(dto);
@@ -45,7 +47,7 @@ class ${entity.name()}ServiceTests {
   }
 
   @Test
-  void updates${entity.article()}${entity.name()}FromItsDto() {
+  void updates${tests.article()}${entity.name()}FromItsDto() {
     ${entity.name()} ${entity.variable()} = new ${entity.name()}();
     ${entity.name()}Dto dto = dto();
     when(${entity.plural()}.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
@@ -57,7 +59,7 @@ class ${entity.name()}ServiceTests {
   }
 
   @Test
-  void deletes${entity.article()}${entity.name()}() {
+  void deletes${tests.article()}${entity.name()}() {
     ${entity.name()} ${entity.variable()} = new ${entity.name()}();
     when(${entity.plural()}.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
 
@@ -68,7 +70,7 @@ class ${entity.name()}ServiceTests {
 
   private static ${entity.name()}Dto dto() {
     return new ${entity.name()}Dto(
-        @for(var argument : ForSupport.of(entity.serviceDtoArguments()))
+        @for(var argument : ForSupport.of(tests.serviceDtoArguments()))
         ${argument.get()}${argument.isLast() ? ");" : ","}
         @endfor
   }

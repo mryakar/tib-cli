@@ -1,30 +1,32 @@
 @import gg.jte.support.ForSupport
 @import me.yakar.tib.pack.EntityModel
-@param EntityModel entity
+@import me.yakar.tib.pack.EntityTestsModel
+@param EntityTestsModel tests
+!{EntityModel entity = tests.entity();}
 !{String path = "/api/" + entity.plural();}
 !{String dto = entity.name() + "Dto";}
 // Written by tib when the entity was created; it is yours from then on.
 package ${entity.packageName()};
 
-${entity.apiTestsImports()}/** The API of ${entity.plural()}, over HTTP, against PostgreSQL in a container. */
+${tests.apiTestsImports()}/** The API of ${entity.plural()}, over HTTP, against PostgreSQL in a container. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
 class ${entity.name()}ApiTests {
 
   @Autowired private TestRestTemplate http;
   @Autowired private ${entity.name()}Repository ${entity.plural()};
-  @for(var target : entity.requiredTargets())
+  @for(var target : tests.requiredTargets())
   @Autowired private ${target.name()}Repository ${target.plural()};
   @endfor
-  @if(!entity.requiredTargets().isEmpty())<%-- keeps the blank line below --%>
+  @if(!tests.requiredTargets().isEmpty())<%-- keeps the blank line below --%>
 
-  @for(var target : entity.requiredTargets())
+  @for(var target : tests.requiredTargets())
   private ${target.name()} ${target.variable()};
   @endfor<%-- keeps the blank line below --%>
 
   @BeforeEach
   void saveWhatA${entity.name()}Needs() {
-    @for(var target : entity.requiredTargets())
+    @for(var target : tests.requiredTargets())
     ${target.variable()} = ${target.plural()}.saveAndFlush(new${target.name()}());
     @endfor
   }
@@ -33,13 +35,13 @@ class ${entity.name()}ApiTests {
   @AfterEach
   void deleteAll() {
     ${entity.plural()}.deleteAll();
-    @for(var target : entity.reversedRequiredTargets())
+    @for(var target : tests.reversedRequiredTargets())
     ${target.plural()}.deleteAll();
     @endfor
   }
 
   @Test
-  void creates${entity.article()}${entity.name()}() {
+  void creates${tests.article()}${entity.name()}() {
     ${dto} dto = dto();
 
     ResponseEntity<${dto}> created = http.postForEntity("${path}", dto, ${dto}.class);
@@ -48,12 +50,12 @@ class ${entity.name()}ApiTests {
     assertThat(created.getBody().${entity.idField()}()).isNotNull();
     assertThat(created.getBody())
         .usingRecursiveComparison()
-        .ignoringFields(${entity.ignoredFields(true)})
+        .ignoringFields(${tests.ignoredFields(true)})
         .isEqualTo(dto);
   }
 
   @Test
-  void gets${entity.article()}${entity.name()}() {
+  void gets${tests.article()}${entity.name()}() {
     ${dto} ${entity.variable()} = create();
 
     ResponseEntity<${dto}> found =
@@ -63,7 +65,7 @@ class ${entity.name()}ApiTests {
     @if(entity.audited())
     assertThat(found.getBody())
         .usingRecursiveComparison()
-        .ignoringFields(${entity.ignoredFields(false)})
+        .ignoringFields(${tests.ignoredFields(false)})
         .isEqualTo(${entity.variable()});
     @else
     assertThat(found.getBody()).isEqualTo(${entity.variable()});
@@ -73,13 +75,13 @@ class ${entity.name()}ApiTests {
   @Test
   void anUnknown${entity.name()}IsNotFound() {
     ResponseEntity<String> found =
-        http.getForEntity("${path}/{id}", String.class, ${entity.unknownId()});
+        http.getForEntity("${path}/{id}", String.class, ${tests.unknownId()});
 
     assertThat(found.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
 
   @Test
-  void updates${entity.article()}${entity.name()}() {
+  void updates${tests.article()}${entity.name()}() {
     ${dto} ${entity.variable()} = create();
     ${dto} dto = otherDto();
 
@@ -95,12 +97,12 @@ class ${entity.name()}ApiTests {
     assertThat(updated.getBody().${entity.idField()}()).isEqualTo(${entity.variable()}.${entity.idField()}());
     assertThat(updated.getBody())
         .usingRecursiveComparison()
-        .ignoringFields(${entity.ignoredFields(true)})
+        .ignoringFields(${tests.ignoredFields(true)})
         .isEqualTo(dto);
   }
 
   @Test
-  void lists${entity.pluralType()}() {
+  void lists${tests.pluralType()}() {
     ${dto} ${entity.variable()} = create();
 
     ResponseEntity<JsonNode> list = http.getForEntity("${path}", JsonNode.class);
@@ -110,7 +112,7 @@ class ${entity.name()}ApiTests {
   }
 
   @Test
-  void deletes${entity.article()}${entity.name()}() {
+  void deletes${tests.article()}${entity.name()}() {
     ${dto} ${entity.variable()} = create();
 
     ResponseEntity<Void> deleted =
@@ -121,11 +123,11 @@ class ${entity.name()}ApiTests {
     assertThat(deleted.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     assertThat(found.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
-  @if(entity.requiresValues())<%-- keeps the blank line below --%>
+  @if(tests.requiresValues())<%-- keeps the blank line below --%>
 
   @Test
-  void refuses${entity.article()}${entity.name()}WithoutItsRequiredValues() {
-    ${dto} empty = new ${dto}(${String.join(", ", entity.emptyDtoArguments())});
+  void refuses${tests.article()}${entity.name()}WithoutItsRequiredValues() {
+    ${dto} empty = new ${dto}(${String.join(", ", tests.emptyDtoArguments())});
 
     ResponseEntity<String> created = http.postForEntity("${path}", empty, String.class);
 
@@ -133,27 +135,27 @@ class ${entity.name()}ApiTests {
   }
   @endif<%-- keeps the blank line below --%>
 
-  /** ${entity.article()} ${entity.variable()} created through the API, with the first sample values. */
+  /** ${tests.article()} ${entity.variable()} created through the API, with the first sample values. */
   private ${dto} create() {
     return http.postForObject("${path}", dto(), ${dto}.class);
   }
 
-  /** ${entity.article()} ${entity.variable()} as the API takes it, with the first sample values. */
+  /** ${tests.article()} ${entity.variable()} as the API takes it, with the first sample values. */
   private ${dto} dto() {
     return new ${dto}(
-        @for(var argument : ForSupport.of(entity.dtoSamples(1)))
+        @for(var argument : ForSupport.of(tests.dtoSamples(1)))
         ${argument.get()}${argument.isLast() ? ");" : ","}
         @endfor
   }
 
-  /** ${entity.article()} ${entity.variable()} as the API takes it, with the second sample values. */
+  /** ${tests.article()} ${entity.variable()} as the API takes it, with the second sample values. */
   private ${dto} otherDto() {
     return new ${dto}(
-        @for(var argument : ForSupport.of(entity.dtoSamples(2)))
+        @for(var argument : ForSupport.of(tests.dtoSamples(2)))
         ${argument.get()}${argument.isLast() ? ");" : ","}
         @endfor
   }
-  @for(var model : entity.requiredTargets())<%-- keeps the blank line below --%>
+  @for(var model : tests.requiredTargets())<%-- keeps the blank line below --%>
 
   private ${model.name()} new${model.name()}() {
     ${model.name()} ${model.variable()} = new ${model.name()}();
