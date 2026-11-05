@@ -29,7 +29,8 @@ import picocli.CommandLine.ScopeType;
     exitCodeList = {
       "0:Done, or nothing to change.",
       "1:The spec, the DDL, the pack or the project has a problem; the message says which.",
-      "2:The command line is wrong."
+      "2:The command line is wrong.",
+      "3:tib failed; a bug, reported with its stack trace."
     },
     subcommands = {
       InitCommand.class,

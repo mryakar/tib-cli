@@ -19,6 +19,7 @@ import java.lang.management.ManagementFactory
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import me.yakar.tib.cli.Tib.Result
+import picocli.CommandLine.IFactory
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -33,13 +34,31 @@ class TibApplicationSpec extends Specification {
     process?.destroyForcibly()
   }
 
-  def "an exception that is not tib's goes on to picocli"() {
+  def "a bug is reported with its stack trace, with exit code 3"() {
+    given: 'a command that fails with an exception that is not tib\'s'
+    CommandFactory commands = new CommandFactory(new TibVersion('1.2.3'))
+    IFactory factory = { Class cls ->
+      cls == SchemaCommand ? new SchemaCommand() {
+            @Override
+            void run() {
+              throw new IllegalStateException('a bug')
+            }
+          } : commands.create(cls)
+    } as IFactory
+    StringWriter out = new StringWriter()
+    StringWriter err = new StringWriter()
+
     when:
-    TibApplication.report(new IllegalStateException('a bug'), null, null)
+    int exitCode = TibApplication.commandLine(factory)
+        .setOut(new PrintWriter(out))
+        .setErr(new PrintWriter(err))
+        .execute('schema')
 
     then:
-    IllegalStateException e = thrown()
-    e.message == 'a bug'
+    exitCode == 3
+    out.toString() == ''
+    err.toString().startsWith('java.lang.IllegalStateException: a bug')
+    err.toString().contains('\tat ')
   }
 
   def "the application prints its version and exits with 0"() {

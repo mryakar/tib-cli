@@ -34,6 +34,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **Breaking:** a bug in tib exits with 3, with its stack trace on the standard error; it exited
+  with 1, the code of a problem of the spec, the DDL, the pack or the project, and of `tib status`
+  finding a file of tib's edited. A script that treats every code other than 0 as a failure needs
+  no change.
 - `TestcontainersConfiguration` of a new service is public, so that the tests of the entities in
   their own packages can import it. In a service scaffolded by 0.1.0, make it public before
   running `tib generate entity` again, or the new tests do not compile.
