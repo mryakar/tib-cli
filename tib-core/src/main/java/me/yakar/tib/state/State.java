@@ -143,12 +143,7 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   public static State of(Tree tree) {
     return in(tree)
         .orElseThrow(
-            () ->
-                new StateException(
-                    tree.root()
-                        + " is not a tib project: there is no "
-                        + PATH
-                        + ". Run tib init service first."));
+            () -> new StateException(tree.root() + " is not a tib project: there is no " + PATH));
   }
 
   /**
