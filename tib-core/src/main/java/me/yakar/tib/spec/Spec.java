@@ -108,24 +108,24 @@ public record Spec(
               + packageSegment()
               + "', which is a Java keyword");
     }
-    // The entities by name; the first one of a name.
+    // The entities by name, and their indexes; the first one of a name.
     Map<String, Entity> names = new HashMap<>();
+    Map<String, Integer> indexes = new HashMap<>();
     // The tables, in upper case: SQL names are the same in any case.
     Set<String> tables = new HashSet<>();
     for (int i = 0; i < entities.size(); i++) {
       Entity entity = entities.get(i);
       if (names.putIfAbsent(entity.name(), entity) != null) {
         problems.add("entities[" + i + "].name", "'" + entity.name() + "' is already an entity");
-      } else if (!tables.add(entity.table().toUpperCase(Locale.ROOT))) {
-        problems.add("entities[" + i + "].table", "'" + entity.table() + "' is already a table");
+      } else {
+        indexes.put(entity.name(), i);
+        if (!tables.add(entity.table().toUpperCase(Locale.ROOT))) {
+          problems.add("entities[" + i + "].table", "'" + entity.table() + "' is already a table");
+        }
       }
     }
     for (int i = 0; i < entities.size(); i++) {
       entities.get(i).check(problems, "entities[" + i + "]", names);
-    }
-    Map<String, Integer> indexes = new HashMap<>();
-    for (int i = 0; i < entities.size(); i++) {
-      indexes.putIfAbsent(entities.get(i).name(), i);
     }
     int[] marks = new int[entities.size()];
     Map<String, String> cycles = new LinkedHashMap<>();
