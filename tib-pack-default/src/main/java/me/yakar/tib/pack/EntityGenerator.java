@@ -73,11 +73,12 @@ final class EntityGenerator implements Generator {
     }
     tree.once(migration(tree, entity), render("entity/migration_sql.jte", entity));
     tree.once(
-        tests + name + "RepositoryTests.java", render("entity/repository_tests_java.jte", entity));
+        tests + name + "RepositoryTests.java",
+        renderTests("entity/repository_tests_java.jte", entity));
     if (entity.layer()) {
       tree.once(
-          tests + name + "ServiceTests.java", render("entity/service_tests_java.jte", entity));
-      tree.once(tests + name + "ApiTests.java", render("entity/api_tests_java.jte", entity));
+          tests + name + "ServiceTests.java", renderTests("entity/service_tests_java.jte", entity));
+      tree.once(tests + name + "ApiTests.java", renderTests("entity/api_tests_java.jte", entity));
     }
   }
 
@@ -132,5 +133,9 @@ final class EntityGenerator implements Generator {
 
   private static String render(String template, EntityModel entity) {
     return Templates.render(template, Map.of("entity", entity));
+  }
+
+  private static String renderTests(String template, EntityModel entity) {
+    return Templates.render(template, Map.of("tests", new EntityTestsModel(entity)));
   }
 }

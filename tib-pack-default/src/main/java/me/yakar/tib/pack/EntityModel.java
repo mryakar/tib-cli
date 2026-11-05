@@ -60,6 +60,10 @@ public final class EntityModel {
     this.targets = List.copyOf(targets);
   }
 
+  Project project() {
+    return project;
+  }
+
   Entity entity() {
     return entity;
   }
@@ -151,6 +155,16 @@ public final class EntityModel {
    */
   public List<EntityModel> targets() {
     return targets;
+  }
+
+  /**
+   * The relations that are not nullable, but for one to itself, which has to be: a sample of the
+   * entity sets them to the samples of their targets.
+   */
+  public List<RelationModel> requiredRelations() {
+    return relations.stream()
+        .filter(relation -> !relation.nullable() && relation.target() != this)
+        .toList();
   }
 
   // The generated base class.
@@ -335,230 +349,6 @@ public final class EntityModel {
         : type;
   }
 
-  // The tests.
-
-  /** The article of the name, for the names of the tests: {@code A} or {@code An}. */
-  public String article() {
-    return "AEIOU".indexOf(entity.name().charAt(0)) < 0 ? "A" : "An";
-  }
-
-  /**
-   * The entities that an entity of this one needs before it is saved: the targets of its relations
-   * that are not nullable, and theirs, each after the ones it needs. A relation to itself has to be
-   * nullable, so this one is never among them.
-   */
-  public List<EntityModel> requiredTargets() {
-    List<EntityModel> targets = new ArrayList<>();
-    addRequiredTargets(targets);
-    targets.remove(this);
-    return targets;
-  }
-
-  private void addRequiredTargets(List<EntityModel> targets) {
-    for (RelationModel relation : relations) {
-      EntityModel target = relation.target();
-      if (!relation.nullable() && target != this && !targets.contains(target)) {
-        target.addRequiredTargets(targets);
-        targets.add(target);
-      }
-    }
-  }
-
-  /** The entities that an entity of this one needs, each before the ones it needs. */
-  public List<EntityModel> reversedRequiredTargets() {
-    return requiredTargets().reversed();
-  }
-
-  /** The name of the collection as a type: {@code Vehicles}. */
-  public String pluralType() {
-    return Names.property(plural());
-  }
-
-  /**
-   * The arguments of a DTO that the API takes, with the first or the second sample values: no
-   * identifier, a relation that is not nullable to the saved target in its variable, the others to
-   * none, and no audit times.
-   */
-  public List<String> dtoSamples(int variant) {
-    List<String> arguments = new ArrayList<>();
-    arguments.add("null");
-    for (FieldModel field : fields) {
-      arguments.add(field.sample(variant));
-    }
-    for (RelationModel relation : relations) {
-      arguments.add(relation.nullable() ? "null" : relation.target().variable() + ".getId()");
-    }
-    auditArguments(arguments);
-    return arguments;
-  }
-
-  /**
-   * The arguments of a DTO for the test of the service, which uses no database: the identifier
-   * {@code ID}, the first sample values, and a sample identifier for every relation.
-   */
-  public List<String> serviceDtoArguments() {
-    List<String> arguments = new ArrayList<>();
-    arguments.add("ID");
-    for (FieldModel field : fields) {
-      arguments.add(field.sample(1));
-    }
-    for (RelationModel relation : relations) {
-      arguments.add(relation.target().sampleId());
-    }
-    auditArguments(arguments);
-    return arguments;
-  }
-
-  /** The arguments of a DTO without any value. */
-  public List<String> emptyDtoArguments() {
-    return dtoComponents().stream().map(component -> "null").toList();
-  }
-
-  /** Whether a DTO without values breaks a constraint: a field or a relation is not nullable. */
-  public boolean requiresValues() {
-    return fields.stream().anyMatch(field -> !field.nullable()) || !requiredRelations().isEmpty();
-  }
-
-  /**
-   * Whether two entities with the same sample values break a constraint: a field is unique, or a
-   * one-to-one relation is not nullable.
-   */
-  public boolean unique() {
-    return fields.stream().anyMatch(field -> field.field().unique())
-        || requiredRelations().stream().anyMatch(RelationModel::oneToOne);
-  }
-
-  /** The fields of the DTO that the comparison of two of them leaves out, as Java strings. */
-  public String ignoredFields(boolean id) {
-    List<String> ignored = new ArrayList<>();
-    if (id) {
-      ignored.add(idField());
-    }
-    if (entity.audit()) {
-      ignored.add("createdAt");
-      ignored.add("updatedAt");
-    }
-    return String.join(", ", ignored.stream().map(name -> "\"" + name + "\"").toList());
-  }
-
-  /** An identifier for the tests, as Java. */
-  public String sampleId() {
-    return entity.id().type() == IdType.UUID ? FieldModel.uuid(1) : "1L";
-  }
-
-  /** An identifier that no entity has, as Java. */
-  public String unknownId() {
-    return entity.id().type() == IdType.UUID ? "UUID.randomUUID()" : "Long.MAX_VALUE";
-  }
-
-  public String repositoryTestsImports() {
-    SortedSet<String> statics = new TreeSet<>();
-    statics.add("org.assertj.core.api.Assertions.assertThat");
-    SortedSet<String> imports = sampleImports();
-    imports.add(project.basePackage() + ".TestcontainersConfiguration");
-    targetImports(imports);
-    if (!requiredTargets().isEmpty()) {
-      imports.add("org.junit.jupiter.api.BeforeEach");
-    }
-    if (unique()) {
-      statics.add("org.assertj.core.api.Assertions.assertThatThrownBy");
-      imports.add("org.springframework.dao.DataIntegrityViolationException");
-    }
-    imports.add("org.junit.jupiter.api.Test");
-    imports.add("org.springframework.beans.factory.annotation.Autowired");
-    imports.add("org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase");
-    imports.add("org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest");
-    imports.add("org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager");
-    imports.add("org.springframework.context.annotation.Import");
-    return staticImports(statics) + imports(imports);
-  }
-
-  public String serviceTestsImports() {
-    SortedSet<String> statics = new TreeSet<>();
-    statics.add("org.assertj.core.api.Assertions.assertThat");
-    statics.add("org.assertj.core.api.Assertions.assertThatThrownBy");
-    statics.add("org.mockito.ArgumentMatchers.any");
-    statics.add("org.mockito.ArgumentMatchers.eq");
-    statics.add("org.mockito.Mockito.verify");
-    statics.add("org.mockito.Mockito.when");
-    SortedSet<String> imports = typeImports();
-    for (RelationModel relation : relations) {
-      if (relation.target().entity().id().type() == IdType.UUID) {
-        imports.add("java.util.UUID");
-      }
-    }
-    imports.add("java.util.Optional");
-    imports.add("org.junit.jupiter.api.Test");
-    imports.add("org.junit.jupiter.api.extension.ExtendWith");
-    imports.add("org.mockito.InjectMocks");
-    imports.add("org.mockito.Mock");
-    imports.add("org.mockito.junit.jupiter.MockitoExtension");
-    imports.add("org.springframework.http.HttpStatus");
-    imports.add("org.springframework.web.server.ResponseStatusException");
-    return staticImports(statics) + imports(imports);
-  }
-
-  public String apiTestsImports() {
-    SortedSet<String> statics = new TreeSet<>();
-    statics.add("org.assertj.core.api.Assertions.assertThat");
-    SortedSet<String> imports = sampleImports();
-    imports.add(project.basePackage() + ".TestcontainersConfiguration");
-    targetImports(imports);
-    if (!requiredTargets().isEmpty()) {
-      imports.add("org.junit.jupiter.api.BeforeEach");
-    }
-    if (entity.id().type() == IdType.UUID) {
-      imports.add("java.util.UUID");
-    }
-    imports.add("com.fasterxml.jackson.databind.JsonNode");
-    imports.add("org.junit.jupiter.api.AfterEach");
-    imports.add("org.junit.jupiter.api.Test");
-    imports.add("org.springframework.beans.factory.annotation.Autowired");
-    imports.add("org.springframework.boot.test.context.SpringBootTest");
-    imports.add("org.springframework.boot.test.web.client.TestRestTemplate");
-    imports.add("org.springframework.context.annotation.Import");
-    imports.add("org.springframework.http.HttpEntity");
-    imports.add("org.springframework.http.HttpMethod");
-    imports.add("org.springframework.http.HttpStatus");
-    imports.add("org.springframework.http.ResponseEntity");
-    return staticImports(statics) + imports(imports);
-  }
-
-  /**
-   * The relations that are not nullable, but for one to itself, which has to be: a sample of the
-   * entity sets them to the samples of their targets.
-   */
-  public List<RelationModel> requiredRelations() {
-    return relations.stream()
-        .filter(relation -> !relation.nullable() && relation.target() != this)
-        .toList();
-  }
-
-  /** Two nulls for the audit times of a DTO, if the entity has them. */
-  private void auditArguments(List<String> arguments) {
-    if (entity.audit()) {
-      arguments.add("null");
-      arguments.add("null");
-    }
-  }
-
-  /** The imports of the sample values of this entity and of the entities it needs. */
-  private SortedSet<String> sampleImports() {
-    SortedSet<String> imports = fieldImports(fields);
-    for (EntityModel target : requiredTargets()) {
-      imports.addAll(fieldImports(target.fields));
-    }
-    return imports;
-  }
-
-  /** The imports of the entities that this one needs, and of their repositories. */
-  private void targetImports(SortedSet<String> imports) {
-    for (EntityModel target : requiredTargets()) {
-      imports.add(target.packageName() + "." + target.name());
-      imports.add(target.packageName() + "." + target.name() + "Repository");
-    }
-  }
-
   // Imports.
 
   /** The import of the identifier's type, if it needs one. */
@@ -571,14 +361,14 @@ public final class EntityModel {
   }
 
   /** The imports of the identifier's type and of the fields' types. */
-  private SortedSet<String> typeImports() {
+  SortedSet<String> typeImports() {
     SortedSet<String> imports = idImports();
     imports.addAll(fieldImports(fields));
     return imports;
   }
 
   /** The imports of the types of the fields. */
-  private static SortedSet<String> fieldImports(List<FieldModel> fields) {
+  static SortedSet<String> fieldImports(List<FieldModel> fields) {
     SortedSet<String> imports = new TreeSet<>();
     for (FieldModel field : fields) {
       switch (field.field().type()) {
@@ -603,15 +393,8 @@ public final class EntityModel {
     }
   }
 
-  /** The static import statements, and a blank line after them. */
-  private static String staticImports(SortedSet<String> imports) {
-    StringBuilder text = new StringBuilder();
-    imports.forEach(imported -> text.append("import static ").append(imported).append(";\n"));
-    return text.append('\n').toString();
-  }
-
   /** The import statements, and a blank line after them; nothing when there are none. */
-  private static String imports(SortedSet<String> imports) {
+  static String imports(SortedSet<String> imports) {
     if (imports.isEmpty()) {
       return "";
     }

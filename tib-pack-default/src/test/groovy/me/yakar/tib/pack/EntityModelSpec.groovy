@@ -21,49 +21,22 @@ import spock.lang.Specification
 
 class EntityModelSpec extends Specification {
 
-  def "the article of the name is #article: #name"() {
-    expect:
-    models("entities:\n  - name: $name\n")[name].article() == article
-
-    where:
-    name    | article
-    'Tag'   | 'A'
-    'Item'  | 'An'
-  }
-
-  def "the entities that an entity needs come once each, each after the ones it needs, without itself"() {
+  def "the relations that a sample sets are the ones that are not nullable, but for one to itself"() {
     given:
     Map<String, EntityModel> models = models('''\
       entities:
-        - name: C
         - name: B
-          relations:
-            - { kind: manyToOne, target: C, nullable: false }
-        - name: D
+        - name: C
         - name: A
           relations:
             - { kind: manyToOne, target: B, nullable: false }
             - { kind: manyToOne, target: B, field: other, nullable: false }
             - { kind: manyToOne, target: A, field: parent, nullable: false }
-            - { kind: manyToOne, target: D }
+            - { kind: manyToOne, target: C }
       '''.stripIndent())
 
     expect:
-    models.A.requiredTargets()*.name() == ['C', 'B']
-    models.A.reversedRequiredTargets()*.name() == ['B', 'C']
     models.A.requiredRelations()*.field() == ['b', 'other']
-  }
-
-  def "two entities with the same values break a constraint when #what"() {
-    expect:
-    models("entities:\n  - name: B\n  - name: A\n    $members\n").A.unique() == unique
-
-    where:
-    what                                   | members                                                                    | unique
-    'a field is unique'                    | 'fields: [{ name: code, type: String, unique: true }]'                     | true
-    'a one-to-one relation is not nullable' | 'relations: [{ kind: oneToOne, target: B, nullable: false }]'             | true
-    'a one-to-one relation is nullable'    | 'relations: [{ kind: oneToOne, target: B }]'                               | false
-    'a many-to-one relation is not nullable' | 'relations: [{ kind: manyToOne, target: B, nullable: false }]'           | false
   }
 
   def "a sample BigDecimal fits the precision and the scale of its column: #precision, #scale"() {
