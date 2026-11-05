@@ -39,7 +39,8 @@ import picocli.CommandLine.Model.CommandSpec;
       "0:Every file of tib's is as it wrote it.",
       "1:A file of tib's was edited or is missing, or the project has a problem; the message says"
           + " which.",
-      "2:The command line is wrong."
+      "2:The command line is wrong.",
+      "3:tib failed; a bug, reported with its stack trace."
     })
 public class StatusCommand implements Callable<Integer> {
 

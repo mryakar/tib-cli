@@ -25,6 +25,9 @@ import picocli.CommandLine.ParseResult;
 /** The application that the packages ship: runs the {@code tib} command and exits with its code. */
 public final class TibApplication {
 
+  /** The exit code of a bug. */
+  static final int BUG = 3;
+
   private TibApplication() {}
 
   /** The {@code tib} command, with its subcommands built by the factory. */
@@ -35,15 +38,15 @@ public final class TibApplication {
 
   /**
    * Prints the message of a failure that the user can fix, exit code 1; any other exception is a
-   * bug, which picocli reports with its stack trace.
+   * bug, printed with its stack trace, exit code 3.
    */
-  static int report(Exception e, CommandLine commandLine, ParseResult parseResult)
-      throws Exception {
+  static int report(Exception e, CommandLine commandLine, ParseResult parseResult) {
     if (e instanceof TibException) {
       commandLine.getErr().println(e.getMessage());
       return ExitCode.SOFTWARE;
     }
-    throw e;
+    e.printStackTrace(commandLine.getErr());
+    return BUG;
   }
 
   /** Runs tib; a run that fails ends the process with the exit code of the command. */
