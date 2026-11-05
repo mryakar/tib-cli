@@ -79,6 +79,19 @@ class StateSpec extends Specification {
     State.parse(snapshot, '0.1.0') == state
   }
 
+  def "the state file of every released tib is read: #version"() {
+    when:
+    State released = State.parse(StateSpec.getResource("state-${version}.yaml").text, version)
+
+    then:
+    released.tib() == version
+    released.inputs() == inputs
+
+    where:
+    version | inputs
+    '0.1.0' | []
+  }
+
   def "the state of a project is in its tree, if tib ran on it before"() {
     given:
     Tree tree = Tree.at(dir)
