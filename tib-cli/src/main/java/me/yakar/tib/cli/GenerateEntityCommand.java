@@ -60,19 +60,21 @@ public class GenerateEntityCommand implements Callable<Integer> {
     Path ddl;
   }
 
+  @Mixin private ServiceDirectory directory;
+
   @Mixin private GenerationOptions options;
 
   @Override
   public Integer call() {
-    Tree tree = options.tree();
-    State state = options.state(tree);
+    Tree tree = directory.tree();
+    State state = directory.state(tree);
     Spec project = state.spec();
     if (input.spec == null) {
       String ddl = State.Input.read(input.ddl);
       return options.generate(
           Optional.of(state),
           DdlReader.parse(ddl, project),
-          List.of(options.input(State.Input.Kind.DDL, input.ddl, ddl)),
+          List.of(State.Input.of(State.Input.Kind.DDL, tree.root(), input.ddl, ddl)),
           Pack::entity,
           tree);
     }
@@ -97,7 +99,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
     return options.generate(
         Optional.of(state),
         service,
-        List.of(options.input(State.Input.Kind.SPEC, input.spec, yaml)),
+        List.of(State.Input.of(State.Input.Kind.SPEC, tree.root(), input.spec, yaml)),
         Pack::entity,
         tree);
   }

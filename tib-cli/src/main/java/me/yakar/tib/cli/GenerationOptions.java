@@ -16,7 +16,6 @@
 package me.yakar.tib.cli;
 
 import java.io.PrintWriter;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -46,12 +45,6 @@ public final class GenerationOptions {
   private CommandSpec commandSpec;
 
   @Option(
-      names = {"-d", "--dir"},
-      paramLabel = "DIR",
-      description = "The directory of the service; the current one by default.")
-  private Path dir = Path.of(".");
-
-  @Option(
       names = "--dry-run",
       description = "Print what would be written, as a diff, and write nothing.")
   private boolean dryRun;
@@ -67,23 +60,6 @@ public final class GenerationOptions {
 
   GenerationOptions(TibVersion version) {
     this.version = version;
-  }
-
-  /** The files of the service. */
-  Tree tree() {
-    return Tree.at(dir);
-  }
-
-  /** The state file of the service, as this tib reads it. */
-  State state(Tree tree) {
-    return State.of(tree, version.version());
-  }
-
-  /**
-   * The file that the spec of the service is read from, with its content, as the state keeps it.
-   */
-  State.Input input(State.Input.Kind kind, Path file, String content) {
-    return State.Input.of(kind, dir, file, content);
   }
 
   /**
@@ -136,7 +112,8 @@ public final class GenerationOptions {
       err.println("tib writes anyway, as --allow-dirty asks.");
     }
     tree.apply();
-    out.println("Wrote " + files + (files == 1 ? " file" : " files") + " to " + tree.root() + ".");
+    out.println(
+        "Wrote " + ServiceDirectory.count(files, "file", "files") + " to " + tree.root() + ".");
     return ExitCode.OK;
   }
 

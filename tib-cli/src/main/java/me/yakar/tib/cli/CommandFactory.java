@@ -40,8 +40,8 @@ public final class CommandFactory implements IFactory {
     if (cls == GenerationOptions.class) {
       return cls.cast(new GenerationOptions(version));
     }
-    if (cls == StatusCommand.class) {
-      return cls.cast(new StatusCommand(version));
+    if (cls == ServiceDirectory.class) {
+      return cls.cast(new ServiceDirectory(version));
     }
     return CommandLine.defaultFactory().create(cls);
   }
