@@ -40,6 +40,8 @@ public final class Git {
     ProcessBuilder status =
         new ProcessBuilder(
                 git,
+                "-c",
+                "core.quotePath=false",
                 "-C",
                 directory.toString(),
                 "status",
