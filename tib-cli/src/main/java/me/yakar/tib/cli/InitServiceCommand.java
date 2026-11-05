@@ -63,6 +63,10 @@ public class InitServiceCommand implements Callable<Integer> {
   @Override
   public Integer call() {
     Tree tree = directory.tree();
+    if (tree.exists(State.PATH)) {
+      return options.refuse(
+          tree.root() + " is already a tib project: " + State.PATH + " is there.");
+    }
     Spec service;
     List<State.Input> inputs;
     if (source.spec != null) {
@@ -72,10 +76,6 @@ public class InitServiceCommand implements Callable<Integer> {
     } else {
       service = new Spec(Spec.VERSION, source.name, null, null, null).check();
       inputs = List.of();
-    }
-    if (tree.exists(State.PATH)) {
-      return options.refuse(
-          tree.root() + " is already a tib project: " + State.PATH + " is there.");
     }
     return options.generate(Optional.empty(), service, inputs, Pack::init, tree);
   }
