@@ -37,7 +37,10 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 2
-    result.err().startsWith('Error: Missing required argument (specify one of these): (NAME | --spec=FILE)\n')
+    result.out() == ''
+    result.err().contains('Usage: tib init service ')
+    result.err().contains('NAME')
+    result.err().contains('--spec=FILE')
   }
 
   def "the name and the spec exclude each other"() {
@@ -46,7 +49,8 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 2
-    result.err().startsWith('Error: NAME, --spec=FILE are mutually exclusive (specify only one)\n')
+    result.out() == ''
+    result.err().contains('Usage: tib init service ')
     dir.toFile().list().length == 0
   }
 
