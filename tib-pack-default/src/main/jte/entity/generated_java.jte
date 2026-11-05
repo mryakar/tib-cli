@@ -1,7 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.spec.Entity
 @param EntityModel entity
-// Written by tib on every run. Do not edit: your changes would be lost. Your code goes in ${entity.name()}.
 package ${entity.packageName()};
 
 ${entity.generatedImports()}/** The columns of ${entity.table()}, as the spec names them; {@link ${entity.name()}} is the entity. */

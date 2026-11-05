@@ -5,7 +5,6 @@
 !{EntityModel entity = tests.entity();}
 !{String path = entity.path();}
 !{String dto = entity.name() + "Dto";}
-// Written by tib when the entity was created; it is yours from then on.
 package ${entity.packageName()};
 
 ${tests.apiTestsImports()}/** The API of ${entity.plural()}, over HTTP, against PostgreSQL in a container. */

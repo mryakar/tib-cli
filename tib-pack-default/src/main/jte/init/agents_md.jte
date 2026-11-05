@@ -2,7 +2,6 @@
 @import me.yakar.tib.pack.DefaultPack
 @param Project project
 @param DefaultPack pack
-<!-- Written by tib when the service was created; it is yours from then on. -->
 # ${project.name()}
 
 A Spring Boot ${pack.bootVersion()} service on Java ${pack.javaVersion()}, with JPA, PostgreSQL, Flyway and Testcontainers, scaffolded by tib.

@@ -1,7 +1,6 @@
 @import me.yakar.tib.generate.Project
 @param Project project
 !{String database = project.name().replace('-', '_');}
-# Written by tib when the service was created; it is yours from then on.
 spring:
   application:
     name: ${project.name()}

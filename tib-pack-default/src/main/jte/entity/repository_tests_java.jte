@@ -2,7 +2,6 @@
 @import me.yakar.tib.pack.EntityTestsModel
 @param EntityTestsModel tests
 !{EntityModel entity = tests.entity();}
-// Written by tib when the entity was created; it is yours from then on.
 package ${entity.packageName()};
 
 ${tests.repositoryTestsImports()}/** The table of ${entity.plural()}, against PostgreSQL in a container. */

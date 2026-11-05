@@ -3,7 +3,6 @@
 @import me.yakar.tib.pack.EntityTestsModel
 @param EntityTestsModel tests
 !{EntityModel entity = tests.entity();}
-// Written by tib when the entity was created; it is yours from then on.
 package ${entity.packageName()};
 
 ${tests.serviceTestsImports()}/** The use cases of ${entity.plural()}, with the repository and the mapper mocked. */

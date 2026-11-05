@@ -1,6 +1,5 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
-// Written by tib when the entity was created; it is yours from then on.
 package ${entity.packageName()};
 
 import jakarta.persistence.Entity;

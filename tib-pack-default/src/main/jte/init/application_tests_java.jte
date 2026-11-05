@@ -1,6 +1,5 @@
 @import me.yakar.tib.generate.Project
 @param Project project
-// Written by tib when the service was created; it is yours from then on.
 package ${project.basePackage()};
 
 import org.junit.jupiter.api.Test;
