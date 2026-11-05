@@ -17,7 +17,9 @@ package me.yakar.tib.generate;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
 
@@ -37,8 +39,10 @@ public final class Generation {
    *
    * @param previous the state file of the project, if tib ran on it before
    * @param inputs the files that the spec of this run was read from
+   * @return the paths of the files that the previous state has and the new one forgot, in order:
+   *     files of the generator's that the run did not stage again; they stay on disk as they are
    */
-  public static void run(
+  public static List<String> run(
       Optional<State> previous,
       Project project,
       List<State.Input> inputs,
@@ -58,5 +62,11 @@ public final class Generation {
             project.spec(),
             tree);
     tree.own(State.PATH, next.yaml());
+    Set<String> recorded = next.files().stream().map(State.File::path).collect(Collectors.toSet());
+    return previous.stream()
+        .flatMap(state -> state.files().stream())
+        .map(State.File::path)
+        .filter(path -> !recorded.contains(path))
+        .toList();
   }
 }

@@ -41,9 +41,12 @@ class GenerationSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    Generation.run(Optional.empty(), project, [], pack, { generator }, '1.2.3', tree)
+    List<String> forgotten = Generation.run(Optional.empty(), project, [], pack, {
+      generator
+    }, '1.2.3', tree)
 
     then:
+    forgotten == []
     tree.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'Service.java']
     tree.changes()*.owner() == [Owner.GENERATOR, Owner.GENERATOR, Owner.DEVELOPER]
 
@@ -58,7 +61,7 @@ class GenerationSpec extends Specification {
     state.files()[0] == State.File.of('Generated.java', Owner.GENERATOR, 'class Generated {}\n')
   }
 
-  def "the state of a later run follows the previous one"() {
+  def "the state of a later run follows the previous one, and forgets the files of the generator's that it did not stage again"() {
     given:
     State.Input spec = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'a')
     Tree first = Tree.at(dir)
@@ -67,14 +70,16 @@ class GenerationSpec extends Specification {
 
     when:
     Tree second = Tree.at(dir)
-    Generation.run(State.in(second, '1.2.4'), project, [], pack, Pack::entity, '1.2.4', second)
+    List<String> forgotten = Generation.run(State.in(second, '1.2.4'), project, [], pack, Pack::entity, '1.2.4', second)
 
     then:
     second.changes()*.path() == ['.tib/state.yaml', 'test.txt']
     State state = State.in(second, '1.2.4').get()
     state.tib() == '1.2.4'
     state.inputs() == [spec]
-    state.files()*.path() == ['Generated.java', 'Service.java', 'test.txt']
+    state.files()*.path() == ['Service.java', 'test.txt']
+    forgotten == ['Generated.java']
+    Files.exists(dir.resolve('Generated.java'))
   }
 
   def "a file of the developer's that was removed after a run does not come back"() {

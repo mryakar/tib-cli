@@ -42,6 +42,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   with every problem it has instead of failing with a stack trace. Each problem names its value by
   the path from the root of the file, as in `files[2].owner` or `spec.entities[0].name`, the way a
   problem of a spec file does.
+- A run whose spec no longer has an entity forgets the files of tib's that it generated for that
+  entity, instead of keeping them in the state file for good. They stay on disk as they are, yours
+  to delete, and `tib status` no longer reports them.
 
 ## [0.1.0] - 2026-11-02
 
