@@ -250,9 +250,9 @@ class DefaultPackSpec extends Specification {
         expected.relativize(it).toString().replace('\\', '/')
       }.sort()
     }
-    assert files == changes*.path()
+    assert files == changes*.path() : "the files are not the snapshot's; the generated files are in $actual"
     changes.each { change ->
-      assert change.after() == Files.readString(expected.resolve(change.path())) : change.path()
+      assert change.after() == Files.readString(expected.resolve(change.path())) : "${change.path()}; the generated files are in $actual"
     }
   }
 }
