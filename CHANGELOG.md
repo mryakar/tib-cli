@@ -50,6 +50,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `<table>_<column>_idx`, as in a service read from DDL in lower case.
 - `tib` starts faster and uses less memory: `tib --version` takes about a third of the CPU time
   of 0.1.0 and 60% of its memory, and the packages are about 9 MB smaller.
+- The messages on the standard error have one shape: the problem, then what to do about it on a
+  line of its own. A problem of a state file starts with the directory of the service, and a
+  directory that is not a tib project is told to run `tib init service` first.
 
 ### Fixed
 

@@ -16,6 +16,7 @@
 package me.yakar.tib.cli;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -102,13 +103,14 @@ public final class GenerationOptions {
     List<String> uncommitted = Git.uncommitted(tree.root());
     if (!uncommitted.isEmpty()) {
       if (!allowDirty) {
-        return refuse(
-            uncommitted(tree, uncommitted)
-                + "Commit or stash them first, so that the changes of tib can be told apart, or run"
+        throw new RefusalException(
+            uncommitted(tree, uncommitted),
+            uncommitted,
+            "Commit or stash them first, so that the changes of tib can be told apart, or run"
                 + " again with --allow-dirty.");
       }
       PrintWriter err = commandSpec.commandLine().getErr();
-      err.print(uncommitted(tree, uncommitted));
+      err.println(uncommitted(tree, uncommitted));
       err.println("tib writes anyway, as --allow-dirty asks.");
     }
     tree.apply();
@@ -119,25 +121,12 @@ public final class GenerationOptions {
 
   /** The uncommitted changes of the service, a line each, the first ones of many. */
   private static String uncommitted(Tree tree, List<String> changes) {
-    StringBuilder message =
-        new StringBuilder(
-            tree.root() + " has changes that are not committed:" + System.lineSeparator());
-    changes.stream()
-        .limit(LISTED)
-        .forEach(change -> message.append("  ").append(change).append(System.lineSeparator()));
+    List<String> lines = new ArrayList<>();
+    lines.add(tree.root() + " has changes that are not committed:");
+    changes.stream().limit(LISTED).forEach(change -> lines.add("  " + change));
     if (changes.size() > LISTED) {
-      message
-          .append("  and ")
-          .append(changes.size() - LISTED)
-          .append(" more")
-          .append(System.lineSeparator());
+      lines.add("  and " + (changes.size() - LISTED) + " more");
     }
-    return message.toString();
-  }
-
-  /** Says why the command does not run. */
-  int refuse(String message) {
-    commandSpec.commandLine().getErr().println(message);
-    return ExitCode.SOFTWARE;
+    return String.join(System.lineSeparator(), lines);
   }
 }

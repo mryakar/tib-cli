@@ -59,7 +59,8 @@ class GenerateEntityCommandSpec extends Specification {
 
     then:
     result.exitCode() == 1
-    result.err() == "${dir.toAbsolutePath().normalize()} is not a tib project: there is no .tib/state.yaml\n"
+    result.err().contains('is not a tib project')
+    result.err().endsWith('\nRun tib init service first.\n')
   }
 
   def "a dry run prints the diff and writes nothing"() {
@@ -218,7 +219,7 @@ class GenerateEntityCommandSpec extends Specification {
 
     then:
     result.exitCode() == 1
-    result.err().startsWith(message)
+    result.err().startsWith("${dir.toAbsolutePath().normalize()}: $message")
     result.err().readLines().size() == 1
 
     where:

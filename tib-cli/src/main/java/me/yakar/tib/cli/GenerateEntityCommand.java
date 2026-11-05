@@ -81,7 +81,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
     String yaml = State.Input.read(source.spec);
     Spec service = SpecReader.parse(yaml);
     if (!service.service().equals(project.service())) {
-      return options.refuse(
+      throw new RefusalException(
           source.spec
               + " is the spec of "
               + service.service()
@@ -89,7 +89,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
               + project.service());
     }
     if (!service.group().equals(project.group())) {
-      return options.refuse(
+      throw new RefusalException(
           source.spec
               + " is the spec of a service in "
               + service.group()

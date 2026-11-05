@@ -64,8 +64,8 @@ public class InitServiceCommand implements Callable<Integer> {
   public Integer call() {
     Tree tree = directory.tree();
     if (tree.exists(State.PATH)) {
-      return options.refuse(
-          tree.root() + " is already a tib project: " + State.PATH + " is there.");
+      throw new RefusalException(
+          tree.root() + " is already a tib project: " + State.PATH + " is there");
     }
     Spec service;
     List<State.Input> inputs;
