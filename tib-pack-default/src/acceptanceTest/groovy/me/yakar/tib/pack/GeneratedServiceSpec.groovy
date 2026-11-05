@@ -29,8 +29,8 @@ import spock.lang.TempDir
 /**
  * The services of the example spec, of its DDL and of the corner spec of the snapshots, generated
  * and then built with Gradle, as a user would build them. Where Docker runs Linux containers, the
- * build includes the test of the service, which starts PostgreSQL in a container; elsewhere the
- * build compiles the service and its test. On Linux under CI, Docker has to be there.
+ * build includes the tests of the service, which start PostgreSQL in a container; elsewhere the
+ * build compiles the service and its tests. On Linux under CI, Docker has to be there.
  */
 class GeneratedServiceSpec extends Specification {
 
@@ -60,7 +60,7 @@ class GeneratedServiceSpec extends Specification {
     when:
     List<String> command = [GRADLEW, '-p', dir.toString(), 'build', '--console=plain', '--no-daemon']
     if (!docker) {
-      // Without its test, nothing in the build compiles the test of the service: it is asked for.
+      // With the task test left out, nothing in the build compiles the tests of the service.
       command.addAll(['testClasses', '-x', 'test'])
     }
     gradle = new ProcessBuilder(command).redirectErrorStream(true).redirectOutput(log.toFile()).start()
@@ -107,7 +107,7 @@ class GeneratedServiceSpec extends Specification {
   }
 
   /**
-   * Whether Docker runs Linux containers here: the test of the service needs one for its database.
+   * Whether Docker runs Linux containers here: the tests of the service need one for PostgreSQL.
    * Docker on a Windows runner may run Windows containers only.
    */
   private static boolean docker() {
