@@ -180,6 +180,15 @@ class StateSpec extends Specification {
     written.differences(Tree.at(dir)) == []
   }
 
+  def "a file of the developer's is not read, so one that is not UTF-8 is no difference"() {
+    given:
+    State written = new State('0.1.0', state.pack(), [], state.spec(), [State.File.of('V2__depot.sql', Owner.DEVELOPER, '-- Şube\n')])
+    Files.write(dir.resolve('V2__depot.sql'), '-- Şube\n'.getBytes('windows-1254'))
+
+    expect:
+    written.differences(Tree.at(dir)) == []
+  }
+
   def "a kind of difference is named in lower case"() {
     expect:
     Difference.Kind.values()*.toString() == ['edited', 'missing', 'removed']

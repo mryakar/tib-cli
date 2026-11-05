@@ -155,21 +155,26 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
    * The files that tib wrote and that are no longer as it wrote them, as far as that matters to
    * tib, in the order of the state: a file of the generator's that was edited or is missing, a
    * shared file that is missing, and a file of the developer's that was removed. A file of the
-   * developer's or a shared file that was edited is as it should be.
+   * developer's or a shared file that was edited is as it should be; only the files of the
+   * generator's are read.
    */
   public List<Difference> differences(Tree tree) {
     List<Difference> differences = new ArrayList<>();
     for (File file : files) {
-      Optional<String> content = tree.read(file.path());
-      if (content.isEmpty()) {
+      if (file.owner() == Owner.GENERATOR) {
+        Optional<String> content = tree.read(file.path());
+        if (content.isEmpty()) {
+          differences.add(new Difference(file.path(), Difference.Kind.MISSING));
+        } else if (!sha256(content.get()).equals(file.sha256())) {
+          differences.add(new Difference(file.path(), Difference.Kind.EDITED));
+        }
+      } else if (!tree.exists(file.path())) {
         differences.add(
             new Difference(
                 file.path(),
                 file.owner() == Owner.DEVELOPER
                     ? Difference.Kind.REMOVED
                     : Difference.Kind.MISSING));
-      } else if (file.owner() == Owner.GENERATOR && !sha256(content.get()).equals(file.sha256())) {
-        differences.add(new Difference(file.path(), Difference.Kind.EDITED));
       }
     }
     return List.copyOf(differences);
