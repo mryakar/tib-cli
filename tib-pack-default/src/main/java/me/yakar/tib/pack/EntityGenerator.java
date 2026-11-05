@@ -15,7 +15,6 @@
  */
 package me.yakar.tib.pack;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -45,12 +44,16 @@ final class EntityGenerator implements Generator {
 
   @Override
   public void generate(Project project, Tree tree) {
-    Map<String, EntityModel> models = new HashMap<>();
+    models(project).values().forEach(model -> generateEntity(model, tree));
+  }
+
+  /** The models of the entities of the project, by name, each after the entities it refers to. */
+  static Map<String, EntityModel> models(Project project) {
+    Map<String, EntityModel> models = new LinkedHashMap<>();
     for (Entity entity : ordered(project.spec().entities())) {
-      EntityModel model = new EntityModel(project, entity, models);
-      models.put(entity.name(), model);
-      generateEntity(model, tree);
+      models.put(entity.name(), new EntityModel(project, entity, models));
     }
+    return models;
   }
 
   private static void generateEntity(EntityModel entity, Tree tree) {
