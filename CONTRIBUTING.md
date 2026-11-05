@@ -9,9 +9,10 @@ tib needs JDK 21; the packages embed JDK 25, which Gradle downloads when it need
 
 | Command | What it does |
 |---|---|
-| `./gradlew build` | Formatting check, tests, the acceptance test (see Tests), coverage verification |
+| `./gradlew build` | Formatting check, tests, the acceptance test (see Tests), coverage verification, the generated documentation |
 | `./gradlew spotlessApply` | Formats the code and adds license headers |
 | `./gradlew build -PtestJavaVersion=25` | Runs the tests on another JDK (the code is still compiled for 21) |
+| `./gradlew test updateSnapshots --continue` | Replaces the snapshots under `src/test/snapshots` with what the unit tests wrote; review the change with `git diff` |
 | `./gradlew packages` | Builds the installer of your platform (`.deb` or `.msi`) and the portable zip, in `tib-cli/build/packages` |
 | `./gradlew :tib-cli:antoraContent` | Generates the command reference, the tables of the spec and its schema for the documentation |
 
@@ -21,12 +22,14 @@ Antora runs the documentation tasks of the build itself and writes the site to `
 ## Code
 
 - Format with `./gradlew spotlessApply` before committing. Java follows google-java-format; Groovy
-  tests use the same indentation; Gradle scripts follow ktfmt.
+  tests use the same indentation; Gradle scripts follow ktfmt. Spotless and google-java-format are
+  updated together, and the code that a new version formats differently changes in a commit of its
+  own.
 - Every source file starts with the Apache-2.0 license header. Spotless adds it.
 - Classes go in the package of their concept, not in packages named after a layer (`model`,
   `util`).
-- `tib-core` does not depend on Spring.
-- Look for a solution in the language and the JDK before reaching for a framework.
+- tib does not depend on Spring; look for a solution in the language and the JDK before reaching
+  for a framework.
 
 ## Tests
 
@@ -36,11 +39,13 @@ Antora runs the documentation tasks of the build itself and writes the site to `
 - Generators are tested three ways: a snapshot of the files they write, a second run that changes
   nothing, and the acceptance test, which generates three services, from the example spec, from
   its DDL and from the corner spec of the snapshots, and builds each with Gradle; where Docker runs
-  Linux containers, the build includes the service's test against PostgreSQL in a container,
-  elsewhere it compiles the service and its test.
-- An update of the Spring Boot that the default pack generates comes in a pull request of its
-  own: it also needs the snapshots under `tib-pack-default/src/test/snapshots` updated, from what
-  the test writes under `tib-pack-default/build/snapshots/test`, and the acceptance test green.
+  Linux containers, the build runs the tests of the service against PostgreSQL in a container,
+  elsewhere it compiles the service and its tests.
+- A change of a template, of the state file or of the schema of the spec changes the snapshots
+  under `src/test/snapshots` of its module: `./gradlew test updateSnapshots --continue` replaces
+  them with what the tests wrote. Review the change with `git diff`, and commit the snapshots with
+  the change that made them, in a commit of its own. An update of the Spring Boot that the default
+  pack generates comes in a pull request of its own, with the acceptance test green.
 
 ## Design rules
 
