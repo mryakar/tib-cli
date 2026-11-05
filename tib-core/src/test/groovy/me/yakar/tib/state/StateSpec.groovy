@@ -133,7 +133,7 @@ class StateSpec extends Specification {
 
     then:
     StateException e = thrown()
-    e.message == "${tree.root()} is not a tib project: there is no .tib/state.yaml. Run tib init service first."
+    e.message == "${tree.root()} is not a tib project: there is no .tib/state.yaml"
 
     when:
     tree.own(State.PATH, state.yaml())
