@@ -40,7 +40,8 @@ class StatusCommandSpec extends Specification {
     then:
     result.exitCode() == 1
     result.out() == ''
-    result.err() == "${dir.toAbsolutePath().normalize()} is not a tib project: there is no .tib/state.yaml\n"
+    result.err().contains('is not a tib project')
+    result.err().endsWith('\nRun tib init service first.\n')
   }
 
   def "a state file that a newer tib wrote is refused"() {
@@ -53,7 +54,7 @@ class StatusCommandSpec extends Specification {
     then:
     result.exitCode() == 1
     result.out() == ''
-    result.err() == '.tib/state.yaml was written by tib 1.2.3, which is newer than this tib 1.2.2; upgrade tib\n'
+    result.err() == "${dir.toAbsolutePath().normalize()}: .tib/state.yaml was written by tib 1.2.3, which is newer than this tib 1.2.2; upgrade tib\n"
   }
 
   def "a service whose files are as tib wrote them"() {
@@ -161,7 +162,7 @@ class StatusCommandSpec extends Specification {
 
     then:
     result.exitCode() == 1
-    result.err().startsWith('the state file has a problem: state: ')
+    result.err().startsWith("${dir.toAbsolutePath().normalize()}: the state file has a problem: state: ")
   }
 
   /** Scaffolds the example service and generates its entities; the spec file. */

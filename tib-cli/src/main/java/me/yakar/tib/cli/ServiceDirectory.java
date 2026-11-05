@@ -17,6 +17,7 @@ package me.yakar.tib.cli;
 
 import java.nio.file.Path;
 import me.yakar.tib.state.State;
+import me.yakar.tib.state.StateException;
 import me.yakar.tib.tree.Tree;
 import picocli.CommandLine.Option;
 
@@ -40,9 +41,19 @@ final class ServiceDirectory {
     return Tree.at(dir);
   }
 
-  /** The state file of the service in the tree, as this tib reads it. */
+  /**
+   * The state file of the service in the tree, as this tib reads it. A problem of the state file
+   * names the service it is in; a directory without one is told how to start a project.
+   */
   State state(Tree tree) {
-    return State.of(tree, version.version());
+    try {
+      return State.of(tree, version.version());
+    } catch (StateException e) {
+      if (tree.exists(State.PATH)) {
+        throw new RefusalException(tree.root() + ": " + e.getMessage(), e.problems());
+      }
+      throw new RefusalException(e.getMessage(), e.problems(), "Run tib init service first.");
+    }
   }
 
   /** The count with the word that fits it, as in {@code 1 file} or {@code 2 files}. */

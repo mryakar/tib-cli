@@ -85,7 +85,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 1
-    result.err() == "${dir.toAbsolutePath().normalize()} is already a tib project: .tib/state.yaml is there.\n"
+    result.err() == "${dir.toAbsolutePath().normalize()} is already a tib project: .tib/state.yaml is there\n"
 
     when: 'the spec has a problem too'
     Result broken = tib.run('init', 'service', '--spec', Files.writeString(dir.resolve('spec.yaml'), 'tib: 2\n').toString(), '-d', dir.toString())
