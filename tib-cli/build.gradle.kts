@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// The command line: picocli commands that Spring Boot runs, and the application that the packages
-// ship. Its Spring Boot version is the CLI's own runtime, not the one of the projects it generates.
+// The command line: the picocli commands, and the application that the packages ship.
 import me.yakar.tib.gradle.JPackage
 import me.yakar.tib.gradle.JPackageImage
 import me.yakar.tib.gradle.JPackageInstaller
@@ -26,11 +25,8 @@ plugins { id("tib.java-conventions") }
 description = "tib command line"
 
 dependencies {
-  implementation(platform(libs.spring.boot.dependencies))
   implementation(project(":tib-core"))
-  implementation(libs.spring.boot.starter)
   implementation(libs.picocli)
-  implementation(libs.picocli.spring.boot.starter)
   runtimeOnly(project(":tib-pack-default"))
 }
 
@@ -40,7 +36,7 @@ val projectVersion = version.toString()
 tasks.processResources {
   val version = projectVersion
   inputs.property("version", version)
-  filesMatching("application.properties") { expand("version" to version) }
+  filesMatching("**/version.properties") { expand("version" to version) }
 }
 
 // The application test starts the CLI in a JVM of its own and compares its output with the version
@@ -205,11 +201,7 @@ val docs =
     runtimeClasspath += output + compileClasspath
   }
 
-// The tests build the commands with the factory of the documentation generator.
-dependencies {
-  "docsImplementation"(libs.picocli.codegen)
-  testImplementation(docs.output)
-}
+dependencies { "docsImplementation"(libs.picocli.codegen) }
 
 val commandReference =
   tasks.register<JavaExec>("commandReference") {
@@ -223,7 +215,7 @@ val commandReference =
       CommandLineArgumentProvider {
         listOf(
           "--outdir=${pages.get().asFile.absolutePath}",
-          "--factory=me.yakar.tib.cli.docs.CommandFactory",
+          "--factory=me.yakar.tib.cli.CommandFactory",
           "--force",
           "me.yakar.tib.cli.TibCommand",
         )

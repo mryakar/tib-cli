@@ -65,7 +65,7 @@ public final class GenerationOptions {
 
   private final TibVersion version;
 
-  public GenerationOptions(TibVersion version) {
+  GenerationOptions(TibVersion version) {
     this.version = version;
   }
 

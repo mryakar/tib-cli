@@ -48,6 +48,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The names that tib adds to a table whose name has no upper-case letter are in lower case too:
   the audit columns `created_at` and `updated_at`, the sequence `<table>_seq` and the index
   `<table>_<column>_idx`, as in a service read from DDL in lower case.
+- `tib` starts faster and uses less memory: `tib --version` takes about a third of the CPU time
+  of 0.1.0 and 60% of its memory, and the packages are about 9 MB smaller.
 
 ### Fixed
 

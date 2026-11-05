@@ -15,22 +15,26 @@
  */
 package me.yakar.tib.cli;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import java.util.ResourceBundle;
 import picocli.CommandLine.IVersionProvider;
 
-/** The version that {@code tib --version} prints: the one the build wrote into the application. */
-@Component
-public class TibVersion implements IVersionProvider {
+/** The version that {@code tib --version} prints, and that tib writes into the state file. */
+public final class TibVersion implements IVersionProvider {
 
   private final String version;
 
-  public TibVersion(@Value("${tib.version}") String version) {
+  TibVersion(String version) {
     this.version = version;
   }
 
+  /** The version that the build wrote into the application. */
+  static TibVersion ofBuild() {
+    return new TibVersion(
+        ResourceBundle.getBundle("me.yakar.tib.cli.version").getString("version"));
+  }
+
   /** The version, as in {@code 0.1.0}. */
-  public String version() {
+  String version() {
     return version;
   }
 

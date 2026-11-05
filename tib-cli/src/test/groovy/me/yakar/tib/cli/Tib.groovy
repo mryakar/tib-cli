@@ -15,7 +15,6 @@
  */
 package me.yakar.tib.cli
 
-import me.yakar.tib.cli.docs.CommandFactory
 import picocli.CommandLine
 
 /** Runs the tib command in this JVM, as the application does, with a version of the test's own. */
@@ -33,7 +32,7 @@ class Tib {
   Result run(String... args) {
     StringWriter out = new StringWriter()
     StringWriter err = new StringWriter()
-    int exitCode = TibApplication.commandLine(new CommandFactory(version))
+    int exitCode = TibApplication.commandLine(new CommandFactory(new TibVersion(version)))
         .setOut(new PrintWriter(out))
         .setErr(new PrintWriter(err))
         // Without colors: whether picocli would use them depends on the platform and the console.

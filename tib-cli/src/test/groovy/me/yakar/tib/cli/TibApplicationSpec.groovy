@@ -19,7 +19,6 @@ import java.lang.management.ManagementFactory
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import me.yakar.tib.cli.Tib.Result
-import me.yakar.tib.cli.docs.CommandFactory
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -34,17 +33,6 @@ class TibApplicationSpec extends Specification {
     process?.destroyForcibly()
   }
 
-  def "runs the command and keeps its exit code"() {
-    given:
-    TibApplication application = new TibApplication(new CommandFactory('1.2.3'))
-
-    when:
-    application.run('--no-such-option')
-
-    then:
-    application.exitCode == 2
-  }
-
   def "an exception that is not tib's goes on to picocli"() {
     when:
     TibApplication.report(new IllegalStateException('a bug'), null, null)
@@ -57,15 +45,6 @@ class TibApplicationSpec extends Specification {
   def "the application prints its version and exits with 0"() {
     when:
     Result result = start('--version')
-
-    then:
-    result.exitCode() == 0
-    result.out() == "tib ${System.getProperty('tib.version')}\n"
-  }
-
-  def "the arguments do not configure Spring"() {
-    when:
-    Result result = start('--spring.main.banner-mode=console', '--version')
 
     then:
     result.exitCode() == 0

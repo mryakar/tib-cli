@@ -13,41 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.yakar.tib.cli.docs;
+package me.yakar.tib.cli;
 
-import me.yakar.tib.cli.GenerationOptions;
-import me.yakar.tib.cli.StatusCommand;
-import me.yakar.tib.cli.TibVersion;
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
-/**
- * Builds the commands without Spring, for the documentation generator and the tests: what the
- * commands take from the application gets a version of its own.
- */
+/** Builds the commands of tib with the version that they print and write into the state file. */
 public final class CommandFactory implements IFactory {
 
-  private final String version;
+  private final TibVersion version;
 
-  /** With the version {@code docs}, for the documentation generator. */
+  /** With the version that the build wrote into the application. */
   public CommandFactory() {
-    this("docs");
+    this(TibVersion.ofBuild());
   }
 
-  public CommandFactory(String version) {
+  CommandFactory(TibVersion version) {
     this.version = version;
   }
 
   @Override
   public <K> K create(Class<K> cls) throws Exception {
     if (cls == TibVersion.class) {
-      return cls.cast(new TibVersion(version));
+      return cls.cast(version);
     }
     if (cls == GenerationOptions.class) {
-      return cls.cast(new GenerationOptions(new TibVersion(version)));
+      return cls.cast(new GenerationOptions(version));
     }
     if (cls == StatusCommand.class) {
-      return cls.cast(new StatusCommand(new TibVersion(version)));
+      return cls.cast(new StatusCommand(version));
     }
     return CommandLine.defaultFactory().create(cls);
   }
