@@ -49,6 +49,7 @@ public final class Tree {
   private final Path root;
   private final SortedMap<String, Change> changes = new TreeMap<>();
   private final SortedSet<String> writtenBefore = new TreeSet<>();
+  private final SortedSet<String> owned = new TreeSet<>();
 
   private Tree(Path root) {
     this.root = root;
@@ -101,7 +102,17 @@ public final class Tree {
 
   /** Stages a file that the generator owns, whatever is there. */
   public void own(String path, String content) {
-    stage(key(path), content, Owner.GENERATOR);
+    String key = key(path);
+    owned.add(key);
+    stage(key, content, Owner.GENERATOR);
+  }
+
+  /**
+   * The paths of the files that the generator owns and that were staged in this tree, in order,
+   * whether that changed them or not.
+   */
+  public List<String> owned() {
+    return List.copyOf(owned);
   }
 
   /**

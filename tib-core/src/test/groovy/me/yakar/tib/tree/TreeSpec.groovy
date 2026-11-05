@@ -246,6 +246,21 @@ class TreeSpec extends Specification {
     tree.changes()*.path() == ['Generated.java', 'src/Controller.java']
   }
 
+  def "the files that the generator owns are the ones staged for it, changed or not"() {
+    given:
+    Files.writeString(project.resolve('Same.java'), 'class Same {}\n')
+    Tree tree = Tree.at(project)
+
+    when:
+    tree.own('./Same.java', 'class Same {}\n')
+    tree.own('New.java', 'class New {}\n')
+    tree.once('Mine.java', 'class Mine {}\n')
+
+    then:
+    tree.changes()*.path() == ['Mine.java', 'New.java']
+    tree.owned() == ['New.java', 'Same.java']
+  }
+
   def "lists the files under a directory that tib wrote before, there or not, in order"() {
     given:
     Files.createDirectories(project.resolve('db/migration'))
