@@ -22,12 +22,10 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build the site
+  site:
+    name: Build the documentation
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    # The environment that holds the key which signs the APT repository, for main and the tags.
-    environment: apt
     steps:
       # Always main, whatever triggered the run, with the tags for the versions of the site.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -53,6 +51,31 @@ jobs:
         run: |
           npm ci
           npx antora --clean --to-dir "$GITHUB_WORKSPACE/site" --stacktrace antora-playbook.yml
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: site
+          path: site
+          if-no-files-found: error
+          retention-days: 1
+
+  # A separate job for the key that signs the APT repository: no Gradle, npm or Antora runs where
+  # the key is.
+  apt:
+    name: Build the APT repository
+    needs: site
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The environment that holds the key which signs the APT repository, for main and the tags.
+    environment: apt
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: site
+          path: site
       - name: Download the .deb of every release
         run: |
           mkdir -p debs
@@ -75,7 +98,7 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: build
+    needs: apt
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:
