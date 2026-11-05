@@ -56,7 +56,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    result.out().startsWith('--- /dev/null\n+++ b/.gitignore\n')
+    result.out().startsWith('--- /dev/null\n+++ b/.gitattributes\n')
     result.out().contains('+++ b/src/main/java/com/example/vehicleservice/VehicleServiceApplication.java\n')
     dir.toFile().list().length == 0
   }

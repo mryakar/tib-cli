@@ -27,6 +27,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A state file that a newer tib wrote is refused, with `.tib/state.yaml was written by tib 0.3.0,
   which is newer than this tib 0.2.0; upgrade tib`, instead of being read by an older tib and its
   older pack.
+- `tib init service` writes a `.gitattributes` that keeps the line feeds of text files on every
+  platform, so that a clone on Windows with `core.autocrlf` does not make every file of tib's
+  differ from what tib wrote. In a service scaffolded by 0.1.0, add `* text=auto eol=lf` to your
+  `.gitattributes`.
 
 ### Changed
 

@@ -29,6 +29,7 @@ class TemplatesSpec extends Specification {
     'build.gradle.kts'       | '// Mine.'
     'application.yaml'       | '# Mine.'
     '.gitignore'             | '# Mine.'
+    '.gitattributes'         | '# Mine.'
     'db/migration/V1__a.sql' | '-- Mine.'
     'AGENTS.md'              | '<!-- Mine. -->'
   }
