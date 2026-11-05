@@ -114,10 +114,26 @@ class GenerationOptionsSpec extends Specification {
     git('commit', '-q', '-m', 'service')
   }
 
-  /** Runs git in the service, without the signing or the identity of the machine. */
+  /**
+   * Runs git in the service, without the signing, the identity or the line endings of the machine;
+   * its output is read while it runs, so that git never waits for the test.
+   */
   private void git(String... args) {
-    Process process = (['git', '-c', 'user.name=tib', '-c', 'user.email=tib@example.com', '-c', 'commit.gpgsign=false'] + args.toList())
+    Process process = ([
+      'git',
+      '-c',
+      'user.name=tib',
+      '-c',
+      'user.email=tib@example.com',
+      '-c',
+      'commit.gpgsign=false',
+      '-c',
+      'core.autocrlf=false'
+    ] + args.toList())
     .execute(null, dir.toFile())
-    assert process.waitFor() == 0 : process.errorStream.text
+    StringBuilder out = new StringBuilder()
+    StringBuilder err = new StringBuilder()
+    process.waitForProcessOutput(out, err)
+    assert process.exitValue() == 0 : err
   }
 }
