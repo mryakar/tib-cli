@@ -132,6 +132,19 @@ class ${entity.name()}ApiTests {
 
     assertThat(created.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
+  @endif
+  @if(tests.unique())<%-- keeps the blank line below --%>
+
+  @Test
+  void refuses${tests.article()}${entity.name()}WhoseUniqueValuesAreTaken() {
+    create();
+
+    ResponseEntity<JsonNode> created = http.postForEntity("${path}", dto(), JsonNode.class);
+
+    assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(created.getBody().path("detail").asText())
+        .isEqualTo("The request breaks a constraint of the database.");
+  }
   @endif<%-- keeps the blank line below --%>
 
   /** ${tests.article()} ${entity.variable()} created through the API, with the first sample values. */

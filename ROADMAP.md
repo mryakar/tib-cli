@@ -28,8 +28,6 @@ These come after the MVP, in no fixed order:
 - Removing the files of the generator that the spec no longer produces, such as those of a removed
   entity.
 - A notice when the columns of a table changed after its migration was written.
-- An answer of 409 Conflict from the generated service when a request breaks a constraint of the
-  database.
 - A default pack on Spring Boot 4.
 - The Gradle wrapper in the generated service.
 - Forgetting an input that the service no longer uses, such as a spec file that was moved.

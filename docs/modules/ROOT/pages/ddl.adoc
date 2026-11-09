@@ -15,7 +15,7 @@ include::example$vehicle-service.sql[]
 $ tib init service vehicle-service
 $ tib generate entity --ddl vehicle-service.sql --dry-run
 $ tib generate entity --ddl vehicle-service.sql
-Wrote 23 files to /home/you/vehicle-service.
+Wrote 24 files to /home/you/vehicle-service.
 ----
 
 == What tib reads

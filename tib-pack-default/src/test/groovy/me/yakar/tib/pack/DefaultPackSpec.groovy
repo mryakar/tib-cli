@@ -63,6 +63,7 @@ class DefaultPackSpec extends Specification {
     (Owner.DEVELOPER): [
       'Written by tib when the service was created; it is yours from then on.',
       'Written by tib when the entity was created; it is yours from then on.',
+      'Written by tib with the first entity of the service; it is yours from then on.',
       'Written by tib when the entity was created. A change of the schema is a new migration.',
     ],
   ]
