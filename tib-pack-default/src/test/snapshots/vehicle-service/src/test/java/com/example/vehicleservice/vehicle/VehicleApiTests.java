@@ -119,6 +119,17 @@ class VehicleApiTests {
     assertThat(created.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
 
+  @Test
+  void refusesAVehicleWhoseUniqueValuesAreTaken() {
+    create();
+
+    ResponseEntity<JsonNode> created = http.postForEntity("/api/vehicles", dto(), JsonNode.class);
+
+    assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+    assertThat(created.getBody().path("detail").asText())
+        .isEqualTo("The request breaks a constraint of the database.");
+  }
+
   /** A vehicle created through the API, with the first sample values. */
   private VehicleDto create() {
     return http.postForObject("/api/vehicles", dto(), VehicleDto.class);

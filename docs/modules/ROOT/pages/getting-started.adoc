@@ -75,7 +75,7 @@ $ tib generate entity --spec vehicle-service.yaml --dry-run
 +++ b/.tib/state.yaml
 ...
 $ tib generate entity --spec vehicle-service.yaml
-Wrote 23 files to /home/you/vehicle-service.
+Wrote 24 files to /home/you/vehicle-service.
 ----
 
 For `Vehicle` that is, in the package `com.example.vehicleservice.vehicle`: `VehicleGenerated`,
@@ -84,10 +84,27 @@ the mapped superclass with the columns, `VehicleDto` and `VehicleMapper`, writte
 `VehicleController`, a CRUD API under `/api/vehicles`, written once; and the Flyway migration
 `V2__create_vehicle.sql`, written once and numbered after the migrations already there.
 
+The first entity with an API also brings `ConflictHandler`, in `com.example.vehicleservice`,
+written once: a request that breaks a constraint of the database, such as a plate number that
+another vehicle has or a depot that vehicles refer to, gets `409 Conflict`, as a problem detail
+that does not name the constraint:
+
+[source,json]
+----
+{
+  "type": "about:blank",
+  "title": "Conflict",
+  "status": 409,
+  "detail": "The request breaks a constraint of the database.",
+  "instance": "/api/depots/fa8b065a-0851-4b16-9985-bcb5a9cd1c9f"
+}
+----
+
 Its tests come with it, written once, in the same package under `src/test/java`:
 `VehicleRepositoryTests` saves and reads a vehicle, `VehicleApiTests` calls every operation of
 the API over HTTP, both against PostgreSQL in a container, and `VehicleServiceTests` tests the
-service with its repository and mapper mocked. They fill the entity with sample values that fit
+service with its repository and mapper mocked. For an entity with a unique value,
+`VehicleApiTests` also checks that a second one with the same value gets `409 Conflict`. They fill the entity with sample values that fit
 its columns; `./gradlew build` runs them. An entity without a service and a controller, because
 its spec turns off its DTO or its mapper, gets the repository test only.
 
@@ -159,7 +176,7 @@ tib runs with it again; one that is no longer where tib read it is not:
 [source,bash]
 ----
 $ tib status
-vehicle-service: tib 0.2.0, pack default 0.2.0, 2 entities, 32 files.
+vehicle-service: tib 0.2.0, pack default 0.2.0, 2 entities, 33 files.
 
 Read from:
 changed  vehicle-service.sql

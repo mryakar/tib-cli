@@ -106,6 +106,43 @@ entities:
     'renamed' | ['V1__a.sql']
   }
 
+  def "the first entity with an API brings the handler of conflicts, once: #entities"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new EntityGenerator().generate(new Project(SpecReader.parse("tib: 1\nservice: s\nentities:\n$entities")), tree)
+
+    then:
+    tree.changes()*.path().contains('src/main/java/com/example/s/ConflictHandler.java') == handler
+
+    where:
+    entities                                                          | handler
+    '  - name: A\n'                                                   | true
+    '  - name: A\n    options: { mapper: false }\n'                    | false
+    '  - name: A\n    options: { dto: false, mapper: false }\n  - name: B\n' | true
+  }
+
+  def "the handler of conflicts is written once: one that is there, or that tib wrote before, stays"() {
+    given:
+    Path handler = dir.resolve('src/main/java/com/example/s/ConflictHandler.java')
+    if (there) {
+      Files.createDirectories(handler.parent)
+      Files.writeString(handler, 'mine\n')
+    }
+    Tree tree = Tree.at(dir)
+    tree.writtenBefore(['src/main/java/com/example/s/ConflictHandler.java'])
+
+    when:
+    new EntityGenerator().generate(new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n')), tree)
+
+    then:
+    !tree.changes()*.path().contains('src/main/java/com/example/s/ConflictHandler.java')
+
+    where:
+    there << [true, false]
+  }
+
   /** A migration of the developer's at the path, under the migrations of the service. */
   private void writeMigration(String path) {
     Path file = dir.resolve(EntityGenerator.MIGRATIONS).resolve(path)

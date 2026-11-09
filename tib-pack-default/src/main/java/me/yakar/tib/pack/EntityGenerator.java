@@ -45,6 +45,10 @@ final class EntityGenerator implements Generator {
   private static final String ONCE =
       "Written by tib when the entity was created; it is yours from then on.";
 
+  /** The header of a file of the developer's that the service needs once it has entities. */
+  private static final String FIRST_ENTITY =
+      "Written by tib with the first entity of the service; it is yours from then on.";
+
   /** The header of a migration, which is the developer's. */
   private static final String MIGRATION =
       "Written by tib when the entity was created. A change of the schema is a new migration.";
@@ -56,7 +60,18 @@ final class EntityGenerator implements Generator {
 
   @Override
   public void generate(Project project, Tree tree) {
-    models(project).values().forEach(model -> generateEntity(model, tree));
+    Map<String, EntityModel> models = models(project);
+    models.values().forEach(model -> generateEntity(model, tree));
+    // Once, by the run that first generates an API: a service scaffolded before it gets it too.
+    if (models.values().stream().anyMatch(EntityModel::layer)) {
+      String handler = DefaultPack.MAIN + project.packagePath() + "/ConflictHandler.java";
+      once(
+          tree,
+          handler,
+          FIRST_ENTITY,
+          "entity/conflict_handler_java.jte",
+          Map.of("project", project));
+    }
   }
 
   /** The models of the entities of the project, by name, each after the entities it refers to. */
