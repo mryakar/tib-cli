@@ -7,6 +7,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `tib status` reads the spec files and the DDL that the state file names again. One that changed
+  since tib read it is listed under `Read from:` as `changed`, and makes it exit with 1 until tib
+  runs with it again; one that is no longer there is listed as `absent`, and is no problem.
+
+### Changed
+
+- `tib status` lists the files of tib's that differ under `Files:`, and says in a line of its own
+  when every file that the spec was read from is as tib read it.
+
 ## [0.2.0] - 2026-11-05
 
 ### Added

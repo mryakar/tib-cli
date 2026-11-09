@@ -32,7 +32,7 @@ These come after the MVP, in no fixed order:
   database.
 - A default pack on Spring Boot 4.
 - The Gradle wrapper in the generated service.
-- A notice from `tib status` when a spec file or the DDL changed after tib read it.
+- Forgetting an input that the service no longer uses, such as a spec file that was moved.
 - The generated Java formatted with google-java-format by the default pack, so that a formatter
   run on the service leaves the files of tib's as tib wrote them.
 - One builder of sample entities per entity, which the generated tests share.

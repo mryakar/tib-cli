@@ -4,7 +4,8 @@
 `.tib/state.yaml` is the record of what tib generated in a service: the versions of tib and of
 the pack that wrote it, the files that the spec was read from, the spec, and every file that tib
 wrote with its owner and the hash of its content. tib reads it at the start of a run and writes it
-with every run that writes files; `tib status` compares the files of the service with it. Commit
+with every run that writes files; `tib status` compares the files of the service, and those that
+the spec was read from, with it. Commit
 it with the service, and do not edit it.
 
 == An example
@@ -70,7 +71,8 @@ a service scaffolded from its name. A file read again takes the place of its ear
 |The path of the file.
 
 |`inputs[].sha256`
-|The SHA-256 of the content of the file when tib read it.
+|The SHA-256 of the content of the file when tib read it, which `tib status` compares with the
+file on disk.
 
 |`spec`
 |The spec that tib generated the files from: the spec file, or the spec of the service with the
@@ -97,6 +99,11 @@ on disk.
 Every path is relative to the directory of the service and separated by `/`, on Windows too, so
 that the file is the same on every machine. An input on another drive than the service keeps its
 whole path.
+
+`tib status` reads every input again from its path. One whose content changed since is listed as
+`changed`, and makes it exit with 1 until tib runs with it again; one that is no longer there,
+such as a spec file that was moved, is listed as `absent` and is no problem. Its record stays: tib
+does not forget an input yet.
 
 When an entity leaves the spec, the next run forgets the records of the files written on every run
 for it, so that `tib status` does not report them as missing once they are deleted. The

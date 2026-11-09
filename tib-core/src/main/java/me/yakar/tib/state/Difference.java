@@ -18,14 +18,18 @@ package me.yakar.tib.state;
 import java.util.Locale;
 
 /**
- * A file that tib wrote and that is no longer as it wrote it.
+ * A file that tib read the spec from or wrote, and that is no longer as tib read or wrote it.
  *
- * @param path the path of the file in the project
+ * @param path the path of the file in the project, or that of an input as the state keeps it
  */
 public record Difference(String path, Kind kind) {
 
-  /** How the file differs from what tib wrote. */
+  /** How the file differs from what tib read or wrote. */
   public enum Kind {
+    /** An input was edited after tib read it; the next run of tib with it reads it again. */
+    CHANGED,
+    /** An input is not where tib read it; tib does not need it. */
+    ABSENT,
     /** A file of the generator's was edited; git checkout, or the next run of tib, restores it. */
     EDITED,
     /** A file of the generator's, or a shared file, is not there; tib needs it. */

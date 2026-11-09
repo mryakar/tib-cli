@@ -18,6 +18,7 @@ package me.yakar.tib.state;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -238,6 +239,35 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
                 file.owner() == Owner.DEVELOPER
                     ? Difference.Kind.REMOVED
                     : Difference.Kind.MISSING));
+      }
+    }
+    return List.copyOf(differences);
+  }
+
+  /**
+   * The inputs that are no longer as tib read them, in the order of the state: one whose content
+   * changed, and one that is not there. The path of an input is resolved against the directory of
+   * the service; the bytes of the file are hashed, so a file that is no longer UTF-8 is a changed
+   * one.
+   *
+   * @param service the directory of the service
+   * @throws StateException when a file is there but cannot be read
+   */
+  public List<Difference> inputDifferences(Path service) {
+    List<Difference> differences = new ArrayList<>();
+    for (Input input : inputs) {
+      Path file = service.resolve(input.path());
+      byte[] content;
+      try {
+        content = Files.readAllBytes(file);
+      } catch (NoSuchFileException e) {
+        differences.add(new Difference(input.path(), Difference.Kind.ABSENT));
+        continue;
+      } catch (IOException e) {
+        throw new StateException("read", file, e);
+      }
+      if (!digest("SHA-256", content).equals(input.sha256())) {
+        differences.add(new Difference(input.path(), Difference.Kind.CHANGED));
       }
     }
     return List.copyOf(differences);
