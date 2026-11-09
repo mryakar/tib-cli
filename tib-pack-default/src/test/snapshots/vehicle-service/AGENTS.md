@@ -34,6 +34,6 @@ their tests: `XRepositoryTests` and `XApiTests` against PostgreSQL in a containe
 `XServiceTests` with the repository and the mapper mocked. Keep `XGenerated`, `XDto` and `XMapper`
 out of your formatter: tib writes them again in its own layout.
 
-`tib status` lists the files of tib's that differ from what it wrote, and exits with 1 when one
-does. tib writes only into a service whose files that git tracks are committed: commit first, or
-pass `--allow-dirty`.
+`tib status` lists the files of tib's that differ from what it wrote, and the spec files and DDL
+that changed since it read them, and exits with 1 when one does. tib writes only into a service
+whose files that git tracks are committed: commit first, or pass `--allow-dirty`.
