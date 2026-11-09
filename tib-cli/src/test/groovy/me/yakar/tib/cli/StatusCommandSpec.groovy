@@ -96,6 +96,9 @@ class StatusCommandSpec extends Specification {
     then:
     result.exitCode() == 0
     result.out().readLines().drop(1) == [
+      'Every file that tib read the spec from is as it read it.',
+      '',
+      'Files:',
       "removed  ${ENTITY}VehicleController.java",
       '',
       'A removed file was yours: tib does not write it again.'
@@ -116,6 +119,9 @@ class StatusCommandSpec extends Specification {
     result.exitCode() == 1
     result.out() == """\
       vehicle-service: tib 1.2.3, pack default ${Tib.state(dir).pack().version()}, 2 entities, ${Tib.state(dir).files().size()} files.
+      Every file that tib read the spec from is as it read it.
+
+      Files:
       removed  ${ENTITY}VehicleController.java
       missing  ${ENTITY}VehicleDto.java
       edited   ${ENTITY}VehicleGenerated.java
@@ -150,9 +156,93 @@ class StatusCommandSpec extends Specification {
     then:
     result.exitCode() == 0
     result.out().readLines().drop(1).every {
-      it == '' || it.startsWith('removed ') || it.startsWith('A removed file')
+      it in ['', 'Files:', 'Every file that tib read the spec from is as it read it.'] ||
+      it.startsWith('removed ') || it.startsWith('A removed file')
     }
     result.out().contains("removed  ${ENTITY}Vehicle.java\n")
+  }
+
+  def "a spec file that was changed is reported with exit code 1, until tib runs with it again"() {
+    given:
+    Path spec = Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), dir.resolve('vehicle-service.yaml'))
+    generated(spec.toString())
+    Files.writeString(spec, Files.readString(spec) + '# changed\n')
+
+    when:
+    Result result = tib.run('status', '-d', dir.toString())
+
+    then:
+    result.exitCode() == 1
+    result.out() == """\
+      vehicle-service: tib 1.2.3, pack default ${Tib.state(dir).pack().version()}, 2 entities, ${Tib.state(dir).files().size()} files.
+      Every file of tib's is as it wrote it.
+
+      Read from:
+      changed  vehicle-service.yaml
+
+      A changed input was edited after tib read the spec from it: the files of tib's follow it once tib runs with it again.
+      """.stripIndent()
+    result.err() == ''
+
+    when: 'tib runs with it again'
+    tib.run('generate', 'entity', '--spec', spec.toString(), '-d', dir.toString())
+    Result again = tib.run('status', '-d', dir.toString())
+
+    then:
+    again.exitCode() == 0
+    again.out().readLines().drop(1) == [
+      'Every file that tib read the spec from is as it read it.',
+      "Every file of tib's is as it wrote it."
+    ]
+  }
+
+  def "a spec file that is no longer where tib read it is reported, and is no problem"() {
+    given:
+    Path spec = Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), dir.resolve('vehicle-service.yaml'))
+    generated(spec.toString())
+    Files.delete(spec)
+    Files.writeString(dir.resolve(ENTITY + 'VehicleGenerated.java'), 'edited\n')
+
+    when:
+    Result result = tib.run('status', '-d', dir.toString())
+
+    then:
+    result.exitCode() == 1
+    result.out().readLines().drop(1) == [
+      '',
+      'Read from:',
+      'absent   vehicle-service.yaml',
+      '',
+      'Files:',
+      "edited   ${ENTITY}VehicleGenerated.java",
+      '',
+      'An absent input is no longer where tib read it: tib does not need it, and keeps its record.',
+      'An edited file is written by tib on every run: git checkout restores it, or the next run of tib replaces it, with --allow-dirty while the edit is not committed.'
+    ]
+
+    when: 'the file of tib\'s is as it wrote it again'
+    tib.run('generate', 'entity', '--spec', EXAMPLES.resolve('vehicle-service.yaml').toString(), '-d', dir.toString())
+    Result again = tib.run('status', '-d', dir.toString())
+
+    then:
+    again.exitCode() == 0
+    again.out().contains('absent   vehicle-service.yaml\n')
+  }
+
+  def "a spec file that is there but cannot be read is reported"() {
+    given:
+    Path spec = Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), dir.resolve('vehicle-service.yaml'))
+    generated(spec.toString())
+    Files.delete(spec)
+    Files.createDirectory(spec)
+
+    when:
+    Result result = tib.run('status', '-d', dir.toString())
+
+    then:
+    result.exitCode() == 1
+    result.out() == ''
+    result.err().startsWith("cannot read ${dir.toAbsolutePath().normalize().resolve('vehicle-service.yaml')}: ")
   }
 
   def "the count of entities and files is #what"() {
@@ -185,9 +275,8 @@ class StatusCommandSpec extends Specification {
     result.err().startsWith("${dir.toAbsolutePath().normalize()}: the state file has a problem: state: ")
   }
 
-  /** Scaffolds the example service and generates its entities; the spec file. */
-  private String generated() {
-    String spec = EXAMPLES.resolve('vehicle-service.yaml').toString()
+  /** Scaffolds the service of the spec and generates its entities; the spec file. */
+  private String generated(String spec = EXAMPLES.resolve('vehicle-service.yaml').toString()) {
     tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
     tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
     spec

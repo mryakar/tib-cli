@@ -16,8 +16,11 @@
 package me.yakar.tib.cli;
 
 import java.io.PrintWriter;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Stream;
 import me.yakar.tib.state.Difference;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
@@ -31,19 +34,28 @@ import picocli.CommandLine.Model.CommandSpec;
 @Command(
     name = "status",
     description = {
-      "Says which of the files that tib wrote into the service are no longer as it wrote them.",
+      "Says which of the files that tib wrote into the service are no longer as it wrote them,"
+          + " and which of the files that it read the spec from were changed since.",
       "A file of tib's that was edited or is missing is a problem: git checkout restores it, or the"
           + " next run of tib writes it again, with --allow-dirty while the change is not"
-          + " committed. A file of yours that was removed is not; tib does not write it again."
+          + " committed. A file of yours that was removed is not; tib does not write it again.",
+      "A spec file or DDL that was changed is a problem too: the files of tib's no longer follow"
+          + " it until tib runs with it again. One that is no longer where tib read it is not;"
+          + " tib does not need it."
     },
     exitCodeList = {
-      "0:Every file of tib's is as it wrote it.",
-      "1:A file of tib's was edited or is missing, or the project has a problem; the message says"
-          + " which.",
+      "0:Every file of tib's is as it wrote it, and every file that it read the spec from is as it"
+          + " read it.",
+      "1:A file of tib's was edited or is missing, a file that tib read the spec from was changed,"
+          + " or the project has a problem; the message says which.",
       "2:The command line is wrong.",
       "3:tib failed; a bug, reported with its stack trace."
     })
 public class StatusCommand implements Callable<Integer> {
+
+  /** The differences that are no problem: tib does not need the file. */
+  private static final Set<Difference.Kind> FINE =
+      EnumSet.of(Difference.Kind.ABSENT, Difference.Kind.REMOVED);
 
   @CommandLine.Spec private CommandSpec commandSpec;
 
@@ -53,10 +65,10 @@ public class StatusCommand implements Callable<Integer> {
   public Integer call() {
     Tree tree = directory.tree();
     State state = directory.state(tree);
-    List<Difference> differences = state.differences(tree);
+    List<Difference> inputs = state.inputDifferences(tree.root());
+    List<Difference> files = state.differences(tree);
     PrintWriter out = commandSpec.commandLine().getOut();
     int entities = state.spec().entities().size();
-    int files = state.files().size();
     out.println(
         state.spec().service()
             + ": tib "
@@ -68,14 +80,19 @@ public class StatusCommand implements Callable<Integer> {
             + ", "
             + ServiceDirectory.count(entities, "entity", "entities")
             + ", "
-            + ServiceDirectory.count(files, "file", "files")
+            + ServiceDirectory.count(state.files().size(), "file", "files")
             + ".");
-    if (differences.isEmpty()) {
-      out.println("Every file of tib's is as it wrote it.");
-      return ExitCode.OK;
+    if (inputs.isEmpty() && !state.inputs().isEmpty()) {
+      out.println("Every file that tib read the spec from is as it read it.");
     }
-    for (Difference difference : differences) {
-      out.printf("%-8s %s%n", difference.kind(), difference.path());
+    if (files.isEmpty()) {
+      out.println("Every file of tib's is as it wrote it.");
+    }
+    list(out, "Read from:", inputs);
+    list(out, "Files:", files);
+    List<Difference> differences = Stream.concat(inputs.stream(), files.stream()).toList();
+    if (differences.isEmpty()) {
+      return ExitCode.OK;
     }
     out.println();
     for (Difference.Kind kind : Difference.Kind.values()) {
@@ -83,13 +100,30 @@ public class StatusCommand implements Callable<Integer> {
         out.println(explanation(kind));
       }
     }
-    boolean wrong =
-        differences.stream().anyMatch(difference -> difference.kind() != Difference.Kind.REMOVED);
+    boolean wrong = differences.stream().anyMatch(difference -> !FINE.contains(difference.kind()));
     return wrong ? ExitCode.SOFTWARE : ExitCode.OK;
+  }
+
+  /** The differences under their heading, after an empty line; nothing when there are none. */
+  private static void list(PrintWriter out, String heading, List<Difference> differences) {
+    if (differences.isEmpty()) {
+      return;
+    }
+    out.println();
+    out.println(heading);
+    for (Difference difference : differences) {
+      out.printf("%-8s %s%n", difference.kind(), difference.path());
+    }
   }
 
   private static String explanation(Difference.Kind kind) {
     return switch (kind) {
+      case CHANGED ->
+          "A changed input was edited after tib read the spec from it: the files of tib's follow"
+              + " it once tib runs with it again.";
+      case ABSENT ->
+          "An absent input is no longer where tib read it: tib does not need it, and keeps its"
+              + " record.";
       case EDITED ->
           "An edited file is written by tib on every run: git checkout restores it, or the next"
               + " run of tib replaces it, with --allow-dirty while the edit is not committed.";

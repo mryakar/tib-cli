@@ -350,7 +350,73 @@ class StateSpec extends Specification {
 
   def "a kind of difference is named in lower case"() {
     expect:
-    Difference.Kind.values()*.toString() == ['edited', 'missing', 'removed']
+    Difference.Kind.values()*.toString() == ['changed', 'absent', 'edited', 'missing', 'removed']
+  }
+
+  def "the input differences are the inputs that changed or are not there, in the order of the state"() {
+    given:
+    Path service = Files.createDirectories(dir.resolve('service'))
+    Files.createDirectories(dir.resolve('db'))
+    State read = inputs(service,
+        Files.writeString(service.resolve('kept.yaml'), 'kept\n'),
+        Files.writeString(service.resolve('changed.yaml'), 'read\n'),
+        Files.writeString(dir.resolve('db/changed.sql'), 'read\n'),
+        Files.writeString(service.resolve('absent.yaml'), 'read\n'))
+    Files.writeString(service.resolve('changed.yaml'), 'changed\n')
+    Files.writeString(dir.resolve('db/changed.sql'), 'changed\n')
+    Files.delete(service.resolve('absent.yaml'))
+
+    expect:
+    read.inputDifferences(service) == [
+      new Difference('changed.yaml', Difference.Kind.CHANGED),
+      new Difference('../db/changed.sql', Difference.Kind.CHANGED),
+      new Difference('absent.yaml', Difference.Kind.ABSENT)
+    ]
+  }
+
+  def "a state whose inputs are as tib read them, or that has none, has no input differences"() {
+    given:
+    Path spec = Files.writeString(dir.resolve('spec.yaml'), 'spec\n')
+
+    expect:
+    inputs(dir, spec).inputDifferences(dir) == []
+    withInputs([]).inputDifferences(dir) == []
+  }
+
+  def "an input is hashed by its bytes, so one that is no longer UTF-8 is a changed one"() {
+    given:
+    Path ddl = Files.writeString(dir.resolve('vehicle.sql'), '-- Şube\n')
+    State read = inputs(dir, ddl)
+    Files.write(ddl, '-- Şube\n'.getBytes('windows-1254'))
+
+    expect:
+    read.inputDifferences(dir) == [new Difference('vehicle.sql', Difference.Kind.CHANGED)]
+  }
+
+  def "an input kept with its whole path is read where it is"() {
+    given:
+    Path spec = Files.writeString(dir.resolve('spec.yaml'), 'spec\n')
+    State read = withInputs([
+      new State.Input(State.Input.Kind.SPEC, spec.toAbsolutePath().toString(), State.sha256('read\n'))
+    ])
+
+    expect:
+    read.inputDifferences(Files.createDirectories(dir.resolve('service'))) == [new Difference(spec.toAbsolutePath().toString(), Difference.Kind.CHANGED)]
+  }
+
+  def "an input that is there but cannot be read is a problem"() {
+    given:
+    Path spec = Files.writeString(dir.resolve('spec.yaml'), 'spec\n')
+    State read = inputs(dir, spec)
+    Files.delete(spec)
+    Files.createDirectory(spec)
+
+    when:
+    read.inputDifferences(dir)
+
+    then:
+    StateException e = thrown()
+    e.message.startsWith("cannot read ${spec}: ")
   }
 
   def "an input is kept with its path relative to the service and the hash of its content"() {
@@ -413,5 +479,17 @@ class StateSpec extends Specification {
   private State with(Map<String, Object> values) {
     Map<String, Object> all = [tib: state.tib(), pack: state.pack(), inputs: state.inputs(), spec: state.spec(), files: state.files()] + values
     new State(all.tib as String, all.pack as State.PackRef, all.inputs as List, all.spec as Spec, all.files as List)
+  }
+
+  /** The state with the files as its inputs, each as tib reads it from the directory of the service. */
+  private State inputs(Path service, Path... files) {
+    withInputs(files.collect { Path file ->
+      State.Input.of(State.Input.Kind.SPEC, service, file, Files.readString(file))
+    })
+  }
+
+  /** The state with other inputs. */
+  private State withInputs(List<State.Input> inputs) {
+    new State(state.tib(), state.pack(), inputs, state.spec(), state.files())
   }
 }

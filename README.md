@@ -14,7 +14,8 @@ The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.
 - `--dry-run` shows the diff and writes nothing; running `tib generate entity` again changes
   nothing and prints `Nothing to change.`. Every generated file says in its first line who owns
   it: the generator or you.
-- `tib status` says which files of tib's were edited or are missing, and exits with 1 if any are.
+- `tib status` says which files of tib's were edited or are missing, and which spec files and DDL
+  changed since tib read them, and exits with 1 if any did.
 
 The [documentation](https://mryakar.github.io/tib-cli/) walks through a first service and lists
 every command; the [roadmap](ROADMAP.md) says what is done and what comes next.
