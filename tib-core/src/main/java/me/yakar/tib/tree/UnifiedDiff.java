@@ -16,7 +16,9 @@
 package me.yakar.tib.tree;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The unified diff of one file, as {@code git diff} and {@code patch} read it: three lines of
@@ -113,9 +115,43 @@ final class UnifiedDiff {
 
   /**
    * The shortest edit script from one list of lines to the other, by longest common subsequence;
-   * where a line is replaced, the old one goes before the new one.
+   * where a line is replaced, the old one goes before the new one. The lines that both lists begin
+   * and end with are left out of the table, which is as large as the two lists in between.
    */
   static List<Edit> edits(List<String> before, List<String> after) {
+    int start = 0;
+    while (start < before.size()
+        && start < after.size()
+        && before.get(start).equals(after.get(start))) {
+      start++;
+    }
+    int end = 0;
+    while (end < before.size() - start
+        && end < after.size() - start
+        && before.get(before.size() - 1 - end).equals(after.get(after.size() - 1 - end))) {
+      end++;
+    }
+    List<String> from = before.subList(start, before.size() - end);
+    List<String> to = after.subList(start, after.size() - end);
+    // A line of the common end that is also in between could pair with one there: it stays in.
+    Set<String> between = new HashSet<>(from);
+    between.addAll(to);
+    while (end > 0 && between.contains(before.get(before.size() - end))) {
+      end--;
+    }
+    from = before.subList(start, before.size() - end);
+    to = after.subList(start, after.size() - end);
+    List<Edit> edits = new ArrayList<>();
+    before.subList(0, start).forEach(line -> edits.add(new Edit(Edit.Kind.EQUAL, line)));
+    table(from, to, edits);
+    before
+        .subList(before.size() - end, before.size())
+        .forEach(line -> edits.add(new Edit(Edit.Kind.EQUAL, line)));
+    return edits;
+  }
+
+  /** Adds the edit script from one list of lines to the other, by the table of their lengths. */
+  private static void table(List<String> before, List<String> after, List<Edit> edits) {
     int n = before.size();
     int m = after.size();
     int[][] common = new int[n + 1][m + 1];
@@ -127,7 +163,6 @@ final class UnifiedDiff {
                 : Math.max(common[i + 1][j], common[i][j + 1]);
       }
     }
-    List<Edit> edits = new ArrayList<>();
     int i = 0;
     int j = 0;
     while (i < n || j < m) {
@@ -143,7 +178,6 @@ final class UnifiedDiff {
         j++;
       }
     }
-    return edits;
   }
 
   /** One line of the edit script. */

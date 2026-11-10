@@ -152,4 +152,55 @@ class UnifiedDiffSpec extends Specification {
     UnifiedDiff.edits([], ['a'])*.kind() == [UnifiedDiff.Edit.Kind.INSERT]
     UnifiedDiff.edits(['a'], [])*.kind() == [UnifiedDiff.Edit.Kind.DELETE]
   }
+
+  def "the lines that both texts begin and end with change nothing of the edits: #seed"() {
+    given: 'lines of a few kinds, so that many of them are the same'
+    Random random = new Random(seed)
+    List<String> before = (0..<random.nextInt(12)).collect { 'abc'[random.nextInt(3)] }
+    List<String> after = (0..<random.nextInt(12)).collect { 'abc'[random.nextInt(3)] }
+
+    expect: 'the edits of the table over the whole texts'
+    UnifiedDiff.edits(before, after) == table(before, after)
+
+    where:
+    seed << (1..500)
+  }
+
+  def "a long text with a change in it takes a table of the lines that changed"() {
+    given: 'a text whose table over all of its lines would not fit in memory'
+    List<String> before = (1..200_000).collect { "line $it\n" as String }
+    List<String> after = before.collect { it == 'line 100000\n' ? 'changed\n' : it }
+
+    expect:
+    UnifiedDiff.edits(before, after).findAll { it.kind() != UnifiedDiff.Edit.Kind.EQUAL } == [
+      new UnifiedDiff.Edit(UnifiedDiff.Edit.Kind.DELETE, 'line 100000\n'),
+      new UnifiedDiff.Edit(UnifiedDiff.Edit.Kind.INSERT, 'changed\n')
+    ]
+  }
+
+  /** The edits by the table of longest common subsequences over all the lines. */
+  private static List<UnifiedDiff.Edit> table(List<String> before, List<String> after) {
+    int n = before.size()
+    int m = after.size()
+    int[][] common = new int[n + 1][m + 1]
+    for (int i = n - 1; i >= 0; i--) {
+      for (int j = m - 1; j >= 0; j--) {
+        common[i][j] = before[i] == after[j] ? common[i + 1][j + 1] + 1 : Math.max(common[i + 1][j], common[i][j + 1])
+      }
+    }
+    List<UnifiedDiff.Edit> edits = []
+    int i = 0
+    int j = 0
+    while (i <n || j <m) {
+      if (i <n && j <m && before[i] == after[j]) {
+        edits << new UnifiedDiff.Edit(UnifiedDiff.Edit.Kind.EQUAL, before[i++])
+        j++
+      } else if (i <n && (j == m || common[i + 1][j] >= common[i][j + 1])) {
+        edits << new UnifiedDiff.Edit(UnifiedDiff.Edit.Kind.DELETE, before[i++])
+      } else {
+        edits << new UnifiedDiff.Edit(UnifiedDiff.Edit.Kind.INSERT, after[j++])
+      }
+    }
+    edits
+  }
 }
