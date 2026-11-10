@@ -30,6 +30,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The tests of a generated service run against PostgreSQL 18 instead of 17. A service generated
+  before keeps its own test configuration, with PostgreSQL 17, until it changes it.
 - The Java that the default pack generates is formatted with google-java-format, its imports
   sorted and the unused ones left out, so that the formatter leaves the files of tib's as tib
   wrote them; `AGENTS.md` says which version. The packages carry the compiler of the JDK that it

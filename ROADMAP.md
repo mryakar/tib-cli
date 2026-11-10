@@ -26,4 +26,3 @@ the first release.
 These come after the MVP, in no fixed order:
 
 - A notice when the columns of a table changed after its migration was written.
-- PostgreSQL 18 for the generated services.
