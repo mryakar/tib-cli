@@ -101,6 +101,9 @@ if (snapshotsDir.isDirectory) {
     gradle.startParameter.taskNames.any {
       it == "updateSnapshots" || it.endsWith(":updateSnapshots")
     }
+  // A run of some of the unit tests writes only their snapshots, and the others would be deleted.
+  val filtered =
+    gradle.startParameter.taskNames.any { it == "--tests" || it.startsWith("--tests=") }
   val actual = layout.buildDirectory.dir("snapshots/test")
   tasks.test {
     outputs.cacheIf("the snapshots are not being updated") { !updating }
@@ -114,6 +117,10 @@ if (snapshotsDir.isDirectory) {
     mustRunAfter(tasks.test)
     val expected = snapshotsDir
     doLast {
+      check(!filtered) {
+        "updateSnapshots replaces every snapshot with what the unit tests of this run wrote:" +
+          " run it without --tests"
+      }
       val written = actual.get().asFile
       check(written.isDirectory) { "$written is missing: run the unit tests first" }
       expected.deleteRecursively()
