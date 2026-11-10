@@ -220,18 +220,37 @@ class StateSpec extends Specification {
     ])
   }
 
-  def "the inputs of a run take the place of those of the same path, and the others stay"() {
+  def "the inputs of a run without a spec file take the place of those of the same path, and the others stay while they are there"() {
     given:
+    Files.writeString(dir.resolve('spec.yaml'), 'a')
+    Files.createDirectories(dir.resolve('db'))
+    Files.writeString(dir.resolve('db/one.sql'), 'b')
     State.Input spec = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'a')
     State.Input ddl = new State.Input(State.Input.Kind.DDL, 'db/one.sql', 'b')
-    State.Input changed = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'c')
+    State.Input gone = new State.Input(State.Input.Kind.DDL, 'db/gone.sql', 'e')
+    State.Input changed = new State.Input(State.Input.Kind.DDL, 'db/one.sql', 'c')
     State.Input other = new State.Input(State.Input.Kind.DDL, '../db/two.sql', 'd')
 
     when:
-    State next = State.next(Optional.of(with(inputs: [spec, ddl])), '1.2.3', state.pack(), [other, changed], state.spec(), Tree.at(dir))
+    State next = State.next(Optional.of(with(inputs: [spec, gone, ddl])), '1.2.3', state.pack(), [other, changed], state.spec(), Tree.at(dir))
 
     then:
-    next.inputs() == [changed, ddl, other]
+    next.inputs() == [spec, changed, other]
+  }
+
+  def "the inputs of a run with a spec file are the only ones"() {
+    given:
+    Files.writeString(dir.resolve('spec.yaml'), 'a')
+    Files.writeString(dir.resolve('one.sql'), 'b')
+    State.Input spec = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'a')
+    State.Input ddl = new State.Input(State.Input.Kind.DDL, 'one.sql', 'b')
+    State.Input moved = new State.Input(State.Input.Kind.SPEC, 'specs/spec.yaml', 'a')
+
+    when:
+    State next = State.next(Optional.of(with(inputs: [spec, ddl])), '1.2.3', state.pack(), [moved], state.spec(), Tree.at(dir))
+
+    then:
+    next.inputs() == [moved]
   }
 
   def "the files that a run staged take the place of their records, and the other records stay"() {

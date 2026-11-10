@@ -62,7 +62,8 @@ version of tib.
 
 |`inputs`
 |The files that the spec of the service was read from, in the order tib first read them; none for
-a service scaffolded from its name. A file read again takes the place of its earlier record.
+a service scaffolded from its name. A file read again takes the place of its earlier record. A
+spec file is the whole spec of the service, so a run with one leaves it the only input.
 
 |`inputs[].kind`
 |`spec` for a spec file, `ddl` for SQL DDL.
@@ -102,8 +103,17 @@ whole path.
 
 `tib status` reads every input again from its path. One whose content changed since is listed as
 `changed`, and makes it exit with 1 until tib runs with it again; one that is no longer there,
-such as a spec file that was moved, is listed as `absent` and is no problem. Its record stays: tib
-does not forget an input yet.
+such as a spec file that was moved, is listed as `absent` and is no problem.
+
+The next run of `tib generate entity` forgets an input that is no longer there, and a run with a
+spec file forgets every other input, as the spec now comes from that file alone. The spec keeps
+what was read from them, and the run names them on the standard error:
+
+[source,text]
+----
+tib no longer reads the spec from these files, and forgets them:
+  vehicle-service.sql
+----
 
 When the spec no longer generates a file, as when an entity leaves the spec or loses its DTO or its
 API, the next run deletes the file and its record: a file of the generator's always, and a file of

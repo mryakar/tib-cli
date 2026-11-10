@@ -126,6 +126,8 @@ class GenerateEntityCommandSpec extends Specification {
       tib no longer generates these files from the spec; they stay, as they were edited:
         ${vehicle}Vehicle.java
       Delete them if the service no longer needs them.
+      tib no longer reads the spec from these files, and forgets them:
+        ${Tib.state(dir).inputs()[0].path()}
       """.stripIndent()
 
     when:
@@ -215,10 +217,10 @@ class GenerateEntityCommandSpec extends Specification {
   def "the files that the spec was read from are recorded, each once, with their last content"() {
     given:
     tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
-    Path schema = Files.writeString(dir.resolve('schema.sql'), Files.readString(Path.of(ddl)))
-    tib.run('generate', 'entity', '--ddl', schema.toString(), '-d', dir.toString())
     Path specFile = Files.writeString(dir.resolve('spec.yaml'), 'tib: 1\nservice: vehicle-service\n')
     tib.run('generate', 'entity', '--spec', specFile.toString(), '-d', dir.toString())
+    Path schema = Files.writeString(dir.resolve('schema.sql'), Files.readString(Path.of(ddl)))
+    tib.run('generate', 'entity', '--ddl', schema.toString(), '-d', dir.toString())
 
     when: 'the DDL changes, and is read again'
     Files.writeString(schema, Files.readString(schema) + '\nCREATE TABLE DRIVER (ID BIGINT PRIMARY KEY);\n')
@@ -226,11 +228,62 @@ class GenerateEntityCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
+    result.err() == ''
     Tib.state(dir).inputs() == [
-      State.Input.of(State.Input.Kind.DDL, dir, schema, Files.readString(schema)),
-      State.Input.of(State.Input.Kind.SPEC, dir, specFile, Files.readString(specFile))
+      State.Input.of(State.Input.Kind.SPEC, dir, specFile, Files.readString(specFile)),
+      State.Input.of(State.Input.Kind.DDL, dir, schema, Files.readString(schema))
     ]
-    Tib.state(dir).inputs()*.path() == ['schema.sql', 'spec.yaml']
+    Tib.state(dir).inputs()*.path() == ['spec.yaml', 'schema.sql']
+  }
+
+  def "a spec file is the whole spec, so a run with one forgets the files that the spec was read from before"() {
+    given:
+    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    Path schema = Files.writeString(dir.resolve('schema.sql'), Files.readString(Path.of(ddl)))
+    tib.run('generate', 'entity', '--ddl', schema.toString(), '-d', dir.toString())
+    Path specFile = Files.copy(Path.of(spec), dir.resolve('spec.yaml'))
+    String forgotten = """\
+      tib no longer reads the spec from these files, and forgets them:
+        schema.sql
+      """.stripIndent()
+
+    when:
+    Result dryRun = tib.run('generate', 'entity', '--spec', specFile.toString(), '-d', dir.toString(), '--dry-run')
+
+    then:
+    dryRun.exitCode() == 0
+    dryRun.err() == forgotten
+
+    when:
+    Result result = tib.run('generate', 'entity', '--spec', specFile.toString(), '-d', dir.toString())
+
+    then:
+    result.exitCode() == 0
+    result.err() == forgotten
+    Tib.state(dir).inputs()*.path() == ['spec.yaml']
+    Tib.state(dir).spec().entities()*.name() == ['Vehicle', 'Depot']
+  }
+
+  def "a DDL file that is no longer where tib read it is forgotten by the next run"() {
+    given:
+    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    Path schema = Files.writeString(dir.resolve('schema.sql'), Files.readString(Path.of(ddl)))
+    tib.run('generate', 'entity', '--ddl', schema.toString(), '-d', dir.toString())
+    Files.createDirectories(dir.resolve('db'))
+    Path moved = Files.move(schema, dir.resolve('db/schema.sql'))
+
+    when:
+    Result result = tib.run('generate', 'entity', '--ddl', moved.toString(), '-d', dir.toString())
+
+    then: 'the entities stay'
+    result.exitCode() == 0
+    result.out() == "Wrote 1 file to ${dir.toAbsolutePath().normalize()}.\n"
+    result.err() == """\
+      tib no longer reads the spec from these files, and forgets them:
+        schema.sql
+      """.stripIndent()
+    Tib.state(dir).inputs()*.path() == ['db/schema.sql']
+    Tib.state(dir).spec().entities()*.name() == ['Depot', 'Vehicle']
   }
 
   def "#problem is reported with exit code 1"() {

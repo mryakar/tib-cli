@@ -172,7 +172,8 @@ read the spec from were changed since. A file of tib's that was edited or is mis
 and makes it exit with 1, so that a build can check for it: `git checkout` restores it, or the
 next run of tib writes it again, with `--allow-dirty` while the change is not committed. A file of
 yours that was removed stays removed. A spec file or DDL that was changed is a problem too, until
-tib runs with it again; one that is no longer where tib read it is not:
+tib runs with it again; one that is no longer where tib read it is not, and the next run of tib
+forgets it:
 
 [source,bash]
 ----

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Owner;
 import me.yakar.tib.tree.Tree;
@@ -34,6 +35,16 @@ public final class Generation {
   private Generation() {}
 
   /**
+   * What a run says beyond its changes.
+   *
+   * @param kept the paths of the files of the developer's that the spec no longer generates and
+   *     that stay, as they were edited, in order
+   * @param forgotten the paths of the inputs of the previous state that the new one forgot, in
+   *     their order
+   */
+  public record Result(List<String> kept, List<String> forgotten) {}
+
+  /**
    * Runs the generator that the function picks from the pack, deletes the files that it generated
    * from the previous spec and no longer generates, and stages the state file that {@link
    * State#next} makes of the previous one; the tree holds the result until it is applied. The
@@ -46,10 +57,8 @@ public final class Generation {
    *
    * @param previous the state file of the project, if tib ran on it before
    * @param inputs the files that the spec of this run was read from
-   * @return the paths of the files of the developer's that the spec no longer generates and that
-   *     stay, as they were edited, in order
    */
-  public static List<String> run(
+  public static Result run(
       Optional<State> previous,
       Project project,
       List<State.Input> inputs,
@@ -70,7 +79,14 @@ public final class Generation {
             project.spec(),
             tree);
     tree.own(State.PATH, next.yaml());
-    return kept;
+    Set<String> read = next.inputs().stream().map(State.Input::path).collect(Collectors.toSet());
+    List<String> forgotten =
+        previous.stream()
+            .flatMap(state -> state.inputs().stream())
+            .map(State.Input::path)
+            .filter(path -> !read.contains(path))
+            .toList();
+    return new Result(kept, forgotten);
   }
 
   /**
