@@ -40,10 +40,6 @@ tasks.processResources {
   filesMatching("**/version.properties") { expand("version" to version) }
 }
 
-// The application test starts the CLI in a JVM of its own and compares its output with the version
-// of the build.
-tasks.test { systemProperty("tib.version", projectVersion) }
-
 // Packaging. jpackage builds the installer of this platform (.deb on Linux, .msi on Windows) and
 // an application image that the portable zip wraps; each embeds a runtime of JDK 25, trimmed to
 // the modules the application uses.

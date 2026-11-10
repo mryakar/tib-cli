@@ -51,15 +51,20 @@ testing {
 val testJavaVersion =
   providers.gradleProperty("testJavaVersion").map(String::toInt).orElse(javaVersion)
 
-// The tests read the examples of the documentation. The unit tests of a module that has snapshots
-// of what it generates also read them, and write what they generate under build/snapshots/test.
+// The tests read the examples of the documentation, and know the root and the version of the build.
+// The unit tests of a module that has snapshots of what it generates also read them, and write what
+// they generate under build/snapshots/test.
+val tibVersion = version.toString()
+
 tasks.withType<Test>().configureEach {
   javaLauncher = javaToolchains.launcherFor {
     languageVersion = testJavaVersion.map(JavaLanguageVersion::of)
   }
   // The tests generate, and the default pack formats what it generates with google-java-format.
   jvmArgs(me.yakar.tib.gradle.JavacExports.JVM_OPTIONS)
-  val examples = layout.settingsDirectory.dir("docs/modules/ROOT/examples")
+  systemProperty("tib.version", tibVersion)
+  val root = layout.settingsDirectory
+  val examples = root.dir("docs/modules/ROOT/examples")
   val snapshots =
     layout.projectDirectory.dir("src/test/snapshots").takeIf {
       name == "test" && it.asFile.isDirectory
@@ -74,6 +79,7 @@ tasks.withType<Test>().configureEach {
   jvmArgumentProviders.add(
     CommandLineArgumentProvider {
       listOfNotNull(
+        "-Dtib.root=${root.asFile.absolutePath}",
         "-Dtib.examples=${examples.asFile.absolutePath}",
         snapshots?.let { "-Dtib.snapshots=${it.asFile.absolutePath}" },
         actual?.let { "-Dtib.snapshots.actual=${it.get().asFile.absolutePath}" },
