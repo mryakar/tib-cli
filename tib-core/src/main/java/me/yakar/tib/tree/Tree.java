@@ -25,7 +25,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,11 +39,11 @@ import java.util.stream.Stream;
 
 /**
  * The files of a project as a run of tib sees them: the directory on disk, with the changes of the
- * run staged on top. Nothing reaches the disk until {@link #apply()}, so a dry run reads the same
- * tree, prints its {@link #diff()} and stops. A change that leaves a file as it is stages nothing,
- * so a second run of the same generation stages nothing.
+ * run staged on top. Nothing reaches the disk until the tree is applied, so a dry run reads the
+ * same tree, prints its {@link #diff()} and stops. A change that leaves a file as it is stages
+ * nothing, so a second run of the same generation stages nothing.
  */
-public final class Tree {
+public final class Tree implements ProjectFiles {
 
   /** The attributes of a file that the file replacing it keeps, of those the file system has. */
   private static final List<String> KEPT =
@@ -53,9 +52,6 @@ public final class Tree {
   private final Path root;
   private final SortedMap<String, Change> changes = new TreeMap<>();
   private final SortedSet<String> writtenBefore = new TreeSet<>();
-  private final SortedSet<String> generated = new TreeSet<>();
-  private final SortedSet<String> deleted = new TreeSet<>();
-  private final SortedMap<String, byte[]> lasting = new TreeMap<>();
 
   private Tree(Path root) {
     this.root = root;
@@ -70,11 +66,7 @@ public final class Tree {
     return root;
   }
 
-  /**
-   * The content of the file as text, as the run sees it: staged, or else on disk.
-   *
-   * @throws TreeException when the file is not UTF-8 text
-   */
+  @Override
   public Optional<String> read(String path) {
     String key = key(path);
     Optional<byte[]> content = bytes(key);
@@ -92,14 +84,14 @@ public final class Tree {
     return change != null ? Optional.ofNullable(change.after()) : onDisk(key);
   }
 
-  /** Whether the file is there, as the run sees it; it is not read. */
+  @Override
   public boolean exists(String path) {
     String key = key(path);
     Change change = changes.get(key);
     return change != null ? !change.deletes() : Files.isRegularFile(root.resolve(key));
   }
 
-  /** The paths of the files under the directory, at any depth, on disk or staged, in order. */
+  @Override
   public List<String> list(String directory) {
     String prefix = key(directory) + "/";
     SortedSet<String> paths = new TreeSet<>();
@@ -131,78 +123,44 @@ public final class Tree {
     }
   }
 
-  /** Stages a file that the generator owns, whatever is there. */
+  @Override
   public void own(String path, String content) {
-    String key = key(path);
-    generated.add(key);
-    stage(key, utf8(content), Owner.GENERATOR, false);
+    stage(key(path), utf8(content), Owner.GENERATOR, false);
   }
 
-  /**
-   * Stages a file that the developer owns, only when there is none and tib did not write it before:
-   * a file that the developer removed stays removed.
-   */
+  @Override
   public void once(String path, String content) {
     once(path, utf8(content), false);
   }
 
-  /**
-   * Stages a file that the developer owns as {@link #once(String, String)} does, with content that
-   * need not be text, and that is written as one that can be run if it is executable, where the
-   * file system can say so.
-   */
+  @Override
   public void once(String path, byte[] content, boolean executable) {
     String key = key(path);
-    generated.add(key);
-    stageOnce(key, content, executable);
-  }
-
-  /**
-   * Stages a file that the developer owns as {@link #once} does, but one that lasts: it is not
-   * among the {@link #generated()} files, so tib does not delete it when the spec no longer
-   * generates it, as a migration that a database may have run.
-   */
-  public void lasting(String path, String content) {
-    String key = key(path);
-    lasting.put(key, utf8(content));
-    stageOnce(key, utf8(content), false);
-  }
-
-  /**
-   * The files that last, by path, with the content that the generator gave them in this tree,
-   * whether that staged them or not.
-   */
-  public SortedMap<String, byte[]> lasting() {
-    return Collections.unmodifiableSortedMap(lasting);
-  }
-
-  private void stageOnce(String key, byte[] content, boolean executable) {
     if (!writtenBefore.contains(key) && !exists(key)) {
       stage(key, content, Owner.DEVELOPER, executable);
     }
   }
 
   /**
-   * The paths of the files that the generator owns or writes once and that were staged in this
-   * tree, in order, whether that changed them or not; the files that last are not among them.
+   * Stages the file as {@link #once(String, String)} does: that it lasts is for the run to know.
    */
-  public List<String> generated() {
-    return List.copyOf(generated);
+  @Override
+  public void lasting(String path, String content) {
+    once(path, content);
   }
 
   /**
-   * Stages the deletion of a file of the owner's that tib no longer generates. A file that is not
-   * there stages nothing, and is deleted all the same.
+   * Stages the deletion of a file of the owner's, if it is there; a file that is not there has no
+   * change.
    */
   public void delete(String path, Owner owner) {
     String key = key(path);
-    deleted.add(key);
-    onDisk(key).ifPresent(before -> changes.put(key, new Change(key, before, null, owner, false)));
-  }
-
-  /** The paths of the files that were deleted in this tree, there or not, in order. */
-  public List<String> deleted() {
-    return List.copyOf(deleted);
+    Optional<byte[]> before = onDisk(key);
+    if (before.isPresent()) {
+      changes.put(key, new Change(key, before.get(), null, owner, false));
+    } else {
+      changes.remove(key);
+    }
   }
 
   /** Stages an edit of a shared file; the file has to be there. */
@@ -217,7 +175,7 @@ public final class Tree {
     paths.forEach(path -> writtenBefore.add(key(path)));
   }
 
-  /** The paths under the directory, at any depth, that tib wrote in earlier runs, there or not. */
+  @Override
   public List<String> recorded(String directory) {
     String prefix = key(directory) + "/";
     return writtenBefore.stream().filter(path -> path.startsWith(prefix)).toList();
@@ -362,8 +320,12 @@ public final class Tree {
     return text.getBytes(StandardCharsets.UTF_8);
   }
 
-  /** The path as the tree names it: relative to the root, normalized, with forward slashes. */
-  private String key(String path) {
+  /**
+   * The path as the tree names it: relative to the root, normalized, with forward slashes.
+   *
+   * @throws TreeException when the path is outside the project
+   */
+  public String key(String path) {
     Path resolved = root.resolve(path).normalize();
     if (!resolved.startsWith(root) || resolved.equals(root)) {
       throw new TreeException(path + " is outside the project");

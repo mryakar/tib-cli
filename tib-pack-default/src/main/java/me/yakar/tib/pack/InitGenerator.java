@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
-import me.yakar.tib.tree.Tree;
+import me.yakar.tib.tree.ProjectFiles;
 
 /**
  * Generates a new service: the build and its Gradle wrapper, the application, its configuration, a
@@ -49,7 +49,7 @@ final class InitGenerator implements Generator {
   }
 
   @Override
-  public void generate(Project project, Tree tree) {
+  public void generate(Project project, ProjectFiles tree) {
     String sources = DefaultPack.MAIN + project.packagePath();
     String tests = DefaultPack.TEST + project.packagePath();
     once(tree, "settings.gradle.kts", "init/settings_gradle_kts.jte", project);
@@ -83,7 +83,7 @@ final class InitGenerator implements Generator {
     once(tree, "AGENTS.md", "init/agents_md.jte", project);
   }
 
-  private void once(Tree tree, String path, String template, Project project) {
+  private void once(ProjectFiles tree, String path, String template, Project project) {
     tree.once(
         path, Templates.render(path, HEADER, template, Map.of("project", project, "pack", pack)));
   }

@@ -15,7 +15,7 @@
  */
 package me.yakar.tib.generate;
 
-import me.yakar.tib.tree.Tree;
+import me.yakar.tib.tree.ProjectFiles;
 
 /** A pack that the tests of the engine find on the class path, or build with a name of theirs. */
 public final class TestPack implements Pack {
@@ -49,7 +49,7 @@ public final class TestPack implements Pack {
 
   @Override
   public Generator init() {
-    return (Project project, Tree tree) -> tree.own("test.txt", project.name() + "\n");
+    return (Project project, ProjectFiles files) -> files.own("test.txt", project.name() + "\n");
   }
 
   @Override

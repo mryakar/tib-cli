@@ -27,7 +27,7 @@ import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Entity;
 import me.yakar.tib.spec.Relation;
-import me.yakar.tib.tree.Tree;
+import me.yakar.tib.tree.ProjectFiles;
 
 /**
  * Generates the entity layer of every entity of the spec, with its tests, each entity after the
@@ -59,7 +59,7 @@ final class EntityGenerator implements Generator {
   private static final Pattern VERSION = Pattern.compile("/V(\\d+)(?:[._]\\d+)*__");
 
   @Override
-  public void generate(Project project, Tree tree) {
+  public void generate(Project project, ProjectFiles tree) {
     Map<String, EntityModel> models = models(project);
     models.values().forEach(model -> generateEntity(model, tree));
     // Written here and not by init: only a service with an API needs it.
@@ -83,7 +83,7 @@ final class EntityGenerator implements Generator {
     return models;
   }
 
-  private static void generateEntity(EntityModel entity, Tree tree) {
+  private static void generateEntity(EntityModel entity, ProjectFiles tree) {
     String main = entity.directory() + "/" + entity.name();
     String test = entity.testDirectory() + "/" + entity.name();
     Map<String, Object> model = Map.of("entity", entity);
@@ -111,13 +111,21 @@ final class EntityGenerator implements Generator {
 
   /** Writes a file of tib's: on every run. */
   private static void own(
-      Tree tree, String path, String header, String template, Map<String, Object> parameters) {
+      ProjectFiles tree,
+      String path,
+      String header,
+      String template,
+      Map<String, Object> parameters) {
     tree.own(path, Templates.render(path, header, template, parameters));
   }
 
   /** Writes a file of the developer's: once. */
   private static void once(
-      Tree tree, String path, String header, String template, Map<String, Object> parameters) {
+      ProjectFiles tree,
+      String path,
+      String header,
+      String template,
+      Map<String, Object> parameters) {
     tree.once(path, Templates.render(path, header, template, parameters));
   }
 
@@ -126,7 +134,7 @@ final class EntityGenerator implements Generator {
    * migration the developer removed or renamed stays so; else the one there; else the next major
    * version after the versioned migrations there.
    */
-  private static String migration(Tree tree, EntityModel entity) {
+  private static String migration(ProjectFiles tree, EntityModel entity) {
     String suffix = "__create_" + entity.table().toLowerCase(Locale.ROOT) + ".sql";
     for (String migration : tree.recorded(MIGRATIONS)) {
       if (migration.endsWith(suffix)) {

@@ -248,30 +248,20 @@ class TreeSpec extends Specification {
     tree.changes()*.path() == ['Generated.java', 'src/Controller.java']
   }
 
-  def "the files that the generator owns or writes once are the ones staged for it, changed or not, and the lasting ones are not"() {
+  def "a file that lasts is staged once, as a file of the developer's"() {
     given:
-    Files.writeString(project.resolve('Same.java'), 'class Same {}\n')
     Files.writeString(project.resolve('There.sql'), 'there\n')
     Tree tree = Tree.at(project)
     tree.writtenBefore(['Before.sql'])
 
     when:
-    tree.own('./Same.java', 'class Same {}\n')
-    tree.own('New.java', 'class New {}\n')
-    tree.once('Mine.java', 'class Mine {}\n')
     tree.lasting('V1.sql', 'v1\n')
     tree.lasting('There.sql', 'other\n')
     tree.lasting('Before.sql', 'before\n')
 
-    then: 'a lasting file is written once, as a file of the developer\'s'
-    tree.changes()*.path() == ['Mine.java', 'New.java', 'V1.sql']
-    tree.changes()*.owner() == [Owner.DEVELOPER, Owner.GENERATOR, Owner.DEVELOPER]
-    tree.generated() == ['Mine.java', 'New.java', 'Same.java']
-
-    and: 'what the generator made of every file that lasts is kept, staged or not'
-    tree.lasting().collectEntries { path, content ->
-      [path, new String(content, 'UTF-8')]
-    } == ['Before.sql': 'before\n', 'There.sql': 'other\n', 'V1.sql': 'v1\n']
+    then:
+    tree.changes()*.path() == ['V1.sql']
+    tree.changes()*.owner() == [Owner.DEVELOPER]
   }
 
   def "a file that is not text is staged as bytes, and its diff says only that it differs"() {
@@ -336,6 +326,7 @@ Binary files /dev/null and b/zero.bin differ
     when:
     tree.delete('./a.txt', Owner.GENERATOR)
     tree.delete('src/B.java', Owner.DEVELOPER)
+    tree.own('gone.txt', 'staged\n')
     tree.delete('gone.txt', Owner.DEVELOPER)
     tree.own('src/C.java', 'class C {}\n')
     tree.own('other/D.java', 'class D {}\n')
@@ -344,9 +335,8 @@ Binary files /dev/null and b/zero.bin differ
     !tree.exists('a.txt')
     tree.read('a.txt').empty
     tree.list('src') == ['src/C.java']
-    tree.deleted() == ['a.txt', 'gone.txt', 'src/B.java']
 
-    and: 'a file that is not there stages nothing'
+    and: 'a file that is not there has no change'
     tree.changes()*.path() == ['a.txt', 'other/D.java', 'src/B.java', 'src/C.java']
     tree.changes()*.deletes() == [true, false, true, false]
     with(tree.changes()[0]) {

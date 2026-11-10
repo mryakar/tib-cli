@@ -20,6 +20,7 @@ import java.nio.file.Path
 import me.yakar.tib.spec.Spec
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Owner
+import me.yakar.tib.tree.ProjectFiles
 import me.yakar.tib.tree.Tree
 import me.yakar.tib.tree.TreeException
 import spock.lang.Specification
@@ -32,59 +33,69 @@ class GenerationSpec extends Specification {
 
   Pack pack = new TestPack('p', '1')
   Project project = new Project(new Spec(1, 's', null, 'p', null))
-  Generator generator = { Project p, Tree tree ->
-    tree.own('Generated.java', 'class Generated {}\n')
-    tree.once('Service.java', 'class Service {}\n')
+  Project one = new Project(new Spec(1, 'one', null, 'p', null))
+  Project two = new Project(new Spec(1, 'two', null, 'p', null))
+
+  Generator generator = { Project p, ProjectFiles files ->
+    files.own('Generated.java', 'class Generated {}\n')
+    files.once('Service.java', 'class Service {}\n')
   } as Generator
 
-  def "stages the files of the generator and the state file"() {
-    given:
-    Tree tree = Tree.at(dir)
+  /** Writes the files of a second entity only for the spec of service two. */
+  Generator entities = { Project p, ProjectFiles files ->
+    files.own('a/AGenerated.java', 'class AGenerated {}\n')
+    files.once('a/A.java', 'class A {}\n')
+    files.lasting('V1__a.sql', 'a\n')
+    if (p.name() == 'two') {
+      files.own('b/BGenerated.java', 'class BGenerated {}\n')
+      files.once('b/B.java', 'class B {}\n')
+      files.once('b/BService.java', 'class BService {}\n')
+      files.once('b/BTests.java', 'class BTests {}\n')
+      files.lasting('V2__b.sql', 'b\n')
+    }
+  } as Generator
 
+  def "the first run stages the files of the generator and the state file"() {
     when:
-    Generation.Result result = Generation.run(Optional.empty(), project, [], pack, {
-      generator
-    }, '1.2.3', tree)
+    Map ran = run(project, generator)
 
     then:
-    result == new Generation.Result([], [], [])
-    tree.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'Service.java']
-    tree.changes()*.owner() == [Owner.GENERATOR, Owner.GENERATOR, Owner.DEVELOPER]
+    ran.result == new Generation.Result([], [], [], [])
+    ran.tree.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'Service.java']
+    ran.tree.changes()*.owner() == [Owner.GENERATOR, Owner.GENERATOR, Owner.DEVELOPER]
 
     and:
-    State state = State.in(tree, '1.2.3').get()
+    State state = State.in(ran.tree, '1.2.3').get()
     state.tib() == '1.2.3'
     state.pack() == new State.PackRef('p', '1', 'Test 1')
     state.inputs() == []
     state.spec() == project.spec()
-    state.files()*.path() == ['Generated.java', 'Service.java']
-    state.files()*.owner() == [Owner.GENERATOR, Owner.DEVELOPER]
-    state.files()[0] == State.File.of('Generated.java', Owner.GENERATOR, 'class Generated {}\n')
+    state.files() == [
+      State.File.of('Generated.java', Owner.GENERATOR, 'class Generated {}\n'),
+      State.File.of('Service.java', Owner.DEVELOPER, 'class Service {}\n')
+    ]
   }
 
-  def "the state of a later run follows the previous one, and the files of the generator's that it did not stage again are deleted"() {
+  def "the state of a later run follows the previous one, and the files of the generator's that it did not generate again are deleted"() {
     given:
     State.Input spec = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'a')
     Files.writeString(dir.resolve('spec.yaml'), 'a')
-    Tree first = Tree.at(dir)
-    Generation.run(Optional.empty(), project, [spec], pack, { generator }, '1.2.3', first)
-    first.apply()
+    run(project, generator, [spec]).tree.apply(State.PATH)
 
-    when:
-    Tree second = Tree.at(dir)
-    Generation.Result result = Generation.run(State.in(second, '1.2.4'), project, [], pack, Pack::entity, '1.2.4', second)
+    when: 'another generator runs'
+    Map ran = run(project, pack.entity(), [], '1.2.4')
 
-    then: 'the file of the developer\'s that this generator does not write stays'
-    second.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'test.txt']
-    second.changes()[1].deletes()
-    State state = State.in(second, '1.2.4').get()
+    then: "the file of the developer's that this generator does not write stays"
+    ran.tree.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'test.txt']
+    ran.tree.changes()[1].deletes()
+    State state = State.in(ran.tree, '1.2.4').get()
     state.tib() == '1.2.4'
     state.inputs() == [spec]
     state.files()*.path() == ['Service.java', 'test.txt']
-    result == new Generation.Result([], [], [])
+    ran.result == new Generation.Result([], [], [], [])
 
     when:
-    second.apply()
+    ran.tree.apply(State.PATH)
 
     then:
     !Files.exists(dir.resolve('Generated.java'))
@@ -93,9 +104,8 @@ class GenerationSpec extends Specification {
 
   def "a run that cannot delete a file leaves the state as it was, and the next run goes on from there"() {
     given:
-    run(Optional.empty(), project, generator)
-    Tree tree = Tree.at(dir)
-    Generation.run(State.in(tree, '1.2.3'), project, [], pack, Pack::entity, '1.2.3', tree)
+    run(project, generator).tree.apply(State.PATH)
+    Map ran = run(project, pack.entity())
 
     and: 'the file to delete is a directory with a file in it by the time it is deleted'
     Files.delete(dir.resolve('Generated.java'))
@@ -103,7 +113,7 @@ class GenerationSpec extends Specification {
     Files.writeString(dir.resolve('Generated.java/x'), 'x')
 
     when:
-    tree.apply(State.PATH)
+    ran.tree.apply(State.PATH)
 
     then:
     thrown(TreeException)
@@ -111,40 +121,22 @@ class GenerationSpec extends Specification {
 
     when: 'what was in the way is gone'
     dir.resolve('Generated.java').toFile().deleteDir()
-    run(State.in(Tree.at(dir), '1.2.3'), project, pack.entity())
+    run(project, pack.entity()).tree.apply(State.PATH)
 
     then:
     !State.in(Tree.at(dir), '1.2.3').get().files()*.path().contains('Generated.java')
 
-    when:
-    Tree again = Tree.at(dir)
-    Generation.run(State.in(again, '1.2.3'), project, [], pack, Pack::entity, '1.2.3', again)
-
-    then:
-    again.changes() == []
+    and:
+    run(project, pack.entity()).tree.changes() == []
   }
 
   def "the files that the spec no longer generates are deleted, but for those that were edited, that last, or that another generator wrote"() {
-    given: 'a generator that writes the files of a second entity only for the spec of service two'
-    Generator entities = { Project p, Tree tree ->
-      tree.own('a/AGenerated.java', 'class AGenerated {}\n')
-      tree.once('a/A.java', 'class A {}\n')
-      tree.lasting('V1__a.sql', 'a\n')
-      if (p.name() == 'two') {
-        tree.own('b/BGenerated.java', 'class BGenerated {}\n')
-        tree.once('b/B.java', 'class B {}\n')
-        tree.once('b/BService.java', 'class BService {}\n')
-        tree.once('b/BTests.java', 'class BTests {}\n')
-        tree.lasting('V2__b.sql', 'b\n')
-      }
+    given:
+    Generator init = { Project p, ProjectFiles files ->
+      files.once('Init.java', 'class Init {}\n')
     } as Generator
-    Generator init = { Project p, Tree tree ->
-      tree.once('Init.java', 'class Init {}\n')
-    } as Generator
-    Project one = new Project(new Spec(1, 'one', null, 'p', null))
-    Project two = new Project(new Spec(1, 'two', null, 'p', null))
-    run(Optional.empty(), two, init)
-    run(State.in(Tree.at(dir), '1.2.3'), two, entities)
+    run(two, init).tree.apply(State.PATH)
+    run(two, entities).tree.apply(State.PATH)
 
     and: 'the files of the second entity, edited, removed or as they were written'
     Files.writeString(dir.resolve('b/B.java'), 'class B { int mine; }\n')
@@ -152,16 +144,13 @@ class GenerationSpec extends Specification {
     Files.delete(dir.resolve('b/BTests.java'))
 
     when: 'the second entity leaves the spec'
-    Tree tree = Tree.at(dir)
-    Generation.Result result = Generation.run(State.in(tree, '1.2.3'), one, [], pack, {
-      entities
-    }, '1.2.3', tree)
+    Map ran = run(one, entities)
 
-    then:
-    result.kept() == ['b/B.java']
-    tree.changes()*.path() == ['.tib/state.yaml', 'b/BGenerated.java', 'b/BService.java']
-    tree.changes()*.deletes() == [false, true, true]
-    State.in(tree, '1.2.3').get().files()*.path() == [
+    then: 'the file that was edited stays, and leaves the record'
+    ran.result.kept() == ['b/B.java']
+    ran.tree.changes()*.path() == ['.tib/state.yaml', 'b/BGenerated.java', 'b/BService.java']
+    ran.tree.changes()*.deletes() == [false, true, true]
+    State.in(ran.tree, '1.2.3').get().files()*.path() == [
       'Init.java',
       'V1__a.sql',
       'V2__b.sql',
@@ -170,7 +159,7 @@ class GenerationSpec extends Specification {
     ]
 
     when:
-    tree.apply()
+    ran.tree.apply(State.PATH)
 
     then:
     Files.exists(dir.resolve('b/B.java'))
@@ -178,94 +167,125 @@ class GenerationSpec extends Specification {
     Files.exists(dir.resolve('V2__b.sql'))
 
     when: 'again'
-    Tree again = Tree.at(dir)
-    result = Generation.run(State.in(again, '1.2.3'), one, [], pack, { entities }, '1.2.3', again)
+    ran = run(one, entities)
 
-    then: 'the file that stayed is named once, and has left the record'
-    result.kept() == []
-    again.changes() == []
-
-    when: 'the second entity comes back'
-    Tree back = Tree.at(dir)
-    Generation.run(State.in(back, '1.2.3'), two, [], pack, { entities }, '1.2.3', back)
-
-    then: 'the files that were deleted are written again, and the one that stayed is left as it is'
-    back.changes()*.path() == ['.tib/state.yaml', 'b/BGenerated.java', 'b/BService.java', 'b/BTests.java']
-
-    when: 'the file that stayed is gone when the second entity comes back'
-    Files.delete(dir.resolve('b/B.java'))
-    Tree gone = Tree.at(dir)
-    Generation.run(State.in(gone, '1.2.3'), two, [], pack, { entities }, '1.2.3', gone)
-
-    then: 'it is written again, as tib has no record of it'
-    gone.changes()*.path() == ['.tib/state.yaml', 'b/B.java', 'b/BGenerated.java', 'b/BService.java', 'b/BTests.java']
-    gone.read('b/B.java') == Optional.of('class B {}\n')
+    then: 'the file that stayed is named once'
+    ran.result.kept() == []
+    ran.tree.changes() == []
   }
 
-  private void run(Optional<State> previous, Project project, Generator generator, List<State.Input> inputs = []) {
-    Tree tree = Tree.at(dir)
-    Generation.run(previous, project, inputs, pack, { generator }, '1.2.3', tree)
-    tree.apply(State.PATH)
-  }
+  def "an entity that comes back gets the files that tib has no record of, and the others stay as they are"() {
+    given: 'the second entity left the spec, and two of its files stayed, as they were edited'
+    run(two, entities).tree.apply(State.PATH)
+    Files.writeString(dir.resolve('b/B.java'), 'class B { int mine; }\n')
+    Files.writeString(dir.resolve('b/BService.java'), 'class BService { int mine; }\n')
+    run(one, entities).tree.apply(State.PATH)
 
-  def "the files that last and that the spec makes otherwise, or no longer, are named, and left as they are"() {
-    given:
-    Generator lasting = { Project p, Tree tree ->
-      tree.lasting('V1.sql', p.name() == 'two' ? 'a two\n' : 'a\n')
-      tree.lasting('V0.sql', '0\n')
-      if (p.name() == 'two') {
-        tree.lasting('V2.sql', 'b\n')
-      }
-    } as Generator
-    run(Optional.empty(), new Project(new Spec(1, 'two', null, 'p', null)), lasting)
+    and: 'one of them was deleted since'
+    Files.delete(dir.resolve('b/BService.java'))
 
     when:
-    Tree tree = Tree.at(dir)
-    Generation.Result result = Generation.run(State.in(tree, '1.2.3'), new Project(new Spec(1, 'one', null, 'p', null)), [], pack, {
-      lasting
-    }, '1.2.3', tree)
+    Map ran = run(two, entities)
 
-    then: 'each a change from what the previous spec made, to what this one makes, or none'
-    result.lasting()*.path() == ['V1.sql', 'V2.sql']
-    new String(result.lasting()[0].before(), 'UTF-8') == 'a two\n'
-    new String(result.lasting()[0].after(), 'UTF-8') == 'a\n'
-    result.lasting()[1].deletes()
+    then: 'the file that is there is left alone, and the one that is gone is written'
+    ran.tree.changes()*.path() == ['.tib/state.yaml', 'b/BGenerated.java', 'b/BService.java', 'b/BTests.java']
+    ran.tree.read('b/BService.java') == Optional.of('class BService {}\n')
+    ran.tree.read('b/B.java') == Optional.of('class B { int mine; }\n')
+
+    and: 'the file that lasts kept its record, so it is not written again'
+    State.in(ran.tree, '1.2.3').get().files()*.path().contains('V2__b.sql')
+  }
+
+  def "the files that last and that the spec generates otherwise, or no longer, are named, and left as they are"() {
+    given:
+    Generator lasting = { Project p, ProjectFiles files ->
+      files.lasting('V1.sql', p.name() == 'two' ? 'a two\n' : 'a\n')
+      files.lasting('./V0.sql', '0\n')
+      if (p.name() == 'two') {
+        files.lasting('V2.sql', 'b\n')
+      }
+    } as Generator
+    run(two, lasting).tree.apply(State.PATH)
+
+    when:
+    Map ran = run(one, lasting)
+
+    then: 'from what the previous spec generated to what this one generates'
+    ran.result.lastingChanged()*.path() == ['V1.sql']
+    ran.result.lastingChanged()[0].diff() == '''\
+--- a/V1.sql
++++ b/V1.sql
+@@ -1 +1 @@
+-a two
++a
+'''
+    ran.result.lastingDropped() == ['V2.sql']
 
     and: 'nothing of them is staged'
-    tree.changes()*.path() == ['.tib/state.yaml']
+    ran.tree.changes()*.path() == ['.tib/state.yaml']
   }
 
   def "the inputs that the state forgot are named"() {
     given:
     State.Input gone = new State.Input(State.Input.Kind.DDL, 'db/gone.sql', 'a')
-    run(Optional.empty(), project, generator, [gone])
+    run(project, generator, [gone]).tree.apply(State.PATH)
 
     when:
-    Tree tree = Tree.at(dir)
-    Generation.Result result = Generation.run(State.in(tree, '1.2.3'), project, [], pack, {
-      generator
-    }, '1.2.3', tree)
+    Map ran = run(project, generator)
 
     then:
-    result.forgotten() == ['db/gone.sql']
-    State.in(tree, '1.2.3').get().inputs() == []
+    ran.result.forgotten() == ['db/gone.sql']
+    State.in(ran.tree, '1.2.3').get().inputs() == []
   }
 
   def "a file of the developer's that was removed after a run does not come back"() {
     given:
-    Tree first = Tree.at(dir)
-    Generation.run(Optional.empty(), project, [], pack, { generator }, '1.2.3', first)
-    first.apply()
+    run(project, generator).tree.apply(State.PATH)
     Files.delete(dir.resolve('Service.java'))
 
     when:
-    Tree second = Tree.at(dir)
-    Generation.run(State.in(second, '1.2.4'), project, [], pack, { generator }, '1.2.4', second)
+    Map ran = run(project, generator, [], '1.2.4')
 
     then: 'it stays on record as it was written'
-    second.changes()*.path() == ['.tib/state.yaml']
-    State state = State.in(second, '1.2.4').get()
+    ran.tree.changes()*.path() == ['.tib/state.yaml']
+    State state = State.in(ran.tree, '1.2.4').get()
     state.files()*.path() == ['Generated.java', 'Service.java']
     state.files()[1] == State.File.of('Service.java', Owner.DEVELOPER, 'class Service {}\n')
+  }
+
+  def "a generator sees the files of the project and the ones it wrote, and what tib wrote before"() {
+    given:
+    Files.writeString(dir.resolve('there.txt'), 'there\n')
+    run(two, entities).tree.apply(State.PATH)
+    List<Object> seen = []
+    Generator reader = { Project p, ProjectFiles files ->
+      files.once('lib/new.bin', [1, 2] as byte[], false)
+      seen << files.read('there.txt') << files.exists('b/B.java') << files.exists('none')
+      seen << files.list('lib') << files.recorded('a')
+    } as Generator
+
+    when:
+    run(two, reader)
+
+    then: 'the previous spec is generated too, in a tree of its own'
+    seen[0..4] == [Optional.of('there\n'), true, false, ['lib/new.bin'], ['a/A.java', 'a/AGenerated.java']]
+    seen[5..9] == seen[0..4]
+  }
+
+  /**
+   * Runs the generator on the project in the directory, as the first run when tib has no state
+   * there and as a later one otherwise, and applies nothing.
+   *
+   * @return the tree of the run, and its result
+   */
+  private Map run(Project project, Generator generator, List<State.Input> inputs = [], String version = '1.2.3') {
+    Tree tree = Tree.at(dir)
+    Optional<State> previous = State.in(tree, version)
+    [
+      tree  : tree,
+      result: previous.present
+      ? Generation.next(previous.get(), project, inputs, pack, generator, version, tree)
+      : Generation.first(project, inputs, pack, generator, version, tree)
+    ]
   }
 }

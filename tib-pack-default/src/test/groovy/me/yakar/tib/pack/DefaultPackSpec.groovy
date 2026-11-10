@@ -216,12 +216,9 @@ class DefaultPackSpec extends Specification {
     Tree first = Tree.at(dir)
     Tree second = Tree.at(other)
     [first, second].each { tree ->
-      Generation.run(Optional.empty(), new Project(spec), [], new DefaultPack(), {
-        it.init()
-      }, '0.0.0', tree)
-      Generation.run(Optional.of(State.of(tree, '0.0.0')), new Project(spec), [], new DefaultPack(), {
-        it.entity()
-      }, '0.0.0', tree)
+      DefaultPack pack = new DefaultPack()
+      Generation.first(new Project(spec), [], pack, pack.init(), '0.0.0', tree)
+      Generation.next(State.of(tree, '0.0.0'), new Project(spec), [], pack, pack.entity(), '0.0.0', tree)
     }
 
     then:

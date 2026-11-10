@@ -212,7 +212,7 @@ class StateSpec extends Specification {
     tree.once('B.java', 'class B {}\n')
 
     when:
-    State next = State.next(Optional.empty(), '1.2.3', state.pack(), state.inputs(), state.spec(), [], tree)
+    State next = State.first('1.2.3', state.pack(), state.inputs(), state.spec(), tree)
 
     then:
     next == new State('1.2.3', state.pack(), state.inputs(), state.spec(), [
@@ -233,7 +233,7 @@ class StateSpec extends Specification {
     State.Input other = new State.Input(State.Input.Kind.DDL, '../db/two.sql', 'd')
 
     when:
-    State next = State.next(Optional.of(with(inputs: [spec, gone, ddl])), '1.2.3', state.pack(), [other, changed], state.spec(), [], Tree.at(dir))
+    State next = with(inputs: [spec, gone, ddl]).next('1.2.3', state.pack(), [other, changed], state.spec(), [], Tree.at(dir))
 
     then:
     next.inputs() == [spec, changed, other]
@@ -248,7 +248,7 @@ class StateSpec extends Specification {
     State.Input moved = new State.Input(State.Input.Kind.SPEC, 'specs/spec.yaml', 'a')
 
     when:
-    State next = State.next(Optional.of(with(inputs: [spec, ddl])), '1.2.3', state.pack(), [moved], state.spec(), [], Tree.at(dir))
+    State next = with(inputs: [spec, ddl]).next('1.2.3', state.pack(), [moved], state.spec(), [], Tree.at(dir))
 
     then:
     next.inputs() == [moved]
@@ -268,7 +268,7 @@ class StateSpec extends Specification {
     tree.own('New.java', 'class New {}\n')
 
     when:
-    State next = State.next(Optional.of(previous), '1.2.4', state.pack(), [], state.spec(), [], tree)
+    State next = previous.next('1.2.4', state.pack(), [], state.spec(), [], tree)
 
     then: "a file of the developer's that tib wrote before is not staged again, and keeps its record"
     next.tib() == '1.2.4'
@@ -291,7 +291,7 @@ class StateSpec extends Specification {
     ])
 
     when:
-    State next = State.next(Optional.of(previous), '1.2.4', state.pack(), [], state.spec(), ['b/B.java', 'b/BGenerated.java'], Tree.at(dir))
+    State next = previous.next('1.2.4', state.pack(), [], state.spec(), ['b/B.java', 'b/BGenerated.java'], Tree.at(dir))
 
     then:
     next.files() == previous.files() - previous.files()[2..3]

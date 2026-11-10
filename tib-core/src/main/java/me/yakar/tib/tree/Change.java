@@ -36,6 +36,14 @@ public record Change(String path, byte[] before, byte[] after, Owner owner, bool
    * says it differs.
    */
   public String diff() {
+    return diff(path, before, after);
+  }
+
+  /**
+   * The unified diff of the file at the path, from its content before, null when there is none, to
+   * its content after, null when there is none; a file that is not text shows as one line.
+   */
+  public static String diff(String path, byte[] before, byte[] after) {
     if (binary(before) || binary(after)) {
       return "Binary files "
           + (before == null ? "/dev/null" : "a/" + path)

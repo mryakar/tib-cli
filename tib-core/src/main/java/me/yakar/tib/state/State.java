@@ -171,23 +171,25 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     return list == null ? List.of() : Collections.unmodifiableList(new ArrayList<>(list));
   }
 
+  /** The state after the first run on a project: the inputs of the run, and the files it staged. */
+  public static State first(String tib, PackRef pack, List<Input> inputs, Spec spec, Tree tree) {
+    return new State(tib, pack, inputs, spec, List.copyOf(staged(tree, new TreeMap<>()).values()));
+  }
+
   /**
-   * The state after a run that staged its files in the tree. A run that read a spec file has the
-   * whole spec from it, so its inputs are the only ones. Otherwise the inputs of the run take the
-   * place of those of the same path in the previous state, and the others stay, in their order, but
-   * for those whose file is no longer there, as far as can be told: the state forgets where they
-   * were, and the spec keeps what was read from them. Every file that the run staged takes the
-   * place of the record of the same path, and the other records stay, but for the files that the
-   * run dropped: the spec no longer has what they were generated from. The files are in the order
-   * of their paths.
+   * The state after a later run that staged its files in the tree. A run that read a spec file has
+   * the whole spec from it, so its inputs are the only ones. Otherwise the inputs of the run take
+   * the place of those of the same path in this state, and the others stay, in their order, but for
+   * those whose file is no longer there, as far as can be told: the state forgets where they were,
+   * and the spec keeps what was read from them. Every file that the run staged takes the place of
+   * the record of the same path, and the other records stay, but for the files that the run
+   * dropped. The files are in the order of their paths.
    *
-   * @param previous the state before the run, if tib ran on the project before
    * @param tib the version of tib that ran
-   * @param dropped the paths of the files that the spec no longer generates, and that tib deleted
-   *     or left to the developer
+   * @param dropped the paths of the files that the spec no longer generates, and that the run
+   *     deleted or left to the developer
    */
-  public static State next(
-      Optional<State> previous,
+  public State next(
       String tib,
       PackRef pack,
       List<Input> inputs,
@@ -195,25 +197,28 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
       Collection<String> dropped,
       Tree tree) {
     Map<String, Input> read = new LinkedHashMap<>();
-    SortedMap<String, File> written = new TreeMap<>();
-    previous.ifPresent(
-        state -> {
-          if (inputs.stream().noneMatch(input -> input.kind() == Input.Kind.SPEC)) {
-            state.inputs().stream()
-                .filter(input -> !Files.notExists(tree.root().resolve(input.path())))
-                .forEach(input -> read.put(input.path(), input));
-          }
-          state.files().stream()
-              .filter(file -> !dropped.contains(file.path()))
-              .forEach(file -> written.put(file.path(), file));
-        });
+    if (inputs.stream().noneMatch(input -> input.kind() == Input.Kind.SPEC)) {
+      this.inputs.stream()
+          .filter(input -> !Files.notExists(tree.root().resolve(input.path())))
+          .forEach(input -> read.put(input.path(), input));
+    }
     inputs.forEach(input -> read.put(input.path(), input));
+    SortedMap<String, File> written = new TreeMap<>();
+    files.stream()
+        .filter(file -> !dropped.contains(file.path()))
+        .forEach(file -> written.put(file.path(), file));
+    return new State(
+        tib, pack, List.copyOf(read.values()), spec, List.copyOf(staged(tree, written).values()));
+  }
+
+  /** The records with those of the files that are staged in the tree, by path. */
+  private static SortedMap<String, File> staged(Tree tree, SortedMap<String, File> records) {
     for (Change change : tree.changes()) {
       if (!change.deletes()) {
-        written.put(change.path(), File.of(change.path(), change.owner(), change.after()));
+        records.put(change.path(), File.of(change.path(), change.owner(), change.after()));
       }
     }
-    return new State(tib, pack, List.copyOf(read.values()), spec, List.copyOf(written.values()));
+    return records;
   }
 
   /**
