@@ -27,6 +27,11 @@ import spock.lang.TempDir
 
 class EntityGeneratorSpec extends Specification {
 
+  /** A service with one entity. */
+  static final Project A = new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n'))
+
+  static final String HANDLER = 'src/main/java/com/example/s/ConflictHandler.java'
+
   @TempDir
   Path dir
 
@@ -58,7 +63,7 @@ entities:
     Tree tree = Tree.at(dir)
 
     when:
-    new EntityGenerator().generate(new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n')), tree)
+    new EntityGenerator().generate(A, tree)
 
     then:
     tree.changes()*.path().find {
@@ -82,7 +87,7 @@ entities:
     Tree tree = Tree.at(dir)
 
     when:
-    new EntityGenerator().generate(new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n')), tree)
+    new EntityGenerator().generate(A, tree)
 
     then:
     tree.changes()*.path().every { !it.endsWith('.sql') }
@@ -97,7 +102,7 @@ entities:
     })
 
     when:
-    new EntityGenerator().generate(new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n')), tree)
+    new EntityGenerator().generate(A, tree)
 
     then:
     tree.changes()*.path().every { !it.endsWith('.sql') }
@@ -112,7 +117,7 @@ entities:
     given:
     DefaultPack pack = new DefaultPack()
     Tree tree = Tree.at(dir)
-    Generation.first(new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n')), [], pack, pack.entity(), '0.0.0', tree)
+    Generation.first(A, [], pack, pack.entity(), '0.0.0', tree)
     tree.apply(State.PATH)
 
     when:
@@ -133,7 +138,7 @@ entities:
     new EntityGenerator().generate(new Project(SpecReader.parse("tib: 1\nservice: s\nentities:\n$entities")), tree)
 
     then:
-    tree.changes()*.path().contains('src/main/java/com/example/s/ConflictHandler.java') == handler
+    tree.changes()*.path().contains(HANDLER) == handler
 
     where:
     entities                                                          | handler
@@ -142,24 +147,28 @@ entities:
     '  - name: A\n    options: { dto: false, mapper: false }\n  - name: B\n' | true
   }
 
-  def "the handler of conflicts is written once: one that is there, or that tib wrote before, stays"() {
+  def "the handler of conflicts is written once: there #there, written before #recorded"() {
     given:
-    Path handler = dir.resolve('src/main/java/com/example/s/ConflictHandler.java')
     if (there) {
-      Files.createDirectories(handler.parent)
-      Files.writeString(handler, 'mine\n')
+      Files.createDirectories(dir.resolve(HANDLER).parent)
+      Files.writeString(dir.resolve(HANDLER), 'mine\n')
     }
     Tree tree = Tree.at(dir)
-    tree.writtenBefore(['src/main/java/com/example/s/ConflictHandler.java'])
+    if (recorded) {
+      tree.writtenBefore([HANDLER])
+    }
 
     when:
-    new EntityGenerator().generate(new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n')), tree)
+    new EntityGenerator().generate(A, tree)
 
     then:
-    !tree.changes()*.path().contains('src/main/java/com/example/s/ConflictHandler.java')
+    !tree.changes()*.path().contains(HANDLER)
 
     where:
-    there << [true, false]
+    there | recorded
+    true  | false
+    false | true
+    true  | true
   }
 
   /** A migration of the developer's at the path, under the migrations of the service. */
