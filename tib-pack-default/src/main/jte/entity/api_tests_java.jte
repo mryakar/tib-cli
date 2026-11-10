@@ -24,7 +24,7 @@ class ${entity.name()}ApiTests {
   @endfor<%-- keeps the blank line below --%>
 
   @BeforeEach
-  void saveWhatA${entity.name()}Needs() {
+  void saveWhat${entity.article()}${entity.name()}Needs() {
     @for(var target : tests.requiredTargets())
     ${target.variable()} = ${target.plural()}.saveAndFlush(${target.name()}Samples.${target.variable()}(${EntityTestsModel.requiredArguments(target)}).build());
     @endfor
@@ -40,7 +40,7 @@ class ${entity.name()}ApiTests {
   }
 
   @Test
-  void creates${tests.article()}${entity.name()}() {
+  void creates${entity.article()}${entity.name()}() {
     ${dto} dto = dto();
 
     ResponseEntity<${dto}> created = http.postForEntity("${path}", dto, ${dto}.class);
@@ -54,7 +54,7 @@ class ${entity.name()}ApiTests {
   }
 
   @Test
-  void gets${tests.article()}${entity.name()}() {
+  void gets${entity.article()}${entity.name()}() {
     ${dto} ${entity.variable()} = create();
 
     ResponseEntity<${dto}> found =
@@ -80,7 +80,7 @@ class ${entity.name()}ApiTests {
   }
 
   @Test
-  void updates${tests.article()}${entity.name()}() {
+  void updates${entity.article()}${entity.name()}() {
     ${dto} ${entity.variable()} = create();
     ${dto} dto = otherDto();
 
@@ -111,7 +111,7 @@ class ${entity.name()}ApiTests {
   }
 
   @Test
-  void deletes${tests.article()}${entity.name()}() {
+  void deletes${entity.article()}${entity.name()}() {
     ${dto} ${entity.variable()} = create();
 
     ResponseEntity<Void> deleted =
@@ -125,7 +125,7 @@ class ${entity.name()}ApiTests {
   @if(tests.requiresValues())<%-- keeps the blank line below --%>
 
   @Test
-  void refuses${tests.article()}${entity.name()}WithoutItsRequiredValues() {
+  void refuses${entity.article()}${entity.name()}WithoutItsRequiredValues() {
     ${dto} empty = ${entity.name()}Samples.emptyDto().build();
 
     ResponseEntity<String> created = http.postForEntity("${path}", empty, String.class);
@@ -136,7 +136,7 @@ class ${entity.name()}ApiTests {
   @if(tests.unique())<%-- keeps the blank line below --%>
 
   @Test
-  void refuses${tests.article()}${entity.name()}WhoseUniqueValuesAreTaken() {
+  void refuses${entity.article()}${entity.name()}WhoseUniqueValuesAreTaken() {
     create();
 
     ResponseEntity<JsonNode> created = http.postForEntity("${path}", dto(), JsonNode.class);
@@ -147,17 +147,17 @@ class ${entity.name()}ApiTests {
   }
   @endif<%-- keeps the blank line below --%>
 
-  /** ${tests.article()} ${entity.variable()} created through the API, with the first sample values. */
+  /** ${entity.article()} ${entity.variable()} created through the API, with the first sample values. */
   private ${dto} create() {
     return http.postForObject("${path}", dto(), ${dto}.class);
   }
 
-  /** ${tests.article()} ${entity.variable()} as the API takes it, with the first sample values. */
+  /** ${entity.article()} ${entity.variable()} as the API takes it, with the first sample values. */
   private ${dto} dto() {
     return ${entity.name()}Samples.dto(${tests.requiredIdArguments()}).build();
   }
 
-  /** ${tests.article()} ${entity.variable()} as the API takes it, with the second sample values. */
+  /** ${entity.article()} ${entity.variable()} as the API takes it, with the second sample values. */
   private ${dto} otherDto() {
     return ${entity.name()}Samples.otherDto(${tests.requiredIdArguments()}).build();
   }

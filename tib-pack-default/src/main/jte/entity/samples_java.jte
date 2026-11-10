@@ -15,34 +15,34 @@ public final class ${name}Samples {
 
   private ${name}Samples() {}
 
-  /** ${tests.article()} ${entity.variable()} with the first sample values@if(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
+  /** ${entity.article()} ${entity.variable()} with the first sample values@if(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
   public static ${builder} ${entity.variable()}(${tests.requiredParameters()}) {
     return new ${builder}()@for(var field : entity.fields()).${field.name()}(${field.sample(1)})@endfor@for(var relation : entity.requiredRelations()).${relation.field()}(${relation.field()})@endfor;
   }
 
-  /** ${tests.article()} ${entity.variable()} with the second sample values@if(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
+  /** ${entity.article()} ${entity.variable()} with the second sample values@if(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
   public static ${builder} other${name}(${tests.requiredParameters()}) {
     return new ${builder}()@for(var field : entity.fields()).${field.name()}(${field.sample(2)})@endfor@for(var relation : entity.requiredRelations()).${relation.field()}(${relation.field()})@endfor;
   }
   @if(tests.dto())<%-- keeps the blank line below --%>
 
-  /** ${tests.article()} ${entity.variable()} as the API takes it, with the first sample values@if(!entity.requiredRelations().isEmpty()), and the identifiers of the entities it needs@endif. */
+  /** ${entity.article()} ${entity.variable()} as the API takes it, with the first sample values@if(!entity.requiredRelations().isEmpty()), and the identifiers of the entities it needs@endif. */
   public static ${dtoBuilder} dto(${tests.requiredIdParameters()}) {
     return new ${dtoBuilder}()@for(var field : entity.fields()).${field.name()}(${field.sample(1)})@endfor@for(var relation : entity.requiredRelations()).${relation.idField()}(${relation.idField()})@endfor;
   }
 
-  /** ${tests.article()} ${entity.variable()} as the API takes it, with the second sample values@if(!entity.requiredRelations().isEmpty()), and the identifiers of the entities it needs@endif. */
+  /** ${entity.article()} ${entity.variable()} as the API takes it, with the second sample values@if(!entity.requiredRelations().isEmpty()), and the identifiers of the entities it needs@endif. */
   public static ${dtoBuilder} otherDto(${tests.requiredIdParameters()}) {
     return new ${dtoBuilder}()@for(var field : entity.fields()).${field.name()}(${field.sample(2)})@endfor@for(var relation : entity.requiredRelations()).${relation.idField()}(${relation.idField()})@endfor;
   }
 
-  /** ${tests.article()} ${entity.variable()} as the API takes it, without any value. */
+  /** ${entity.article()} ${entity.variable()} as the API takes it, without any value. */
   public static ${dtoBuilder} emptyDto() {
     return new ${dtoBuilder}();
   }
   @endif<%-- keeps the blank line below --%>
 
-  /** ${tests.article()} ${entity.variable()} to build, one value at a time. */
+  /** ${entity.article()} ${entity.variable()} to build, one value at a time. */
   public static final class ${builder} {
     @for(var field : entity.fields())
     private ${field.javaType()} ${field.name()};
@@ -80,7 +80,7 @@ public final class ${name}Samples {
   }
   @if(tests.dto())<%-- keeps the blank line below --%>
 
-  /** ${tests.article()} ${entity.variable()} as the API takes it, to build one value at a time; its audit times are none. */
+  /** ${entity.article()} ${entity.variable()} as the API takes it, to build one value at a time; its audit times are none. */
   public static final class ${dtoBuilder} {
     private ${entity.idType()} ${entity.idField()};
     @for(var field : entity.fields())

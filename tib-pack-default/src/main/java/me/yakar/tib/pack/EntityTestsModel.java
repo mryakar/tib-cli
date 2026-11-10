@@ -27,11 +27,6 @@ import me.yakar.tib.spec.Names;
  */
 public record EntityTestsModel(EntityModel entity) {
 
-  /** The article of the name, for the names of the tests: {@code A} or {@code An}. */
-  public String article() {
-    return "AEIOU".indexOf(entity.name().charAt(0)) < 0 ? "A" : "An";
-  }
-
   /**
    * The entities that an entity of this one needs before it is saved: the targets of its required
    * relations, and theirs, each after the ones it needs. A spec has no cycle of relations, so this

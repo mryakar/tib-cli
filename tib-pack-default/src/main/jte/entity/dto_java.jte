@@ -4,7 +4,7 @@
 package ${entity.packageName()};
 
 ${entity.dtoImports()}/**
- * A ${entity.variable()} as the API shows and takes it@if(!entity.relations().isEmpty()); a relation is the identifier of its target@endif.
+ * ${entity.article()} ${entity.variable()} as the API shows and takes it@if(!entity.relations().isEmpty()); a relation is the identifier of its target@endif.
  @if(entity.audited())
  * The identifier and the audit times are read only; the service ignores them.
  @else

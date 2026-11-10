@@ -1,6 +1,7 @@
 # The corners of the entity layer: an audited entity with a sequence identifier, a one-to-one
 # relation, a relation to itself and two relations to one target, an entity without DTOs, one
-# without a mapper, one without pagination, one with nothing to import, and every type.
+# without a mapper, one without pagination, one with nothing to import, one whose name takes "an"
+# and has a required relation, and every type.
 tib: 1
 service: corner-service
 group: me.yakar
@@ -34,3 +35,8 @@ entities:
     fields:
       - { name: label, type: String }
     options: { mapper: false }
+  - name: Item
+    fields:
+      - { name: label, type: String }
+    relations:
+      - { kind: manyToOne, target: Branch, nullable: false }
