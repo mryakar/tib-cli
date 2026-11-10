@@ -16,18 +16,20 @@
 package me.yakar.tib.generate;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedMap;
-import java.util.SortedSet;
 import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.stream.Collectors;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Owner;
 import me.yakar.tib.tree.ProjectFiles;
 import me.yakar.tib.tree.Tree;
+import me.yakar.tib.tree.TreeException;
 
 /**
  * The files of a tree as a generator writes them, with a record of what it generated, whether that
@@ -35,41 +37,61 @@ import me.yakar.tib.tree.Tree;
  */
 final class Recorder implements ProjectFiles {
 
+  /** A file as the generator made it. */
+  private record Made(Owner owner, byte[] content, boolean lasts) {}
+
   private final Tree tree;
-  private final SortedSet<String> generated = new TreeSet<>();
-  private final SortedMap<String, byte[]> lasting = new TreeMap<>();
-  private final SortedMap<String, State.File> written = new TreeMap<>();
+  private final SortedMap<String, Made> made = new TreeMap<>();
 
   Recorder(Tree tree) {
     this.tree = tree;
   }
 
   /**
-   * The paths of the files that the generator owns or writes once, as the tree names them, in
-   * order; the files that last are not among them.
+   * The paths of the files that the generator owns or writes once, as the tree names them; the
+   * files that last are not among them.
    */
-  SortedSet<String> generated() {
-    return generated;
+  Set<String> generated() {
+    return made.entrySet().stream()
+        .filter(file -> !file.getValue().lasts())
+        .map(Map.Entry::getKey)
+        .collect(Collectors.toSet());
   }
 
   /** The files that last, by path as the tree names it, with the content that was generated. */
   SortedMap<String, byte[]> lasting() {
+    SortedMap<String, byte[]> lasting = new TreeMap<>();
+    made.forEach(
+        (path, file) -> {
+          if (file.lasts()) {
+            lasting.put(path, file.content());
+          }
+        });
     return lasting;
   }
 
   /**
    * The files that are, in the tree, as the generator made them, staged or there already, in the
-   * order of their paths: the ones that tib has to have on record.
+   * order of their paths: the ones that tib has to have on record. Every file that the generator
+   * made and that is there is read to tell.
+   *
+   * @throws TreeException when a file that is there cannot be read: that ends the run
    */
-  Collection<State.File> written() {
-    return written.values();
+  List<State.File> written() {
+    List<State.File> written = new ArrayList<>();
+    made.forEach(
+        (path, file) -> {
+          if (tree.bytes(path).filter(there -> Arrays.equals(there, file.content())).isPresent()) {
+            written.add(State.File.of(path, file.owner(), file.content()));
+          }
+        });
+    return written;
   }
 
   @Override
   public void own(String path, String content) {
     tree.own(path, content);
-    generated.add(tree.key(path));
-    record(path, Owner.GENERATOR, utf8(content));
+    made.put(tree.key(path), new Made(Owner.GENERATOR, utf8(content), false));
   }
 
   @Override
@@ -80,21 +102,13 @@ final class Recorder implements ProjectFiles {
   @Override
   public void once(String path, byte[] content, boolean executable) {
     tree.once(path, content, executable);
-    generated.add(tree.key(path));
-    record(path, Owner.DEVELOPER, content);
+    made.put(tree.key(path), new Made(Owner.DEVELOPER, content, false));
   }
 
   @Override
   public void lasting(String path, String content) {
     tree.lasting(path, content);
-    lasting.put(tree.key(path), utf8(content));
-    record(path, Owner.DEVELOPER, utf8(content));
-  }
-
-  private void record(String path, Owner owner, byte[] content) {
-    if (tree.bytes(path).filter(there -> Arrays.equals(there, content)).isPresent()) {
-      written.put(tree.key(path), State.File.of(tree.key(path), owner, content));
-    }
+    made.put(tree.key(path), new Made(Owner.DEVELOPER, utf8(content), true));
   }
 
   private static byte[] utf8(String text) {

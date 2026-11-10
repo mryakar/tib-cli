@@ -78,8 +78,7 @@ public final class Generation {
       Tree tree) {
     Recorder recorder = new Recorder(tree);
     generator.generate(project, recorder);
-    State first =
-        new State(tibVersion, ref(pack), inputs, project.spec(), List.copyOf(recorder.written()));
+    State first = new State(tibVersion, ref(pack), inputs, project.spec(), recorder.written());
     tree.own(State.PATH, first.yaml());
     return new Result(List.of(), List.of(), List.of(), List.of(), List.of());
   }
