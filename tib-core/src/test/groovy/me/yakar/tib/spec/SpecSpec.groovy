@@ -106,6 +106,18 @@ class SpecSpec extends Specification {
     ]
   }
 
+  def "the spec of a service that has only its name has the defaults, and is checked"() {
+    expect:
+    Spec.of('vehicle-service') == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
+
+    when:
+    Spec.of('Vehicle Service')
+
+    then:
+    SpecException e = thrown()
+    e.problems() == ["service: 'Vehicle Service' does not match ${Names.SERVICE}"]
+  }
+
   def "the list of the model is never null and never changes"() {
     expect:
     Spec.list(null) == []

@@ -17,7 +17,7 @@ package me.yakar.tib.spec;
 
 @Doc("The identifier of the entity.")
 public record Id(
-    @Doc(value = "The name of the field.", pattern = Names.MEMBER, defaultValue = "id")
+    @Doc(value = "The name of the field.", pattern = Names.MEMBER, defaultValue = Id.FIELD)
         String field,
     @Doc(value = "The Java type of the identifier.", defaultValue = "Long") IdType type,
     @Doc(
@@ -25,8 +25,11 @@ public record Id(
                 "How the identifier gets its value: identity or sequence for a Long, uuid for a UUID.")
         IdStrategy strategy) {
 
+  /** The field of an identifier whose spec gives none. */
+  static final String FIELD = "id";
+
   public Id {
-    field = field == null ? "id" : field;
+    field = field == null ? FIELD : field;
     type = type == null ? IdType.LONG : type;
     strategy = strategy == null ? IdStrategy.defaultFor(type) : strategy;
   }

@@ -24,7 +24,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -173,15 +172,8 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   }
 
   public State {
-    inputs = list(inputs);
-    files = list(files);
-  }
-
-  /**
-   * The list as the state keeps it: never null, never changed. A null item stays, for the check.
-   */
-  private static <T> List<T> list(List<T> list) {
-    return list == null ? List.of() : Collections.unmodifiableList(new ArrayList<>(list));
+    inputs = Spec.list(inputs);
+    files = Spec.list(files);
   }
 
   /**
