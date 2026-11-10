@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Entity;
 import me.yakar.tib.spec.IdStrategy;
@@ -29,7 +27,7 @@ import me.yakar.tib.spec.Names;
 
 /**
  * An entity as the templates see it: its names, its fields and relations, and what the generated
- * code imports and declares. The templates lay the code out.
+ * code declares. The templates lay the code out.
  */
 public final class EntityModel {
 
@@ -67,8 +65,9 @@ public final class EntityModel {
     this.targets = List.copyOf(targets);
   }
 
-  Project project() {
-    return project;
+  /** The base package of the service. */
+  public String basePackage() {
+    return project.basePackage();
   }
 
   Entity entity() {
@@ -204,6 +203,11 @@ public final class EntityModel {
     return targets;
   }
 
+  /** The entities that the relations refer to, but for this one: their classes are imported. */
+  public List<EntityModel> otherTargets() {
+    return targets.stream().filter(target -> target != this).toList();
+  }
+
   /**
    * The relations that are not nullable, but for one to itself, which has to be: a sample of the
    * entity sets them to the samples of their targets.
@@ -215,34 +219,6 @@ public final class EntityModel {
   }
 
   // The generated base class.
-
-  public String generatedImports() {
-    SortedSet<String> imports = typeImports();
-    imports.add("jakarta.persistence.Column");
-    imports.add("jakarta.persistence.GeneratedValue");
-    imports.add("jakarta.persistence.GenerationType");
-    imports.add("jakarta.persistence.Id");
-    imports.add("jakarta.persistence.MappedSuperclass");
-    if (idSequence()) {
-      imports.add("jakarta.persistence.SequenceGenerator");
-    }
-    for (RelationModel relation : relations) {
-      imports.add("jakarta.persistence.FetchType");
-      imports.add("jakarta.persistence.JoinColumn");
-      imports.add("jakarta.persistence." + relation.annotation());
-    }
-    for (EntityModel target : targets) {
-      if (target != this) {
-        imports.add(target.packageName() + "." + target.name());
-      }
-    }
-    if (entity.audit()) {
-      imports.add("java.time.Instant");
-      imports.add("org.hibernate.annotations.CreationTimestamp");
-      imports.add("org.hibernate.annotations.UpdateTimestamp");
-    }
-    return imports(imports);
-  }
 
   /** The annotations of the identifier, before its column. */
   public List<String> idAnnotations() {
@@ -265,37 +241,7 @@ public final class EntityModel {
     };
   }
 
-  // The repository.
-
-  public String repositoryImports() {
-    SortedSet<String> imports = idImports();
-    imports.add("org.springframework.data.jpa.repository.JpaRepository");
-    return imports(imports);
-  }
-
   // The DTO.
-
-  public String dtoImports() {
-    SortedSet<String> imports = typeImports();
-    relationIdImports(imports);
-    for (RelationModel relation : relations) {
-      if (!relation.nullable()) {
-        imports.add("jakarta.validation.constraints.NotNull");
-      }
-    }
-    for (FieldModel field : fields) {
-      if (!field.nullable()) {
-        imports.add("jakarta.validation.constraints.NotNull");
-      }
-      if (field.length() != null) {
-        imports.add("jakarta.validation.constraints.Size");
-      }
-    }
-    if (entity.audit()) {
-      imports.add("java.time.Instant");
-    }
-    return imports(imports);
-  }
 
   /** The components of the record: its type and name, after their validation. */
   public List<String> dtoComponents() {
@@ -312,54 +258,6 @@ public final class EntityModel {
       components.add("Instant updatedAt");
     }
     return components;
-  }
-
-  // The mapper.
-
-  public String mapperImports() {
-    SortedSet<String> imports = new TreeSet<>();
-    for (EntityModel target : targets) {
-      if (target != this) {
-        imports.add(target.packageName() + "." + target.name() + "Repository");
-      }
-    }
-    imports.add("org.springframework.stereotype.Component");
-    return imports(imports);
-  }
-
-  // The service.
-
-  public String serviceImports() {
-    SortedSet<String> imports = idImports();
-    listImports(imports);
-    imports.add("org.springframework.http.HttpStatus");
-    imports.add("org.springframework.stereotype.Service");
-    imports.add("org.springframework.transaction.annotation.Transactional");
-    imports.add("org.springframework.web.server.ResponseStatusException");
-    return imports(imports);
-  }
-
-  // The controller.
-
-  public String controllerImports() {
-    SortedSet<String> imports = idImports();
-    imports.add("jakarta.validation.Valid");
-    listImports(imports);
-    imports.add("org.springframework.http.HttpStatus");
-    for (String annotation :
-        List.of(
-            "DeleteMapping",
-            "GetMapping",
-            "PathVariable",
-            "PostMapping",
-            "PutMapping",
-            "RequestBody",
-            "RequestMapping",
-            "ResponseStatus",
-            "RestController")) {
-      imports.add("org.springframework.web.bind.annotation." + annotation);
-    }
-    return imports(imports);
   }
 
   // The migration.
@@ -399,66 +297,5 @@ public final class EntityModel {
     return entity.id().strategy() == IdStrategy.IDENTITY
         ? type + " GENERATED BY DEFAULT AS IDENTITY"
         : type;
-  }
-
-  // Imports.
-
-  /** The import of the identifier's type, if it needs one. */
-  SortedSet<String> idImports() {
-    SortedSet<String> imports = new TreeSet<>();
-    if (uuid()) {
-      imports.add("java.util.UUID");
-    }
-    return imports;
-  }
-
-  /** The import of the type of the identifiers of the relations' targets, if they need one. */
-  void relationIdImports(SortedSet<String> imports) {
-    if (relations.stream().anyMatch(relation -> relation.target().uuid())) {
-      imports.add("java.util.UUID");
-    }
-  }
-
-  /** The imports of the identifier's type and of the fields' types. */
-  SortedSet<String> typeImports() {
-    SortedSet<String> imports = idImports();
-    imports.addAll(fieldImports(fields));
-    return imports;
-  }
-
-  /** The imports of the types of the fields. */
-  static SortedSet<String> fieldImports(List<FieldModel> fields) {
-    SortedSet<String> imports = new TreeSet<>();
-    for (FieldModel field : fields) {
-      switch (field.field().type()) {
-        case BIG_DECIMAL -> imports.add("java.math.BigDecimal");
-        case LOCAL_DATE -> imports.add("java.time.LocalDate");
-        case LOCAL_DATE_TIME -> imports.add("java.time.LocalDateTime");
-        case INSTANT -> imports.add("java.time.Instant");
-        case UUID -> imports.add("java.util.UUID");
-        default -> {}
-      }
-    }
-    return imports;
-  }
-
-  /** The imports of a list of the entities: a page of them, or all of them. */
-  private void listImports(SortedSet<String> imports) {
-    if (paginated()) {
-      imports.add("org.springframework.data.domain.Page");
-      imports.add("org.springframework.data.domain.Pageable");
-    } else {
-      imports.add("java.util.List");
-    }
-  }
-
-  /** The import statements, and a blank line after them; nothing when there are none. */
-  static String imports(SortedSet<String> imports) {
-    if (imports.isEmpty()) {
-      return "";
-    }
-    StringBuilder text = new StringBuilder();
-    imports.forEach(imported -> text.append("import ").append(imported).append(";\n"));
-    return text.append('\n').toString();
   }
 }

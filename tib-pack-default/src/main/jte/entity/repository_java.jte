@@ -2,4 +2,7 @@
 @param EntityModel entity
 package ${entity.packageName()};
 
-${entity.repositoryImports()}public interface ${entity.name()}Repository extends JpaRepository<${entity.name()}, ${entity.idType()}> {}
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface ${entity.name()}Repository extends JpaRepository<${entity.name()}, ${entity.idType()}> {}

@@ -2,7 +2,19 @@
 @param EntityModel entity
 package ${entity.packageName()};
 
-${entity.serviceImports()}/** The use cases of ${entity.plural()}. */
+import java.util.UUID;
+@if(entity.paginated())
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+@else
+import java.util.List;
+@endif
+import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
+
+/** The use cases of ${entity.plural()}. */
 @Service
 @Transactional
 public class ${entity.name()}Service {
