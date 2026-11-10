@@ -72,6 +72,18 @@ class DdlReaderSpec extends Specification {
     e.message == 'the DDL has a problem: T.F: the type INTEGER[] is not supported'
   }
 
+  def "a table that is created from another one is a problem: #sql"() {
+    when:
+    DdlReader.parse("CREATE TABLE S (ID BIGINT PRIMARY KEY);\n$sql;", SERVICE)
+
+    then:
+    DdlException e = thrown()
+    e.problems() == ['T: a table that is created from another one is not supported']
+
+    where:
+    sql << ['CREATE TABLE T AS SELECT * FROM S', 'CREATE TABLE T LIKE S']
+  }
+
   def "a keyword in a string literal says nothing of the column: #literal"() {
     expect:
     entity("CREATE TABLE T (ID BIGINT PRIMARY KEY $literal, A INT $literal);") == new Entity(
