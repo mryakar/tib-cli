@@ -33,23 +33,11 @@ class ${entity.name()}RepositoryTests {
   @Autowired private ${target.name()}Repository ${target.plural()};
   @endfor
   @Autowired private TestEntityManager entityManager;
-  @if(!tests.requiredTargets().isEmpty())<%-- keeps the blank line below --%>
-
-  @for(var target : tests.requiredTargets())
-  private ${target.name()} ${target.variable()};
-  @endfor<%-- keeps the blank line below --%>
-
-  @BeforeEach
-  void saveWhat${entity.article()}${entity.name()}Needs() {
-    @for(var target : tests.requiredTargets())
-    ${target.variable()} = ${target.plural()}.saveAndFlush(${target.name()}Samples.${target.variable()}(${EntityTestsModel.requiredArguments(target)}).build());
-    @endfor
-  }
-  @endif<%-- keeps the blank line below --%>
+  @template.entity.required_targets(tests = tests)
 
   @Test
   void savesAndFinds${entity.article()}${entity.name()}() {
-    ${entity.name()} ${entity.variable()} = ${entity.plural()}.saveAndFlush(${entity.name()}Samples.${entity.variable()}(${EntityTestsModel.requiredArguments(entity)}).build());
+    ${entity.name()} ${entity.variable()} = ${entity.plural()}.saveAndFlush(${tests.sample(entity)});
     entityManager.clear();
 
     ${entity.name()} found = ${entity.plural()}.findById(${entity.variable()}.getId()).orElseThrow();
@@ -68,9 +56,9 @@ class ${entity.name()}RepositoryTests {
 
   @Test
   void refuses${entity.article()}${entity.name()}WhoseUniqueValuesAreTaken() {
-    ${entity.plural()}.saveAndFlush(${entity.name()}Samples.${entity.variable()}(${EntityTestsModel.requiredArguments(entity)}).build());
+    ${entity.plural()}.saveAndFlush(${tests.sample(entity)});
 
-    assertThatThrownBy(() -> ${entity.plural()}.saveAndFlush(${entity.name()}Samples.${entity.variable()}(${EntityTestsModel.requiredArguments(entity)}).build()))
+    assertThatThrownBy(() -> ${entity.plural()}.saveAndFlush(${tests.sample(entity)}))
         .isInstanceOf(DataIntegrityViolationException.class);
   }
   @endif

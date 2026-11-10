@@ -178,7 +178,8 @@ public final class EntityModel {
     return entity.options().pagination();
   }
 
-  boolean dto() {
+  /** Whether the entity has a DTO, and so do its samples. */
+  public boolean dto() {
     return entity.options().dto();
   }
 
