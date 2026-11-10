@@ -179,7 +179,7 @@ class TreeSpec extends Specification {
 
     then:
     TreeException e = thrown()
-    e.message == "cannot read ${project.resolve('f')}: Input length = 1"
+    e.message == "cannot read ${project.resolve('f')}: not UTF-8 text"
   }
 
   def "a file whose directory cannot be made fails the apply"() {
@@ -289,7 +289,7 @@ Binary files /dev/null and b/zero.bin differ
 
     then:
     TreeException e = thrown()
-    e.message == "cannot read ${project.resolve('lib/new.jar')}: Input length = 1"
+    e.message == "cannot read ${project.resolve('lib/new.jar')}: not UTF-8 text"
   }
 
   def "a file that cannot be read fails, as a directory does"() {
