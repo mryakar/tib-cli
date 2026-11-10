@@ -29,7 +29,9 @@ content. The first line of each generated file says whose it is:
 
 The entities come from a spec. To add or change one, change the spec and run
 `tib generate entity --spec <file>`, or for tables in SQL, `tib generate entity --ddl <file>`;
-with `--dry-run`, tib shows what it would change and changes nothing.
+with `--dry-run`, tib shows what it would change and changes nothing. To remove an entity, take
+it out of the spec and run `tib generate entity --spec <file>`: tib deletes its files, but for
+those you edited and the migration; dropping its table is a new migration.
 
 For an entity `X`, its code goes in `X`, never in `XGenerated`: `XGenerated`, `XDto` and `XMapper`
 are tib's; `X`, `XRepository`, `XService`, `XController` and the migration are yours, and so are
