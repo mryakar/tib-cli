@@ -1,7 +1,7 @@
 <!-- Written by tib when the service was created; it is yours from then on. -->
 # vehicle-service
 
-A Spring Boot 3.5.16 service on Java 21, with JPA, PostgreSQL, Flyway and Testcontainers,
+A Spring Boot 4.1.2 service on Java 21, with JPA, PostgreSQL, Flyway and Testcontainers,
 scaffolded by tib. The base package is `com.example.vehicleservice`.
 
 ## Build and run

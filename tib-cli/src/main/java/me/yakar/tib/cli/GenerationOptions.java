@@ -18,6 +18,7 @@ package me.yakar.tib.cli;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import me.yakar.tib.generate.Generation;
@@ -78,15 +79,11 @@ final class GenerationOptions {
       List<State.Input> inputs,
       Function<Pack, Generator> generator,
       Tree tree) {
+    Pack pack = Packs.find(service.pack());
+    previous.ifPresent(state -> sameStack(state, pack, tree));
     Generation.Result result =
         Generation.run(
-            previous,
-            new Project(service),
-            inputs,
-            Packs.find(service.pack()),
-            generator,
-            version.version(),
-            tree);
+            previous, new Project(service), inputs, pack, generator, version.version(), tree);
     PrintWriter out = commandSpec.commandLine().getOut();
     PrintWriter err = commandSpec.commandLine().getErr();
     int files = tree.changes().size();
@@ -133,6 +130,31 @@ final class GenerationOptions {
     }
     notices(err, result);
     return ExitCode.OK;
+  }
+
+  /**
+   * Refuses a service that was generated for another stack than the one of the pack, or before tib
+   * named the stack: the files that tib wrote once, such as the build, are of that stack.
+   */
+  private static void sameStack(State state, Pack pack, Tree tree) {
+    if (!pack.stack().equals(state.pack().stack())) {
+      String problem =
+          tree.root()
+              + " was generated for "
+              + Objects.requireNonNullElse(state.pack().stack(), "an earlier stack")
+              + " by tib "
+              + state.tib()
+              + "; pack "
+              + pack.name()
+              + " "
+              + pack.version()
+              + " generates for "
+              + pack.stack();
+      throw new RefusalException(
+          problem,
+          List.of(problem),
+          "Run tib " + state.tib() + " on it until the service moves to " + pack.stack() + ".");
+    }
   }
 
   /**

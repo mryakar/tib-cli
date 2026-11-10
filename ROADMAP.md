@@ -26,7 +26,6 @@ the first release.
 These come after the MVP, in no fixed order:
 
 - A notice when the columns of a table changed after its migration was written.
-- A default pack on Spring Boot 4.
 - The Gradle wrapper in the generated service.
 - The generated Java formatted with google-java-format by the default pack, so that a formatter
   run on the service leaves the files of tib's as tib wrote them.

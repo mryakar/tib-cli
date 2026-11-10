@@ -3,7 +3,6 @@ package me.yakar.cornerservice.tag;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -15,16 +14,19 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import tools.jackson.databind.JsonNode;
 
 /** The API of tags, over HTTP, against PostgreSQL in a container. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 @Import(TestcontainersConfiguration.class)
 class TagApiTests {
 
@@ -106,7 +108,7 @@ class TagApiTests {
     ResponseEntity<JsonNode> list = http.getForEntity("/api/tags", JsonNode.class);
 
     assertThat(list.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(list.getBody().findValuesAsText("id")).contains(tag.id().toString());
+    assertThat(list.getBody().findValuesAsString("id")).contains(tag.id().toString());
   }
 
   @Test

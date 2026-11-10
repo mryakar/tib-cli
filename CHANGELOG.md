@@ -20,6 +20,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The default pack generates Spring Boot 4.1 services, instead of Spring Boot 3.5: the modular
+  starters of Spring Boot 4, Flyway through its starter, Testcontainers 2 and Jackson 3 in the
+  tests. The state file names the stack that the pack generates for, and `tib generate entity`
+  refuses a service that was generated for another one, which every service of an earlier tib
+  was, and names the tib to go on with; `tib status` still reads it.
 - `tib status` lists the files of tib's that differ under `Files:`, and says in a line of its own
   when every file that the spec was read from is as tib read it.
 - A run whose spec no longer generates a file, as when an entity leaves the spec or loses its DTO

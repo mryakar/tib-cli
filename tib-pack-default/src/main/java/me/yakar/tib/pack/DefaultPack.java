@@ -23,7 +23,7 @@ import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Pack;
 
 /**
- * The default pack: a plain Spring Boot 3 service with JPA, PostgreSQL, Flyway and Testcontainers,
+ * The default pack: a plain Spring Boot 4 service with JPA, PostgreSQL, Flyway and Testcontainers,
  * built with Gradle on Java 21.
  */
 public final class DefaultPack implements Pack {
@@ -45,6 +45,13 @@ public final class DefaultPack implements Pack {
   @Override
   public String version() {
     return properties.getProperty("version");
+  }
+
+  /** Spring Boot, by its major version, as in {@code Spring Boot 4}. */
+  @Override
+  public String stack() {
+    String boot = bootVersion();
+    return "Spring Boot " + boot.substring(0, boot.indexOf('.'));
   }
 
   /** The Spring Boot version of the generated service. */

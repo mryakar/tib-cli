@@ -38,7 +38,7 @@ class StateSpec extends Specification {
   @Shared
   State state = new State(
   '0.1.0',
-  new State.PackRef('default', '0.1.0'),
+  new State.PackRef('default', '0.1.0', 'Spring Boot 4'),
   [
     new State.Input(State.Input.Kind.SPEC, 'vehicle-service.yaml', '345'),
     new State.Input(State.Input.Kind.DDL, '../db/vehicle.sql', '678')
@@ -84,9 +84,10 @@ class StateSpec extends Specification {
     when:
     State released = State.parse(StateSpec.getResource("state-${version}.yaml").text, version)
 
-    then:
+    then: 'a state written before tib named the stack of the pack has none'
     released.tib() == version
     released.inputs() == inputs
+    released.pack().stack() == null
 
     where:
     version | inputs
@@ -150,8 +151,8 @@ class StateSpec extends Specification {
     values                                                                   | problem
     [tib: null]                                                              | 'tib: required'
     [pack: null]                                                             | 'pack: required'
-    [pack: new State.PackRef(null, '0.1.0')]                                 | 'pack.name: required'
-    [pack: new State.PackRef('default', null)]                               | 'pack.version: required'
+    [pack: new State.PackRef(null, '0.1.0', null)]                           | 'pack.name: required'
+    [pack: new State.PackRef('default', null, null)]                         | 'pack.version: required'
     [inputs: [state.inputs()[0], new State.Input(null, 'a.sql', '1')]]       | 'inputs[1].kind: required'
     [inputs: [new State.Input(State.Input.Kind.DDL, null, '1')]]             | 'inputs[0].path: required'
     [inputs: [new State.Input(State.Input.Kind.DDL, 'a.sql', null)]]         | 'inputs[0].sha256: required'

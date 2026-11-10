@@ -26,6 +26,13 @@ public interface Pack {
   String version();
 
   /**
+   * The stack that the pack generates for, as people name it, such as {@code Spring Boot 4}. tib
+   * does not generate into a service that was generated for another stack: the files that it wrote
+   * once, such as the build, would not fit what it writes now.
+   */
+  String stack();
+
+  /**
    * The generator of a new service. It writes its files once, for the developer, and owns none: the
    * runs of {@link #entity()} that follow would delete them.
    */

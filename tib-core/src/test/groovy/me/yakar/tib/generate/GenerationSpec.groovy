@@ -53,7 +53,7 @@ class GenerationSpec extends Specification {
     and:
     State state = State.in(tree, '1.2.3').get()
     state.tib() == '1.2.3'
-    state.pack() == new State.PackRef('p', '1')
+    state.pack() == new State.PackRef('p', '1', 'Test 1')
     state.inputs() == []
     state.spec() == project.spec()
     state.files()*.path() == ['Generated.java', 'Service.java']

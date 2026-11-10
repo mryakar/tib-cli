@@ -16,10 +16,11 @@ The state file of the service of xref:getting-started.adoc[], after
 [source,yaml]
 ----
 # Written by tib on every run. Do not edit: your changes would be lost. # <1>
-tib: 0.2.0
+tib: 0.3.0
 pack:
   name: default
-  version: 0.2.0
+  version: 0.3.0
+  stack: Spring Boot 4
 inputs:
 - kind: spec
   path: vehicle-service.yaml
@@ -59,6 +60,10 @@ who owns it; a YAML reader skips it.
 |`pack.name`, `pack.version`
 |The pack that generated the files, and its version. The version of the default pack is the
 version of tib.
+
+|`pack.stack`
+|The stack that the pack generates for, such as `Spring Boot 4`; none in a state file that a tib
+before 0.3.0 wrote.
 
 |`inputs`
 |The files that the spec of the service was read from, in the order tib first read them; none for
@@ -151,6 +156,18 @@ its value, and tib writes nothing:
 [source,text]
 ----
 /home/you/vehicle-service: the state file has a problem: files[2].owner: required
+----
+
+A service that was generated for another stack than the one of the pack, or by a tib before 0.3.0,
+which generated Spring Boot 3, is refused by `tib generate entity`: the files that tib wrote once,
+such as the build and the tests, are of that stack, and what it would write now would not fit
+them. `tib status` still reads it. The tib that wrote the service goes on with it, until the
+service moves to the stack of the pack:
+
+[source,text]
+----
+/home/you/vehicle-service was generated for an earlier stack by tib 0.2.0; pack default 0.3.0 generates for Spring Boot 4
+Run tib 0.2.0 on it until the service moves to Spring Boot 4.
 ----
 
 == Versions
