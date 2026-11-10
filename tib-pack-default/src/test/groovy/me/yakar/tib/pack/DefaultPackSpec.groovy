@@ -45,7 +45,7 @@ class DefaultPackSpec extends Specification {
   static final String VERSION = System.getProperty('tib.version')
 
   /** The example service of the documentation. */
-  static final Spec VEHICLES = SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
+  static final Spec VEHICLES = SpecReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
 
   /** The corners of the entity layer that the example service does not reach. */
   static final String CORNER_SPEC = DefaultPackSpec.getResource('corner-service.yaml').text

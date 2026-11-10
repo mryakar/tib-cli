@@ -15,7 +15,7 @@
  */
 package me.yakar.tib.spec
 
-import java.nio.file.NoSuchFileException
+import java.nio.file.Files
 import java.nio.file.Path
 import spock.lang.Specification
 
@@ -25,7 +25,7 @@ class SpecReaderSpec extends Specification {
 
   def "reads the example spec of the documentation and fills in the defaults"() {
     when:
-    Spec spec = SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
+    Spec spec = SpecReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
 
     then:
     spec.tib() == 1
@@ -126,19 +126,5 @@ class SpecReaderSpec extends Specification {
     then:
     SpecException e = thrown()
     e.problems()[0].startsWith('not YAML: ')
-  }
-
-  def "a file that is not there cannot be read"() {
-    given:
-    Path file = EXAMPLES.resolve('no-such-service.yaml')
-
-    when:
-    SpecReader.read(file)
-
-    then:
-    SpecException e = thrown()
-    e.message == "cannot read $file: no such file"
-    e.problems() == [e.message]
-    e.cause instanceof NoSuchFileException
   }
 }

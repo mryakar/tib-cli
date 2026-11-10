@@ -15,9 +15,6 @@
  */
 package me.yakar.tib.spec;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import tools.jackson.core.JacksonException;
@@ -29,10 +26,7 @@ import tools.jackson.databind.exc.InvalidFormatException;
 import tools.jackson.databind.exc.UnrecognizedPropertyException;
 import tools.jackson.dataformat.yaml.YAMLMapper;
 
-/**
- * Reads a spec from YAML and checks it, and reads a file that holds a spec the same way; a problem
- * names the value it is about.
- */
+/** Reads a spec from YAML and checks it; a problem names the value it is about. */
 public final class SpecReader {
 
   private static final YAMLMapper YAML =
@@ -42,17 +36,6 @@ public final class SpecReader {
           .build();
 
   private SpecReader() {}
-
-  /** Reads the spec file. */
-  public static Spec read(Path file) {
-    String yaml;
-    try {
-      yaml = Files.readString(file);
-    } catch (IOException e) {
-      throw new SpecException(file, e);
-    }
-    return parse(yaml);
-  }
 
   /** Reads a spec from its YAML. */
   public static Spec parse(String yaml) {

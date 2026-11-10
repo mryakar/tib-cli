@@ -15,22 +15,16 @@
  */
 package me.yakar.tib.ddl;
 
-import java.io.IOException;
 import java.io.Serial;
-import java.nio.file.Path;
 import java.util.List;
 import me.yakar.tib.TibException;
 
-/** The DDL has problems that keep it from being read into a spec, or its file cannot be read. */
+/** The DDL has problems that keep it from being read into a spec. */
 public class DdlException extends TibException {
 
   @Serial private static final long serialVersionUID = 1L;
 
   DdlException(List<String> problems) {
     super("DDL", problems);
-  }
-
-  DdlException(Path file, IOException cause) {
-    super("read", file, cause);
   }
 }

@@ -30,7 +30,6 @@ import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.SpecException
 import me.yakar.tib.spec.SpecReader
 import spock.lang.Specification
-import spock.lang.TempDir
 
 class DdlReaderSpec extends Specification {
 
@@ -38,12 +37,9 @@ class DdlReaderSpec extends Specification {
 
   static final Spec SERVICE = SpecReader.parse('tib: 1\nservice: vehicle-service\ngroup: me.yakar\n')
 
-  @TempDir
-  Path dir
-
   def "reads the tables of the example DDL into the spec of the service"() {
     when:
-    Spec spec = DdlReader.read(EXAMPLES.resolve('vehicle-service.sql'), SERVICE)
+    Spec spec = DdlReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.sql')), SERVICE)
 
     then:
     spec.service() == 'vehicle-service'
@@ -59,15 +55,6 @@ class DdlReaderSpec extends Specification {
         new Field('price', 'price', FieldType.BIG_DECIMAL, null, 12, 2, true, false),
       ], [new Relation(RelationKind.MANY_TO_ONE, 'Depot', 'depot', 'depot_id', true)], true, null),
     ]
-  }
-
-  def "a file that is not there cannot be read"() {
-    when:
-    DdlReader.read(dir.resolve('missing.sql'), SERVICE)
-
-    then:
-    DdlException e = thrown()
-    e.message == "cannot read ${dir.resolve('missing.sql')}: no such file"
   }
 
   def "a column of a supported SQL type is a field of its type, with its sizes"() {

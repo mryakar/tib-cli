@@ -91,8 +91,8 @@ class GeneratedServiceSpec extends Specification {
 
     where:
     input             | spec
-    'example spec'    | SpecReader.read(EXAMPLES.resolve('vehicle-service.yaml'))
-    'example DDL'     | DdlReader.read(EXAMPLES.resolve('vehicle-service.sql'), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
+    'example spec'    | SpecReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
+    'example DDL'     | DdlReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
     // The corner spec is a resource of the unit tests, next to their snapshots.
     'corner spec'     | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text)
   }
