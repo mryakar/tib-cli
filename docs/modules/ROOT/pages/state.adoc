@@ -85,8 +85,8 @@ entities that the DDL yields, with every default and every derived value written
 `tib generate entity --ddl` builds on it.
 
 |`files`
-|Every file that tib wrote into the service, in the order of their paths, without the state file
-itself.
+|Every file that tib wrote into the service, and every file that was there already as tib
+generates it, in the order of their paths, without the state file itself.
 
 |`files[].path`
 |The path of the file.
@@ -97,8 +97,8 @@ edited; `developer`, written once and yours from then on; `shared`, edited in pl
 replaced, which the default pack does not write.
 
 |`files[].sha256`
-|The SHA-256 of the content of the file as tib wrote it, which `tib status` compares with the file
-on disk.
+|The SHA-256 of the content of the file as tib generated it, which `tib status` compares with the
+file on disk.
 |===
 
 Every path is relative to the directory of the service and separated by `/`, on Windows too, so
