@@ -172,13 +172,14 @@ The spec no longer generates these files, but they last, and tib leaves them:
 Undo what they made with a file of yours, such as a migration that drops the table.
 ----
 
-When the table comes back to the spec, tib does not write the migration that it wrote before, and
-the run names it, with the diff from the file as it is in the service to what the spec generates
-now, or with its path alone when the two are the same:
+When the spec generates a migration for the first time or again, and a file is there at its path
+or tib wrote it before, as when the table comes back to the spec, tib does not write it, and the
+run names it, with the diff from the file as it is in the service to what the spec generates now,
+or with its path alone when the two are the same:
 
 [source,text]
 ----
-The spec generates these files again, but tib wrote them before, and leaves them:
+The spec generates these files, but they are there or tib wrote them before, and tib leaves them:
   src/main/resources/db/migration/V2__create_vehicle.sql
 Make sure the database has what they make, with a file of yours, such as a new migration.
 ----

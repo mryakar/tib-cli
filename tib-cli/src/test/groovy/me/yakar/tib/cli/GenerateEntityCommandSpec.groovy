@@ -407,7 +407,7 @@ class GenerateEntityCommandSpec extends Specification {
 
     then: 'the migration stays as it is'
     result.exitCode() == 0
-    result.err().contains('The spec generates these files again, but tib wrote them before, and leaves them:\n' + named(migration))
+    result.err().contains('The spec generates these files, but they are there or tib wrote them before, and tib leaves them:\n' + named(migration))
     result.err().endsWith('Make sure the database has what they make, with a file of yours, such as a new migration.\n')
     Files.readString(dir.resolve(migration)) == before
 

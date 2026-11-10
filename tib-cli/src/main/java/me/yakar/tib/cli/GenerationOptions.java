@@ -174,7 +174,8 @@ final class GenerationOptions {
     }
     if (!result.lastingReturned().isEmpty()) {
       err.println(
-          "The spec generates these files again, but tib wrote them before, and leaves them:");
+          "The spec generates these files, but they are there or tib wrote them before, and tib"
+              + " leaves them:");
       for (Lasting lasting : result.lastingReturned()) {
         if (lasting.diff().isEmpty()) {
           err.println("  " + lasting.path());
