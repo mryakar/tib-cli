@@ -18,14 +18,15 @@ updates:
       # runs it: remove this entry once Spotless 8.11 or later is in.
       - dependency-name: com.google.googlejavaformat:google-java-format
         versions: [">=1.37.0"]
-      # The default pack generates Spring Boot 3 services; a major version changes what it generates.
+      # A major version of Spring Boot is another stack than the one the default pack generates.
       - dependency-name: org.springframework.boot:spring-boot-gradle-plugin
         update-types: [version-update:semver-major]
     groups:
       # The Spring Boot of the generated services changes the snapshots; its update comes alone.
       generated-stack:
         patterns: ["org.springframework.boot:spring-boot-gradle-plugin"]
-      # The formatter and the plugin that runs it move together.
+      # The formatter and the plugin that runs it move together. google-java-format also formats
+      # what the default pack generates: its update changes the snapshots and comes with them.
       format:
         patterns: ["com.diffplug.spotless:*", "com.google.googlejavaformat:*"]
       gradle:

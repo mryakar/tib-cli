@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 // The default template pack: a plain Spring Boot 4 service with JPA, PostgreSQL, Flyway and
-// Testcontainers. Its templates are compiled by the build, so that the packaged runtime needs no
-// compiler.
+// Testcontainers. Its templates are compiled by the build, not when tib runs.
 import gg.jte.ContentType
 
 plugins {
