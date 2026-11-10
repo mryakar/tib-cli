@@ -5,7 +5,9 @@
 package ${entity.packageName()};
 
 import static org.assertj.core.api.Assertions.assertThat;
+@if(tests.unique())
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+@endif
 
 import ${entity.basePackage()}.TestcontainersConfiguration;
 @for(var target : tests.requiredTargets())
@@ -13,14 +15,18 @@ import ${target.packageName()}.${target.name()};
 import ${target.packageName()}.${target.name()}Repository;
 import ${target.packageName()}.${target.name()}Samples;
 @endfor
+@if(!tests.requiredTargets().isEmpty())
 import org.junit.jupiter.api.BeforeEach;
+@endif
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
 import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
 import org.springframework.context.annotation.Import;
+@if(tests.unique())
 import org.springframework.dao.DataIntegrityViolationException;
+@endif
 
 /** The table of ${entity.plural()}, against PostgreSQL in a container. */
 @DataJpaTest

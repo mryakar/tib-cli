@@ -34,6 +34,18 @@ public record FieldModel(Field field) {
     return field.type().toString();
   }
 
+  /** The import of the Java type, as a line of Java; nothing for a type of {@code java.lang}. */
+  public String typeImport() {
+    return switch (field.type()) {
+      case BIG_DECIMAL -> "import java.math.BigDecimal;";
+      case LOCAL_DATE -> "import java.time.LocalDate;";
+      case LOCAL_DATE_TIME -> "import java.time.LocalDateTime;";
+      case INSTANT -> "import java.time.Instant;";
+      case UUID -> "import java.util.UUID;";
+      case STRING, INTEGER, LONG, BOOLEAN -> "";
+    };
+  }
+
   /** The name with its first letter in upper case, for the accessors. */
   public String property() {
     return Names.property(field.name());

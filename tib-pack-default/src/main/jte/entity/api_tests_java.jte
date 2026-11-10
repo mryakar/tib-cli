@@ -14,9 +14,13 @@ import ${target.packageName()}.${target.name()};
 import ${target.packageName()}.${target.name()}Repository;
 import ${target.packageName()}.${target.name()}Samples;
 @endfor
+@if(entity.uuid())
 import java.util.UUID;
+@endif
 import org.junit.jupiter.api.AfterEach;
+@if(!tests.requiredTargets().isEmpty())
 import org.junit.jupiter.api.BeforeEach;
+@endif
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.TestRestTemplate;

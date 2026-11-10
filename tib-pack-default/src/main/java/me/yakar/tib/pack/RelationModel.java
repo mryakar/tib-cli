@@ -51,7 +51,7 @@ public record RelationModel(Relation relation, EntityModel target) {
   }
 
   /** The JPA annotation of the relation's kind. */
-  String annotation() {
+  public String annotation() {
     return oneToOne() ? "OneToOne" : "ManyToOne";
   }
 

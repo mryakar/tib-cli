@@ -12,7 +12,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
+@if(entity.uuid())
 import java.util.UUID;
+@endif
+@for(var relation : entity.relations())
+@if(relation.target().uuid())
+import java.util.UUID;
+@endif
+@endfor
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
