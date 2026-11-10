@@ -22,4 +22,4 @@ import picocli.CommandLine.Command;
     name = "generate",
     description = "Generates code into a service that tib scaffolded.",
     subcommands = GenerateEntityCommand.class)
-public class GenerateCommand {}
+class GenerateCommand {}

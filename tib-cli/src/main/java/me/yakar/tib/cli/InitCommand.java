@@ -22,4 +22,4 @@ import picocli.CommandLine.Command;
     name = "init",
     description = "Scaffolds a new project.",
     subcommands = InitServiceCommand.class)
-public class InitCommand {}
+class InitCommand {}

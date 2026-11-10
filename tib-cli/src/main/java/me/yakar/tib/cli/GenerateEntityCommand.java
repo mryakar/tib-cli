@@ -32,7 +32,7 @@ import picocli.CommandLine.Option;
     name = "entity",
     description =
         "Generates the entity layer of the entities of the spec, or of the tables of DDL.")
-public class GenerateEntityCommand implements Callable<Integer> {
+class GenerateEntityCommand implements Callable<Integer> {
 
   @ArgGroup(multiplicity = "1")
   private Source source;

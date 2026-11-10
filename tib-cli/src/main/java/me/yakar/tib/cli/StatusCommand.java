@@ -44,7 +44,7 @@ import picocli.CommandLine.Model.CommandSpec;
       TibCommand.USAGE,
       TibCommand.BUG
     })
-public class StatusCommand implements Callable<Integer> {
+class StatusCommand implements Callable<Integer> {
 
   @CommandLine.Spec private CommandSpec commandSpec;
 

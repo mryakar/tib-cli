@@ -25,7 +25,7 @@ import picocli.CommandLine.Model.CommandSpec;
     name = "schema",
     description =
         "Prints the JSON Schema of the spec file, for completion and validation in an editor.")
-public class SchemaCommand implements Runnable {
+class SchemaCommand implements Runnable {
 
   @CommandLine.Spec private CommandSpec commandSpec;
 

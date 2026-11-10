@@ -19,7 +19,7 @@ import java.util.ResourceBundle;
 import picocli.CommandLine.IVersionProvider;
 
 /** The version that {@code tib --version} prints, and that tib writes into the state file. */
-public final class TibVersion implements IVersionProvider {
+final class TibVersion implements IVersionProvider {
 
   private final String version;
 
