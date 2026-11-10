@@ -68,15 +68,22 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `ConflictHandler`.
 - The help of `--dry-run` reads `Prints what the run would change, as a diff, and changes
   nothing.`, as a dry run shows deletions too, and that of `--allow-dirty` starts with `Writes`.
+- The state file records a file that was there before tib wrote it when it is as tib generates
+  it, as it records the files that tib wrote; `tib generate entity` deletes it with its entity,
+  and `tib status` lists it when it is removed.
 
 ### Fixed
 
 - A file that is not UTF-8 text is reported as `cannot read spec.yaml: not UTF-8 text`, instead
   of `cannot read spec.yaml: Input length = 1`.
 - A run that fails while it writes or deletes leaves the state file as it was, so that the next
-  run finishes what it left: the state file is written last.
-- A file written once that you edited, that stayed when its entity left the spec and that you
-  deleted since, is written again when the entity comes back to the spec.
+  run, with `--allow-dirty` while what it wrote is not committed, finishes what it left: the state
+  file is written last, and records every file that is as tib generates it, written by that run or
+  there already.
+- A file that the developer owns and that cannot be read ends the run with `cannot read` and its
+  path, also a dry run, instead of being taken for a file that is there.
+- The lines of one message end with a line feed on every platform; on Windows, a refusal with
+  its advice mixed two line ends.
 - DDL that creates a table from another one, as `CREATE TABLE … AS SELECT` or `LIKE` does, is
   reported as a problem of the DDL, instead of ending tib with an exception.
 - The tests and the comments that tib generates say `an` before an entity whose name starts with
