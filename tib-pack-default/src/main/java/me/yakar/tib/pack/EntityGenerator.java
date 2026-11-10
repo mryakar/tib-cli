@@ -59,14 +59,14 @@ final class EntityGenerator implements Generator {
   private static final Pattern VERSION = Pattern.compile("/V(\\d+)(?:[._]\\d+)*__");
 
   @Override
-  public void generate(Project project, ProjectFiles tree) {
+  public void generate(Project project, ProjectFiles files) {
     Map<String, EntityModel> models = models(project);
-    models.values().forEach(model -> generateEntity(model, tree));
+    models.values().forEach(model -> generateEntity(model, files));
     // Written here and not by init: only a service with an API needs it.
     if (models.values().stream().anyMatch(EntityModel::layer)) {
       String handler = DefaultPack.MAIN + project.packagePath() + "/ConflictHandler.java";
       once(
-          tree,
+          files,
           handler,
           FIRST_ENTITY,
           "entity/conflict_handler_java.jte",
@@ -83,50 +83,50 @@ final class EntityGenerator implements Generator {
     return models;
   }
 
-  private static void generateEntity(EntityModel entity, ProjectFiles tree) {
+  private static void generateEntity(EntityModel entity, ProjectFiles files) {
     String main = entity.directory() + "/" + entity.name();
     String test = entity.testDirectory() + "/" + entity.name();
     Map<String, Object> model = Map.of("entity", entity);
     Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity));
-    own(tree, main + "Generated.java", EVERY_RUN, "entity/generated_java.jte", model);
-    once(tree, main + ".java", ONCE, "entity/entity_java.jte", model);
-    once(tree, main + "Repository.java", ONCE, "entity/repository_java.jte", model);
+    own(files, main + "Generated.java", EVERY_RUN, "entity/generated_java.jte", model);
+    once(files, main + ".java", ONCE, "entity/entity_java.jte", model);
+    once(files, main + "Repository.java", ONCE, "entity/repository_java.jte", model);
     if (entity.dto()) {
-      own(tree, main + "Dto.java", EVERY_RUN, "entity/dto_java.jte", model);
+      own(files, main + "Dto.java", EVERY_RUN, "entity/dto_java.jte", model);
     }
     // A migration lasts: a database may have run it, so it stays when the entity leaves the spec.
-    String migration = migration(tree, entity);
-    tree.lasting(
+    String migration = migration(files, entity);
+    files.lasting(
         migration, Templates.render(migration, MIGRATION, "entity/migration_sql.jte", model));
-    own(tree, test + "Samples.java", EVERY_RUN, "entity/samples_java.jte", tests);
-    once(tree, test + "RepositoryTests.java", ONCE, "entity/repository_tests_java.jte", tests);
+    own(files, test + "Samples.java", EVERY_RUN, "entity/samples_java.jte", tests);
+    once(files, test + "RepositoryTests.java", ONCE, "entity/repository_tests_java.jte", tests);
     if (entity.layer()) {
-      own(tree, main + "Mapper.java", EVERY_RUN, "entity/mapper_java.jte", model);
-      once(tree, main + "Service.java", ONCE, "entity/service_java.jte", model);
-      once(tree, main + "Controller.java", ONCE, "entity/controller_java.jte", model);
-      once(tree, test + "ServiceTests.java", ONCE, "entity/service_tests_java.jte", tests);
-      once(tree, test + "ApiTests.java", ONCE, "entity/api_tests_java.jte", tests);
+      own(files, main + "Mapper.java", EVERY_RUN, "entity/mapper_java.jte", model);
+      once(files, main + "Service.java", ONCE, "entity/service_java.jte", model);
+      once(files, main + "Controller.java", ONCE, "entity/controller_java.jte", model);
+      once(files, test + "ServiceTests.java", ONCE, "entity/service_tests_java.jte", tests);
+      once(files, test + "ApiTests.java", ONCE, "entity/api_tests_java.jte", tests);
     }
   }
 
   /** Writes a file of tib's: on every run. */
   private static void own(
-      ProjectFiles tree,
+      ProjectFiles files,
       String path,
       String header,
       String template,
       Map<String, Object> parameters) {
-    tree.own(path, Templates.render(path, header, template, parameters));
+    files.own(path, Templates.render(path, header, template, parameters));
   }
 
   /** Writes a file of the developer's: once. */
   private static void once(
-      ProjectFiles tree,
+      ProjectFiles files,
       String path,
       String header,
       String template,
       Map<String, Object> parameters) {
-    tree.once(path, Templates.render(path, header, template, parameters));
+    files.once(path, Templates.render(path, header, template, parameters));
   }
 
   /**
@@ -134,15 +134,15 @@ final class EntityGenerator implements Generator {
    * migration the developer removed or renamed stays so; else the one there; else the next major
    * version after the versioned migrations there.
    */
-  private static String migration(ProjectFiles tree, EntityModel entity) {
+  private static String migration(ProjectFiles files, EntityModel entity) {
     String suffix = "__create_" + entity.table().toLowerCase(Locale.ROOT) + ".sql";
-    for (String migration : tree.recorded(MIGRATIONS)) {
+    for (String migration : files.recorded(MIGRATIONS)) {
       if (migration.endsWith(suffix)) {
         return migration;
       }
     }
     long latest = 0;
-    for (String migration : tree.list(MIGRATIONS)) {
+    for (String migration : files.list(MIGRATIONS)) {
       if (migration.endsWith(suffix)) {
         return migration;
       }
