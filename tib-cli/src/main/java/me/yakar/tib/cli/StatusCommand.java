@@ -28,26 +28,21 @@ import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 
-/** {@code tib status}: what tib generated into a service, and which of its files differ. */
+/**
+ * {@code tib status}: what tib generated into a service, and which of the files it wrote or read
+ * differ.
+ */
 @Command(
     name = "status",
-    description = {
-      "Says which of the files that tib wrote into the service are no longer as it wrote them,"
-          + " and which of the files that it read the spec from were changed since.",
-      "A file of tib's that was edited or is missing is a problem: git checkout restores it, or the"
-          + " next run of tib writes it again, with --allow-dirty while the change is not"
-          + " committed. A file of yours that was removed is not; tib does not write it again.",
-      "A spec file or DDL that was changed is a problem too: the files of tib's no longer follow"
-          + " it until tib runs with it again. One that is no longer where tib read it is not;"
-          + " tib does not need it."
-    },
+    description =
+        "Says which of the files that tib wrote into the service are no longer as it wrote them,"
+            + " and which of the files that it read the spec from were changed since.",
     exitCodeList = {
-      "0:Every file of tib's is as it wrote it, and every file that it read the spec from is as it"
-          + " read it.",
+      "0:Nothing that tib needs differs.",
       "1:A file of tib's was edited or is missing, a file that tib read the spec from was changed,"
           + " or the project has a problem; the message says which.",
-      "2:The command line is wrong.",
-      "3:tib failed; a bug, reported with its stack trace."
+      TibCommand.USAGE,
+      TibCommand.BUG
     })
 public class StatusCommand implements Callable<Integer> {
 
