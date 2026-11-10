@@ -18,10 +18,7 @@ package me.yakar.tib.cli;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-import java.util.function.Function;
 import me.yakar.tib.generate.Generation;
-import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Lasting;
 import me.yakar.tib.generate.Pack;
 import me.yakar.tib.generate.Packs;
@@ -36,8 +33,11 @@ import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 
-/** The options of a command that generates into a service, and the end of its run. */
+/** The options of a command that generates into a service, and the run that they steer. */
 final class GenerationOptions {
+
+  /** The description of the option that names the spec file. */
+  static final String SPEC_FILE = "The spec file of the service.";
 
   private static final String NOTHING_TO_CHANGE = "Nothing to change.";
 
@@ -66,43 +66,64 @@ final class GenerationOptions {
   }
 
   /**
-   * Runs the generator that the function picks from the pack of the service, then prints the diff
-   * of a dry run, or writes the files, says how many, and names the files it deleted. A dry run
-   * that changes nothing says so on the standard error. A run that would write into a service with
-   * uncommitted changes is refused unless {@code --allow-dirty}. The files that the spec no longer
-   * generates and that stay, as they were edited, are named on the standard error, and so are the
-   * inputs that the state forgot. The inputs are the files the spec was read from.
+   * Scaffolds the service into a directory that tib did not run on, and ends the run as {@link
+   * #end} does.
+   *
+   * @param inputs the files that the spec was read from
    */
-  int generate(
-      Optional<State> previous,
-      Spec service,
-      List<State.Input> inputs,
-      Function<Pack, Generator> generator,
-      Tree tree) {
+  int init(Spec service, List<State.Input> inputs, Tree tree) {
     Pack pack = Packs.find(service.pack());
-    Project project = new Project(service);
-    Generator generating = generator.apply(pack);
-    Generation.Result result =
-        previous.isPresent()
-            ? Generation.next(
-                previous.get(), project, inputs, pack, generating, version.version(), tree)
-            : Generation.first(project, inputs, pack, generating, version.version(), tree);
+    return end(
+        Generation.first(new Project(service), inputs, pack, pack.init(), version.version(), tree),
+        tree);
+  }
+
+  /**
+   * Generates the entity layer into the service that has the state, and ends the run as {@link
+   * #end} does.
+   *
+   * @param input the file that the spec was read from
+   */
+  int entity(State previous, Spec service, State.Input input, Tree tree) {
+    Pack pack = Packs.find(service.pack());
+    return end(
+        Generation.next(
+            previous,
+            new Project(service),
+            List.of(input),
+            pack,
+            pack.entity(),
+            version.version(),
+            tree),
+        tree);
+  }
+
+  /**
+   * Ends a run that staged its changes in the tree: a dry run prints the diff; otherwise the
+   * changes are written, unless the service has uncommitted changes and {@code --allow-dirty} is
+   * not given. A run without changes says so, a dry run on the standard error.
+   */
+  private int end(Generation.Result result, Tree tree) {
     PrintWriter out = commandSpec.commandLine().getOut();
     PrintWriter err = commandSpec.commandLine().getErr();
-    int files = tree.changes().size();
+    List<Change> changes = tree.changes();
     if (dryRun) {
       out.print(tree.diff());
       out.flush();
-      if (files == 0) {
+      if (changes.isEmpty()) {
         err.println(NOTHING_TO_CHANGE);
       }
-      notices(err, result);
-      return ExitCode.OK;
-    }
-    if (files == 0) {
+    } else if (changes.isEmpty()) {
       out.println(NOTHING_TO_CHANGE);
-      return ExitCode.OK;
+    } else {
+      write(changes, tree, out, err);
     }
+    notices(err, result);
+    return ExitCode.OK;
+  }
+
+  /** Writes the changes, and says how many files were written and which were deleted. */
+  private void write(List<Change> changes, Tree tree, PrintWriter out, PrintWriter err) {
     List<String> uncommitted = Git.uncommitted(tree.root());
     if (!uncommitted.isEmpty()) {
       if (!allowDirty) {
@@ -114,31 +135,20 @@ final class GenerationOptions {
       err.println(uncommitted(tree, uncommitted));
       err.println("tib writes anyway, as --allow-dirty asks.");
     }
-    List<String> deleted =
-        tree.changes().stream().filter(Change::deletes).map(Change::path).toList();
+    List<String> deleted = changes.stream().filter(Change::deletes).map(Change::path).toList();
     tree.apply(State.PATH);
-    out.println(
-        "Wrote "
-            + ServiceDirectory.count(files - deleted.size(), "file", "files")
-            + " to "
-            + tree.root()
-            + ".");
+    out.println("Wrote " + files(changes.size() - deleted.size()) + " to " + tree.root() + ".");
     if (!deleted.isEmpty()) {
-      out.println(
-          "Deleted "
-              + ServiceDirectory.count(deleted.size(), "file", "files")
-              + " that the spec no longer generates:");
+      out.println("Deleted " + files(deleted.size()) + " that the spec no longer generates:");
       deleted.forEach(path -> out.println("  " + path));
     }
-    notices(err, result);
-    return ExitCode.OK;
   }
 
-  /**
-   * Names the files that the spec no longer generates and that stay, as they were edited, the
-   * inputs that the state forgot, and the files that last and that the spec now generates
-   * otherwise, no longer generates, or generates again.
-   */
+  private static String files(int count) {
+    return Messages.count(count, "file", "files");
+  }
+
+  /** Says on the standard error what stays or is forgotten although the spec changed. */
   private static void notices(PrintWriter err, Generation.Result result) {
     if (!result.kept().isEmpty()) {
       err.println(

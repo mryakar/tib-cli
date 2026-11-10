@@ -55,9 +55,4 @@ final class ServiceDirectory {
       throw new RefusalException(e.getMessage(), "Run tib init service first.");
     }
   }
-
-  /** The count with the word that fits it, as in {@code 1 file} or {@code 2 files}. */
-  static String count(int count, String one, String many) {
-    return count + " " + (count == 1 ? one : many);
-  }
 }
