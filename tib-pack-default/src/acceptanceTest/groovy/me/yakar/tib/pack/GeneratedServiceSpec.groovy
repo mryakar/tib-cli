@@ -22,6 +22,7 @@ import me.yakar.tib.ddl.DdlReader
 import me.yakar.tib.generate.Pack
 import me.yakar.tib.generate.Project
 import me.yakar.tib.spec.SpecReader
+import me.yakar.tib.state.State
 import me.yakar.tib.tree.Tree
 import spock.lang.Specification
 import spock.lang.TempDir
@@ -52,7 +53,7 @@ class GeneratedServiceSpec extends Specification {
     Pack pack = new DefaultPack()
     pack.init().generate(project, tree)
     pack.entity().generate(project, tree)
-    tree.apply()
+    tree.apply(State.PATH)
     boolean docker = docker()
     assert docker || !LINUX || !System.getenv('CI') : 'the build of the service needs Docker under CI'
     Path log = logs.resolve('gradle.log')

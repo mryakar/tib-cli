@@ -194,13 +194,6 @@ public final class Tree implements ProjectFiles {
   }
 
   /**
-   * Writes the staged changes to disk, as {@link #apply(String)} does, in the order of the paths.
-   */
-  public void apply() {
-    write(null);
-  }
-
-  /**
    * Writes the staged changes to disk. Every file is first written next to its target, as {@code
    * <name>.tib.tmp} with the permissions of a new file, which can be run if the change says so, or
    * of the file it replaces, and then moved over it in one step, so a file is either the old one or
@@ -213,10 +206,7 @@ public final class Tree implements ProjectFiles {
    * @param last the path of the file that is moved into place last, if it is staged
    */
   public void apply(String last) {
-    write(key(last));
-  }
-
-  private void write(String last) {
+    Path lastFile = root.resolve(key(last));
     // The files written next to their targets, by target, in the order of the paths.
     Map<Path, Path> staged = new LinkedHashMap<>();
     String verb = "write";
@@ -242,7 +232,6 @@ public final class Tree implements ProjectFiles {
         }
         keep(file, staging, KEPT);
       }
-      Path lastFile = last == null ? null : root.resolve(last);
       for (Map.Entry<Path, Path> entry : staged.entrySet()) {
         if (!entry.getKey().equals(lastFile)) {
           target = entry.getKey();
