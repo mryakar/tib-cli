@@ -41,6 +41,8 @@ jreleaser-tool-provider = { module = "org.jreleaser:jreleaser-tool-provider", ve
 ktfmt = { module = "org.jetbrains.kotlinx:ktfmt", version.ref = "ktfmt" }
 spock-core = { module = "org.spockframework:spock-core", version.ref = "spock" }
 
-# Gradle plugins used by the convention plugins in build-logic
+# The Gradle plugin used by the convention plugins in build-logic
 spotless-gradle-plugin = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
-jte-gradle-plugin = { module = "gg.jte:jte-gradle-plugin", version.ref = "jte" }
+
+[plugins]
+jte = { id = "gg.jte.gradle", version.ref = "jte" }

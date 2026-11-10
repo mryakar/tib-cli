@@ -20,7 +20,7 @@ import gg.jte.ContentType
 
 plugins {
   id("tib.java-conventions")
-  id("gg.jte.gradle")
+  alias(libs.plugins.jte)
 }
 
 description = "tib default template pack: Spring Boot 4, JPA, PostgreSQL, Flyway, Testcontainers"
