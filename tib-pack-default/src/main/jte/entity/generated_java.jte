@@ -2,7 +2,28 @@
 @param EntityModel entity
 package ${entity.packageName()};
 
-${entity.generatedImports()}/** The columns of ${entity.table()}, as the spec names them; {@link ${entity.name()}} is the entity. */
+import jakarta.persistence.Column;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.SequenceGenerator;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+@for(var target : entity.otherTargets())
+import ${target.packageName()}.${target.name()};
+@endfor
+
+/** The columns of ${entity.table()}, as the spec names them; {@link ${entity.name()}} is the entity. */
 @MappedSuperclass
 public abstract class ${entity.name()}Generated {
 

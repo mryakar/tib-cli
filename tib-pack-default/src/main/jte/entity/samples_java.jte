@@ -7,7 +7,16 @@
 !{String dtoBuilder = name + "DtoBuilder";}
 package ${entity.packageName()};
 
-${tests.samplesImports()}/**
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
+@for(var target : entity.otherTargets())
+import ${target.packageName()}.${target.name()};
+@endfor
+
+/**
  * Sample ${entity.plural()} for the tests, with the first or the second sample values: a test
  * changes the value it is about through the builder.
  */

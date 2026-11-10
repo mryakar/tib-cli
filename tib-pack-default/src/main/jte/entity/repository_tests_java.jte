@@ -4,7 +4,25 @@
 !{EntityModel entity = tests.entity();}
 package ${entity.packageName()};
 
-${tests.repositoryTestsImports()}/** The table of ${entity.plural()}, against PostgreSQL in a container. */
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import ${entity.basePackage()}.TestcontainersConfiguration;
+@for(var target : tests.requiredTargets())
+import ${target.packageName()}.${target.name()};
+import ${target.packageName()}.${target.name()}Repository;
+import ${target.packageName()}.${target.name()}Samples;
+@endfor
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
+import org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase;
+import org.springframework.boot.jpa.test.autoconfigure.TestEntityManager;
+import org.springframework.context.annotation.Import;
+import org.springframework.dao.DataIntegrityViolationException;
+
+/** The table of ${entity.plural()}, against PostgreSQL in a container. */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @Import(TestcontainersConfiguration.class)

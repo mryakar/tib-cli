@@ -5,7 +5,12 @@
 !{boolean endsWithFields = entity.relations().isEmpty() && !entity.audited();}
 package ${entity.packageName()};
 
-${entity.mapperImports()}/** Between the entity and its DTO@if(!entity.relations().isEmpty()); a relation is resolved by the identifier of its target@endif. */
+import org.springframework.stereotype.Component;
+@for(var target : entity.otherTargets())
+import ${target.packageName()}.${target.name()}Repository;
+@endfor
+
+/** Between the entity and its DTO@if(!entity.relations().isEmpty()); a relation is resolved by the identifier of its target@endif. */
 @Component
 public class ${entity.name()}Mapper {
 

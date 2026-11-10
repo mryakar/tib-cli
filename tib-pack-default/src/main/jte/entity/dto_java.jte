@@ -3,7 +3,15 @@
 @param EntityModel entity
 package ${entity.packageName()};
 
-${entity.dtoImports()}/**
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+/**
  * ${entity.article()} ${entity.variable()} as the API shows and takes it@if(!entity.relations().isEmpty()); a relation is the identifier of its target@endif.
  @if(entity.audited())
  * The identifier and the audit times are read only; the service ignores them.
