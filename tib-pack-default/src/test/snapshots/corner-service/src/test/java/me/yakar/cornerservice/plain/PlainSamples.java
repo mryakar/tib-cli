@@ -53,7 +53,7 @@ public final class PlainSamples {
     }
   }
 
-  /** A plain as the API takes it, to build one value at a time; its audit times are none. */
+  /** A plain as the API takes it, to build one value at a time. */
   public static final class PlainDtoBuilder {
     private Long id;
     private String label;

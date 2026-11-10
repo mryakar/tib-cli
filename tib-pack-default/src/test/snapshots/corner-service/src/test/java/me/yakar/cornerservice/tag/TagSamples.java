@@ -75,7 +75,7 @@ public final class TagSamples {
     }
   }
 
-  /** A tag as the API takes it, to build one value at a time; its audit times are none. */
+  /** A tag as the API takes it, to build one value at a time. */
   public static final class TagDtoBuilder {
     private Long id;
     private String label;

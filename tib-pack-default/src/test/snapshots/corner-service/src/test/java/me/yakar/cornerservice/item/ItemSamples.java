@@ -68,7 +68,7 @@ public final class ItemSamples {
     }
   }
 
-  /** An item as the API takes it, to build one value at a time; its audit times are none. */
+  /** An item as the API takes it, to build one value at a time. */
   public static final class ItemDtoBuilder {
     private Long id;
     private String label;
