@@ -114,13 +114,8 @@ if (snapshotsDir.isDirectory) {
 
 jacoco { toolVersion = version("jacoco") }
 
-// Coverage counts every test suite; executionData(tasks) adds no task dependency, so dependsOn
-// does.
-tasks.withType<JacocoReportBase>().configureEach {
-  val tests = tasks.withType<Test>()
-  dependsOn(tests)
-  executionData(*tests.toTypedArray())
-}
+// Coverage counts the unit tests, which the report and the verification run first.
+tasks.withType<JacocoReportBase>().configureEach { dependsOn(tasks.test) }
 
 // Every instruction, branch and line of a module is covered, or the build fails.
 tasks.jacocoTestCoverageVerification {
