@@ -15,6 +15,8 @@
  */
 package me.yakar.tib.pack;
 
+import com.google.googlejavaformat.java.Formatter;
+import com.google.googlejavaformat.java.FormatterException;
 import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.output.StringOutput;
@@ -25,17 +27,32 @@ final class Templates {
 
   private static final TemplateEngine ENGINE = TemplateEngine.createPrecompiled(ContentType.Plain);
 
+  private static final Formatter FORMATTER = new Formatter();
+
   private Templates() {}
 
   /**
    * The text of the file at the path: the header that says who owns it, as a comment of the file's
-   * kind, then the template with the parameters, by name.
+   * kind, then the template with the parameters, by name. Java is in the layout of
+   * google-java-format, its imports sorted and the unused ones left out.
    */
   static String render(
       String path, String header, String template, Map<String, Object> parameters) {
     StringOutput output = new StringOutput();
     ENGINE.render(template, parameters, output);
-    return comment(path, header) + "\n" + output;
+    return format(path, comment(path, header) + "\n" + output);
+  }
+
+  /** The text of the file at the path, formatted if it is Java. */
+  static String format(String path, String text) {
+    if (!path.endsWith(".java")) {
+      return text;
+    }
+    try {
+      return FORMATTER.formatSourceAndFixImports(text);
+    } catch (FormatterException e) {
+      throw new IllegalStateException(path + " is not Java that google-java-format reads", e);
+    }
   }
 
   /** The text as a comment of one line in the file at the path, by its extension. */

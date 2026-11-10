@@ -64,6 +64,11 @@ public final class DefaultPack implements Pack {
     return properties.getProperty("java");
   }
 
+  /** The version of google-java-format, whose layout the generated Java has. */
+  public String formatterVersion() {
+    return properties.getProperty("google-java-format");
+  }
+
   /** The PostgreSQL major version that the tests of the generated service run against. */
   public String postgresVersion() {
     return properties.getProperty("postgres");

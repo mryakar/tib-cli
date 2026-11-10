@@ -8,10 +8,7 @@ import org.springframework.stereotype.Component;
 public class DepotMapper {
 
   public DepotDto toDto(Depot depot) {
-    return new DepotDto(
-        depot.getId(),
-        depot.getCode(),
-        depot.getOpenedOn());
+    return new DepotDto(depot.getId(), depot.getCode(), depot.getOpenedOn());
   }
 
   /** Copies the DTO onto the entity, all but its identifier. */

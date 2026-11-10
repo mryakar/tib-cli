@@ -42,4 +42,38 @@ class TemplatesSpec extends Specification {
     IllegalArgumentException e = thrown()
     e.message == 'there is no comment in logo.png'
   }
+
+  def "Java is formatted as google-java-format lays it out, with its imports sorted and the unused ones left out"() {
+    expect:
+    Templates.format('A.java', '''\
+package a;
+import java.util.Set;
+import java.util.List;
+class A {   List<String> names() { return List.of(); } }
+''') == '''\
+package a;
+
+import java.util.List;
+
+class A {
+  List<String> names() {
+    return List.of();
+  }
+}
+'''
+  }
+
+  def "a file that is not Java is left as it is"() {
+    expect:
+    Templates.format('application.yaml', 'a:   b\n') == 'a:   b\n'
+  }
+
+  def "Java that the formatter cannot read is a mistake of the pack, named by its path"() {
+    when:
+    Templates.format('A.java', 'class {')
+
+    then:
+    IllegalStateException e = thrown()
+    e.message == 'A.java is not Java that google-java-format reads'
+  }
 }

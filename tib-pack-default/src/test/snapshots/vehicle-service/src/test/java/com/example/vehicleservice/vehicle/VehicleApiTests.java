@@ -139,25 +139,11 @@ class VehicleApiTests {
 
   /** A vehicle as the API takes it, with the first sample values. */
   private VehicleDto dto() {
-    return new VehicleDto(
-        null,
-        "One",
-        1,
-        new BigDecimal("1.00"),
-        null,
-        null,
-        null);
+    return new VehicleDto(null, "One", 1, new BigDecimal("1.00"), null, null, null);
   }
 
   /** A vehicle as the API takes it, with the second sample values. */
   private VehicleDto otherDto() {
-    return new VehicleDto(
-        null,
-        "Two",
-        2,
-        new BigDecimal("2.00"),
-        null,
-        null,
-        null);
+    return new VehicleDto(null, "Two", 2, new BigDecimal("2.00"), null, null, null);
   }
 }

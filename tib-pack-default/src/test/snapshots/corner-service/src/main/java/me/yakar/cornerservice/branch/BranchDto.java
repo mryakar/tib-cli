@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * A branch as the API shows and takes it; a relation is the identifier of its target.
- * The identifier and the audit times are read only; the service ignores them.
+ * A branch as the API shows and takes it; a relation is the identifier of its target. The
+ * identifier and the audit times are read only; the service ignores them.
  */
 public record BranchDto(
     Long id,

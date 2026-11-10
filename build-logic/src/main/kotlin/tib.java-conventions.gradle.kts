@@ -57,6 +57,8 @@ tasks.withType<Test>().configureEach {
   javaLauncher = javaToolchains.launcherFor {
     languageVersion = testJavaVersion.map(JavaLanguageVersion::of)
   }
+  // The tests generate, and the default pack formats what it generates with google-java-format.
+  jvmArgs(me.yakar.tib.gradle.JavacExports.JVM_OPTIONS)
   val examples = layout.settingsDirectory.dir("docs/modules/ROOT/examples")
   val snapshots =
     layout.projectDirectory.dir("src/test/snapshots").takeIf {

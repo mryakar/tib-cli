@@ -19,6 +19,8 @@ spock = "2.5-groovy-5.0"
 spotless = "8.10.4"
 
 [libraries]
+# The formatter of the default pack, and of this build through Spotless.
+google-java-format = { module = "com.google.googlejavaformat:google-java-format", version.ref = "google-java-format" }
 groovy-bom = { module = "org.apache.groovy:groovy-bom", version.ref = "groovy" }
 jackson-bom = { module = "tools.jackson:jackson-bom", version.ref = "jackson" }
 jackson-databind = { module = "tools.jackson.core:jackson-databind" }
@@ -33,7 +35,6 @@ picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "pico
 # Declared as libraries only so that Dependabot updates their versions; the build and the release
 # workflow read the versions: the tools that they run, and the Spring Boot of the generated projects.
 generated-spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "generated-spring-boot" }
-google-java-format = { module = "com.google.googlejavaformat:google-java-format", version.ref = "google-java-format" }
 jacoco-agent = { module = "org.jacoco:org.jacoco.agent", version.ref = "jacoco" }
 jreleaser-tool-provider = { module = "org.jreleaser:jreleaser-tool-provider", version.ref = "jreleaser" }
 ktfmt = { module = "org.jetbrains.kotlinx:ktfmt", version.ref = "ktfmt" }

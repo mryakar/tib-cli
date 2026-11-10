@@ -41,10 +41,7 @@ class DepotApiTests {
 
     assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(created.getBody().id()).isNotNull();
-    assertThat(created.getBody())
-        .usingRecursiveComparison()
-        .ignoringFields("id")
-        .isEqualTo(dto);
+    assertThat(created.getBody()).usingRecursiveComparison().ignoringFields("id").isEqualTo(dto);
   }
 
   @Test
@@ -73,18 +70,11 @@ class DepotApiTests {
 
     ResponseEntity<DepotDto> updated =
         http.exchange(
-            "/api/depots/{id}",
-            HttpMethod.PUT,
-            new HttpEntity<>(dto),
-            DepotDto.class,
-            depot.id());
+            "/api/depots/{id}", HttpMethod.PUT, new HttpEntity<>(dto), DepotDto.class, depot.id());
 
     assertThat(updated.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(updated.getBody().id()).isEqualTo(depot.id());
-    assertThat(updated.getBody())
-        .usingRecursiveComparison()
-        .ignoringFields("id")
-        .isEqualTo(dto);
+    assertThat(updated.getBody()).usingRecursiveComparison().ignoringFields("id").isEqualTo(dto);
   }
 
   @Test
@@ -103,8 +93,7 @@ class DepotApiTests {
 
     ResponseEntity<Void> deleted =
         http.exchange("/api/depots/{id}", HttpMethod.DELETE, null, Void.class, depot.id());
-    ResponseEntity<String> found =
-        http.getForEntity("/api/depots/{id}", String.class, depot.id());
+    ResponseEntity<String> found = http.getForEntity("/api/depots/{id}", String.class, depot.id());
 
     assertThat(deleted.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     assertThat(found.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -137,17 +126,11 @@ class DepotApiTests {
 
   /** A depot as the API takes it, with the first sample values. */
   private DepotDto dto() {
-    return new DepotDto(
-        null,
-        "One",
-        LocalDate.of(2026, 1, 1));
+    return new DepotDto(null, "One", LocalDate.of(2026, 1, 1));
   }
 
   /** A depot as the API takes it, with the second sample values. */
   private DepotDto otherDto() {
-    return new DepotDto(
-        null,
-        "Two",
-        LocalDate.of(2026, 1, 2));
+    return new DepotDto(null, "Two", LocalDate.of(2026, 1, 2));
   }
 }

@@ -117,7 +117,8 @@ class BranchApiTests {
 
   @Test
   void refusesABranchWithoutItsRequiredValues() {
-    BranchDto empty = new BranchDto(null, null, null, null, null, null, null, null, null, null, null, null);
+    BranchDto empty =
+        new BranchDto(null, null, null, null, null, null, null, null, null, null, null, null);
 
     ResponseEntity<String> created = http.postForEntity("/api/branches", empty, String.class);
 

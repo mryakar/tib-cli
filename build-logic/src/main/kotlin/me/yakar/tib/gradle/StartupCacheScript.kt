@@ -23,7 +23,9 @@ import java.io.File
  *
  * The cache fits only the class path it was built with, so the installers run the script where they
  * install the application, with the launcher's class path in its order. The script records a
- * training run, then creates the cache from it.
+ * training run, then creates the cache from it. The training run scaffolds a service as a dry run,
+ * which writes nothing, so that the cache holds the classes that generate and format, and not only
+ * those that start.
  */
 object StartupCacheScript {
 
@@ -34,7 +36,11 @@ object StartupCacheScript {
    * The JVM options the launcher runs with; the cache is built with the same ones. The JVM says
    * nothing about the cache, which is missing until the script has run.
    */
-  val JVM_OPTIONS = listOf("-XX:+UseCompactObjectHeaders", "-Xlog:aot=off,cds=off")
+  val JVM_OPTIONS =
+    listOf("-XX:+UseCompactObjectHeaders", "-Xlog:aot=off,cds=off") + JavacExports.JVM_OPTIONS
+
+  /** The training run, but for the directory: a new service, as a dry run. */
+  private const val TRAINING = "init service sample --dry-run"
 
   /** Writes the script for one platform. */
   fun write(appDirectory: File, launcherName: String, windows: Boolean) {
@@ -61,7 +67,7 @@ object StartupCacheScript {
           |set "cp=${jars.joinToString(";") { "%app%\\$it" }}"
           |"%java%" $options ^
           |  -XX:AOTMode=record -XX:AOTConfiguration="%app%\$cache.config" ^
-          |  -cp "%cp%" $mainClass --version >nul || (del /q "%app%\$cache.config" 2>nul & exit /b 1)
+          |  -cp "%cp%" $mainClass $TRAINING -d "%app%\$cache.sample" >nul || (del /q "%app%\$cache.config" 2>nul & exit /b 1)
           |"%java%" $options ^
           |  -XX:AOTMode=create -XX:AOTConfiguration="%app%\$cache.config" -XX:AOTCache="%app%\$cache" ^
           |  -cp "%cp%" >nul
@@ -86,7 +92,7 @@ object StartupCacheScript {
           |trap 'rm -f "${'$'}app/$cache.config"' EXIT
           |"${'$'}java" $options \
           |  -XX:AOTMode=record -XX:AOTConfiguration="${'$'}app/$cache.config" \
-          |  -cp "${'$'}cp" $mainClass --version >/dev/null
+          |  -cp "${'$'}cp" $mainClass $TRAINING -d "${'$'}app/$cache.sample" >/dev/null
           |"${'$'}java" $options \
           |  -XX:AOTMode=create -XX:AOTConfiguration="${'$'}app/$cache.config" -XX:AOTCache="${'$'}app/$cache" \
           |  -cp "${'$'}cp" >/dev/null
