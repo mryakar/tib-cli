@@ -27,8 +27,14 @@ class Tib {
   /** The examples of the documentation: the spec and the DDL of a service. */
   static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
 
+  /** The spec file of the documentation: a vehicle and a depot. */
+  static final String SPEC = EXAMPLES.resolve('vehicle-service.yaml')
+
+  /** The DDL of the documentation: the tables of the vehicle and of the depot. */
+  static final String DDL = EXAMPLES.resolve('vehicle-service.sql')
+
   /** The spec of the documentation without its vehicle: the depot only. */
-  static final String DEPOT_ONLY = Files.readString(EXAMPLES.resolve('vehicle-service.yaml'))
+  static final String DEPOT_ONLY = Files.readString(Path.of(SPEC))
   .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, '')
 
   /** What a run printed, with the line separator of every platform, and its exit code. */

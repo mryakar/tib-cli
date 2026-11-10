@@ -17,10 +17,12 @@ package me.yakar.tib.cli
 
 import static me.yakar.tib.cli.Tib.EXAMPLES
 
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.cli.Tib.Result
 import me.yakar.tib.state.State
+import me.yakar.tib.tree.Owner
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -66,6 +68,7 @@ class InitServiceCommandSpec extends Specification {
     result.exitCode() == 0
     result.out().startsWith('--- /dev/null\n+++ b/.gitattributes\n')
     result.out().contains('+++ b/src/main/java/com/example/vehicleservice/VehicleServiceApplication.java\n')
+    result.out().contains('Binary files /dev/null and b/gradle/wrapper/gradle-wrapper.jar differ\n')
     dir.toFile().list().length == 0
   }
 
@@ -82,6 +85,19 @@ class InitServiceCommandSpec extends Specification {
     state.pack().name() == 'default'
     state.inputs() == []
     state.spec().service() == 'vehicle-service'
+
+    and: 'the Gradle wrapper is the developer\'s, and gradlew is a file to run'
+    state.files().findAll {
+      it.path().startsWith('gradle')
+    }.collectEntries {
+      [it.path(), it.owner()]
+    } == [
+      'gradle/wrapper/gradle-wrapper.jar': Owner.DEVELOPER,
+      'gradle/wrapper/gradle-wrapper.properties': Owner.DEVELOPER,
+      'gradlew': Owner.DEVELOPER,
+      'gradlew.bat': Owner.DEVELOPER
+    ]
+    !FileSystems.default.supportedFileAttributeViews().contains('posix') || Files.isExecutable(dir.resolve('gradlew'))
   }
 
   def "a directory that is a tib project already is refused"() {
