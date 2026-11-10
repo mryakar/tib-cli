@@ -20,6 +20,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.yakar.tib.state.State;
@@ -144,42 +147,57 @@ public final class Generation {
             tree.root(),
             now.written(),
             Stream.concat(dropped.deleted().stream(), dropped.kept().stream()).toList());
-    Set<String> staged = tree.changes().stream().map(Change::path).collect(Collectors.toSet());
-    List<Lasting> returned = new ArrayList<>();
-    now.lasting()
-        .forEach(
-            (path, makes) -> {
-              if (!before.lasting().containsKey(path) && !staged.contains(path)) {
-                returned.add(new Lasting(path, tree.bytes(path).orElse(null), makes));
-              }
-            });
     tree.own(State.PATH, next.yaml());
-    Set<String> recorded =
-        previous.files().stream().map(State.File::path).collect(Collectors.toSet());
-    List<Lasting> changed = new ArrayList<>();
-    List<String> gone = new ArrayList<>();
-    before
-        .lasting()
-        .forEach(
-            (path, made) -> {
-              byte[] makes = now.lasting().get(path);
-              if (makes == null) {
-                if (recorded.contains(path) || tree.exists(path)) {
-                  gone.add(path);
-                }
-              } else if (!Arrays.equals(made, makes) && !staged.contains(path)) {
-                changed.add(new Lasting(path, made, makes));
-              }
-            });
+    Left left = left(previous, before.lasting(), now.lasting(), tree);
     return new Result(
         dropped.kept(),
         previous.inputs().stream()
             .map(State.Input::path)
             .filter(path -> next.inputs().stream().noneMatch(input -> input.path().equals(path)))
             .toList(),
-        List.copyOf(changed),
-        List.copyOf(gone),
-        List.copyOf(returned));
+        left.changed(),
+        left.dropped(),
+        left.returned());
+  }
+
+  /** The files that last and that the run leaves as they are, as {@link Result} names them. */
+  private record Left(List<Lasting> changed, List<String> dropped, List<Lasting> returned) {}
+
+  /**
+   * The files that last and that the run leaves as they are, where the spec says otherwise. A file
+   * that the spec no longer generates is named when it is on record or there. A file that the spec
+   * generates and that the run does not write is named when the previous spec did not generate it,
+   * or generated it otherwise.
+   *
+   * @param before the files that the generator makes of the previous spec, with their content
+   * @param now the files that it makes of this one
+   */
+  private static Left left(
+      State previous, SortedMap<String, byte[]> before, SortedMap<String, byte[]> now, Tree tree) {
+    Set<String> recorded =
+        previous.files().stream().map(State.File::path).collect(Collectors.toSet());
+    Set<String> staged = tree.changes().stream().map(Change::path).collect(Collectors.toSet());
+    List<Lasting> changed = new ArrayList<>();
+    List<String> dropped = new ArrayList<>();
+    List<Lasting> returned = new ArrayList<>();
+    SortedSet<String> paths = new TreeSet<>(before.keySet());
+    paths.addAll(now.keySet());
+    for (String path : paths) {
+      byte[] made = before.get(path);
+      byte[] makes = now.get(path);
+      if (makes == null) {
+        if (recorded.contains(path) || tree.exists(path)) {
+          dropped.add(path);
+        }
+      } else if (!staged.contains(path)) {
+        if (made == null) {
+          returned.add(new Lasting(path, tree.bytes(path).orElse(null), makes));
+        } else if (!Arrays.equals(made, makes)) {
+          changed.add(new Lasting(path, made, makes));
+        }
+      }
+    }
+    return new Left(List.copyOf(changed), List.copyOf(dropped), List.copyOf(returned));
   }
 
   private static State.PackRef ref(Pack pack) {
