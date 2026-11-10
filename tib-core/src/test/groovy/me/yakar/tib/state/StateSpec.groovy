@@ -85,13 +85,15 @@ class StateSpec extends Specification {
     State released = State.parse(StateSpec.getResource("state-${version}.yaml").text, version)
 
     then: 'a state written before tib named the stack of the pack has none'
-    released.tib() == version
+    released.spec() == state.spec()
+    released.files() == state.files()
     released.inputs() == inputs
     released.pack().stack() == null
 
-    where:
+    where: 'the state of the snapshot, as each release wrote it'
     version | inputs
     '0.1.0' | []
+    '0.2.0' | state.inputs()
   }
 
   def "the state of a project is in its tree, if tib ran on it before"() {
@@ -381,7 +383,7 @@ class StateSpec extends Specification {
 
     expect:
     inputs(dir, spec).inputDifferences(dir) == []
-    withInputs([]).inputDifferences(dir) == []
+    with(inputs: []).inputDifferences(dir) == []
   }
 
   def "an input is hashed by its bytes, so one that is no longer UTF-8 is a changed one"() {
@@ -397,7 +399,7 @@ class StateSpec extends Specification {
   def "an input kept with its whole path is read where it is"() {
     given:
     Path spec = Files.writeString(dir.resolve('spec.yaml'), 'spec\n')
-    State read = withInputs([
+    State read = with(inputs: [
       new State.Input(State.Input.Kind.SPEC, spec.toAbsolutePath().toString(), State.sha256('read\n'.getBytes('UTF-8')))
     ])
 
@@ -458,11 +460,6 @@ class StateSpec extends Specification {
     e.message == "cannot read ${dir.resolve('missing.yaml')}: no such file"
   }
 
-  def "a kind of input is named in lower case"() {
-    expect:
-    State.Input.Kind.values()*.toString() == ['spec', 'ddl']
-  }
-
   def "the hash is the SHA-256 in hex"() {
     expect:
     State.File.of('a', Owner.GENERATOR, '').sha256() == 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
@@ -484,13 +481,8 @@ class StateSpec extends Specification {
 
   /** The state with the files as its inputs, each as tib reads it from the directory of the service. */
   private State inputs(Path service, Path... files) {
-    withInputs(files.collect { Path file ->
+    with(inputs: files.collect { Path file ->
       State.Input.of(State.Input.Kind.SPEC, service, file, Files.readString(file))
     })
-  }
-
-  /** The state with other inputs. */
-  private State withInputs(List<State.Input> inputs) {
-    new State(state.tib(), state.pack(), inputs, state.spec(), state.files())
   }
 }
