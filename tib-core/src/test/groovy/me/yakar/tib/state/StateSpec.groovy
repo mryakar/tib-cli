@@ -205,22 +205,6 @@ class StateSpec extends Specification {
     '0.3.0'          | 'docs'           | false
   }
 
-  def "a first state has the inputs of its run and the files that it staged"() {
-    given:
-    Tree tree = Tree.at(dir)
-    tree.own('A.java', 'class A {}\n')
-    tree.once('B.java', 'class B {}\n')
-
-    when:
-    State next = State.first('1.2.3', state.pack(), state.inputs(), state.spec(), tree)
-
-    then:
-    next == new State('1.2.3', state.pack(), state.inputs(), state.spec(), [
-      State.File.of('A.java', Owner.GENERATOR, 'class A {}\n'),
-      State.File.of('B.java', Owner.DEVELOPER, 'class B {}\n')
-    ])
-  }
-
   def "the inputs of a run without a spec file take the place of those of the same path, and the others stay while they are there"() {
     given:
     Files.writeString(dir.resolve('spec.yaml'), 'a')
@@ -233,7 +217,7 @@ class StateSpec extends Specification {
     State.Input other = new State.Input(State.Input.Kind.DDL, '../db/two.sql', 'd')
 
     when:
-    State next = with(inputs: [spec, gone, ddl]).next('1.2.3', state.pack(), [other, changed], state.spec(), [], Tree.at(dir))
+    State next = with(inputs: [spec, gone, ddl]).next('1.2.3', state.pack(), [other, changed], state.spec(), dir, [], [])
 
     then:
     next.inputs() == [spec, changed, other]
@@ -248,36 +232,30 @@ class StateSpec extends Specification {
     State.Input moved = new State.Input(State.Input.Kind.SPEC, 'specs/spec.yaml', 'a')
 
     when:
-    State next = with(inputs: [spec, ddl]).next('1.2.3', state.pack(), [moved], state.spec(), [], Tree.at(dir))
+    State next = with(inputs: [spec, ddl]).next('1.2.3', state.pack(), [moved], state.spec(), dir, [], [])
 
     then:
     next.inputs() == [moved]
   }
 
-  def "the files that a run staged take the place of their records, and the other records stay"() {
+  def "the files that a run wrote take the place of their records, and the other records stay"() {
     given:
     State previous = with(files: [
       State.File.of('Mine.java', Owner.DEVELOPER, 'class Mine {}\n'),
       State.File.of('Gen.java', Owner.GENERATOR, 'class Gen {}\n'),
       State.File.of('libs.toml', Owner.SHARED, '[versions]\n')
     ])
-    Tree tree = Tree.at(dir)
-    tree.writtenBefore(previous.files()*.path())
-    tree.own('Gen.java', 'class Gen { int x; }\n')
-    tree.once('Mine.java', 'class Mine { int x; }\n')
-    tree.own('New.java', 'class New {}\n')
+    List<State.File> written = [
+      State.File.of('New.java', Owner.GENERATOR, 'class New {}\n'),
+      State.File.of('Gen.java', Owner.GENERATOR, 'class Gen { int x; }\n')
+    ]
 
     when:
-    State next = previous.next('1.2.4', state.pack(), [], state.spec(), [], tree)
+    State next = previous.next('1.2.4', state.pack(), [], state.spec(), dir, written, [])
 
-    then: "a file of the developer's that tib wrote before is not staged again, and keeps its record"
+    then: 'in the order of their paths'
     next.tib() == '1.2.4'
-    next.files() == [
-      State.File.of('Gen.java', Owner.GENERATOR, 'class Gen { int x; }\n'),
-      previous.files()[0],
-      State.File.of('New.java', Owner.GENERATOR, 'class New {}\n'),
-      previous.files()[2]
-    ]
+    next.files() == [written[1], previous.files()[0], written[0], previous.files()[2]]
   }
 
   def "the files that a run dropped leave the record"() {
@@ -291,7 +269,7 @@ class StateSpec extends Specification {
     ])
 
     when:
-    State next = previous.next('1.2.4', state.pack(), [], state.spec(), ['b/B.java', 'b/BGenerated.java'], Tree.at(dir))
+    State next = previous.next('1.2.4', state.pack(), [], state.spec(), dir, [], ['b/B.java', 'b/BGenerated.java'])
 
     then:
     next.files() == previous.files() - previous.files()[2..3]

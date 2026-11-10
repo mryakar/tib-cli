@@ -16,12 +16,16 @@
 package me.yakar.tib.generate;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import me.yakar.tib.state.State;
+import me.yakar.tib.tree.Owner;
 import me.yakar.tib.tree.ProjectFiles;
 import me.yakar.tib.tree.Tree;
 
@@ -34,6 +38,7 @@ final class Recorder implements ProjectFiles {
   private final Tree tree;
   private final SortedSet<String> generated = new TreeSet<>();
   private final SortedMap<String, byte[]> lasting = new TreeMap<>();
+  private final SortedMap<String, State.File> written = new TreeMap<>();
 
   Recorder(Tree tree) {
     this.tree = tree;
@@ -52,28 +57,48 @@ final class Recorder implements ProjectFiles {
     return lasting;
   }
 
+  /**
+   * The files that are, in the tree, as the generator made them, staged or there already, in the
+   * order of their paths: the ones that tib has to have on record.
+   */
+  Collection<State.File> written() {
+    return written.values();
+  }
+
   @Override
   public void own(String path, String content) {
-    generated.add(tree.key(path));
     tree.own(path, content);
+    generated.add(tree.key(path));
+    record(path, Owner.GENERATOR, utf8(content));
   }
 
   @Override
   public void once(String path, String content) {
-    generated.add(tree.key(path));
-    tree.once(path, content);
+    once(path, utf8(content), false);
   }
 
   @Override
   public void once(String path, byte[] content, boolean executable) {
-    generated.add(tree.key(path));
     tree.once(path, content, executable);
+    generated.add(tree.key(path));
+    record(path, Owner.DEVELOPER, content);
   }
 
   @Override
   public void lasting(String path, String content) {
-    lasting.put(tree.key(path), content.getBytes(StandardCharsets.UTF_8));
     tree.lasting(path, content);
+    lasting.put(tree.key(path), utf8(content));
+    record(path, Owner.DEVELOPER, utf8(content));
+  }
+
+  private void record(String path, Owner owner, byte[] content) {
+    if (tree.bytes(path).filter(there -> Arrays.equals(there, content)).isPresent()) {
+      written.put(tree.key(path), State.File.of(tree.key(path), owner, content));
+    }
+  }
+
+  private static byte[] utf8(String text) {
+    return text.getBytes(StandardCharsets.UTF_8);
   }
 
   @Override
