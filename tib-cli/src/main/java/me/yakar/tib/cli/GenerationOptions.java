@@ -114,7 +114,7 @@ final class GenerationOptions {
     }
     List<String> deleted =
         tree.changes().stream().filter(Change::deletes).map(Change::path).toList();
-    tree.apply();
+    tree.apply(State.PATH);
     out.println(
         "Wrote "
             + ServiceDirectory.count(files - deleted.size(), "file", "files")

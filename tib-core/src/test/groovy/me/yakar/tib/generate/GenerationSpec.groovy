@@ -21,6 +21,7 @@ import me.yakar.tib.spec.Spec
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Owner
 import me.yakar.tib.tree.Tree
+import me.yakar.tib.tree.TreeException
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -88,6 +89,39 @@ class GenerationSpec extends Specification {
     then:
     !Files.exists(dir.resolve('Generated.java'))
     Files.exists(dir.resolve('Service.java'))
+  }
+
+  def "a run that cannot delete a file leaves the state as it was, and the next run goes on from there"() {
+    given:
+    run(Optional.empty(), project, generator)
+    Tree tree = Tree.at(dir)
+    Generation.run(State.in(tree, '1.2.3'), project, [], pack, Pack::entity, '1.2.3', tree)
+
+    and: 'the file to delete is a directory with a file in it by the time it is deleted'
+    Files.delete(dir.resolve('Generated.java'))
+    Files.createDirectories(dir.resolve('Generated.java'))
+    Files.writeString(dir.resolve('Generated.java/x'), 'x')
+
+    when:
+    tree.apply(State.PATH)
+
+    then:
+    thrown(TreeException)
+    State.in(Tree.at(dir), '1.2.3').get().files()*.path() == ['Generated.java', 'Service.java']
+
+    when: 'what was in the way is gone'
+    dir.resolve('Generated.java').toFile().deleteDir()
+    run(State.in(Tree.at(dir), '1.2.3'), project, pack.entity())
+
+    then:
+    !State.in(Tree.at(dir), '1.2.3').get().files()*.path().contains('Generated.java')
+
+    when:
+    Tree again = Tree.at(dir)
+    Generation.run(State.in(again, '1.2.3'), project, [], pack, Pack::entity, '1.2.3', again)
+
+    then:
+    again.changes() == []
   }
 
   def "the files that the spec no longer generates are deleted, but for those that were edited, that last, or that another generator wrote"() {
@@ -163,7 +197,7 @@ class GenerationSpec extends Specification {
   private void run(Optional<State> previous, Project project, Generator generator, List<State.Input> inputs = []) {
     Tree tree = Tree.at(dir)
     Generation.run(previous, project, inputs, pack, { generator }, '1.2.3', tree)
-    tree.apply()
+    tree.apply(State.PATH)
   }
 
   def "the files that last and that the spec makes otherwise, or no longer, are named, and left as they are"() {

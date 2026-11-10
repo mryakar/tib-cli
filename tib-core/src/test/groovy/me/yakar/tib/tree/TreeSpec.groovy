@@ -405,6 +405,59 @@ Binary files /dev/null and b/zero.bin differ
     tree.changes()*.path() == ['d']
   }
 
+  def "the file at the last path is written after the others and after the deletions"() {
+    given:
+    Files.writeString(project.resolve('old.txt'), 'old\n')
+    Tree tree = Tree.at(project)
+    tree.own('.record', 'new\n')
+    tree.own('a.txt', 'a\n')
+    tree.delete('old.txt', Owner.GENERATOR)
+
+    when:
+    tree.apply('./.record')
+
+    then:
+    project.toFile().list() as Set == ['.record', 'a.txt'] as Set
+    Files.readString(project.resolve('.record')) == 'new\n'
+    tree.changes().empty
+
+    when: 'the last path is not staged'
+    tree.own('a.txt', 'b\n')
+    tree.apply('.record')
+
+    then:
+    Files.readString(project.resolve('a.txt')) == 'b\n'
+    Files.readString(project.resolve('.record')) == 'new\n'
+  }
+
+  def "a file that cannot be #verb leaves the file at the last path as it was"() {
+    given: 'a file that sorts first, as the one that records the run does'
+    Files.writeString(project.resolve('.record'), 'old\n')
+    Files.writeString(project.resolve('d'), 'd')
+    Tree tree = Tree.at(project)
+    tree.own('.record', 'new\n')
+    stage(tree)
+
+    and: 'the other file is a directory with a file in it by the time it is written or deleted'
+    Files.delete(project.resolve('d'))
+    Files.createDirectories(project.resolve('d'))
+    Files.writeString(project.resolve('d/e'), 'e')
+
+    when:
+    tree.apply('.record')
+
+    then:
+    TreeException e = thrown()
+    e.message.startsWith("cannot $verb ${project.resolve('d')}: ")
+    Files.readString(project.resolve('.record')) == 'old\n'
+    project.toFile().list() as Set == ['.record', 'd'] as Set
+
+    where:
+    verb     | stage
+    'write'  | { it.own('d', 'other') }
+    'delete' | { it.delete('d', Owner.GENERATOR) }
+  }
+
   def "lists the files under a directory that tib wrote before, there or not, in order"() {
     given:
     Files.createDirectories(project.resolve('db/migration'))
