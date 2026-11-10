@@ -49,42 +49,42 @@ final class InitGenerator implements Generator {
   }
 
   @Override
-  public void generate(Project project, ProjectFiles tree) {
+  public void generate(Project project, ProjectFiles files) {
     String sources = DefaultPack.MAIN + project.packagePath();
     String tests = DefaultPack.TEST + project.packagePath();
-    once(tree, "settings.gradle.kts", "init/settings_gradle_kts.jte", project);
-    once(tree, "build.gradle.kts", "init/build_gradle_kts.jte", project);
+    once(files, "settings.gradle.kts", "init/settings_gradle_kts.jte", project);
+    once(files, "build.gradle.kts", "init/build_gradle_kts.jte", project);
     for (String file : WRAPPER) {
-      tree.once(file, DefaultPack.resource("wrapper/" + file), file.equals("gradlew"));
+      files.once(file, DefaultPack.resource("wrapper/" + file), file.equals("gradlew"));
     }
-    once(tree, ".gitignore", "init/gitignore.jte", project);
-    once(tree, ".gitattributes", "init/gitattributes.jte", project);
+    once(files, ".gitignore", "init/gitignore.jte", project);
+    once(files, ".gitattributes", "init/gitattributes.jte", project);
     once(
-        tree,
+        files,
         sources + "/" + project.applicationClass() + ".java",
         "init/application_java.jte",
         project);
-    once(tree, "src/main/resources/application.yaml", "init/application_yaml.jte", project);
+    once(files, "src/main/resources/application.yaml", "init/application_yaml.jte", project);
     once(
-        tree,
+        files,
         tests + "/TestcontainersConfiguration.java",
         "init/testcontainers_configuration_java.jte",
         project);
     once(
-        tree,
+        files,
         tests + "/" + project.applicationClass() + "Tests.java",
         "init/application_tests_java.jte",
         project);
     once(
-        tree,
+        files,
         tests + "/Test" + project.applicationClass() + ".java",
         "init/test_application_java.jte",
         project);
-    once(tree, "AGENTS.md", "init/agents_md.jte", project);
+    once(files, "AGENTS.md", "init/agents_md.jte", project);
   }
 
-  private void once(ProjectFiles tree, String path, String template, Project project) {
-    tree.once(
+  private void once(ProjectFiles files, String path, String template, Project project) {
+    files.once(
         path, Templates.render(path, HEADER, template, Map.of("project", project, "pack", pack)));
   }
 }
