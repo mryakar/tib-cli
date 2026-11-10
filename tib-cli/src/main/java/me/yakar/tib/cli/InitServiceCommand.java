@@ -32,7 +32,7 @@ import picocli.CommandLine.Parameters;
 @Command(
     name = "service",
     description = "Scaffolds a new Spring Boot service, from its name or its spec file.")
-public class InitServiceCommand implements Callable<Integer> {
+class InitServiceCommand implements Callable<Integer> {
 
   @ArgGroup(multiplicity = "1")
   private Source source;
