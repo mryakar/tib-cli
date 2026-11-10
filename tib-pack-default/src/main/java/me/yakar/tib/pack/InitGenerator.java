@@ -33,7 +33,7 @@ final class InitGenerator implements Generator {
 
   /**
    * The Gradle wrapper, as the build of tib has it: the files of Gradle's, without a header of
-   * tib's. {@code gradlew} is run.
+   * tib's; {@code gradlew} is written as a file that can be run.
    */
   static final List<String> WRAPPER =
       List.of(
