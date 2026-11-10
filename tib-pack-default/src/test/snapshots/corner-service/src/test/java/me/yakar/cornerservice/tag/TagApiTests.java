@@ -76,7 +76,7 @@ class TagApiTests {
   @Test
   void updatesATag() {
     TagDto tag = create();
-    TagDto dto = otherDto();
+    TagDto dto = TagSamples.otherDto(branch.getId()).build();
 
     ResponseEntity<TagDto> updated =
         http.exchange(
@@ -126,10 +126,5 @@ class TagApiTests {
   /** A tag as the API takes it, with the first sample values. */
   private TagDto dto() {
     return TagSamples.dto(branch.getId()).build();
-  }
-
-  /** A tag as the API takes it, with the second sample values. */
-  private TagDto otherDto() {
-    return TagSamples.otherDto(branch.getId()).build();
   }
 }

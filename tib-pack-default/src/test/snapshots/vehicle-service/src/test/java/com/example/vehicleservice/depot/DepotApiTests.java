@@ -65,7 +65,7 @@ class DepotApiTests {
   @Test
   void updatesADepot() {
     DepotDto depot = create();
-    DepotDto dto = otherDto();
+    DepotDto dto = DepotSamples.otherDto().build();
 
     ResponseEntity<DepotDto> updated =
         http.exchange(
@@ -126,10 +126,5 @@ class DepotApiTests {
   /** A depot as the API takes it, with the first sample values. */
   private DepotDto dto() {
     return DepotSamples.dto().build();
-  }
-
-  /** A depot as the API takes it, with the second sample values. */
-  private DepotDto otherDto() {
-    return DepotSamples.otherDto().build();
   }
 }

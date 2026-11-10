@@ -70,7 +70,7 @@ class VehicleApiTests {
   @Test
   void updatesAVehicle() {
     VehicleDto vehicle = create();
-    VehicleDto dto = otherDto();
+    VehicleDto dto = VehicleSamples.otherDto().build();
 
     ResponseEntity<VehicleDto> updated =
         http.exchange(
@@ -139,10 +139,5 @@ class VehicleApiTests {
   /** A vehicle as the API takes it, with the first sample values. */
   private VehicleDto dto() {
     return VehicleSamples.dto().build();
-  }
-
-  /** A vehicle as the API takes it, with the second sample values. */
-  private VehicleDto otherDto() {
-    return VehicleSamples.otherDto().build();
   }
 }

@@ -70,7 +70,7 @@ class BranchApiTests {
   @Test
   void updatesABranch() {
     BranchDto branch = create();
-    BranchDto dto = otherDto();
+    BranchDto dto = BranchSamples.otherDto().build();
 
     ResponseEntity<BranchDto> updated =
         http.exchange(
@@ -128,10 +128,5 @@ class BranchApiTests {
   /** A branch as the API takes it, with the first sample values. */
   private BranchDto dto() {
     return BranchSamples.dto().build();
-  }
-
-  /** A branch as the API takes it, with the second sample values. */
-  private BranchDto otherDto() {
-    return BranchSamples.otherDto().build();
   }
 }

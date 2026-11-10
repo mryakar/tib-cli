@@ -76,7 +76,7 @@ class ItemApiTests {
   @Test
   void updatesAnItem() {
     ItemDto item = create();
-    ItemDto dto = otherDto();
+    ItemDto dto = ItemSamples.otherDto(branch.getId()).build();
 
     ResponseEntity<ItemDto> updated =
         http.exchange(
@@ -126,10 +126,5 @@ class ItemApiTests {
   /** An item as the API takes it, with the first sample values. */
   private ItemDto dto() {
     return ItemSamples.dto(branch.getId()).build();
-  }
-
-  /** An item as the API takes it, with the second sample values. */
-  private ItemDto otherDto() {
-    return ItemSamples.otherDto(branch.getId()).build();
   }
 }
