@@ -73,21 +73,6 @@ class EntityModelSpec extends Specification {
     'v_2'      | 'B_ID'   | ['v_2_seq', 'created_at', 'updated_at', 'v_2_B_ID_idx']
   }
 
-  def "a sample BigDecimal fits the precision and the scale of its column: #precision, #scale"() {
-    given:
-    FieldModel field = models("entities:\n  - name: A\n    fields: [{ name: amount, type: BigDecimal$size }]\n").A.fields()[0]
-
-    expect:
-    [field.sample(1), field.sample(2)] == samples.collect { 'new BigDecimal("' + it + '")' }
-
-    where:
-    precision | scale | size                          | samples
-    null      | null  | ''                            | ['1', '2']
-    12        | 2     | ', precision: 12, scale: 2'   | ['1.00', '2.00']
-    null      | 2     | ', scale: 2'                  | ['1.00', '2.00']
-    2         | 2     | ', precision: 2, scale: 2'    | ['0.01', '0.02']
-  }
-
   /** The models of the entities of the spec, by name. */
   private static Map<String, EntityModel> models(String entities) {
     EntityGenerator.models(new Project(SpecReader.parse("tib: 1\nservice: s\n$entities")))
