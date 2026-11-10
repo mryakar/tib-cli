@@ -3,13 +3,10 @@ package me.yakar.cornerservice.tag;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.UUID;
 import me.yakar.cornerservice.TestcontainersConfiguration;
 import me.yakar.cornerservice.branch.Branch;
 import me.yakar.cornerservice.branch.BranchRepository;
+import me.yakar.cornerservice.branch.BranchSamples;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,36 +29,16 @@ class TagRepositoryTests {
 
   @BeforeEach
   void saveWhatATagNeeds() {
-    branch = branches.saveAndFlush(newBranch());
+    branch = branches.saveAndFlush(BranchSamples.branch().build());
   }
 
   @Test
   void savesAndFindsATag() {
-    Tag tag = tags.saveAndFlush(newTag());
+    Tag tag = tags.saveAndFlush(TagSamples.tag(branch).build());
     entityManager.clear();
 
     Tag found = tags.findById(tag.getId()).orElseThrow();
-    assertThat(found.getLabel()).isEqualTo("One");
+    assertThat(found.getLabel()).isEqualTo(tag.getLabel());
     assertThat(found.getBranch().getId()).isEqualTo(branch.getId());
-  }
-
-  private Branch newBranch() {
-    Branch branch = new Branch();
-    branch.setCode("One");
-    branch.setCount(1L);
-    branch.setOpen(true);
-    branch.setOpenedAt(LocalDateTime.of(2026, 1, 1, 12, 0));
-    branch.setSeenAt(Instant.parse("2026-01-01T12:00:00Z"));
-    branch.setToken(UUID.fromString("00000000-0000-0000-0000-000000000001"));
-    branch.setRatio(new BigDecimal("1"));
-    branch.setAmount(new BigDecimal("1"));
-    return branch;
-  }
-
-  private Tag newTag() {
-    Tag tag = new Tag();
-    tag.setLabel("One");
-    tag.setBranch(branch);
-    return tag;
   }
 }

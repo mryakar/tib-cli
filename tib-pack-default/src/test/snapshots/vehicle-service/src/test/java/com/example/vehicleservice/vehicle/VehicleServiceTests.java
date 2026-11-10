@@ -8,9 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -82,13 +80,6 @@ class VehicleServiceTests {
   }
 
   private static VehicleDto dto() {
-    return new VehicleDto(
-        ID,
-        "One",
-        1,
-        new BigDecimal("1.00"),
-        UUID.fromString("00000000-0000-0000-0000-000000000001"),
-        null,
-        null);
+    return VehicleSamples.dto().id(ID).build();
   }
 }

@@ -80,6 +80,6 @@ class TagServiceTests {
   }
 
   private static TagDto dto() {
-    return new TagDto(ID, "One", 1L, 1L);
+    return TagSamples.dto(1L).id(ID).build();
   }
 }

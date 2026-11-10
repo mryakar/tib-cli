@@ -8,7 +8,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.LocalDate;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
@@ -82,6 +81,6 @@ class DepotServiceTests {
   }
 
   private static DepotDto dto() {
-    return new DepotDto(ID, "One", LocalDate.of(2026, 1, 1));
+    return DepotSamples.dto().id(ID).build();
   }
 }

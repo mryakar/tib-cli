@@ -113,6 +113,8 @@ class DefaultPackSpec extends Specification {
       'VehicleDto.java',
       'VehicleGenerated.java',
       'VehicleMapper.java',
+      'DepotSamples.java',
+      'VehicleSamples.java',
     ]
     snapshot('vehicle-service', changes)
   }

@@ -3,10 +3,6 @@ package me.yakar.cornerservice.branch;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.UUID;
 import me.yakar.cornerservice.TestcontainersConfiguration;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -117,8 +113,7 @@ class BranchApiTests {
 
   @Test
   void refusesABranchWithoutItsRequiredValues() {
-    BranchDto empty =
-        new BranchDto(null, null, null, null, null, null, null, null, null, null, null, null);
+    BranchDto empty = BranchSamples.emptyDto().build();
 
     ResponseEntity<String> created = http.postForEntity("/api/branches", empty, String.class);
 
@@ -132,35 +127,11 @@ class BranchApiTests {
 
   /** A branch as the API takes it, with the first sample values. */
   private BranchDto dto() {
-    return new BranchDto(
-        null,
-        "One",
-        1L,
-        true,
-        LocalDateTime.of(2026, 1, 1, 12, 0),
-        Instant.parse("2026-01-01T12:00:00Z"),
-        UUID.fromString("00000000-0000-0000-0000-000000000001"),
-        new BigDecimal("1"),
-        new BigDecimal("1"),
-        null,
-        null,
-        null);
+    return BranchSamples.dto().build();
   }
 
   /** A branch as the API takes it, with the second sample values. */
   private BranchDto otherDto() {
-    return new BranchDto(
-        null,
-        "Two",
-        2L,
-        false,
-        LocalDateTime.of(2026, 1, 2, 12, 0),
-        Instant.parse("2026-01-02T12:00:00Z"),
-        UUID.fromString("00000000-0000-0000-0000-000000000002"),
-        new BigDecimal("2"),
-        new BigDecimal("2"),
-        null,
-        null,
-        null);
+    return BranchSamples.otherDto().build();
   }
 }

@@ -1,4 +1,3 @@
-@import gg.jte.support.ForSupport
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.EntityTestsModel
 @param EntityTestsModel tests
@@ -68,9 +67,6 @@ class ${entity.name()}ServiceTests {
   }
 
   private static ${entity.name()}Dto dto() {
-    return new ${entity.name()}Dto(
-        @for(var argument : ForSupport.of(tests.serviceDtoArguments()))
-        ${argument.get()}${argument.isLast() ? ");" : ","}
-        @endfor
+    return ${entity.name()}Samples.dto(${tests.sampleIdArguments()}).${entity.idField()}(ID).build();
   }
 }

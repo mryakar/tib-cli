@@ -24,19 +24,19 @@ class ${entity.name()}RepositoryTests {
   @BeforeEach
   void saveWhatA${entity.name()}Needs() {
     @for(var target : tests.requiredTargets())
-    ${target.variable()} = ${target.plural()}.saveAndFlush(new${target.name()}());
+    ${target.variable()} = ${target.plural()}.saveAndFlush(${target.name()}Samples.${target.variable()}(${EntityTestsModel.requiredArguments(target)}).build());
     @endfor
   }
   @endif<%-- keeps the blank line below --%>
 
   @Test
   void savesAndFinds${tests.article()}${entity.name()}() {
-    ${entity.name()} ${entity.variable()} = ${entity.plural()}.saveAndFlush(new${entity.name()}());
+    ${entity.name()} ${entity.variable()} = ${entity.plural()}.saveAndFlush(${entity.name()}Samples.${entity.variable()}(${EntityTestsModel.requiredArguments(entity)}).build());
     entityManager.clear();
 
     ${entity.name()} found = ${entity.plural()}.findById(${entity.variable()}.getId()).orElseThrow();
     @for(var field : entity.fields())
-    assertThat(found.get${field.property()}()).isEqualTo(${field.sample(1)});
+    assertThat(found.get${field.property()}()).isEqualTo(${entity.variable()}.get${field.property()}());
     @endfor
     @for(var relation : entity.requiredRelations())
     assertThat(found.get${relation.property()}().getId()).isEqualTo(${relation.target().variable()}.getId());
@@ -50,34 +50,10 @@ class ${entity.name()}RepositoryTests {
 
   @Test
   void refuses${tests.article()}${entity.name()}WhoseUniqueValuesAreTaken() {
-    ${entity.plural()}.saveAndFlush(new${entity.name()}());
+    ${entity.plural()}.saveAndFlush(${entity.name()}Samples.${entity.variable()}(${EntityTestsModel.requiredArguments(entity)}).build());
 
-    assertThatThrownBy(() -> ${entity.plural()}.saveAndFlush(new${entity.name()}()))
+    assertThatThrownBy(() -> ${entity.plural()}.saveAndFlush(${entity.name()}Samples.${entity.variable()}(${EntityTestsModel.requiredArguments(entity)}).build()))
         .isInstanceOf(DataIntegrityViolationException.class);
   }
   @endif
-  @for(var model : tests.requiredTargets())<%-- keeps the blank line below --%>
-
-  private ${model.name()} new${model.name()}() {
-    ${model.name()} ${model.variable()} = new ${model.name()}();
-    @for(var field : model.fields())
-    ${model.variable()}.set${field.property()}(${field.sample(1)});
-    @endfor
-    @for(var relation : model.requiredRelations())
-    ${model.variable()}.set${relation.property()}(${relation.target().variable()});
-    @endfor
-    return ${model.variable()};
-  }
-  @endfor<%-- keeps the blank line below --%>
-
-  private ${entity.name()} new${entity.name()}() {
-    ${entity.name()} ${entity.variable()} = new ${entity.name()}();
-    @for(var field : entity.fields())
-    ${entity.variable()}.set${field.property()}(${field.sample(1)});
-    @endfor
-    @for(var relation : entity.requiredRelations())
-    ${entity.variable()}.set${relation.property()}(${relation.target().variable()});
-    @endfor
-    return ${entity.variable()};
-  }
 }
