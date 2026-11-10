@@ -49,13 +49,13 @@ final class GenerationOptions {
 
   @Option(
       names = "--dry-run",
-      description = "Print what would be written, as a diff, and write nothing.")
+      description = "Prints what the run would change, as a diff, and changes nothing.")
   private boolean dryRun;
 
   @Option(
       names = "--allow-dirty",
       description =
-          "Write also when files of the service that git tracks have changes that are not"
+          "Writes also when files of the service that git tracks have changes that are not"
               + " committed.")
   private boolean allowDirty;
 
