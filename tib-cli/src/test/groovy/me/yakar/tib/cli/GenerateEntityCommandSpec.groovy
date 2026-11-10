@@ -337,7 +337,7 @@ class GenerateEntityCommandSpec extends Specification {
     result.exitCode() == 1
     result.err() == """\
       ${dir.toAbsolutePath().normalize()} was generated for $stack by tib 1.2.3; pack default $pack generates for Spring Boot 4
-      Run tib 1.2.3 on it until the service moves to Spring Boot 4.
+      Go on with tib 1.2.3 for this service, or move it to Spring Boot 4 by hand.
       """.stripIndent()
     tib.run('status', '-d', dir.toString()).exitCode() == 0
 

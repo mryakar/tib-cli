@@ -18,7 +18,7 @@ package me.yakar.tib.generate;
 import java.io.Serial;
 import me.yakar.tib.TibException;
 
-/** A pack that is not there. */
+/** A pack that is not there, or that does not generate for the stack of the service. */
 public class PackException extends TibException {
 
   @Serial private static final long serialVersionUID = 1L;

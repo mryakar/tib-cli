@@ -18,6 +18,7 @@ package me.yakar.tib.generate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 import me.yakar.tib.state.State;
@@ -86,9 +87,14 @@ public final class Generation {
    * generates it again and it is not there. A file that lasts stays, on record, and so does a file
    * of the developer's that another generator wrote.
    *
+   * <p>A service that was generated for another stack than the one of the pack, or before tib
+   * recorded the stack, is refused before anything is staged: the files that tib wrote once, such
+   * as the build, are of that stack.
+   *
    * @param previous the state file of the project
    * @param inputs the files that the spec of this run was read from
    * @param pack the pack of the generator
+   * @throws PackException when the pack generates for another stack than the service has
    */
   public static Result next(
       State previous,
@@ -98,6 +104,25 @@ public final class Generation {
       Generator generator,
       String tibVersion,
       Tree tree) {
+    if (!pack.stack().equals(previous.pack().stack())) {
+      throw new PackException(
+          tree.root()
+              + " was generated for "
+              + Objects.requireNonNullElse(previous.pack().stack(), "an earlier stack")
+              + " by tib "
+              + previous.tib()
+              + "; pack "
+              + pack.name()
+              + " "
+              + pack.version()
+              + " generates for "
+              + pack.stack()
+              + "\nGo on with tib "
+              + previous.tib()
+              + " for this service, or move it to "
+              + pack.stack()
+              + " by hand.");
+    }
     Recorder now = generate(generator, project, previous, tree);
     // What the generator makes of the previous spec, in a tree of its own that is never applied.
     Recorder before =
