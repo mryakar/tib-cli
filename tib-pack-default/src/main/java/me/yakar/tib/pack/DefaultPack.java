@@ -34,8 +34,7 @@ public final class DefaultPack implements Pack {
   /** The root of the tests of the generated service. */
   static final String TEST = "src/test/java/";
 
-  private final Properties properties =
-      load(DefaultPack.class.getResourceAsStream("pack.properties"));
+  private final Properties properties = load(stream("pack.properties"));
 
   @Override
   public String name() {
@@ -86,7 +85,15 @@ public final class DefaultPack implements Pack {
 
   /** A file that the pack carries, next to this class, as bytes. */
   static byte[] resource(String name) {
-    return bytes(DefaultPack.class.getResourceAsStream(name));
+    return bytes(stream(name));
+  }
+
+  private static InputStream stream(String name) {
+    InputStream stream = DefaultPack.class.getResourceAsStream(name);
+    if (stream == null) {
+      throw new IllegalStateException("the pack does not carry " + name);
+    }
+    return stream;
   }
 
   static byte[] bytes(InputStream stream) {
