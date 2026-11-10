@@ -1,4 +1,3 @@
-@import gg.jte.support.ForSupport
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
 package ${entity.packageName()};
@@ -19,7 +18,4 @@ import java.util.UUID;
  * The identifier is read only; the service ignores it.
  @endif
  */
-public record ${entity.name()}Dto(
-    @for(var component : ForSupport.of(entity.dtoComponents()))
-    ${component.get()}${component.isLast() ? ") {}" : ","}
-    @endfor
+public record ${entity.name()}Dto(${entity.dtoComponents()}) {}

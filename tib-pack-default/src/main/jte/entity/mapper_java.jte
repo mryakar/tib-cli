@@ -1,8 +1,5 @@
-@import gg.jte.support.ForSupport
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
-<%-- Whether the arguments of the DTO end with the fields: no relation and no audit times follow. --%>
-!{boolean endsWithFields = entity.relations().isEmpty() && !entity.audited();}
 package ${entity.packageName()};
 
 import org.springframework.stereotype.Component;
@@ -19,7 +16,7 @@ public class ${entity.name()}Mapper {
   private final ${target.name()}Repository ${target.plural()};
   @endfor<%-- keeps the blank line below --%>
 
-  public ${entity.name()}Mapper(@for(var target : ForSupport.of(entity.targets()))${target.get().name()}Repository ${target.get().plural()}${target.isLast() ? "" : ", "}@endfor) {
+  public ${entity.name()}Mapper(${entity.repositoryParameters()}) {
     @for(var target : entity.targets())
     this.${target.plural()} = ${target.plural()};
     @endfor
@@ -27,18 +24,7 @@ public class ${entity.name()}Mapper {
 
   @endif
   public ${entity.name()}Dto toDto(${entity.name()} ${entity.variable()}) {
-    return new ${entity.name()}Dto(
-        ${entity.variable()}.getId()${entity.fields().isEmpty() && endsWithFields ? ");" : ","}
-        @for(var field : ForSupport.of(entity.fields()))
-        ${entity.variable()}.get${field.get().property()}()${field.isLast() && endsWithFields ? ");" : ","}
-        @endfor
-        @for(var relation : ForSupport.of(entity.relations()))
-        ${entity.variable()}.get${relation.get().property()}() == null ? null : ${entity.variable()}.get${relation.get().property()}().getId()${relation.isLast() && !entity.audited() ? ");" : ","}
-        @endfor
-        @if(entity.audited())
-        ${entity.variable()}.getCreatedAt(),
-        ${entity.variable()}.getUpdatedAt());
-        @endif
+    return new ${entity.name()}Dto(${entity.dtoArguments()});
   }
 
   /** Copies the DTO onto the entity, all but its identifier@if(entity.audited()) and its audit times@endif. */
