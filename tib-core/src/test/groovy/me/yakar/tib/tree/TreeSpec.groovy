@@ -26,6 +26,9 @@ import spock.lang.TempDir
 
 class TreeSpec extends Specification {
 
+  /** The path of a file that records a run, which the trees of most tests do not stage. */
+  static final String LAST = '.record'
+
   @TempDir
   Path project
 
@@ -150,7 +153,7 @@ class TreeSpec extends Specification {
     tree.own('src/main/java/B.java', 'class B {}\n')
 
     when:
-    tree.apply()
+    tree.apply(LAST)
 
     then:
     Files.readString(project.resolve('a.txt')) == 'b\n'
@@ -179,7 +182,7 @@ class TreeSpec extends Specification {
     tree.own('f/child', 'x')
 
     when:
-    tree.apply()
+    tree.apply(LAST)
 
     then:
     TreeException e = thrown()
@@ -195,7 +198,7 @@ class TreeSpec extends Specification {
     tree.own('b/c', 'c')
 
     when:
-    tree.apply()
+    tree.apply(LAST)
 
     then:
     TreeException e = thrown()
@@ -290,7 +293,7 @@ class TreeSpec extends Specification {
     tree.once('gradlew.bat', '@echo off\r\n'.getBytes('UTF-8'), false)
 
     when:
-    tree.apply()
+    tree.apply(LAST)
 
     then:
     Files.readString(project.resolve('gradlew')) == '#!/bin/sh\n'
@@ -346,7 +349,7 @@ class TreeSpec extends Specification {
     tree.own('n.txt', 'n\n')
 
     when:
-    tree.apply()
+    tree.apply(LAST)
 
     then:
     project.toFile().list() as Set == ['n.txt', 'src'] as Set
@@ -364,7 +367,7 @@ class TreeSpec extends Specification {
     Files.writeString(project.resolve('d/e'), 'e')
 
     when:
-    tree.apply()
+    tree.apply(LAST)
 
     then:
     TreeException e = thrown()
@@ -456,7 +459,7 @@ class TreeSpec extends Specification {
     tree.own('src/A.java', 'class A {}\n')
 
     when:
-    tree.apply()
+    tree.apply(LAST)
 
     then:
     Files.readString(project.resolve('run.sh')) == 'echo b\n'
@@ -489,7 +492,7 @@ class TreeSpec extends Specification {
     tree.own('a.txt', 'a\n')
 
     when:
-    tree.apply()
+    tree.apply(LAST)
 
     then:
     Files.readString(project.resolve('a.txt')) == 'a\n'
