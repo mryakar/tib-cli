@@ -90,7 +90,7 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
 
     /** What the file is. */
     public enum Kind {
-      /** A spec file. */
+      /** A spec file: the whole spec of the service. */
       SPEC,
       /** SQL DDL. */
       DDL;
@@ -162,11 +162,14 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   }
 
   /**
-   * The state after a run that staged its files in the tree. The inputs of the run take the place
-   * of those of the same path in the previous state, and the others stay, in their order; every
-   * file that the run staged takes the place of the record of the same path, and the other records
-   * stay, but for the files that the run deleted: the spec no longer has what they were generated
-   * from. The files are in the order of their paths.
+   * The state after a run that staged its files in the tree. A run that read a spec file has the
+   * whole spec from it, so its inputs are the only ones. Otherwise the inputs of the run take the
+   * place of those of the same path in the previous state, and the others stay, in their order, but
+   * for those whose file is no longer there, as far as can be told: the state forgets where they
+   * were, and the spec keeps what was read from them. Every file that the run staged takes the
+   * place of the record of the same path, and the other records stay, but for the files that the
+   * run deleted: the spec no longer has what they were generated from. The files are in the order
+   * of their paths.
    *
    * @param previous the state before the run, if tib ran on the project before
    * @param tib the version of tib that ran
@@ -183,7 +186,11 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     List<String> deleted = tree.deleted();
     previous.ifPresent(
         state -> {
-          state.inputs().forEach(input -> read.put(input.path(), input));
+          if (inputs.stream().noneMatch(input -> input.kind() == Input.Kind.SPEC)) {
+            state.inputs().stream()
+                .filter(input -> !Files.notExists(tree.root().resolve(input.path())))
+                .forEach(input -> read.put(input.path(), input));
+          }
           state.files().stream()
               .filter(file -> !deleted.contains(file.path()))
               .forEach(file -> written.put(file.path(), file));

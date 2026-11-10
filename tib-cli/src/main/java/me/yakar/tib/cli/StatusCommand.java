@@ -122,8 +122,8 @@ public class StatusCommand implements Callable<Integer> {
           "A changed input was edited after tib read the spec from it: the files of tib's follow"
               + " it once tib runs with it again.";
       case ABSENT ->
-          "An absent input is no longer where tib read it: tib does not need it, and keeps its"
-              + " record.";
+          "An absent input is no longer where tib read it: tib does not need it, and forgets it"
+              + " on its next run.";
       case EDITED ->
           "An edited file is written by tib on every run: git checkout restores it, or the next"
               + " run of tib replaces it, with --allow-dirty while the edit is not committed.";

@@ -211,17 +211,19 @@ class StatusCommandSpec extends Specification {
       'Files:',
       "edited   ${ENTITY}VehicleGenerated.java",
       '',
-      'An absent input is no longer where tib read it: tib does not need it, and keeps its record.',
+      'An absent input is no longer where tib read it: tib does not need it, and forgets it on its next run.',
       'An edited file is written by tib on every run: git checkout restores it, or the next run of tib replaces it, with --allow-dirty while the edit is not committed.'
     ]
 
-    when: 'the file of tib\'s is as it wrote it again'
-    tib.run('generate', 'entity', '--spec', EXAMPLES.resolve('vehicle-service.yaml').toString(), '-d', dir.toString())
+    when: 'tib runs with the spec where it is now'
+    String moved = EXAMPLES.resolve('vehicle-service.yaml').toString()
+    tib.run('generate', 'entity', '--spec', moved, '-d', dir.toString())
     Result again = tib.run('status', '-d', dir.toString())
 
-    then:
+    then: 'the state forgot where the spec was'
     again.exitCode() == 0
-    again.out().contains('absent   vehicle-service.yaml\n')
+    !again.out().contains('Read from:')
+    Tib.state(dir).inputs()*.path() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(moved), '').path()]
   }
 
   def "a spec file that is there but cannot be read is reported"() {

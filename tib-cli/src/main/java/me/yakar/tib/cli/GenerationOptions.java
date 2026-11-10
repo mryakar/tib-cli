@@ -69,8 +69,8 @@ final class GenerationOptions {
    * of a dry run, or writes the files, says how many, and names the files it deleted. A dry run
    * that changes nothing says so on the standard error. A run that would write into a service with
    * uncommitted changes is refused unless {@code --allow-dirty}. The files that the spec no longer
-   * generates and that stay, as they were edited, are named on the standard error. The inputs are
-   * the files the spec was read from.
+   * generates and that stay, as they were edited, are named on the standard error, and so are the
+   * inputs that the state forgot. The inputs are the files the spec was read from.
    */
   int generate(
       Optional<State> previous,
@@ -78,7 +78,7 @@ final class GenerationOptions {
       List<State.Input> inputs,
       Function<Pack, Generator> generator,
       Tree tree) {
-    List<String> kept =
+    Generation.Result result =
         Generation.run(
             previous,
             new Project(service),
@@ -96,7 +96,7 @@ final class GenerationOptions {
       if (files == 0) {
         err.println(NOTHING_TO_CHANGE);
       }
-      kept(err, kept);
+      notices(err, result);
       return ExitCode.OK;
     }
     if (files == 0) {
@@ -131,17 +131,24 @@ final class GenerationOptions {
               + " that the spec no longer generates:");
       deleted.forEach(path -> out.println("  " + path));
     }
-    kept(err, kept);
+    notices(err, result);
     return ExitCode.OK;
   }
 
-  /** Names the files that the spec no longer generates and that stay, as they were edited. */
-  private static void kept(PrintWriter err, List<String> paths) {
-    if (!paths.isEmpty()) {
+  /**
+   * Names the files that the spec no longer generates and that stay, as they were edited, and the
+   * inputs that the state forgot.
+   */
+  private static void notices(PrintWriter err, Generation.Result result) {
+    if (!result.kept().isEmpty()) {
       err.println(
           "tib no longer generates these files from the spec; they stay, as they were edited:");
-      paths.forEach(path -> err.println("  " + path));
+      result.kept().forEach(path -> err.println("  " + path));
       err.println("Delete them if the service no longer needs them.");
+    }
+    if (!result.forgotten().isEmpty()) {
+      err.println("tib no longer reads the spec from these files, and forgets them:");
+      result.forgotten().forEach(path -> err.println("  " + path));
     }
   }
 

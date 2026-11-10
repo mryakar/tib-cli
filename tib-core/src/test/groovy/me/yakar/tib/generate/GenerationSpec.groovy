@@ -41,12 +41,12 @@ class GenerationSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    List<String> forgotten = Generation.run(Optional.empty(), project, [], pack, {
+    Generation.Result result = Generation.run(Optional.empty(), project, [], pack, {
       generator
     }, '1.2.3', tree)
 
     then:
-    forgotten == []
+    result == new Generation.Result([], [])
     tree.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'Service.java']
     tree.changes()*.owner() == [Owner.GENERATOR, Owner.GENERATOR, Owner.DEVELOPER]
 
@@ -64,13 +64,14 @@ class GenerationSpec extends Specification {
   def "the state of a later run follows the previous one, and the files of the generator's that it did not stage again are deleted"() {
     given:
     State.Input spec = new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'a')
+    Files.writeString(dir.resolve('spec.yaml'), 'a')
     Tree first = Tree.at(dir)
     Generation.run(Optional.empty(), project, [spec], pack, { generator }, '1.2.3', first)
     first.apply()
 
     when:
     Tree second = Tree.at(dir)
-    List<String> kept = Generation.run(State.in(second, '1.2.4'), project, [], pack, Pack::entity, '1.2.4', second)
+    Generation.Result result = Generation.run(State.in(second, '1.2.4'), project, [], pack, Pack::entity, '1.2.4', second)
 
     then: 'the file of the developer\'s that this generator does not write stays'
     second.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'test.txt']
@@ -79,7 +80,7 @@ class GenerationSpec extends Specification {
     state.tib() == '1.2.4'
     state.inputs() == [spec]
     state.files()*.path() == ['Service.java', 'test.txt']
-    kept == []
+    result == new Generation.Result([], [])
 
     when:
     second.apply()
@@ -118,12 +119,12 @@ class GenerationSpec extends Specification {
 
     when: 'the second entity leaves the spec'
     Tree tree = Tree.at(dir)
-    List<String> kept = Generation.run(State.in(tree, '1.2.3'), one, [], pack, {
+    Generation.Result result = Generation.run(State.in(tree, '1.2.3'), one, [], pack, {
       entities
     }, '1.2.3', tree)
 
     then:
-    kept == ['b/B.java']
+    result.kept() == ['b/B.java']
     tree.changes()*.path() == ['.tib/state.yaml', 'b/BGenerated.java', 'b/BService.java']
     tree.changes()*.deletes() == [false, true, true]
     State.in(tree, '1.2.3').get().files()*.path() == [
@@ -145,10 +146,10 @@ class GenerationSpec extends Specification {
 
     when: 'again'
     Tree again = Tree.at(dir)
-    kept = Generation.run(State.in(again, '1.2.3'), one, [], pack, { entities }, '1.2.3', again)
+    result = Generation.run(State.in(again, '1.2.3'), one, [], pack, { entities }, '1.2.3', again)
 
     then: 'the file that stayed is named once'
-    kept == []
+    result.kept() == []
     again.changes() == []
 
     when: 'the second entity comes back'
@@ -159,10 +160,26 @@ class GenerationSpec extends Specification {
     back.changes()*.path() == ['.tib/state.yaml', 'b/BGenerated.java', 'b/BService.java', 'b/BTests.java']
   }
 
-  private void run(Optional<State> previous, Project project, Generator generator) {
+  private void run(Optional<State> previous, Project project, Generator generator, List<State.Input> inputs = []) {
     Tree tree = Tree.at(dir)
-    Generation.run(previous, project, [], pack, { generator }, '1.2.3', tree)
+    Generation.run(previous, project, inputs, pack, { generator }, '1.2.3', tree)
     tree.apply()
+  }
+
+  def "the inputs that the state forgot are named"() {
+    given:
+    State.Input gone = new State.Input(State.Input.Kind.DDL, 'db/gone.sql', 'a')
+    run(Optional.empty(), project, generator, [gone])
+
+    when:
+    Tree tree = Tree.at(dir)
+    Generation.Result result = Generation.run(State.in(tree, '1.2.3'), project, [], pack, {
+      generator
+    }, '1.2.3', tree)
+
+    then:
+    result.forgotten() == ['db/gone.sql']
+    State.in(tree, '1.2.3').get().inputs() == []
   }
 
   def "a file of the developer's that was removed after a run does not come back"() {

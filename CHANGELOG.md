@@ -27,6 +27,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   run always, and a file written once when it is as tib wrote it. A file written once that you
   edited stays, and the run names it on the standard error; a migration always stays. `--dry-run`
   shows the deletions in its diff, and the run names the files it deleted.
+- The state file forgets the spec files and the DDL that the spec no longer comes from, and the run
+  names them on the standard error. A run with a spec file keeps only that file, as the spec comes
+  from it alone; any other run forgets those that are no longer there, such as DDL that was moved.
+  The spec keeps what was read from them.
 
 ## [0.2.0] - 2026-11-05
 
