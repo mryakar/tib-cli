@@ -22,22 +22,12 @@ import java.io.File
  * cache of the application: the AOT cache of the JDK, which the launcher loads on every run.
  *
  * The cache fits only the class path it was built with, so the installers run the script where they
- * install the application, with the launcher's class path in its order. The script records a
- * training run, then creates the cache from it. The training run scaffolds a service as a dry run,
- * which writes nothing, so that the cache holds the classes that generate and format, and not only
- * those that start.
+ * install the application, with the launcher's class path in its order and its options (see
+ * [Launcher]). The script records a training run, then creates the cache from it. The training run
+ * scaffolds a service as a dry run, which writes nothing, so that the cache holds the classes that
+ * generate and format, and not only those that start.
  */
 object StartupCacheScript {
-
-  /** The name of the cache file, next to the jars; the launcher names it in its options. */
-  fun cache(launcherName: String) = "$launcherName.aot"
-
-  /**
-   * The JVM options the launcher runs with; the cache is built with the same ones. The JVM says
-   * nothing about the cache, which is missing until the script has run.
-   */
-  val JVM_OPTIONS =
-    listOf("-XX:+UseCompactObjectHeaders", "-Xlog:aot=off,cds=off") + JavacExports.JVM_OPTIONS
 
   /** The training run, but for the directory: a new service, as a dry run. */
   private const val TRAINING = "init service sample --dry-run"
@@ -51,8 +41,8 @@ object StartupCacheScript {
       configuration
         .filter { it.startsWith("app.classpath=") }
         .map { it.substringAfter('=').trim().removePrefix("\$APPDIR").trimStart('/', '\\') }
-    val options = JVM_OPTIONS.joinToString(" ")
-    val cache = cache(launcherName)
+    val options = Launcher.JVM_OPTIONS.joinToString(" ")
+    val cache = Launcher.cache(launcherName)
     if (windows) {
       appDirectory
         .resolve("startup-cache.cmd")
