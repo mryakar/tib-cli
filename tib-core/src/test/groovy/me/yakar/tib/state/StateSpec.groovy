@@ -212,7 +212,7 @@ class StateSpec extends Specification {
     tree.once('B.java', 'class B {}\n')
 
     when:
-    State next = State.next(Optional.empty(), '1.2.3', state.pack(), state.inputs(), state.spec(), tree)
+    State next = State.next(Optional.empty(), '1.2.3', state.pack(), state.inputs(), state.spec(), [], tree)
 
     then:
     next == new State('1.2.3', state.pack(), state.inputs(), state.spec(), [
@@ -233,7 +233,7 @@ class StateSpec extends Specification {
     State.Input other = new State.Input(State.Input.Kind.DDL, '../db/two.sql', 'd')
 
     when:
-    State next = State.next(Optional.of(with(inputs: [spec, gone, ddl])), '1.2.3', state.pack(), [other, changed], state.spec(), Tree.at(dir))
+    State next = State.next(Optional.of(with(inputs: [spec, gone, ddl])), '1.2.3', state.pack(), [other, changed], state.spec(), [], Tree.at(dir))
 
     then:
     next.inputs() == [spec, changed, other]
@@ -248,7 +248,7 @@ class StateSpec extends Specification {
     State.Input moved = new State.Input(State.Input.Kind.SPEC, 'specs/spec.yaml', 'a')
 
     when:
-    State next = State.next(Optional.of(with(inputs: [spec, ddl])), '1.2.3', state.pack(), [moved], state.spec(), Tree.at(dir))
+    State next = State.next(Optional.of(with(inputs: [spec, ddl])), '1.2.3', state.pack(), [moved], state.spec(), [], Tree.at(dir))
 
     then:
     next.inputs() == [moved]
@@ -268,7 +268,7 @@ class StateSpec extends Specification {
     tree.own('New.java', 'class New {}\n')
 
     when:
-    State next = State.next(Optional.of(previous), '1.2.4', state.pack(), [], state.spec(), tree)
+    State next = State.next(Optional.of(previous), '1.2.4', state.pack(), [], state.spec(), [], tree)
 
     then: "a file of the developer's that tib wrote before is not staged again, and keeps its record"
     next.tib() == '1.2.4'
@@ -280,8 +280,8 @@ class StateSpec extends Specification {
     ]
   }
 
-  def "the files that a run deleted take their records with them, there or not"() {
-    given: 'a state with the files of two entities, and a run that deletes those of the second'
+  def "the files that a run dropped leave the record"() {
+    given:
     State previous = with(files: [
       State.File.of('a/A.java', Owner.DEVELOPER, 'class A {}\n'),
       State.File.of('a/AGenerated.java', Owner.GENERATOR, 'class AGenerated {}\n'),
@@ -289,18 +289,11 @@ class StateSpec extends Specification {
       State.File.of('b/BGenerated.java', Owner.GENERATOR, 'class BGenerated {}\n'),
       State.File.of('libs.toml', Owner.SHARED, '[versions]\n')
     ])
-    Files.createDirectories(dir.resolve('b'))
-    Files.writeString(dir.resolve('b/BGenerated.java'), 'class BGenerated {}\n')
-    Tree tree = Tree.at(dir)
-    tree.writtenBefore(previous.files()*.path())
-    tree.delete('b/B.java', Owner.DEVELOPER)
-    tree.delete('b/BGenerated.java', Owner.GENERATOR)
 
     when:
-    State next = State.next(Optional.of(previous), '1.2.4', state.pack(), [], state.spec(), tree)
+    State next = State.next(Optional.of(previous), '1.2.4', state.pack(), [], state.spec(), ['b/B.java', 'b/BGenerated.java'], Tree.at(dir))
 
-    then: 'only the file that is there is a change'
-    tree.changes()*.path() == ['b/BGenerated.java']
+    then:
     next.files() == previous.files() - previous.files()[2..3]
   }
 

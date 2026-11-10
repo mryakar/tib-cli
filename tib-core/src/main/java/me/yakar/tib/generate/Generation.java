@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Change;
 import me.yakar.tib.tree.Owner;
@@ -58,8 +59,9 @@ public final class Generation {
    *
    * <p>A file that the spec no longer generates is deleted when the generator owns it, edited or
    * not, and when the developer owns it and it is as tib wrote it. A file of the developer's that
-   * was edited stays, and stays on record; so does a file that lasts, and a file that another
-   * generator wrote.
+   * was edited stays and leaves the record: it is the developer's alone, and tib writes it again
+   * only when the spec generates it again and it is not there. A file that lasts stays, on record,
+   * and so does a file of the developer's that another generator wrote.
    *
    * @param previous the state file of the project, if tib ran on it before
    * @param inputs the files that the spec of this run was read from
@@ -89,6 +91,7 @@ public final class Generation {
             new State.PackRef(pack.name(), pack.version(), pack.stack()),
             inputs,
             project.spec(),
+            Stream.concat(tree.deleted().stream(), kept.stream()).toList(),
             tree);
     tree.own(State.PATH, next.yaml());
     Set<String> read = next.inputs().stream().map(State.Input::path).collect(Collectors.toSet());

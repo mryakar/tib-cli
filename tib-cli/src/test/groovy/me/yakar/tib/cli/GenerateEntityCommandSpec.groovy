@@ -167,10 +167,10 @@ class GenerateEntityCommandSpec extends Specification {
     !Files.exists(dir.resolve(vehicle + 'VehicleService.java'))
     !Files.exists(dir.resolve(tests))
 
-    and: 'the migration lasts, and the file that stayed stays on record'
+    and: 'the migration lasts, on record, and the file that stayed has left the record'
     Files.exists(dir.resolve(migration))
-    Tib.state(dir).files()*.path().containsAll([migration, vehicle + 'Vehicle.java'])
-    !Tib.state(dir).files()*.path().any { it.startsWith(vehicle + 'VehicleGenerated') }
+    Tib.state(dir).files()*.path().contains(migration)
+    !Tib.state(dir).files()*.path().any { it.startsWith(vehicle) }
 
     when: 'again'
     Result again = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString())
