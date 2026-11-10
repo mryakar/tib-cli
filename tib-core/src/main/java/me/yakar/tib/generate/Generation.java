@@ -113,7 +113,7 @@ public final class Generation {
       if (file.owner() == Owner.GENERATOR) {
         tree.delete(path, Owner.GENERATOR);
       } else if (generatedBefore.contains(path)) {
-        if (tree.read(path).map(content -> asWritten(file, content)).orElse(true)) {
+        if (tree.bytes(path).map(content -> asWritten(file, content)).orElse(true)) {
           tree.delete(path, file.owner());
         } else {
           kept.add(path);
@@ -124,7 +124,7 @@ public final class Generation {
   }
 
   /** Whether the content is that of the file as tib wrote it. */
-  private static boolean asWritten(State.File file, String content) {
+  private static boolean asWritten(State.File file, byte[] content) {
     return State.File.of(file.path(), file.owner(), content).equals(file);
   }
 

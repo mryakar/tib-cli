@@ -28,15 +28,15 @@ import spock.lang.TempDir
 
 /**
  * The services of the example spec, of its DDL and of the corner spec of the snapshots, generated
- * and then built with Gradle, as a user would build them. Where Docker runs Linux containers, the
+ * and then built with their own Gradle wrapper, as a user would build them. Where Docker runs Linux containers, the
  * build includes the tests of the service, which start PostgreSQL in a container; elsewhere the
  * build compiles the service and its tests. On Linux under CI, Docker has to be there.
  */
 class GeneratedServiceSpec extends Specification {
 
   static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
-  static final String GRADLEW = System.getProperty('tib.gradlew')
   static final boolean LINUX = System.getProperty('os.name') == 'Linux'
+  static final boolean WINDOWS = System.getProperty('os.name').startsWith('Windows')
 
   @TempDir
   Path dir
@@ -58,7 +58,8 @@ class GeneratedServiceSpec extends Specification {
     Process gradle = null
 
     when:
-    List<String> command = [GRADLEW, '-p', dir.toString(), 'build', '--console=plain', '--no-daemon']
+    String gradlew = dir.resolve(WINDOWS ? 'gradlew.bat' : 'gradlew').toString()
+    List<String> command = [gradlew, '-p', dir.toString(), 'build', '--console=plain', '--no-daemon']
     if (!docker) {
       // With the task test left out, nothing in the build compiles the tests of the service.
       command.addAll(['testClasses', '-x', 'test'])

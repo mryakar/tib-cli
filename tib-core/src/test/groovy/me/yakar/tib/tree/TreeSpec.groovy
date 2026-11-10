@@ -64,7 +64,9 @@ class TreeSpec extends Specification {
     then:
     tree.changes()*.path() == ['Controller.java', 'Generated.java', 'libs.versions.toml']
     tree.changes()*.owner() == [Owner.DEVELOPER, Owner.GENERATOR, Owner.SHARED]
-    tree.changes()*.before() == [null, null, '[versions]\n']
+    tree.changes()*.before().collect {
+      it == null ? null : new String(it, 'UTF-8')
+    } == [null, null, '[versions]\n']
     tree.read('Service.java') == Optional.of('class Service {}\n')
     tree.read('libs.versions.toml') == Optional.of('[versions]\nspring = "3.5.0"\n')
   }
@@ -267,6 +269,58 @@ class TreeSpec extends Specification {
     tree.generated() == ['Mine.java', 'New.java', 'Same.java']
   }
 
+  def "a file that is not text is staged as bytes, and its diff says only that it differs"() {
+    given:
+    byte[] jar = [0xCA, 0xFE, 0xBA, 0xBE] as byte[]
+    byte[] zero = [0x61, 0x00, 0x62] as byte[]
+    Files.write(project.resolve('old.bin'), zero)
+    Tree tree = Tree.at(project)
+
+    when:
+    tree.once('lib/new.jar', jar, false)
+    tree.once('zero.bin', zero, false)
+    tree.delete('old.bin', Owner.DEVELOPER)
+
+    then:
+    tree.bytes('lib/new.jar').get() == jar
+    tree.diff() == '''\
+Binary files /dev/null and b/lib/new.jar differ
+Binary files a/old.bin and /dev/null differ
+Binary files /dev/null and b/zero.bin differ
+'''
+
+    when:
+    tree.read('lib/new.jar')
+
+    then:
+    TreeException e = thrown()
+    e.message == "cannot read ${project.resolve('lib/new.jar')}: Input length = 1"
+  }
+
+  def "a file that cannot be read fails, as a directory does"() {
+    when:
+    Tree.read(project)
+
+    then:
+    TreeException e = thrown()
+    e.message.startsWith("cannot read ${project}")
+  }
+
+  def "a file to run is written as one, where the file system can say so"() {
+    given:
+    Tree tree = Tree.at(project)
+    tree.once('gradlew', '#!/bin/sh\n'.getBytes('UTF-8'), true)
+    tree.once('gradlew.bat', '@echo off\r\n'.getBytes('UTF-8'), false)
+
+    when:
+    tree.apply()
+
+    then:
+    Files.readString(project.resolve('gradlew')) == '#!/bin/sh\n'
+    Files.isExecutable(project.resolve('gradlew'))
+    Files.readString(project.resolve('gradlew.bat')) == '@echo off\r\n'
+  }
+
   def "a deleted file is gone from what the run sees, and its diff ends in /dev/null"() {
     given:
     Files.writeString(project.resolve('a.txt'), 'a\n')
@@ -290,7 +344,13 @@ class TreeSpec extends Specification {
     and: 'a file that is not there stages nothing'
     tree.changes()*.path() == ['a.txt', 'other/D.java', 'src/B.java', 'src/C.java']
     tree.changes()*.deletes() == [true, false, true, false]
-    tree.changes()[0] == new Change('a.txt', 'a\n', null, Owner.GENERATOR)
+    with(tree.changes()[0]) {
+      path() == 'a.txt'
+      new String(before(), 'UTF-8') == 'a\n'
+      after() == null
+      owner() == Owner.GENERATOR
+      !executable()
+    }
 
     and:
     tree.diff().startsWith('''\

@@ -37,6 +37,9 @@ class DefaultPackSpec extends Specification {
   static final Path SNAPSHOTS = Path.of(System.getProperty('tib.snapshots'))
   static final Path ACTUAL = Path.of(System.getProperty('tib.snapshots.actual'))
 
+  /** The root of this build, whose Gradle wrapper the pack carries. */
+  static final Path BUILD = SNAPSHOTS.parent.parent.parent.parent
+
   /** The version of tib that the build makes. */
   static final String VERSION = System.getProperty('tib.version')
 
@@ -138,13 +141,38 @@ class DefaultPackSpec extends Specification {
     Locale.setDefault(locale)
   }
 
+  def "a new service comes with the Gradle wrapper of this build, written once, and gradlew is run"() {
+    when:
+    List<Change> wrapper = generate(VEHICLES, dir).changes().findAll {
+      it.path() in InitGenerator.WRAPPER
+    }
+
+    then: 'the files of the wrapper are left out of the snapshot, which they would tie to the Gradle of this build'
+    wrapper*.path() == InitGenerator.WRAPPER.toSorted()
+    wrapper.every { it.owner() == Owner.DEVELOPER && it.before() == null }
+    wrapper.findAll { it.executable() }*.path() == ['gradlew']
+    wrapper.each { assert it.after() == Files.readAllBytes(BUILD.resolve(it.path())) : it.path() }
+  }
+
+  def "a file that the pack carries has to be readable"() {
+    when:
+    DefaultPack.bytes(new InputStream() {
+          int read() {
+            throw new IOException('unreadable')
+          }
+        })
+
+    then:
+    thrown(UncheckedIOException)
+  }
+
   def "the first line of every generated file states its owner: #name"() {
     when:
     List<Change> changes = generate(spec, dir).changes()
 
     then:
-    changes.each { change ->
-      String header = change.after().readLines()[0].replaceFirst(/^(\/\/|#|--|<!--) /, '')
+    changes.findAll { !(it.path() in InitGenerator.WRAPPER) }.each { change ->
+      String header = new String(change.after(), 'UTF-8').readLines()[0].replaceFirst(/^(\/\/|#|--|<!--) /, '')
       assert HEADERS[change.owner()].any { header.startsWith(it) } : change.path()
     }
 
@@ -170,7 +198,11 @@ class DefaultPackSpec extends Specification {
     then:
     first.changes()*.path().contains('.tib/state.yaml')
     first.changes()*.path() == second.changes()*.path()
-    first.changes()*.after() == second.changes()*.after()
+    first.changes().collect {
+      it.after() as List
+    } == second.changes().collect {
+      it.after() as List
+    }
 
     where:
     name              | spec
@@ -237,13 +269,14 @@ class DefaultPackSpec extends Specification {
    * The files are the ones of the snapshot, each as the snapshot says. What was generated is
    * written where the build asks for it, to be copied over the snapshot on purpose.
    */
-  private static void snapshot(String name, List<Change> changes) {
+  private static void snapshot(String name, List<Change> generated) {
+    List<Change> changes = generated.findAll { !(it.path() in InitGenerator.WRAPPER) }
     Path actual = ACTUAL.resolve(name)
     actual.toFile().deleteDir()
     changes.each { change ->
       Path file = actual.resolve(change.path())
       Files.createDirectories(file.parent)
-      Files.writeString(file, change.after())
+      Files.write(file, change.after())
     }
     Path expected = SNAPSHOTS.resolve(name)
     List<String> files = Files.walk(expected).withCloseable { paths ->
@@ -253,7 +286,7 @@ class DefaultPackSpec extends Specification {
     }
     assert files == changes*.path() : "the files are not the snapshot's; the generated files are in $actual"
     changes.each { change ->
-      assert change.after() == Files.readString(expected.resolve(change.path())) : "${change.path()}; the generated files are in $actual"
+      assert new String(change.after(), 'UTF-8') == Files.readString(expected.resolve(change.path())) : "${change.path()}; the generated files are in $actual"
     }
   }
 }

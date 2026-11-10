@@ -147,9 +147,14 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   /** A file that tib wrote, with its owner and the SHA-256 of its content when it was written. */
   public record File(String path, Owner owner, String sha256) {
 
-    /** The file as tib writes it, with the hash of its content. */
+    /** The file as tib writes it, with the hash of its text in UTF-8. */
     public static File of(String path, Owner owner, String content) {
-      return new File(path, owner, State.sha256(content));
+      return of(path, owner, content.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /** The file as tib writes it, with the hash of its bytes. */
+    public static File of(String path, Owner owner, byte[] content) {
+      return new File(path, owner, digest("SHA-256", content));
     }
   }
 
@@ -239,10 +244,10 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     List<Difference> differences = new ArrayList<>();
     for (File file : files) {
       if (file.owner() == Owner.GENERATOR) {
-        Optional<String> content = tree.read(file.path());
+        Optional<byte[]> content = tree.bytes(file.path());
         if (content.isEmpty()) {
           differences.add(new Difference(file.path(), Difference.Kind.MISSING));
-        } else if (!sha256(content.get()).equals(file.sha256())) {
+        } else if (!digest("SHA-256", content.get()).equals(file.sha256())) {
           differences.add(new Difference(file.path(), Difference.Kind.EDITED));
         }
       } else if (!tree.exists(file.path())) {

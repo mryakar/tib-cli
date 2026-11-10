@@ -6,7 +6,7 @@ scaffolded by tib. The base package is `com.example.vehicleservice`.
 
 ## Build and run
 
-With Gradle 9 installed, run `gradle wrapper` once; from then on the wrapper builds the service.
+The Gradle wrapper builds the service; no Gradle of its own is needed.
 
 - `./gradlew build` compiles, tests and checks. The tests start PostgreSQL in a container, so
   Docker has to run.

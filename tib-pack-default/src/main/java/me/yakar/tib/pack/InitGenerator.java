@@ -15,20 +15,32 @@
  */
 package me.yakar.tib.pack;
 
+import java.util.List;
 import java.util.Map;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.tree.Tree;
 
 /**
- * Generates a new service: the build, the application, its configuration, a test and a main against
- * a database in a container, and the notes for agents. Every file is written once and is the
- * developer's from then on.
+ * Generates a new service: the build and its Gradle wrapper, the application, its configuration, a
+ * test and a main against a database in a container, and the notes for agents. Every file is
+ * written once and is the developer's from then on.
  */
 final class InitGenerator implements Generator {
 
   private static final String HEADER =
       "Written by tib when the service was created; it is yours from then on.";
+
+  /**
+   * The Gradle wrapper, as the build of tib has it: the files of Gradle's, without a header of
+   * tib's. {@code gradlew} is run.
+   */
+  static final List<String> WRAPPER =
+      List.of(
+          "gradlew",
+          "gradlew.bat",
+          "gradle/wrapper/gradle-wrapper.jar",
+          "gradle/wrapper/gradle-wrapper.properties");
 
   private final DefaultPack pack;
 
@@ -42,6 +54,9 @@ final class InitGenerator implements Generator {
     String tests = DefaultPack.TEST + project.packagePath();
     once(tree, "settings.gradle.kts", "init/settings_gradle_kts.jte", project);
     once(tree, "build.gradle.kts", "init/build_gradle_kts.jte", project);
+    for (String file : WRAPPER) {
+      tree.once(file, DefaultPack.resource("wrapper/" + file), file.equals("gradlew"));
+    }
     once(tree, ".gitignore", "init/gitignore.jte", project);
     once(tree, ".gitattributes", "init/gitattributes.jte", project);
     once(
