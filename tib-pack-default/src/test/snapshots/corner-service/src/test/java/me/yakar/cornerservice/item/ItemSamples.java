@@ -1,5 +1,4 @@
-// Written by tib on every run. Do not edit: your changes would be lost. A test changes a sample
-// through its builder.
+// Written by tib on every run. Do not edit: your changes would be lost.
 package me.yakar.cornerservice.item;
 
 import me.yakar.cornerservice.branch.Branch;

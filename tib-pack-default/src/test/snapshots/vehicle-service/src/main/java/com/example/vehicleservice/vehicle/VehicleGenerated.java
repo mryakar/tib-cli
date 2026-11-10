@@ -1,4 +1,4 @@
-// Written by tib on every run. Do not edit: your changes would be lost. Your code goes in Vehicle.
+// Written by tib on every run. Do not edit: your changes would be lost.
 package com.example.vehicleservice.vehicle;
 
 import com.example.vehicleservice.depot.Depot;

@@ -1,4 +1,4 @@
-// Written by tib on every run. Do not edit: your changes would be lost. Your code goes in Plain.
+// Written by tib on every run. Do not edit: your changes would be lost.
 package me.yakar.cornerservice.plain;
 
 import jakarta.persistence.Column;
