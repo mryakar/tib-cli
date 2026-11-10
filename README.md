@@ -13,7 +13,7 @@ The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.
   `--allow-dirty` says so.
 - `--dry-run` shows the diff and writes nothing; running `tib generate entity` again changes
   nothing and prints `Nothing to change.`. Every generated file says in its first line who owns
-  it: the generator or you.
+  it, the generator or you; the files of the Gradle wrapper are Gradle's as they are, and yours.
 - `tib status` says which files of tib's were edited or are missing, and which spec files and DDL
   changed since tib read them, and exits with 1 if any did.
 

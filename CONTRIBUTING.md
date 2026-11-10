@@ -24,7 +24,8 @@ Antora runs the documentation tasks of the build itself and writes the site to `
 - Format with `./gradlew spotlessApply` before committing. Java follows google-java-format; Groovy
   tests use the same indentation; Gradle scripts follow ktfmt. Spotless and google-java-format are
   updated together, and the code that a new version formats differently changes in a commit of its
-  own.
+  own. The default pack formats what it generates with the same google-java-format, so its update
+  changes the snapshots too.
 - Every source file starts with the Apache-2.0 license header. Spotless adds it.
 - Classes go in the package of their concept, not in packages named after a layer (`model`,
   `util`).
@@ -52,7 +53,10 @@ Antora runs the documentation tasks of the build itself and writes the site to `
 - `--dry-run` writes nothing. A change that breaks this is not merged.
 - The same input, pack and version give the same output. Nothing random, no timestamps, unless a
   command asks for them.
-- Every generated file says in its header who owns it: the generator or the developer.
+- A second run with the same input changes nothing and says `Nothing to change.`
+- Every generated file says in its header who owns it: the generator or the developer. The files
+  of the Gradle wrapper are the exception: they are Gradle's, byte for byte, and only the state
+  file names their owner.
 
 ## Documentation
 
