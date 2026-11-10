@@ -31,61 +31,65 @@ class GenerationOptionsSpec extends Specification {
   @TempDir
   Path copy
 
-  Tib tib = new Tib()
+  Tib tib
+
+  def setup() {
+    tib = new Tib(dir)
+  }
 
   String spec = EXAMPLES.resolve('vehicle-service.yaml').toString()
 
   def "a service whose tracked files have uncommitted changes is refused, and nothing is written"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
     committed()
     Files.writeString(dir.resolve('AGENTS.md'), 'mine\n')
-    Map<String, String> before = Tib.files(dir)
+    Map<String, String> before = tib.files()
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    Result result = tib.generate('--spec', spec)
 
     then:
     result.exitCode() == 1
     result.out() == ''
     result.err() == """\
-      ${dir.toAbsolutePath().normalize()} has changes that are not committed:
+      ${tib.root} has changes that are not committed:
          M AGENTS.md
       Commit or stash them first, so that the changes of tib can be told apart, or run again with --allow-dirty.
       """.stripIndent()
-    Tib.files(dir) == before
+    tib.files() == before
 
     when: 'a dry run writes nothing anyway'
-    Result dryRun = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
+    Result dryRun = tib.generate('--spec', spec, '--dry-run')
 
     then:
     dryRun.exitCode() == 0
     dryRun.out().contains('+++ b/.tib/state.yaml\n')
-    Tib.files(dir) == before
+    tib.files() == before
   }
 
   def "the diff of a dry run is a patch that git applies, with the result of a real run"() {
     given: 'a committed service, and a copy of it, each with the spec in it'
     [dir, copy].each {
-      tib.run('init', 'service', 'vehicle-service', '-d', it.toString())
+      new Tib(it).init('vehicle-service')
       Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), it.resolve('spec.yaml'))
     }
     committed()
 
     when: 'the diff of a dry run is applied to the service, and the copy is generated into'
-    Result dryRun = tib.run('generate', 'entity', '--spec', dir.resolve('spec.yaml').toString(), '-d', dir.toString(), '--dry-run')
+    Result dryRun = tib.generate('--spec', dir.resolve('spec.yaml').toString(), '--dry-run')
     Files.writeString(dir.resolve('.git/tib.diff'), dryRun.out())
     git('apply', '--check', '.git/tib.diff')
     git('apply', '.git/tib.diff')
-    tib.run('generate', 'entity', '--spec', copy.resolve('spec.yaml').toString(), '-d', copy.toString())
+    new Tib(copy).generate('--spec', copy.resolve('spec.yaml').toString())
 
     then:
-    Tib.files(dir) == Tib.files(copy)
+    tib.files() == new Tib(copy).files()
   }
 
   def "with --allow-dirty, a service with uncommitted changes is written, with a warning"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
     committed()
     (1..12).each { Files.writeString(dir.resolve("File${it}.txt"), 'x\n') }
     git('add', '.')
@@ -93,13 +97,13 @@ class GenerationOptionsSpec extends Specification {
     (1..12).each { Files.writeString(dir.resolve("File${it}.txt"), 'y\n') }
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--allow-dirty')
+    Result result = tib.generate('--spec', spec, '--allow-dirty')
 
     then:
     result.exitCode() == 0
     result.out().startsWith('Wrote ')
     result.err().readLines() == [
-      "${dir.toAbsolutePath().normalize()} has changes that are not committed:".toString(),
+      "${tib.root} has changes that are not committed:".toString(),
       *(['1', '10', '11', '12', '2', '3', '4', '5', '6', '7'].collect {
         "   M File${it}.txt".toString()
       }),
@@ -110,19 +114,19 @@ class GenerationOptionsSpec extends Specification {
 
   def "untracked files, and a run that changes nothing, are no reason to refuse"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
     committed()
     Files.writeString(dir.resolve('notes.txt'), 'untracked\n')
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    Result result = tib.generate('--spec', spec)
 
     then:
     result.exitCode() == 0
     result.out().startsWith('Wrote ')
 
     when: 'the files of tib are not committed, and the run changes nothing'
-    Result again = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    Result again = tib.generate('--spec', spec)
 
     then:
     again.exitCode() == 0

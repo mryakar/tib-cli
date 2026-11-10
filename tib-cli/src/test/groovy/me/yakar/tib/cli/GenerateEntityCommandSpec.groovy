@@ -29,7 +29,11 @@ class GenerateEntityCommandSpec extends Specification {
   @TempDir
   Path dir
 
-  Tib tib = new Tib()
+  Tib tib
+
+  def setup() {
+    tib = new Tib(dir)
+  }
 
   String spec = EXAMPLES.resolve('vehicle-service.yaml').toString()
 
@@ -57,54 +61,45 @@ class GenerateEntityCommandSpec extends Specification {
     result.err().contains('Usage: tib generate entity ')
   }
 
-  def "a directory that is not a tib project is refused"() {
-    when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
-
-    then:
-    result.exitCode() == 1
-    result.err() == "${dir.toAbsolutePath().normalize()} is not a tib project: there is no .tib/state.yaml\nRun tib init service first.\n"
-  }
-
   def "a dry run prints the diff and writes nothing"() {
     given:
-    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
-    Map<String, String> before = Tib.files(dir)
+    tib.init('--spec', spec)
+    Map<String, String> before = tib.files()
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
+    Result result = tib.generate('--spec', spec, '--dry-run')
 
     then:
     result.exitCode() == 0
     result.out().contains('+++ b/src/main/java/com/example/vehicleservice/vehicle/VehicleGenerated.java\n')
     result.out().contains('+++ b/.tib/state.yaml\n')
     result.err() == ''
-    Tib.files(dir) == before
+    tib.files() == before
   }
 
   def "generates the entity layer of the spec into the service, once"() {
     given:
-    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
-    State before = Tib.state(dir)
+    tib.init('--spec', spec)
+    State before = tib.state()
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    Result result = tib.generate('--spec', spec)
 
     then:
     result.exitCode() == 0
-    result.out() == "Wrote ${Tib.state(dir).files().size() - before.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
+    result.out() == "Wrote ${tib.state().files().size() - before.files().size() + 1} files to ${tib.root}.\n"
     Files.exists(dir.resolve('src/main/resources/db/migration/V2__create_vehicle.sql'))
 
     when: 'again'
-    Result again = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    Result again = tib.generate('--spec', spec)
 
     then: 'the spec is on record once'
     again.exitCode() == 0
     again.out() == 'Nothing to change.\n'
-    Tib.state(dir).inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(spec), Files.readString(Path.of(spec)))]
+    tib.state().inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(spec), Files.readString(Path.of(spec)))]
 
     when: 'again, as a dry run'
-    Result dryRun = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString(), '--dry-run')
+    Result dryRun = tib.generate('--spec', spec, '--dry-run')
 
     then: 'the diff is empty'
     dryRun.exitCode() == 0
@@ -114,27 +109,26 @@ class GenerateEntityCommandSpec extends Specification {
 
   def "the files of an entity that left the spec are deleted, but for those that were edited"() {
     given:
-    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
-    tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
-    String depot = Files.writeString(dir.resolve('depot.yaml'), Files.readString(Path.of(spec))
-        .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, '')).toString()
+    tib.init('--spec', spec)
+    tib.generate('--spec', spec)
+    String depot = tib.write('depot.yaml', Tib.DEPOT_ONLY)
     String vehicle = 'src/main/java/com/example/vehicleservice/vehicle/'
     String tests = 'src/test/java/com/example/vehicleservice/vehicle/'
     Files.writeString(dir.resolve(vehicle + 'Vehicle.java'), 'mine\n')
-    String migration = Tib.state(dir).files()*.path().find { it.endsWith('__create_vehicle.sql') }
+    String migration = tib.state().files()*.path().find { it.endsWith('__create_vehicle.sql') }
     String notice = """\
       tib no longer generates these files from the spec; they stay, as they were edited:
         ${vehicle}Vehicle.java
       Delete them if the service no longer needs them.
       tib no longer reads the spec from these files, and forgets them:
-        ${Tib.state(dir).inputs()[0].path()}
+        ${tib.state().inputs()[0].path()}
       The spec no longer generates these files, but they last, and tib leaves them:
         ${migration}
       Undo what they made with a file of yours, such as a migration that drops the table.
       """.stripIndent()
 
     when:
-    Result dryRun = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString(), '--dry-run')
+    Result dryRun = tib.generate('--spec', depot, '--dry-run')
 
     then: 'the diff deletes them, and nothing is deleted'
     dryRun.exitCode() == 0
@@ -144,12 +138,12 @@ class GenerateEntityCommandSpec extends Specification {
     Files.exists(dir.resolve(vehicle + 'VehicleGenerated.java'))
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString())
+    Result result = tib.generate('--spec', depot)
 
     then:
     result.exitCode() == 0
     result.out() == """\
-      Wrote 1 file to ${dir.toAbsolutePath().normalize()}.
+      Wrote 1 file to ${tib.root}.
       Deleted 10 files that the spec no longer generates:
         ${vehicle}VehicleController.java
         ${vehicle}VehicleDto.java
@@ -169,11 +163,11 @@ class GenerateEntityCommandSpec extends Specification {
 
     and: 'the migration lasts, on record, and the file that stayed has left the record'
     Files.exists(dir.resolve(migration))
-    Tib.state(dir).files()*.path().contains(migration)
-    !Tib.state(dir).files()*.path().any { it.startsWith(vehicle) }
+    tib.state().files()*.path().contains(migration)
+    !tib.state().files()*.path().any { it.startsWith(vehicle) }
 
     when: 'again'
-    Result again = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString())
+    Result again = tib.generate('--spec', depot)
 
     then: 'the file that stayed is named once'
     again.out() == 'Nothing to change.\n'
@@ -182,21 +176,21 @@ class GenerateEntityCommandSpec extends Specification {
 
   def "generates the entity layer of the tables of the DDL into the service, once"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
-    State before = Tib.state(dir)
+    tib.init('vehicle-service')
+    State before = tib.state()
 
     when:
-    Result result = tib.run('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
+    Result result = tib.generate('--ddl', ddl)
 
     then:
     result.exitCode() == 0
-    result.out() == "Wrote ${Tib.state(dir).files().size() - before.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
+    result.out() == "Wrote ${tib.state().files().size() - before.files().size() + 1} files to ${tib.root}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/depot/DepotGenerated.java'))
-    Tib.state(dir).spec().entities()*.name() == ['Depot', 'Vehicle']
-    Tib.state(dir).inputs() == [State.Input.of(State.Input.Kind.DDL, dir, Path.of(ddl), Files.readString(Path.of(ddl)))]
+    tib.state().spec().entities()*.name() == ['Depot', 'Vehicle']
+    tib.state().inputs() == [State.Input.of(State.Input.Kind.DDL, dir, Path.of(ddl), Files.readString(Path.of(ddl)))]
 
     when: 'again'
-    Result again = tib.run('generate', 'entity', '--ddl', ddl, '-d', dir.toString())
+    Result again = tib.generate('--ddl', ddl)
 
     then:
     again.exitCode() == 0
@@ -205,46 +199,46 @@ class GenerateEntityCommandSpec extends Specification {
 
   def "a run that changes only the state file writes one file"() {
     given: 'a service that an older tib scaffolded, and a spec without entities'
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
     Path empty = Files.writeString(dir.resolve('spec.yaml'), 'tib: 1\nservice: vehicle-service\n')
 
     when:
-    Result result = new Tib('1.2.4').run('generate', 'entity', '--spec', empty.toString(), '-d', dir.toString())
+    Result result = new Tib(dir, '1.2.4').generate('--spec', empty.toString())
 
     then:
     result.exitCode() == 0
-    result.out() == "Wrote 1 file to ${dir.toAbsolutePath().normalize()}.\n"
-    Tib.state(dir).tib() == '1.2.4'
-    Tib.state(dir).inputs()*.path() == ['spec.yaml']
+    result.out() == "Wrote 1 file to ${tib.root}.\n"
+    tib.state().tib() == '1.2.4'
+    tib.state().inputs()*.path() == ['spec.yaml']
   }
 
   def "the files that the spec was read from are recorded, each once, with their last content"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
     Path specFile = Files.writeString(dir.resolve('spec.yaml'), 'tib: 1\nservice: vehicle-service\n')
-    tib.run('generate', 'entity', '--spec', specFile.toString(), '-d', dir.toString())
+    tib.generate('--spec', specFile.toString())
     Path schema = Files.writeString(dir.resolve('schema.sql'), Files.readString(Path.of(ddl)))
-    tib.run('generate', 'entity', '--ddl', schema.toString(), '-d', dir.toString())
+    tib.generate('--ddl', schema.toString())
 
     when: 'the DDL changes, and is read again'
     Files.writeString(schema, Files.readString(schema) + '\nCREATE TABLE DRIVER (ID BIGINT PRIMARY KEY);\n')
-    Result result = tib.run('generate', 'entity', '--ddl', schema.toString(), '-d', dir.toString())
+    Result result = tib.generate('--ddl', schema.toString())
 
     then:
     result.exitCode() == 0
     result.err() == ''
-    Tib.state(dir).inputs() == [
+    tib.state().inputs() == [
       State.Input.of(State.Input.Kind.SPEC, dir, specFile, Files.readString(specFile)),
       State.Input.of(State.Input.Kind.DDL, dir, schema, Files.readString(schema))
     ]
-    Tib.state(dir).inputs()*.path() == ['spec.yaml', 'schema.sql']
+    tib.state().inputs()*.path() == ['spec.yaml', 'schema.sql']
   }
 
   def "a spec file is the whole spec, so a run with one forgets the files that the spec was read from before"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
     Path schema = Files.writeString(dir.resolve('schema.sql'), Files.readString(Path.of(ddl)))
-    tib.run('generate', 'entity', '--ddl', schema.toString(), '-d', dir.toString())
+    tib.generate('--ddl', schema.toString())
     Path specFile = Files.copy(Path.of(spec), dir.resolve('spec.yaml'))
     String forgotten = """\
       tib no longer reads the spec from these files, and forgets them:
@@ -252,7 +246,7 @@ class GenerateEntityCommandSpec extends Specification {
       """.stripIndent()
 
     when:
-    Result dryRun = tib.run('generate', 'entity', '--spec', specFile.toString(), '-d', dir.toString(), '--dry-run')
+    Result dryRun = tib.generate('--spec', specFile.toString(), '--dry-run')
 
     then: 'the spec file names the tables in its own case, which the migrations do not follow'
     dryRun.exitCode() == 0
@@ -260,27 +254,27 @@ class GenerateEntityCommandSpec extends Specification {
     dryRun.err().contains('-CREATE TABLE depots (\n+CREATE TABLE DEPOTS (\n')
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', specFile.toString(), '-d', dir.toString())
+    Result result = tib.generate('--spec', specFile.toString())
 
     then:
     result.exitCode() == 0
     result.err() == dryRun.err()
-    Tib.state(dir).inputs()*.path() == ['spec.yaml']
-    Tib.state(dir).spec().entities()*.name() == ['Vehicle', 'Depot']
+    tib.state().inputs()*.path() == ['spec.yaml']
+    tib.state().spec().entities()*.name() == ['Vehicle', 'Depot']
   }
 
   def "a table whose columns changed after its migration was written is named, with the diff, once"() {
     given:
-    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
-    tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    tib.init('--spec', spec)
+    tib.generate('--spec', spec)
     String colored = Files.writeString(dir.resolve('colored.yaml'), Files.readString(Path.of(spec)).replace(
             '      - { name: capacity, type: Integer }\n',
             '      - { name: color, type: String, length: 20 }\n      - { name: capacity, type: Integer }\n')).toString()
-    String migration = Tib.state(dir).files()*.path().find { it.endsWith('__create_vehicle.sql') }
+    String migration = tib.state().files()*.path().find { it.endsWith('__create_vehicle.sql') }
     String before = Files.readString(dir.resolve(migration))
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', colored, '-d', dir.toString())
+    Result result = tib.generate('--spec', colored)
 
     then: 'the migration stays as it was'
     result.exitCode() == 0
@@ -294,7 +288,7 @@ class GenerateEntityCommandSpec extends Specification {
     Files.readString(dir.resolve(migration)) == before
 
     when: 'again'
-    Result again = tib.run('generate', 'entity', '--spec', colored, '-d', dir.toString())
+    Result again = tib.generate('--spec', colored)
 
     then:
     again.out() == 'Nothing to change.\n'
@@ -303,19 +297,18 @@ class GenerateEntityCommandSpec extends Specification {
 
   def "the migration of an entity that comes back to the spec is named, once: #how"() {
     given: 'the vehicle left the spec'
-    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
-    tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
-    String depot = Files.writeString(dir.resolve('depot.yaml'), Files.readString(Path.of(spec))
-        .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, '')).toString()
-    tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString())
-    String migration = Tib.state(dir).files()*.path().find { it.endsWith('__create_vehicle.sql') }
+    tib.init('--spec', spec)
+    tib.generate('--spec', spec)
+    String depot = tib.write('depot.yaml', Tib.DEPOT_ONLY)
+    tib.generate('--spec', depot)
+    String migration = tib.state().files()*.path().find { it.endsWith('__create_vehicle.sql') }
     if (content != null) {
       Files.writeString(dir.resolve(migration), content)
     }
     String before = Files.readString(dir.resolve(migration))
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    Result result = tib.generate('--spec', spec)
 
     then: 'the migration stays as it is'
     result.exitCode() == 0
@@ -324,7 +317,7 @@ class GenerateEntityCommandSpec extends Specification {
     Files.readString(dir.resolve(migration)) == before
 
     when: 'again'
-    Result again = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    Result again = tib.generate('--spec', spec)
 
     then:
     again.out() == 'Nothing to change.\n'
@@ -338,43 +331,43 @@ class GenerateEntityCommandSpec extends Specification {
 
   def "a DDL file that is no longer where tib read it is forgotten by the next run"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
     Path schema = Files.writeString(dir.resolve('schema.sql'), Files.readString(Path.of(ddl)))
-    tib.run('generate', 'entity', '--ddl', schema.toString(), '-d', dir.toString())
+    tib.generate('--ddl', schema.toString())
     Files.createDirectories(dir.resolve('db'))
     Path moved = Files.move(schema, dir.resolve('db/schema.sql'))
 
     when:
-    Result result = tib.run('generate', 'entity', '--ddl', moved.toString(), '-d', dir.toString())
+    Result result = tib.generate('--ddl', moved.toString())
 
     then: 'the entities stay'
     result.exitCode() == 0
-    result.out() == "Wrote 1 file to ${dir.toAbsolutePath().normalize()}.\n"
+    result.out() == "Wrote 1 file to ${tib.root}.\n"
     result.err() == """\
       tib no longer reads the spec from these files, and forgets them:
         schema.sql
       """.stripIndent()
-    Tib.state(dir).inputs()*.path() == ['db/schema.sql']
-    Tib.state(dir).spec().entities()*.name() == ['Depot', 'Vehicle']
+    tib.state().inputs()*.path() == ['db/schema.sql']
+    tib.state().spec().entities()*.name() == ['Depot', 'Vehicle']
   }
 
   def "a service generated for #stack is refused, and tib status still reads it"() {
     given:
-    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
+    tib.init('--spec', spec)
     Path state = dir.resolve('.tib/state.yaml')
-    String pack = Tib.state(dir).pack().version()
+    String pack = tib.state().pack().version()
     Files.writeString(state, Files.readString(state).replace('  stack: Spring Boot 4\n', line))
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    Result result = tib.generate('--spec', spec)
 
     then:
     result.exitCode() == 1
     result.err() == """\
-      ${dir.toAbsolutePath().normalize()} was generated for $stack by tib 1.2.3; pack default $pack generates for Spring Boot 4
+      ${tib.root} was generated for $stack by tib 1.2.3; pack default $pack generates for Spring Boot 4
       Go on with tib 1.2.3 for this service, or move it to Spring Boot 4 by hand.
       """.stripIndent()
-    tib.run('status', '-d', dir.toString()).exitCode() == 0
+    tib.status().exitCode() == 0
 
     where:
     stack               | line
@@ -384,11 +377,11 @@ class GenerateEntityCommandSpec extends Specification {
 
   def "#problem is reported with exit code 1"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
     String file = content == null ? name : Files.writeString(dir.resolve(name), content).toString()
 
     when:
-    Result result = tib.run('generate', 'entity', option, file, '-d', dir.toString())
+    Result result = tib.generate(option, file)
 
     then:
     result.exitCode() == 1
@@ -405,12 +398,12 @@ class GenerateEntityCommandSpec extends Specification {
 
   def "the spec of another #what is refused, and nothing is written"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
     String file = Files.writeString(dir.resolve('spec.yaml'), content).toString()
     String before = Files.readString(dir.resolve(State.PATH))
 
     when:
-    Result result = tib.run('generate', 'entity', '--spec', file, '-d', dir.toString())
+    Result result = tib.generate('--spec', file)
 
     then:
     result.exitCode() == 1
@@ -421,24 +414,5 @@ class GenerateEntityCommandSpec extends Specification {
     what      | content                                                    | message
     'service' | 'tib: 1\nservice: fleet-service\n'                         | 'is the spec of fleet-service; this project is vehicle-service'
     'group'   | 'tib: 1\nservice: vehicle-service\ngroup: com.acme\n'      | 'is the spec of a service in com.acme; this project is in com.example'
-  }
-
-  def "a state file that tib cannot read is reported: #state"() {
-    given:
-    Files.createDirectories(dir.resolve('.tib'))
-    Files.writeString(dir.resolve(State.PATH), state)
-
-    when:
-    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
-
-    then:
-    result.exitCode() == 1
-    result.err().startsWith("${dir.toAbsolutePath().normalize()}: $message")
-    result.err().readLines().size() == 1
-
-    where:
-    state                                                                         | message
-    '['                                                                           | 'the state file has a problem: state: '
-    'tib: 1.2.3\npack: { name: default, version: 1 }\nspec:\n  tib: 1\n  service: int\n' | "the state file has a problem: spec.service: 'int' makes the package 'int'"
   }
 }
