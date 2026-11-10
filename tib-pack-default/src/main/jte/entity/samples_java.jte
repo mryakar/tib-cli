@@ -80,7 +80,7 @@ public final class ${name}Samples {
   }
   @if(tests.dto())<%-- keeps the blank line below --%>
 
-  /** ${entity.article()} ${entity.variable()} as the API takes it, to build one value at a time; its audit times are none. */
+  /** ${entity.article()} ${entity.variable()} as the API takes it, to build one value at a time@if(entity.audited()); its audit times are none@endif. */
   public static final class ${dtoBuilder} {
     private ${entity.idType()} ${entity.idField()};
     @for(var field : entity.fields())
