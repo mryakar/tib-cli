@@ -43,6 +43,10 @@ public record FieldModel(Field field) {
     return field.nullable();
   }
 
+  boolean unique() {
+    return field.unique();
+  }
+
   /** The length of a String: the spec's, or else the default; a field of another type has none. */
   Integer length() {
     if (field.length() != null || field.type() != FieldType.STRING) {

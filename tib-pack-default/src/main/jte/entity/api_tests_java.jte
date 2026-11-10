@@ -40,19 +40,7 @@ class ${entity.name()}ApiTests {
   @for(var target : tests.requiredTargets())
   @Autowired private ${target.name()}Repository ${target.plural()};
   @endfor
-  @if(!tests.requiredTargets().isEmpty())<%-- keeps the blank line below --%>
-
-  @for(var target : tests.requiredTargets())
-  private ${target.name()} ${target.variable()};
-  @endfor<%-- keeps the blank line below --%>
-
-  @BeforeEach
-  void saveWhat${entity.article()}${entity.name()}Needs() {
-    @for(var target : tests.requiredTargets())
-    ${target.variable()} = ${target.plural()}.saveAndFlush(${target.name()}Samples.${target.variable()}(${EntityTestsModel.requiredArguments(target)}).build());
-    @endfor
-  }
-  @endif<%-- keeps the blank line below --%>
+  @template.entity.required_targets(tests = tests)
 
   @AfterEach
   void deleteAll() {
