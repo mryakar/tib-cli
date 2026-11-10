@@ -18,6 +18,7 @@ import me.yakar.tib.gradle.JPackage
 import me.yakar.tib.gradle.JPackageImage
 import me.yakar.tib.gradle.JPackageInstaller
 import me.yakar.tib.gradle.JdkModules
+import me.yakar.tib.gradle.Launcher
 import me.yakar.tib.gradle.StartupCacheScript
 
 plugins { id("tib.java-conventions") }
@@ -97,11 +98,8 @@ val jpackageAppImage =
     jlinkOptions.addAll("--strip-debug", "--no-man-pages", "--no-header-files")
     // The launcher loads the start-up cache that the installers build (see StartupCacheScript),
     // silently when there is none, such as from the portable zip before its script was run.
-    StartupCacheScript.JVM_OPTIONS.forEach { options.addAll("--java-options", it) }
-    options.addAll(
-      "--java-options",
-      "-XX:AOTCache=\$APPDIR/${StartupCacheScript.cache(launcherName)}",
-    )
+    Launcher.JVM_OPTIONS.forEach { options.addAll("--java-options", it) }
+    options.addAll("--java-options", "-XX:AOTCache=\$APPDIR/${Launcher.cache(launcherName)}")
   }
 
 // The image that the packages ship: jpackage's, with the script that builds the start-up cache,
