@@ -22,6 +22,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `tib status` lists the files of tib's that differ under `Files:`, and says in a line of its own
   when every file that the spec was read from is as tib read it.
+- A run whose spec no longer generates a file, as when an entity leaves the spec or loses its DTO
+  or its API, deletes it, instead of forgetting it and leaving it on disk: a file written on every
+  run always, and a file written once when it is as tib wrote it. A file written once that you
+  edited stays, and the run names it on the standard error; a migration always stays. `--dry-run`
+  shows the deletions in its diff, and the run names the files it deleted.
 
 ## [0.2.0] - 2026-11-05
 

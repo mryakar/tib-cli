@@ -140,26 +140,21 @@ class StatusCommandSpec extends Specification {
     again.exitCode() == 0
   }
 
-  def "the files of tib's of an entity that left the spec are no problem once deleted"() {
+  def "an entity that left the spec leaves nothing of tib's to report"() {
     given:
     String spec = generated()
     Path depot = Files.writeString(dir.resolve('depot.yaml'), Files.readString(Path.of(spec))
         .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, ''))
     tib.run('generate', 'entity', '--spec', depot.toString(), '-d', dir.toString())
-    Files.walk(dir.resolve(ENTITY)).withCloseable { paths ->
-      paths.sorted(Comparator.reverseOrder()).forEach(Files::delete)
-    }
 
     when:
     Result result = tib.run('status', '-d', dir.toString())
 
     then:
+    !Files.exists(dir.resolve(ENTITY))
     result.exitCode() == 0
-    result.out().readLines().drop(1).every {
-      it in ['', 'Files:', 'Every file that tib read the spec from is as it read it.'] ||
-      it.startsWith('removed ') || it.startsWith('A removed file')
-    }
-    result.out().contains("removed  ${ENTITY}Vehicle.java\n")
+    result.out().contains("Every file of tib's is as it wrote it.\n")
+    !result.out().contains('Files:')
   }
 
   def "a spec file that was changed is reported with exit code 1, until tib runs with it again"() {

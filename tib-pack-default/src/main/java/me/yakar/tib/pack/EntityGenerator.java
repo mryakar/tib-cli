@@ -95,7 +95,10 @@ final class EntityGenerator implements Generator {
     if (entity.dto()) {
       own(tree, main + "Dto.java", EVERY_RUN, "entity/dto_java.jte", model);
     }
-    once(tree, migration(tree, entity), MIGRATION, "entity/migration_sql.jte", model);
+    // A migration lasts: a database may have run it, so it stays when the entity leaves the spec.
+    String migration = migration(tree, entity);
+    tree.lasting(
+        migration, Templates.render(migration, MIGRATION, "entity/migration_sql.jte", model));
     once(tree, test + "RepositoryTests.java", ONCE, "entity/repository_tests_java.jte", tests);
     if (entity.layer()) {
       own(tree, main + "Mapper.java", EVERY_RUN, "entity/mapper_java.jte", model);

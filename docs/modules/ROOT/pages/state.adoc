@@ -105,18 +105,24 @@ whole path.
 such as a spec file that was moved, is listed as `absent` and is no problem. Its record stays: tib
 does not forget an input yet.
 
-When an entity leaves the spec, the next run forgets the records of the files written on every run
-for it, so that `tib status` does not report them as missing once they are deleted. The
-files stay on disk, and the run names them on the standard error:
+When the spec no longer generates a file, as when an entity leaves the spec or loses its DTO or its
+API, the next run deletes the file and its record: a file of the generator's always, and a file of
+the developer's when its hash is still that of the record, so that a file that you did not touch
+goes with the entity. The directories that this leaves empty go too. A file of the developer's
+that you edited stays, with its record, and the run names it on the standard error:
 
 [source,text]
 ----
-tib no longer generates these files from the spec, and forgets them:
-  src/main/java/com/example/vehicleservice/depot/DepotDto.java
-  src/main/java/com/example/vehicleservice/depot/DepotGenerated.java
-  src/main/java/com/example/vehicleservice/depot/DepotMapper.java
-Delete them: tib status no longer checks them.
+tib no longer generates these files from the spec; they stay, as they were edited:
+  src/main/java/com/example/vehicleservice/depot/Depot.java
+Delete them if the service no longer needs them.
 ----
+
+A migration always stays, as the database may have run it; dropping the table is a new migration
+of yours. A file that tib wrote when the service was created is not the entity's, and stays too.
+When the entity comes back to the spec, its files that were deleted are written again. Like every
+other change, the deletions show in the diff of `--dry-run`, and wait for the changes of the
+service to be committed.
 
 == Problems
 

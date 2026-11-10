@@ -25,8 +25,6 @@ the first release.
 
 These come after the MVP, in no fixed order:
 
-- Removing the files of the generator that the spec no longer produces, such as those of a removed
-  entity.
 - A notice when the columns of a table changed after its migration was written.
 - A default pack on Spring Boot 4.
 - The Gradle wrapper in the generated service.

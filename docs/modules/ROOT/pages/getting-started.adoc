@@ -127,8 +127,9 @@ spec:
 ----
 
 Run it again after a change of the spec: the files written on every run follow the spec, and the
-files written once stay yours, also when you delete one. A run that would change nothing says so,
-and changes nothing:
+files written once stay yours, also when you delete one. An entity that leaves the spec takes its
+files with it, but for those you edited and its migration; xref:state.adoc[] says which. A run
+that would change nothing says so, and changes nothing:
 
 [source,bash]
 ----

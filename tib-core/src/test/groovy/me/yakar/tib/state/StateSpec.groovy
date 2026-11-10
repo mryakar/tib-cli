@@ -260,8 +260,8 @@ class StateSpec extends Specification {
     ]
   }
 
-  def "an entity that leaves the spec takes the records of its files of the generator's with it"() {
-    given: 'a state with the files of two entities, and a run whose spec has only the first'
+  def "the files that a run deleted take their records with them, there or not"() {
+    given: 'a state with the files of two entities, and a run that deletes those of the second'
     State previous = with(files: [
       State.File.of('a/A.java', Owner.DEVELOPER, 'class A {}\n'),
       State.File.of('a/AGenerated.java', Owner.GENERATOR, 'class AGenerated {}\n'),
@@ -269,18 +269,19 @@ class StateSpec extends Specification {
       State.File.of('b/BGenerated.java', Owner.GENERATOR, 'class BGenerated {}\n'),
       State.File.of('libs.toml', Owner.SHARED, '[versions]\n')
     ])
-    Files.createDirectories(dir.resolve('a'))
-    Files.writeString(dir.resolve('a/AGenerated.java'), 'class AGenerated {}\n')
+    Files.createDirectories(dir.resolve('b'))
+    Files.writeString(dir.resolve('b/BGenerated.java'), 'class BGenerated {}\n')
     Tree tree = Tree.at(dir)
     tree.writtenBefore(previous.files()*.path())
-    tree.own('a/AGenerated.java', 'class AGenerated {}\n')
+    tree.delete('b/B.java', Owner.DEVELOPER)
+    tree.delete('b/BGenerated.java', Owner.GENERATOR)
 
     when:
     State next = State.next(Optional.of(previous), '1.2.4', state.pack(), [], state.spec(), tree)
 
-    then: "the file of the generator's that the run staged without a change keeps its record"
-    tree.changes() == []
-    next.files() == previous.files() - previous.files()[3]
+    then: 'only the file that is there is a change'
+    tree.changes()*.path() == ['b/BGenerated.java']
+    next.files() == previous.files() - previous.files()[2..3]
   }
 
   def "the state of a tree without one says that it is not a tib project"() {
