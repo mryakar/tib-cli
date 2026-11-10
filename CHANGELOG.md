@@ -73,6 +73,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - A file that is not UTF-8 text is reported as `cannot read spec.yaml: not UTF-8 text`, instead
   of `cannot read spec.yaml: Input length = 1`.
+- A run that fails while it writes or deletes leaves the state file as it was, so that the next
+  run finishes what it left: the state file is written last.
+- A file written once that you edited, that stayed when its entity left the spec and that you
+  deleted since, is written again when the entity comes back to the spec.
+- DDL that creates a table from another one, as `CREATE TABLE … AS SELECT` or `LIKE` does, is
+  reported as a problem of the DDL, instead of ending tib with an exception.
+- The tests and the comments that tib generates say `an` before an entity whose name starts with
+  a vowel, as in `saveWhatAnOrderNeeds`.
 
 ## [0.2.0] - 2026-11-05
 
