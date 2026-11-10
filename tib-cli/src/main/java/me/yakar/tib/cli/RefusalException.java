@@ -16,7 +16,6 @@
 package me.yakar.tib.cli;
 
 import java.io.Serial;
-import java.util.List;
 import me.yakar.tib.TibException;
 
 /**
@@ -27,28 +26,13 @@ final class RefusalException extends TibException {
 
   @Serial private static final long serialVersionUID = 1L;
 
-  // An immutable list, which serializes; the lint cannot see that.
-  @SuppressWarnings("serial")
-  private final List<String> problems;
-
-  /** One problem, which is the message. */
+  /** The problem, which is the message. */
   RefusalException(String problem) {
-    this(problem, List.of(problem));
+    super(problem);
   }
 
-  /** A message that says what the problems are. */
-  RefusalException(String message, List<String> problems) {
-    super(message);
-    this.problems = List.copyOf(problems);
-  }
-
-  /** A message that says what the problems are, with the advice on the line after it. */
-  RefusalException(String message, List<String> problems, String advice) {
-    this(message + System.lineSeparator() + advice, problems);
-  }
-
-  @Override
-  public List<String> problems() {
-    return problems;
+  /** The problem, with the advice on the line after it. */
+  RefusalException(String problem, String advice) {
+    this(problem + System.lineSeparator() + advice);
   }
 }

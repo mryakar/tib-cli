@@ -50,9 +50,9 @@ final class ServiceDirectory {
       return State.of(tree, version.version());
     } catch (StateException e) {
       if (tree.exists(State.PATH)) {
-        throw new RefusalException(tree.root() + ": " + e.getMessage(), e.problems());
+        throw new RefusalException(tree.root() + ": " + e.getMessage());
       }
-      throw new RefusalException(e.getMessage(), e.problems(), "Run tib init service first.");
+      throw new RefusalException(e.getMessage(), "Run tib init service first.");
     }
   }
 
