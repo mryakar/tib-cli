@@ -40,8 +40,8 @@ from `XSamples`, which is tib's and follows the spec: a test changes a value thr
 as in `XSamples.x().name("Other").build()`. `ConflictHandler`, in the base package, answers a
 request that breaks a constraint of the database with 409 Conflict; it is yours.
 
-The Java that tib writes is in the layout of google-java-format 1.36.1: formatted with
-it, the files of tib's stay as tib wrote them.
+The Java that tib writes is in the layout of google-java-format 1.36.1: formatted
+with it, the files of tib's stay as tib wrote them.
 
 `tib status` lists the files of tib's that differ from what it wrote, and the spec files and DDL
 that changed since it read them, and exits with 1 when one does. tib writes only into a service
