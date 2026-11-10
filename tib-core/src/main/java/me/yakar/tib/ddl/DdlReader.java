@@ -15,9 +15,6 @@
  */
 package me.yakar.tib.ddl;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -74,17 +71,6 @@ public final class DdlReader {
   private static final Pattern ID_SUFFIX = Pattern.compile("(?i)(.)_ID$");
 
   private DdlReader() {}
-
-  /** Reads the DDL file into the spec of the service, as {@link #parse(String, Spec)} does. */
-  public static Spec read(Path file, Spec service) {
-    String ddl;
-    try {
-      ddl = Files.readString(file);
-    } catch (IOException e) {
-      throw new DdlException(file, e);
-    }
-    return parse(ddl, service);
-  }
 
   /**
    * Reads DDL into the spec of the service. The entity of a table takes the place of the entity of

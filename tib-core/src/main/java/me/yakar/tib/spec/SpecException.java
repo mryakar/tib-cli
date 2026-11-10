@@ -15,16 +15,11 @@
  */
 package me.yakar.tib.spec;
 
-import java.io.IOException;
 import java.io.Serial;
-import java.nio.file.Path;
 import java.util.List;
 import me.yakar.tib.TibException;
 
-/**
- * A spec that tib cannot use: it is not YAML, not a spec, or breaks a rule of the spec; or a spec
- * file that cannot be read.
- */
+/** A spec that tib cannot use: it is not YAML, not a spec, or breaks a rule of the spec. */
 public class SpecException extends TibException {
 
   @Serial private static final long serialVersionUID = 1L;
@@ -35,9 +30,5 @@ public class SpecException extends TibException {
 
   SpecException(String problem) {
     this(List.of(problem));
-  }
-
-  SpecException(Path file, IOException cause) {
-    super("read", file, cause);
   }
 }
