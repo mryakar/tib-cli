@@ -218,8 +218,7 @@ public final class Generation {
         continue;
       }
       if (file.owner() == Owner.GENERATOR
-          || generatedBefore.contains(path)
-              && tree.bytes(path).map(content -> asWritten(file, content)).orElse(true)) {
+          || generatedBefore.contains(path) && tree.bytes(path).map(file::holds).orElse(true)) {
         tree.delete(path, file.owner());
         deleted.add(path);
       } else if (generatedBefore.contains(path)) {
@@ -227,10 +226,5 @@ public final class Generation {
       }
     }
     return new Dropped(deleted, kept);
-  }
-
-  /** Whether the content is that of the file as tib wrote it. */
-  private static boolean asWritten(State.File file, byte[] content) {
-    return State.File.of(file.path(), file.owner(), content).equals(file);
   }
 }
