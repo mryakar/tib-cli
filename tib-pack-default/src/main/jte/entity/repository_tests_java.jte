@@ -22,7 +22,7 @@ class ${entity.name()}RepositoryTests {
   @endfor<%-- keeps the blank line below --%>
 
   @BeforeEach
-  void saveWhatA${entity.name()}Needs() {
+  void saveWhat${entity.article()}${entity.name()}Needs() {
     @for(var target : tests.requiredTargets())
     ${target.variable()} = ${target.plural()}.saveAndFlush(${target.name()}Samples.${target.variable()}(${EntityTestsModel.requiredArguments(target)}).build());
     @endfor
@@ -30,7 +30,7 @@ class ${entity.name()}RepositoryTests {
   @endif<%-- keeps the blank line below --%>
 
   @Test
-  void savesAndFinds${tests.article()}${entity.name()}() {
+  void savesAndFinds${entity.article()}${entity.name()}() {
     ${entity.name()} ${entity.variable()} = ${entity.plural()}.saveAndFlush(${entity.name()}Samples.${entity.variable()}(${EntityTestsModel.requiredArguments(entity)}).build());
     entityManager.clear();
 
@@ -49,7 +49,7 @@ class ${entity.name()}RepositoryTests {
   @if(tests.unique())<%-- keeps the blank line below --%>
 
   @Test
-  void refuses${tests.article()}${entity.name()}WhoseUniqueValuesAreTaken() {
+  void refuses${entity.article()}${entity.name()}WhoseUniqueValuesAreTaken() {
     ${entity.plural()}.saveAndFlush(${entity.name()}Samples.${entity.variable()}(${EntityTestsModel.requiredArguments(entity)}).build());
 
     assertThatThrownBy(() -> ${entity.plural()}.saveAndFlush(${entity.name()}Samples.${entity.variable()}(${EntityTestsModel.requiredArguments(entity)}).build()))

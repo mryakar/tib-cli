@@ -21,16 +21,6 @@ import spock.lang.Specification
 
 class EntityTestsModelSpec extends Specification {
 
-  def "the article of the name is #article: #name"() {
-    expect:
-    tests("entities:\n  - name: $name\n")[name].article() == article
-
-    where:
-    name    | article
-    'Tag'   | 'A'
-    'Item'  | 'An'
-  }
-
   def "the entities that an entity needs come once each, each after the ones it needs, without itself"() {
     given:
     Map<String, EntityTestsModel> tests = tests('''\

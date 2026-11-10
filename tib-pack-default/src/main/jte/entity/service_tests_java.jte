@@ -15,7 +15,7 @@ class ${entity.name()}ServiceTests {
   @InjectMocks private ${entity.name()}Service service;
 
   @Test
-  void gets${tests.article()}${entity.name()}() {
+  void gets${entity.article()}${entity.name()}() {
     ${entity.name()} ${entity.variable()} = new ${entity.name()}();
     ${entity.name()}Dto dto = dto();
     when(${entity.plural()}.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
@@ -35,7 +35,7 @@ class ${entity.name()}ServiceTests {
   }
 
   @Test
-  void creates${tests.article()}${entity.name()}FromItsDto() {
+  void creates${entity.article()}${entity.name()}FromItsDto() {
     ${entity.name()}Dto dto = dto();
     when(${entity.plural()}.saveAndFlush(any(${entity.name()}.class))).thenAnswer(call -> call.getArgument(0));
     when(mapper.toDto(any(${entity.name()}.class))).thenReturn(dto);
@@ -45,7 +45,7 @@ class ${entity.name()}ServiceTests {
   }
 
   @Test
-  void updates${tests.article()}${entity.name()}FromItsDto() {
+  void updates${entity.article()}${entity.name()}FromItsDto() {
     ${entity.name()} ${entity.variable()} = new ${entity.name()}();
     ${entity.name()}Dto dto = dto();
     when(${entity.plural()}.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
@@ -57,7 +57,7 @@ class ${entity.name()}ServiceTests {
   }
 
   @Test
-  void deletes${tests.article()}${entity.name()}() {
+  void deletes${entity.article()}${entity.name()}() {
     ${entity.name()} ${entity.variable()} = new ${entity.name()}();
     when(${entity.plural()}.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
 

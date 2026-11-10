@@ -84,6 +84,11 @@ public final class EntityModel {
     return Names.member(entity.name());
   }
 
+  /** The article of the name: {@code A} or {@code An}. */
+  public String article() {
+    return "AEIOU".indexOf(entity.name().charAt(0)) < 0 ? "A" : "An";
+  }
+
   /** The name of the collection: {@code vehicles}. */
   public String plural() {
     return Names.plural(variable());
