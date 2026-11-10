@@ -39,6 +39,11 @@ class GenerateEntityCommandSpec extends Specification {
 
   String ddl = EXAMPLES.resolve('vehicle-service.sql').toString()
 
+  /** The spec of the documentation with a column more on its vehicle. */
+  static final String COLORED = Files.readString(Path.of(Tib.SPEC)).replace(
+  '      - { name: capacity, type: Integer }\n',
+  '      - { name: color, type: String, length: 20 }\n      - { name: capacity, type: Integer }\n')
+
   def "the spec or the DDL is required"() {
     when:
     Result result = tib.run('generate', 'entity')
@@ -362,6 +367,27 @@ class GenerateEntityCommandSpec extends Specification {
     then:
     again.out() == 'Nothing to change.\n'
     again.err() == ''
+  }
+
+  def "the migrations of a service that was scaffolded from a spec are written without a notice: #scenario"() {
+    given: 'the spec is on record, and none of its migrations is written'
+    tib.init('--spec', spec)
+    String other = tib.write('other.yaml', yaml)
+    String forgotten = "tib no longer reads the spec from these files, and forgets them:\n  ${tib.state().inputs()[0].path()}\n"
+
+    when:
+    Result result = tib.generate('--spec', other, *options)
+
+    then:
+    result.exitCode() == 0
+    result.err() == forgotten
+
+    where:
+    scenario                        | yaml           | options
+    'a column more'                 | COLORED        | []
+    'a column more, in a dry run'   | COLORED        | ['--dry-run']
+    'an entity fewer'               | Tib.DEPOT_ONLY | []
+    'an entity fewer, in a dry run' | Tib.DEPOT_ONLY | ['--dry-run']
   }
 
   def "the migration of an entity that comes back to the spec is named, once: #how"() {
