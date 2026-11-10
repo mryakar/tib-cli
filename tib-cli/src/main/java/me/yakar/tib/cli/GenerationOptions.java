@@ -23,6 +23,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import me.yakar.tib.generate.Generation;
 import me.yakar.tib.generate.Generator;
+import me.yakar.tib.generate.Lasting;
 import me.yakar.tib.generate.Pack;
 import me.yakar.tib.generate.Packs;
 import me.yakar.tib.generate.Project;
@@ -81,9 +82,13 @@ final class GenerationOptions {
       Tree tree) {
     Pack pack = Packs.find(service.pack());
     previous.ifPresent(state -> sameStack(state, pack, tree));
+    Project project = new Project(service);
+    Generator generating = generator.apply(pack);
     Generation.Result result =
-        Generation.run(
-            previous, new Project(service), inputs, pack, generator, version.version(), tree);
+        previous.isPresent()
+            ? Generation.next(
+                previous.get(), project, inputs, pack, generating, version.version(), tree)
+            : Generation.first(project, inputs, pack, generating, version.version(), tree);
     PrintWriter out = commandSpec.commandLine().getOut();
     PrintWriter err = commandSpec.commandLine().getErr();
     int files = tree.changes().size();
@@ -173,14 +178,13 @@ final class GenerationOptions {
       err.println("tib no longer reads the spec from these files, and forgets them:");
       result.forgotten().forEach(path -> err.println("  " + path));
     }
-    List<Change> changed = result.lasting().stream().filter(change -> !change.deletes()).toList();
+    List<Lasting> changed = result.lastingChanged();
     if (!changed.isEmpty()) {
       err.println("The spec now makes these files otherwise, but they last, and tib leaves them:");
-      changed.forEach(change -> err.print(change.diff()));
+      changed.forEach(lasting -> err.print(lasting.diff()));
       err.println("Make the change with a file of yours, such as a new migration.");
     }
-    List<String> dropped =
-        result.lasting().stream().filter(Change::deletes).map(Change::path).toList();
+    List<String> dropped = result.lastingDropped();
     if (!dropped.isEmpty()) {
       err.println("The spec no longer makes these files, but they last, and tib leaves them:");
       dropped.forEach(path -> err.println("  " + path));

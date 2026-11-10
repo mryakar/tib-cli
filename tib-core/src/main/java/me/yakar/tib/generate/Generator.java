@@ -15,18 +15,14 @@
  */
 package me.yakar.tib.generate;
 
-import me.yakar.tib.tree.Tree;
+import me.yakar.tib.tree.ProjectFiles;
 
 /**
- * Generates files of a project into a tree. A pack provides the generators.
- *
- * <p>A run deletes every file that tib owned before and that the generator does not {@link Tree#own
- * own} again, so a file that tib keeps in step with the spec is owned by the generator that runs on
- * every {@code generate}. It also deletes a file that the generator wrote {@link Tree#once once}
- * from the previous spec and no longer does, unless the developer edited it; a file that the
- * generator wrote as {@link Tree#lasting lasting} stays.
+ * Generates files of a project. A pack provides the generators. What a later run does with a file
+ * that the generator no longer generates depends on how it was written: {@link Generation#next}
+ * says how.
  */
 public interface Generator {
 
-  void generate(Project project, Tree tree);
+  void generate(Project project, ProjectFiles files);
 }

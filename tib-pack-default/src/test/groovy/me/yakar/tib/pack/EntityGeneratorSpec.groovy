@@ -17,8 +17,10 @@ package me.yakar.tib.pack
 
 import java.nio.file.Files
 import java.nio.file.Path
+import me.yakar.tib.generate.Generation
 import me.yakar.tib.generate.Project
 import me.yakar.tib.spec.SpecReader
+import me.yakar.tib.state.State
 import me.yakar.tib.tree.Tree
 import spock.lang.Specification
 import spock.lang.TempDir
@@ -106,18 +108,21 @@ entities:
     'renamed' | ['V1__a.sql']
   }
 
-  def "the migration of a table lasts: it is not among the files that the spec generates"() {
+  def "the migration of a table lasts: a run whose spec no longer has the table does not delete it"() {
     given:
+    DefaultPack pack = new DefaultPack()
     Tree tree = Tree.at(dir)
+    Generation.first(new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n')), [], pack, pack.entity(), '0.0.0', tree)
+    tree.apply(State.PATH)
 
     when:
-    new EntityGenerator().generate(new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n')), tree)
+    Tree later = Tree.at(dir)
+    Generation.next(State.of(later, '0.0.0'), new Project(SpecReader.parse('tib: 1\nservice: s\n')), [], pack, pack.entity(), '0.0.0', later)
 
-    then: 'it is written, and a run whose spec has no A does not delete it'
-    String migration = "${EntityGenerator.MIGRATIONS}/V1__create_a.sql"
-    tree.changes()*.path().contains(migration)
-    !tree.generated().contains(migration)
-    tree.generated().contains('src/main/java/com/example/s/a/A.java')
+    then:
+    List<String> deleted = later.changes().findAll { it.deletes() }*.path()
+    deleted.contains('src/main/java/com/example/s/a/A.java')
+    !deleted.contains("${EntityGenerator.MIGRATIONS}/V1__create_a.sql" as String)
   }
 
   def "the first entity with an API brings the handler of conflicts, once: #entities"() {
