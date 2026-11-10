@@ -340,9 +340,18 @@ class StateSpec extends Specification {
     written.differences(Tree.at(dir)) == []
   }
 
-  def "a kind of difference is named in lower case"() {
+  def "a difference is named in lower case, and is a problem when tib needs the file: #kind"() {
     expect:
-    Difference.Kind.values()*.toString() == ['changed', 'absent', 'edited', 'missing', 'removed']
+    kind.toString() == name
+    kind.problem() == problem
+
+    where:
+    kind                    | name      | problem
+    Difference.Kind.CHANGED | 'changed' | true
+    Difference.Kind.ABSENT  | 'absent'  | false
+    Difference.Kind.EDITED  | 'edited'  | true
+    Difference.Kind.MISSING | 'missing' | true
+    Difference.Kind.REMOVED | 'removed' | false
   }
 
   def "the input differences are the inputs that changed or are not there, in the order of the state"() {
