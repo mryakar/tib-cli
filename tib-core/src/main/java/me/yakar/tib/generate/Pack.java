@@ -26,9 +26,9 @@ public interface Pack {
   String version();
 
   /**
-   * The stack that the pack generates for, as people name it, such as {@code Spring Boot 4}. tib
-   * does not generate into a service that was generated for another stack: the files that it wrote
-   * once, such as the build, would not fit what it writes now.
+   * The stack that the pack generates for, such as {@code Spring Boot 4}. The text is the identity
+   * of the stack: the state file records it, a run compares it as it is written, and a pack never
+   * rewords it for the same stack.
    */
   String stack();
 

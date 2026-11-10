@@ -249,6 +249,28 @@ class GenerationSpec extends Specification {
     ran.tree.changes()*.path() == ['.tib/state.yaml']
   }
 
+  def "a service that was generated for #stack is refused, before anything is staged"() {
+    given:
+    run(project, generator).tree.apply(State.PATH)
+    Path state = dir.resolve(State.PATH)
+    Files.writeString(state, Files.readString(state).replace('  stack: Test 1\n', line))
+    Tree tree = Tree.at(dir)
+
+    when:
+    Generation.next(State.of(tree, '1.2.3'), project, [], new TestPack('p', '2'), generator, '1.2.4', tree)
+
+    then:
+    PackException e = thrown()
+    e.message == "${tree.root()} was generated for $stack by tib 1.2.3; pack p 2 generates for Test 2\n" +
+        'Go on with tib 1.2.3 for this service, or move it to Test 2 by hand.'
+    tree.changes() == []
+
+    where:
+    stack              | line
+    'an earlier stack' | ''
+    'Test 1'           | '  stack: Test 1\n'
+  }
+
   def "the inputs that the state forgot are named"() {
     given:
     State.Input gone = new State.Input(State.Input.Kind.DDL, 'db/gone.sql', 'a')
