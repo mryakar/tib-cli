@@ -115,6 +115,7 @@ class GenerateEntityCommandSpec extends Specification {
     String vehicle = 'src/main/java/com/example/vehicleservice/vehicle/'
     String tests = 'src/test/java/com/example/vehicleservice/vehicle/'
     Files.writeString(dir.resolve(vehicle + 'Vehicle.java'), 'mine\n')
+    Map<String, String> before = tib.files()
     String migration = tib.state().files()*.path().find { it.endsWith('__create_vehicle.sql') }
     String notice = """\
       tib no longer generates these files from the spec; they stay, as they were edited:
@@ -135,7 +136,7 @@ class GenerateEntityCommandSpec extends Specification {
     dryRun.out().contains("--- a/${vehicle}VehicleGenerated.java\n+++ /dev/null\n")
     dryRun.out().contains("--- a/${vehicle}VehicleService.java\n+++ /dev/null\n")
     dryRun.err() == notice
-    Files.exists(dir.resolve(vehicle + 'VehicleGenerated.java'))
+    tib.files() == before
 
     when:
     Result result = tib.generate('--spec', depot)
@@ -172,6 +173,74 @@ class GenerateEntityCommandSpec extends Specification {
     then: 'the file that stayed is named once'
     again.out() == 'Nothing to change.\n'
     again.err() == ''
+  }
+
+  def "a dry run of #scenario writes nothing, and a second run changes nothing"() {
+    given:
+    List<String> source = change(tib)
+    Map<String, String> before = tib.files()
+
+    when:
+    Result dryRun = tib.generate(*source, '--dry-run')
+
+    then:
+    dryRun.exitCode() == 0
+    dryRun.out().contains('+++ b/.tib/state.yaml\n')
+    dryRun.err() != ''
+    tib.files() == before
+
+    when:
+    Result result = tib.generate(*source)
+
+    then: 'the run names what the dry run named'
+    result.exitCode() == 0
+    result.out().startsWith('Wrote ')
+    result.err() == dryRun.err()
+    tib.files() != before
+
+    when: 'again'
+    Result again = tib.generate(*source)
+
+    then:
+    again.exitCode() == 0
+    again.out() == 'Nothing to change.\n'
+    again.err() == ''
+
+    where:
+    scenario                                  | change
+    'an entity that left the spec'            | { Tib tib ->
+      tib.init('--spec', Tib.SPEC)
+      tib.generate('--spec', Tib.SPEC)
+      ['--spec', tib.write('depot.yaml', Tib.DEPOT_ONLY)]
+    }
+    'a spec file that replaces the DDL'       | { Tib tib ->
+      tib.init('vehicle-service')
+      tib.generate('--ddl', tib.write('schema.sql', Files.readString(Path.of(Tib.DDL))))
+      ['--spec', tib.write('spec.yaml', Files.readString(Path.of(Tib.SPEC)))]
+    }
+    'DDL that was moved'                      | { Tib tib ->
+      tib.init('vehicle-service')
+      Path schema = Path.of(tib.write('schema.sql', Files.readString(Path.of(Tib.DDL))))
+      tib.generate('--ddl', schema.toString())
+      Files.createDirectories(tib.service.resolve('db'))
+      ['--ddl', Files.move(schema, tib.service.resolve('db/schema.sql')).toString()]
+    }
+    'a table whose columns changed'           | { Tib tib ->
+      tib.init('--spec', Tib.SPEC)
+      tib.generate('--spec', Tib.SPEC)
+      [
+        '--spec',
+        tib.write('colored.yaml', Files.readString(Path.of(Tib.SPEC)).replace(
+            '      - { name: capacity, type: Integer }\n',
+            '      - { name: color, type: String, length: 20 }\n      - { name: capacity, type: Integer }\n'))
+      ]
+    }
+    'an entity that came back to the spec'    | { Tib tib ->
+      tib.init('--spec', Tib.SPEC)
+      tib.generate('--spec', Tib.SPEC)
+      tib.generate('--spec', tib.write('depot.yaml', Tib.DEPOT_ONLY))
+      ['--spec', Tib.SPEC]
+    }
   }
 
   def "generates the entity layer of the tables of the DDL into the service, once"() {
@@ -351,28 +420,32 @@ class GenerateEntityCommandSpec extends Specification {
     tib.state().spec().entities()*.name() == ['Depot', 'Vehicle']
   }
 
-  def "a service generated for #stack is refused, and tib status still reads it"() {
+  def "a service generated for #stack is refused by #run, and tib status still reads it"() {
     given:
     tib.init('--spec', spec)
     Path state = dir.resolve('.tib/state.yaml')
     String pack = tib.state().pack().version()
     Files.writeString(state, Files.readString(state).replace('  stack: Spring Boot 4\n', line))
+    Map<String, String> before = tib.files()
 
     when:
-    Result result = tib.generate('--spec', spec)
+    Result result = tib.generate('--spec', spec, *(run == 'a dry run' ? ['--dry-run'] : []))
 
-    then:
+    then: 'nothing is written'
     result.exitCode() == 1
+    result.out() == ''
     result.err() == """\
       ${tib.root} was generated for $stack by tib 1.2.3; pack default $pack generates for Spring Boot 4
       Go on with tib 1.2.3 for this service, or move it to Spring Boot 4 by hand.
       """.stripIndent()
+    tib.files() == before
     tib.status().exitCode() == 0
 
     where:
-    stack               | line
-    'an earlier stack'  | ''
-    'Spring Boot 3'     | '  stack: Spring Boot 3\n'
+    stack              | line                        | run
+    'an earlier stack' | ''                          | 'a run'
+    'Spring Boot 3'    | '  stack: Spring Boot 3\n' | 'a run'
+    'Spring Boot 3'    | '  stack: Spring Boot 3\n' | 'a dry run'
   }
 
   def "#problem is reported with exit code 1"() {

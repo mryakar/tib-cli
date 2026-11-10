@@ -68,23 +68,34 @@ class GenerationOptionsSpec extends Specification {
     tib.files() == before
   }
 
-  def "the diff of a dry run is a patch that git applies, with the result of a real run"() {
+  def "the diff of a dry run of text files is a patch that git applies, with the result of a real run that #run"() {
     given: 'a committed service, and a copy of it, each with the spec in it'
     [dir, copy].each {
-      new Tib(it).init('vehicle-service')
-      Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), it.resolve('spec.yaml'))
+      Tib service = new Tib(it)
+      service.init('vehicle-service')
+      String all = service.write('spec.yaml', Files.readString(Path.of(spec)))
+      if (file != 'spec.yaml') {
+        service.generate('--spec', all)
+        service.write(file, Tib.DEPOT_ONLY)
+      }
     }
     committed()
 
     when: 'the diff of a dry run is applied to the service, and the copy is generated into'
-    Result dryRun = tib.generate('--spec', dir.resolve('spec.yaml').toString(), '--dry-run')
+    Result dryRun = tib.generate('--spec', dir.resolve(file).toString(), '--dry-run')
     Files.writeString(dir.resolve('.git/tib.diff'), dryRun.out())
     git('apply', '--check', '.git/tib.diff')
     git('apply', '.git/tib.diff')
-    new Tib(copy).generate('--spec', copy.resolve('spec.yaml').toString())
+    Result result = new Tib(copy).generate('--spec', copy.resolve(file).toString())
 
     then:
+    result.out().contains('Deleted ') == (file != 'spec.yaml')
     tib.files() == new Tib(copy).files()
+
+    where:
+    run                                                 | file
+    'writes the files of the entities'                  | 'spec.yaml'
+    'deletes the files of an entity that left the spec' | 'depot.yaml'
   }
 
   def "with --allow-dirty, a service with uncommitted changes is written, with a warning"() {
