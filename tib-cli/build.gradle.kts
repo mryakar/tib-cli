@@ -105,22 +105,28 @@ val jpackageAppImage =
   }
 
 // The image that the packages ship: jpackage's, with the script that builds the start-up cache,
-// without the runtime's commands other than java and, on Linux, without the java.desktop libraries
-// that need X11, ALSA and FreeType.
+// without the runtime's commands other than java (on Windows, where they lie among the runtime's
+// libraries, without those that are named) and, on Linux, without the java.desktop libraries that
+// need X11, ALSA and FreeType.
 val shippedImage =
   tasks.register<Sync>("shippedImage") {
     description = "Prepares the application image that the packages ship."
     from(jpackageAppImage.map { it.destination })
     if (windows) {
-      exclude("$launcherName/runtime/bin/keytool.exe")
+      exclude(
+        "$launcherName/runtime/bin/javac.exe",
+        "$launcherName/runtime/bin/keytool.exe",
+        "$launcherName/runtime/bin/serialver.exe",
+      )
     } else {
       exclude(
         "$launcherName/lib/runtime/lib/libawt_xawt.so",
         "$launcherName/lib/runtime/lib/libsplashscreen.so",
         "$launcherName/lib/runtime/lib/libjsound.so",
         "$launcherName/lib/runtime/lib/libfontmanager.so",
-        "$launcherName/lib/runtime/bin/keytool",
       )
+      val commands = "$launcherName/lib/runtime/bin/"
+      exclude { it.path.startsWith(commands) && it.name != "java" }
     }
     into(layout.buildDirectory.dir("jpackage/image"))
     // The runtime's legal files are read-only, so a copy cannot overwrite the previous one.
