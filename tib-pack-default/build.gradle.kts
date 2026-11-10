@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// The default template pack: a plain Spring Boot 3 service with JPA, PostgreSQL, Flyway and
+// The default template pack: a plain Spring Boot 4 service with JPA, PostgreSQL, Flyway and
 // Testcontainers. Its templates are compiled by the build, so that the packaged runtime needs no
 // compiler.
 import gg.jte.ContentType
@@ -23,7 +23,7 @@ plugins {
   id("gg.jte.gradle")
 }
 
-description = "tib default template pack: Spring Boot 3, JPA, PostgreSQL, Flyway, Testcontainers"
+description = "tib default template pack: Spring Boot 4, JPA, PostgreSQL, Flyway, Testcontainers"
 
 dependencies {
   implementation(project(":tib-core"))
@@ -49,22 +49,26 @@ tasks.processResources {
     )
   inputs.properties(properties)
   filesMatching("**/pack.properties") { expand(properties) }
+  // The Gradle wrapper of this build, which the pack writes into a new service.
+  from(layout.settingsDirectory) {
+    include("gradlew", "gradlew.bat", "gradle/wrapper/gradle-wrapper.*")
+    into("me/yakar/tib/pack/wrapper")
+  }
 }
 
 // The tests compare the version of the pack with the version of the build.
 tasks.test { systemProperty("tib.version", tibVersion) }
 
-// Coverage leaves out the classes that jte generates from the templates.
+// Coverage leaves out the classes that jte generates from the templates, and the jar of the Gradle
+// wrapper that the pack carries.
 tasks.withType<JacocoReportBase>().configureEach {
   classDirectories.setFrom(
-    classDirectories.files.map { fileTree(it) { exclude("gg/jte/generated/**") } },
+    classDirectories.files.map { fileTree(it) { exclude("gg/jte/generated/**", "**/*.jar") } },
   )
 }
 
 // The tests compare the generated example service with its snapshot under src/test/snapshots
-// (resources would leave out .gitignore); the acceptance test builds it with Gradle.
-val windows = System.getProperty("os.name").startsWith("Windows")
-
+// (resources would leave out .gitignore); the acceptance test builds it with its own wrapper.
 testing {
   suites {
     register<JvmTestSuite>("acceptanceTest") {
@@ -80,9 +84,6 @@ testing {
           shouldRunAfter(tasks.test)
           // Shows the output of the service's build in the log.
           testLogging.showStandardStreams = true
-          // The service is built with the wrapper of this build, as a user would build it.
-          val wrapper = if (windows) "gradlew.bat" else "gradlew"
-          systemProperty("tib.gradlew", layout.settingsDirectory.file(wrapper).asFile.absolutePath)
         }
       }
     }

@@ -36,15 +36,18 @@ class Tib {
   }
 
   /**
-   * Every file and directory of the service by path, with the content of each file; git's own files
-   * are not the service's.
+   * Every file and directory of the service by path, with the content of each file, a character for
+   * each byte; git's own files are not the service's.
    */
   static Map<String, String> files(Path service) {
     Files.walk(service).withCloseable { paths ->
       paths.filter {
         it != service && !service.relativize(it).startsWith('.git')
       }.toList().collectEntries {
-        [service.relativize(it).toString(), Files.isDirectory(it) ? 'a directory' : Files.readString(it)]
+        [
+          service.relativize(it).toString(),
+          Files.isDirectory(it) ? 'a directory' : new String(Files.readAllBytes(it), 'ISO-8859-1')
+        ]
       }
     }
   }

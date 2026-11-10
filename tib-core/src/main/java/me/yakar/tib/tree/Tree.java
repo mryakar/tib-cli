@@ -17,10 +17,13 @@ package me.yakar.tib.tree;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,8 +68,23 @@ public final class Tree {
     return root;
   }
 
-  /** The content of the file, as the run sees it: staged, or else on disk. */
+  /**
+   * The content of the file as text, as the run sees it: staged, or else on disk.
+   *
+   * @throws TreeException when the file is not UTF-8 text
+   */
   public Optional<String> read(String path) {
+    String key = key(path);
+    Optional<byte[]> content = bytes(key);
+    try {
+      return content.isEmpty() ? Optional.empty() : Optional.of(Change.decode(content.get()));
+    } catch (CharacterCodingException e) {
+      throw new TreeException("read", root.resolve(key), e);
+    }
+  }
+
+  /** The content of the file as bytes, as the run sees it: staged, or else on disk. */
+  public Optional<byte[]> bytes(String path) {
     String key = key(path);
     Change change = changes.get(key);
     return change != null ? Optional.ofNullable(change.after()) : onDisk(key);
@@ -115,7 +133,7 @@ public final class Tree {
   public void own(String path, String content) {
     String key = key(path);
     generated.add(key);
-    stage(key, content, Owner.GENERATOR);
+    stage(key, utf8(content), Owner.GENERATOR, false);
   }
 
   /**
@@ -123,9 +141,18 @@ public final class Tree {
    * a file that the developer removed stays removed.
    */
   public void once(String path, String content) {
+    once(path, utf8(content), false);
+  }
+
+  /**
+   * Stages a file that the developer owns as {@link #once(String, String)} does, with content that
+   * need not be text, and that is written as one that can be run if it is executable, where the
+   * file system can say so.
+   */
+  public void once(String path, byte[] content, boolean executable) {
     String key = key(path);
     generated.add(key);
-    stageOnce(key, content);
+    stageOnce(key, content, executable);
   }
 
   /**
@@ -134,12 +161,12 @@ public final class Tree {
    * generates it, as a migration that a database may have run.
    */
   public void lasting(String path, String content) {
-    stageOnce(key(path), content);
+    stageOnce(key(path), utf8(content), false);
   }
 
-  private void stageOnce(String key, String content) {
+  private void stageOnce(String key, byte[] content, boolean executable) {
     if (!writtenBefore.contains(key) && !exists(key)) {
-      stage(key, content, Owner.DEVELOPER);
+      stage(key, content, Owner.DEVELOPER, executable);
     }
   }
 
@@ -158,7 +185,7 @@ public final class Tree {
   public void delete(String path, Owner owner) {
     String key = key(path);
     deleted.add(key);
-    onDisk(key).ifPresent(before -> changes.put(key, new Change(key, before, null, owner)));
+    onDisk(key).ifPresent(before -> changes.put(key, new Change(key, before, null, owner, false)));
   }
 
   /** The paths of the files that were deleted in this tree, there or not, in order. */
@@ -170,7 +197,7 @@ public final class Tree {
   public void edit(String path, UnaryOperator<String> edit) {
     String key = key(path);
     String content = read(key).orElseThrow(() -> new TreeException(key + " is not there to edit"));
-    stage(key, edit.apply(content), Owner.SHARED);
+    stage(key, utf8(edit.apply(content)), Owner.SHARED, false);
   }
 
   /** Tells the tree the files that tib wrote to the project in earlier runs. */
@@ -198,11 +225,11 @@ public final class Tree {
 
   /**
    * Writes the staged changes to disk. Every file is first written next to its target, as {@code
-   * <name>.tib.tmp} with the permissions of a new file or of the file it replaces, and then moved
-   * over it in one step, so a file is either the old one or the new one, never half written; when a
-   * write fails, the files written next to their targets are removed. Then the files to delete are
-   * deleted, and with them every directory that this leaves empty, up to the root. Afterwards
-   * nothing is staged.
+   * <name>.tib.tmp} with the permissions of a new file, which can be run if the change says so, or
+   * of the file it replaces, and then moved over it in one step, so a file is either the old one or
+   * the new one, never half written; when a write fails, the files written next to their targets
+   * are removed. Then the files to delete are deleted, and with them every directory that this
+   * leaves empty, up to the root. Afterwards nothing is staged.
    */
   public void apply() {
     // The files written next to their targets, by target, in the order of the paths.
@@ -222,7 +249,11 @@ public final class Tree {
         Files.deleteIfExists(staging);
         Files.createFile(staging);
         staged.put(file, staging);
-        Files.writeString(staging, change.after());
+        Files.write(staging, change.after());
+        if (change.executable()) {
+          // Through File: a file system without the permission to run a file ignores it.
+          staging.toFile().setExecutable(true, false);
+        }
         keep(file, staging, KEPT);
       }
       for (Map.Entry<Path, Path> entry : staged.entrySet()) {
@@ -276,25 +307,31 @@ public final class Tree {
     return FileSystems.getDefault().supportedFileAttributeViews().contains(view);
   }
 
-  private void stage(String key, String after, Owner owner) {
-    String before = onDisk(key).orElse(null);
-    if (after.equals(before)) {
+  private void stage(String key, byte[] after, Owner owner, boolean executable) {
+    byte[] before = onDisk(key).orElse(null);
+    if (Arrays.equals(after, before)) {
       changes.remove(key);
     } else {
-      changes.put(key, new Change(key, before, after, owner));
+      changes.put(key, new Change(key, before, after, owner, executable));
     }
   }
 
-  private Optional<String> onDisk(String key) {
+  private Optional<byte[]> onDisk(String key) {
     Path file = root.resolve(key);
-    if (!Files.isRegularFile(file)) {
-      return Optional.empty();
-    }
+    return Files.isRegularFile(file) ? Optional.of(read(file)) : Optional.empty();
+  }
+
+  /** The bytes of the file. */
+  static byte[] read(Path file) {
     try {
-      return Optional.of(Files.readString(file));
+      return Files.readAllBytes(file);
     } catch (IOException e) {
       throw new TreeException("read", file, e);
     }
+  }
+
+  private static byte[] utf8(String text) {
+    return text.getBytes(StandardCharsets.UTF_8);
   }
 
   /** The path as the tree names it: relative to the root, normalized, with forward slashes. */

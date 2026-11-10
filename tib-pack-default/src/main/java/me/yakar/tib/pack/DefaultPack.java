@@ -79,6 +79,19 @@ public final class DefaultPack implements Pack {
     return new EntityGenerator();
   }
 
+  /** A file that the pack carries, next to this class, as bytes. */
+  static byte[] resource(String name) {
+    return bytes(DefaultPack.class.getResourceAsStream(name));
+  }
+
+  static byte[] bytes(InputStream stream) {
+    try (stream) {
+      return stream.readAllBytes();
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
   static Properties load(InputStream stream) {
     Properties properties = new Properties();
     try (stream) {
