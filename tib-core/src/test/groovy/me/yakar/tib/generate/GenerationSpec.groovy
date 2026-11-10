@@ -123,11 +123,35 @@ class GenerationSpec extends Specification {
     dir.resolve('Generated.java').toFile().deleteDir()
     run(project, pack.entity()).tree.apply(State.PATH)
 
-    then:
-    !State.in(Tree.at(dir), '1.2.3').get().files()*.path().contains('Generated.java')
+    then: 'the file that the failed run wrote is on record too'
+    State.in(Tree.at(dir), '1.2.3').get().files()*.path() == ['Service.java', 'test.txt']
 
     and:
     run(project, pack.entity()).tree.changes() == []
+  }
+
+  def "a file that is there as the generator makes it is on record, and one that is there otherwise is not"() {
+    given: 'the files of a run whose state file was not written'
+    Files.writeString(dir.resolve('Generated.java'), 'class Generated {}\n')
+    Files.writeString(dir.resolve('Service.java'), 'class Service {}\n')
+    Files.createDirectories(dir.resolve('a'))
+    Files.writeString(dir.resolve('a/A.java'), 'class A { int mine; }\n')
+    Files.writeString(dir.resolve('V1__a.sql'), 'a\n')
+
+    when:
+    Map ran = run(one, { Project p, ProjectFiles files ->
+      generator.generate(p, files)
+      entities.generate(p, files)
+    } as Generator)
+
+    then:
+    ran.tree.changes()*.path() == ['.tib/state.yaml', 'a/AGenerated.java']
+    State.in(ran.tree, '1.2.3').get().files() == [
+      State.File.of('Generated.java', Owner.GENERATOR, 'class Generated {}\n'),
+      State.File.of('Service.java', Owner.DEVELOPER, 'class Service {}\n'),
+      State.File.of('V1__a.sql', Owner.DEVELOPER, 'a\n'),
+      State.File.of('a/AGenerated.java', Owner.GENERATOR, 'class AGenerated {}\n')
+    ]
   }
 
   def "the files that the spec no longer generates are deleted, but for those that were edited, that last, or that another generator wrote"() {

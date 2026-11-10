@@ -43,7 +43,6 @@ import java.util.stream.StreamSupport;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecException;
 import me.yakar.tib.spec.SpecReader;
-import me.yakar.tib.tree.Change;
 import me.yakar.tib.tree.Owner;
 import me.yakar.tib.tree.Tree;
 import tools.jackson.databind.cfg.EnumFeature;
@@ -171,21 +170,18 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     return list == null ? List.of() : Collections.unmodifiableList(new ArrayList<>(list));
   }
 
-  /** The state after the first run on a project: the inputs of the run, and the files it staged. */
-  public static State first(String tib, PackRef pack, List<Input> inputs, Spec spec, Tree tree) {
-    return new State(tib, pack, inputs, spec, List.copyOf(staged(tree, new TreeMap<>()).values()));
-  }
-
   /**
-   * The state after a later run that staged its files in the tree. A run that read a spec file has
-   * the whole spec from it, so its inputs are the only ones. Otherwise the inputs of the run take
-   * the place of those of the same path in this state, and the others stay, in their order, but for
-   * those whose file is no longer there, as far as can be told: the state forgets where they were,
-   * and the spec keeps what was read from them. Every file that the run staged takes the place of
-   * the record of the same path, and the other records stay, but for the files that the run
-   * dropped. The files are in the order of their paths.
+   * The state after a later run. A run that read a spec file has the whole spec from it, so its
+   * inputs are the only ones. Otherwise the inputs of the run take the place of those of the same
+   * path in this state, and the others stay, in their order, but for those whose file is no longer
+   * there, as far as can be told: the state forgets where they were, and the spec keeps what was
+   * read from them. Every file that the run wrote takes the place of the record of the same path,
+   * and the other records stay, but for the files that the run dropped. The files are in the order
+   * of their paths.
    *
    * @param tib the version of tib that ran
+   * @param service the directory of the service
+   * @param written the files that are as the run generated them
    * @param dropped the paths of the files that the spec no longer generates, and that the run
    *     deleted or left to the developer
    */
@@ -194,31 +190,22 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
       PackRef pack,
       List<Input> inputs,
       Spec spec,
-      Collection<String> dropped,
-      Tree tree) {
+      Path service,
+      Collection<File> written,
+      Collection<String> dropped) {
     Map<String, Input> read = new LinkedHashMap<>();
     if (inputs.stream().noneMatch(input -> input.kind() == Input.Kind.SPEC)) {
       this.inputs.stream()
-          .filter(input -> !Files.notExists(tree.root().resolve(input.path())))
+          .filter(input -> !Files.notExists(service.resolve(input.path())))
           .forEach(input -> read.put(input.path(), input));
     }
     inputs.forEach(input -> read.put(input.path(), input));
-    SortedMap<String, File> written = new TreeMap<>();
+    SortedMap<String, File> records = new TreeMap<>();
     files.stream()
         .filter(file -> !dropped.contains(file.path()))
-        .forEach(file -> written.put(file.path(), file));
-    return new State(
-        tib, pack, List.copyOf(read.values()), spec, List.copyOf(staged(tree, written).values()));
-  }
-
-  /** The records with those of the files that are staged in the tree, by path. */
-  private static SortedMap<String, File> staged(Tree tree, SortedMap<String, File> records) {
-    for (Change change : tree.changes()) {
-      if (!change.deletes()) {
-        records.put(change.path(), File.of(change.path(), change.owner(), change.after()));
-      }
-    }
-    return records;
+        .forEach(file -> records.put(file.path(), file));
+    written.forEach(file -> records.put(file.path(), file));
+    return new State(tib, pack, List.copyOf(read.values()), spec, List.copyOf(records.values()));
   }
 
   /**

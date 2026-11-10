@@ -65,8 +65,10 @@ public final class Generation {
       Generator generator,
       String tibVersion,
       Tree tree) {
-    generator.generate(project, tree);
-    State first = State.first(tibVersion, ref(pack), inputs, project.spec(), tree);
+    Recorder recorder = new Recorder(tree);
+    generator.generate(project, recorder);
+    State first =
+        new State(tibVersion, ref(pack), inputs, project.spec(), List.copyOf(recorder.written()));
     tree.own(State.PATH, first.yaml());
     return new Result(List.of(), List.of(), List.of(), List.of());
   }
@@ -107,8 +109,9 @@ public final class Generation {
             ref(pack),
             inputs,
             project.spec(),
-            Stream.concat(dropped.deleted().stream(), dropped.kept().stream()).toList(),
-            tree);
+            tree.root(),
+            now.written(),
+            Stream.concat(dropped.deleted().stream(), dropped.kept().stream()).toList());
     tree.own(State.PATH, next.yaml());
     List<Lasting> changed = new ArrayList<>();
     List<String> gone = new ArrayList<>();
