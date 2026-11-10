@@ -169,6 +169,15 @@ class DefaultPackSpec extends Specification {
     thrown(UncheckedIOException)
   }
 
+  def "a file that the pack does not carry is a mistake of its build, named by its name"() {
+    when:
+    DefaultPack.resource('wrapper/none')
+
+    then:
+    IllegalStateException e = thrown()
+    e.message == 'the pack does not carry wrapper/none'
+  }
+
   def "the generated Java is in the layout of google-java-format, which leaves it as it is: #name"() {
     when:
     List<Change> java = generate(spec, dir).changes().findAll { it.path().endsWith('.java') }
