@@ -55,18 +55,14 @@ class TagApiTests {
 
     assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(created.getBody().id()).isNotNull();
-    assertThat(created.getBody())
-        .usingRecursiveComparison()
-        .ignoringFields("id")
-        .isEqualTo(dto);
+    assertThat(created.getBody()).usingRecursiveComparison().ignoringFields("id").isEqualTo(dto);
   }
 
   @Test
   void getsATag() {
     TagDto tag = create();
 
-    ResponseEntity<TagDto> found =
-        http.getForEntity("/api/tags/{id}", TagDto.class, tag.id());
+    ResponseEntity<TagDto> found = http.getForEntity("/api/tags/{id}", TagDto.class, tag.id());
 
     assertThat(found.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(found.getBody()).isEqualTo(tag);
@@ -87,18 +83,11 @@ class TagApiTests {
 
     ResponseEntity<TagDto> updated =
         http.exchange(
-            "/api/tags/{id}",
-            HttpMethod.PUT,
-            new HttpEntity<>(dto),
-            TagDto.class,
-            tag.id());
+            "/api/tags/{id}", HttpMethod.PUT, new HttpEntity<>(dto), TagDto.class, tag.id());
 
     assertThat(updated.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(updated.getBody().id()).isEqualTo(tag.id());
-    assertThat(updated.getBody())
-        .usingRecursiveComparison()
-        .ignoringFields("id")
-        .isEqualTo(dto);
+    assertThat(updated.getBody()).usingRecursiveComparison().ignoringFields("id").isEqualTo(dto);
   }
 
   @Test
@@ -117,8 +106,7 @@ class TagApiTests {
 
     ResponseEntity<Void> deleted =
         http.exchange("/api/tags/{id}", HttpMethod.DELETE, null, Void.class, tag.id());
-    ResponseEntity<String> found =
-        http.getForEntity("/api/tags/{id}", String.class, tag.id());
+    ResponseEntity<String> found = http.getForEntity("/api/tags/{id}", String.class, tag.id());
 
     assertThat(deleted.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     assertThat(found.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -140,20 +128,12 @@ class TagApiTests {
 
   /** A tag as the API takes it, with the first sample values. */
   private TagDto dto() {
-    return new TagDto(
-        null,
-        "One",
-        branch.getId(),
-        null);
+    return new TagDto(null, "One", branch.getId(), null);
   }
 
   /** A tag as the API takes it, with the second sample values. */
   private TagDto otherDto() {
-    return new TagDto(
-        null,
-        "Two",
-        branch.getId(),
-        null);
+    return new TagDto(null, "Two", branch.getId(), null);
   }
 
   private Branch newBranch() {

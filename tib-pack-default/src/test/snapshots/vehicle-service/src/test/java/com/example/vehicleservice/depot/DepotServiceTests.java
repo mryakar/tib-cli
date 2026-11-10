@@ -82,9 +82,6 @@ class DepotServiceTests {
   }
 
   private static DepotDto dto() {
-    return new DepotDto(
-        ID,
-        "One",
-        LocalDate.of(2026, 1, 1));
+    return new DepotDto(ID, "One", LocalDate.of(2026, 1, 1));
   }
 }

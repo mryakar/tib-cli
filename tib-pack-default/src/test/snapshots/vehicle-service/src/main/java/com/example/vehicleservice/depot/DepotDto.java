@@ -6,11 +6,5 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import java.util.UUID;
 
-/**
- * A depot as the API shows and takes it.
- * The identifier is read only; the service ignores it.
- */
-public record DepotDto(
-    UUID id,
-    @NotNull @Size(max = 8) String code,
-    LocalDate openedOn) {}
+/** A depot as the API shows and takes it. The identifier is read only; the service ignores it. */
+public record DepotDto(UUID id, @NotNull @Size(max = 8) String code, LocalDate openedOn) {}

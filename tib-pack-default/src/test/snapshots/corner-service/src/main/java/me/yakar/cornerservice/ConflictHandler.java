@@ -8,9 +8,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * Answers a request that breaks a constraint of the database, such as a value that has to be
- * unique or a row that others refer to, with 409 Conflict. The answer does not say which
- * constraint, so that the schema stays inside the service.
+ * Answers a request that breaks a constraint of the database, such as a value that has to be unique
+ * or a row that others refer to, with 409 Conflict. The answer does not say which constraint, so
+ * that the schema stays inside the service.
  */
 @RestControllerAdvice
 public class ConflictHandler {

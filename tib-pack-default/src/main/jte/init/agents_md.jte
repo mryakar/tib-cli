@@ -36,8 +36,9 @@ those you edited and the migration; dropping its table is a new migration.
 For an entity `X`, its code goes in `X`, never in `XGenerated`: `XGenerated`, `XDto` and `XMapper`
 are tib's; `X`, `XRepository`, `XService`, `XController` and the migration are yours, and so are
 their tests: `XRepositoryTests` and `XApiTests` against PostgreSQL in a container, and
-`XServiceTests` with the repository and the mapper mocked. Keep `XGenerated`, `XDto` and `XMapper`
-out of your formatter: tib writes them again in its own layout.
+`XServiceTests` with the repository and the mapper mocked. The Java that tib writes is in the
+layout of google-java-format ${pack.formatterVersion()}: formatted with it, the files of tib's stay as tib wrote
+them.
 
 `tib status` lists the files of tib's that differ from what it wrote, and the spec files and DDL
 that changed since it read them, and exits with 1 when one does. tib writes only into a service

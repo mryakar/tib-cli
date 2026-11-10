@@ -15,6 +15,7 @@
  */
 package me.yakar.tib.pack
 
+import com.google.googlejavaformat.java.Formatter
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.ddl.DdlReader
@@ -164,6 +165,23 @@ class DefaultPackSpec extends Specification {
 
     then:
     thrown(UncheckedIOException)
+  }
+
+  def "the generated Java is in the layout of google-java-format, which leaves it as it is: #name"() {
+    when:
+    List<Change> java = generate(spec, dir).changes().findAll { it.path().endsWith('.java') }
+
+    then:
+    !java.empty
+    java.each { change ->
+      String text = new String(change.after(), 'UTF-8')
+      assert new Formatter().formatSourceAndFixImports(text) == text : change.path()
+    }
+
+    where:
+    name              | spec
+    'vehicle-service' | VEHICLES
+    'corner-service'  | CORNERS
   }
 
   def "the first line of every generated file states its owner: #name"() {

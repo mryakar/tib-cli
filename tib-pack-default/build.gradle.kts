@@ -28,6 +28,7 @@ description = "tib default template pack: Spring Boot 4, JPA, PostgreSQL, Flyway
 dependencies {
   implementation(project(":tib-core"))
   implementation(libs.jte.runtime)
+  implementation(libs.google.java.format)
 }
 
 jte {
@@ -46,6 +47,7 @@ tasks.processResources {
       "version" to tibVersion,
       "boot" to libs.versions.generated.spring.boot.get(),
       "postgres" to libs.versions.generated.postgres.get(),
+      "googleJavaFormat" to libs.versions.google.java.format.get(),
     )
   inputs.properties(properties)
   filesMatching("**/pack.properties") { expand(properties) }

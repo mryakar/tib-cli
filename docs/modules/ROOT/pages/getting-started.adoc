@@ -83,7 +83,9 @@ For `Vehicle` that is, in the package `com.example.vehicleservice.vehicle`: `Veh
 the mapped superclass with the columns, `VehicleDto` and `VehicleMapper`, written on every run;
 `Vehicle`, the entity for your code, `VehicleRepository`, and `VehicleService` and
 `VehicleController`, a CRUD API under `/api/vehicles`, written once; and the Flyway migration
-`V2__create_vehicle.sql`, written once and numbered after the migrations already there.
+`V2__create_vehicle.sql`, written once and numbered after the migrations already there. The Java
+that tib writes is in the layout of google-java-format, so that a run of it leaves the files as
+they are.
 
 The first entity with an API also brings `ConflictHandler`, in `com.example.vehicleservice`,
 written once: a request that breaks a constraint of the database, such as a plate number that

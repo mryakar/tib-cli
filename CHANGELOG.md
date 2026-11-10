@@ -25,6 +25,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- The Java that the default pack generates is formatted with google-java-format, its imports
+  sorted and the unused ones left out, so that the formatter leaves the files of tib's as tib
+  wrote them; `AGENTS.md` says which version. The packages carry the compiler of the JDK that it
+  needs, and are about 20 MB larger; their start-up cache is trained on a dry run of
+  `tib init service`.
 - The default pack generates Spring Boot 4.1 services, instead of Spring Boot 3.5: the modular
   starters of Spring Boot 4, Flyway through its starter, Testcontainers 2 and Jackson 3 in the
   tests. The state file names the stack that the pack generates for, and `tib generate entity`
