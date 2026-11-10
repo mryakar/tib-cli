@@ -36,6 +36,6 @@ class TibExceptionSpec extends Specification {
     new FileAlreadyExistsException('f')              | 'already exists'
     new NotDirectoryException('f')                   | 'not a directory'
     new FileSystemException('f', null, 'Is a directory') | 'f: Is a directory'
-    new MalformedInputException(1)                   | 'Input length = 1'
+    new MalformedInputException(1)                   | 'not UTF-8 text'
   }
 }

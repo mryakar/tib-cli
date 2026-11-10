@@ -17,6 +17,7 @@ package me.yakar.tib;
 
 import java.io.IOException;
 import java.io.Serial;
+import java.nio.charset.CharacterCodingException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.NoSuchFileException;
@@ -69,6 +70,7 @@ public abstract class TibException extends RuntimeException {
       case AccessDeniedException denied -> "access denied";
       case FileAlreadyExistsException there -> "already exists";
       case NotDirectoryException file -> "not a directory";
+      case CharacterCodingException text -> "not UTF-8 text";
       default -> e.getMessage();
     };
   }
