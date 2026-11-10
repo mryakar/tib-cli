@@ -236,17 +236,33 @@ public final class Tree {
   }
 
   /**
+   * Writes the staged changes to disk, as {@link #apply(String)} does, in the order of the paths.
+   */
+  public void apply() {
+    write(null);
+  }
+
+  /**
    * Writes the staged changes to disk. Every file is first written next to its target, as {@code
    * <name>.tib.tmp} with the permissions of a new file, which can be run if the change says so, or
    * of the file it replaces, and then moved over it in one step, so a file is either the old one or
-   * the new one, never half written; when a write fails, the files written next to their targets
-   * are removed. Then the files to delete are deleted, and with them every directory that this
-   * leaves empty, up to the root. Afterwards nothing is staged.
+   * the new one, never half written. Then the files to delete are deleted, and with them every
+   * directory that this leaves empty, up to the root, as far as the file system lets them go. The
+   * file at the last path is moved into place after all of that, so a file that records the run is
+   * the old one as long as the run did not come through. When a write or a deletion fails, the
+   * files written next to their targets are removed. Afterwards nothing is staged.
+   *
+   * @param last the path of the file that is moved into place last, if it is staged
    */
-  public void apply() {
+  public void apply(String last) {
+    write(key(last));
+  }
+
+  private void write(String last) {
     // The files written next to their targets, by target, in the order of the paths.
     Map<Path, Path> staged = new LinkedHashMap<>();
-    // What is written when it fails: the directory of a file, the file, or the file it replaces.
+    String verb = "write";
+    // What is written or deleted when it fails: a directory, a file, or the file it replaces.
     Path target = root;
     try {
       for (Change change : changes.values()) {
@@ -268,41 +284,41 @@ public final class Tree {
         }
         keep(file, staging, KEPT);
       }
+      Path lastFile = last == null ? null : root.resolve(last);
       for (Map.Entry<Path, Path> entry : staged.entrySet()) {
-        target = entry.getKey();
-        Files.move(
-            entry.getValue(),
-            target,
-            StandardCopyOption.ATOMIC_MOVE,
-            StandardCopyOption.REPLACE_EXISTING);
+        if (!entry.getKey().equals(lastFile)) {
+          target = entry.getKey();
+          move(entry.getValue(), target);
+        }
       }
-    } catch (IOException e) {
-      // Through File: a file that was moved already, or cannot be removed, is no exception.
-      staged.values().forEach(staging -> staging.toFile().delete());
-      throw new TreeException("write", target, e);
-    }
-    try {
+      verb = "delete";
       for (Change change : changes.values()) {
         if (change.deletes()) {
           target = root.resolve(change.path());
           Files.deleteIfExists(target);
-          for (target = target.getParent();
-              !target.equals(root) && empty(target);
-              target = target.getParent()) {
-            Files.delete(target);
+          // Through File: a directory that is not empty, or cannot be deleted, stays.
+          Path directory = target.getParent();
+          while (!directory.equals(root) && directory.toFile().delete()) {
+            directory = directory.getParent();
           }
         }
       }
+      if (staged.containsKey(lastFile)) {
+        verb = "write";
+        target = lastFile;
+        move(staged.get(lastFile), target);
+      }
     } catch (IOException e) {
-      throw new TreeException("delete", target, e);
+      // Through File: a file that was moved already, or cannot be removed, is no exception.
+      staged.values().forEach(staging -> staging.toFile().delete());
+      throw new TreeException(verb, target, e);
     }
     changes.clear();
   }
 
-  private static boolean empty(Path directory) throws IOException {
-    try (Stream<Path> files = Files.list(directory)) {
-      return files.findAny().isEmpty();
-    }
+  private static void move(Path staging, Path target) throws IOException {
+    Files.move(
+        staging, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
   }
 
   /** Gives the file written next to its target the attributes of the target, if it is there. */
