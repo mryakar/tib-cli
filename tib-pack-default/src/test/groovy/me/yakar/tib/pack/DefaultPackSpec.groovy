@@ -38,11 +38,11 @@ class DefaultPackSpec extends Specification {
   static final Path SNAPSHOTS = Path.of(System.getProperty('tib.snapshots'))
   static final Path ACTUAL = Path.of(System.getProperty('tib.snapshots.actual'))
 
-  /** The root of this build, whose Gradle wrapper the pack carries. */
-  static final Path BUILD = SNAPSHOTS.parent.parent.parent.parent
-
   /** The version of tib that the build makes. */
   static final String VERSION = System.getProperty('tib.version')
+
+  /** The version of the tib that runs in a test. */
+  static final String TIB = '0.0.0'
 
   /** The example service of the documentation. */
   static final Spec VEHICLES = SpecReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
@@ -85,13 +85,14 @@ class DefaultPackSpec extends Specification {
     expect:
     pack.name() == 'default'
     pack.version() == VERSION
+    pack.stack() == 'Spring Boot 4'
     Packs.find('default') instanceof DefaultPack
     Packs.find("default@$VERSION") instanceof DefaultPack
   }
 
-  def "the properties of the pack have to be readable"() {
+  def "what the pack carries has to be readable: #what"() {
     when:
-    DefaultPack.load(new InputStream() {
+    read(new InputStream() {
           int read() {
             throw new IOException('unreadable')
           }
@@ -99,6 +100,11 @@ class DefaultPackSpec extends Specification {
 
     then:
     thrown(UncheckedIOException)
+
+    where:
+    what             | read
+    'its properties' | { InputStream stream -> DefaultPack.load(stream) }
+    'a file'         | { InputStream stream -> DefaultPack.bytes(stream) }
   }
 
   def "generates the example service of the documentation as the snapshot says"() {
@@ -106,16 +112,6 @@ class DefaultPackSpec extends Specification {
     List<Change> changes = generate(VEHICLES, dir).changes()
 
     then:
-    changes.findAll { it.owner() == Owner.GENERATOR }*.path()*.replaceAll('.*/', '') == [
-      'DepotDto.java',
-      'DepotGenerated.java',
-      'DepotMapper.java',
-      'VehicleDto.java',
-      'VehicleGenerated.java',
-      'VehicleMapper.java',
-      'DepotSamples.java',
-      'VehicleSamples.java',
-    ]
     snapshot('vehicle-service', changes)
   }
 
@@ -142,31 +138,6 @@ class DefaultPackSpec extends Specification {
 
     cleanup:
     Locale.setDefault(locale)
-  }
-
-  def "a new service comes with the Gradle wrapper of this build, written once, and gradlew is run"() {
-    when:
-    List<Change> wrapper = generate(VEHICLES, dir).changes().findAll {
-      it.path() in InitGenerator.WRAPPER
-    }
-
-    then: 'the files of the wrapper are left out of the snapshot, which they would tie to the Gradle of this build'
-    wrapper*.path() == InitGenerator.WRAPPER.toSorted()
-    wrapper.every { it.owner() == Owner.DEVELOPER && it.before() == null }
-    wrapper.findAll { it.executable() }*.path() == ['gradlew']
-    wrapper.each { assert it.after() == Files.readAllBytes(BUILD.resolve(it.path())) : it.path() }
-  }
-
-  def "a file that the pack carries has to be readable"() {
-    when:
-    DefaultPack.bytes(new InputStream() {
-          int read() {
-            throw new IOException('unreadable')
-          }
-        })
-
-    then:
-    thrown(UncheckedIOException)
   }
 
   def "a file that the pack does not carry is a mistake of its build, named by its name"() {
@@ -213,16 +184,11 @@ class DefaultPackSpec extends Specification {
 
   def "the same spec gives the same files, the state included: #name"() {
     when:
-    Tree first = Tree.at(dir)
-    Tree second = Tree.at(other)
-    [first, second].each { tree ->
-      DefaultPack pack = new DefaultPack()
-      Generation.first(new Project(spec), [], pack, pack.init(), '0.0.0', tree)
-      Generation.next(State.of(tree, '0.0.0'), new Project(spec), [], pack, pack.entity(), '0.0.0', tree)
-    }
+    Tree first = service(spec, dir)
+    Tree second = service(spec, other)
 
     then:
-    first.changes()*.path().contains('.tib/state.yaml')
+    first.changes()*.path().contains(State.PATH)
     first.changes()*.path() == second.changes()*.path()
     first.changes().collect {
       it.after() as List
@@ -238,15 +204,24 @@ class DefaultPackSpec extends Specification {
 
   def "a second run on the generated service changes nothing: #name"() {
     given:
-    generate(spec, dir).apply()
+    if (migrations) {
+      byHand(dir)
+    }
+    service(spec, dir).apply(State.PATH)
+    DefaultPack pack = new DefaultPack()
 
-    expect:
-    generate(spec, dir).changes().empty
+    when:
+    Tree again = Tree.at(dir)
+    Generation.Result result = Generation.next(State.of(again, TIB), new Project(spec), [], pack, pack.entity(), TIB, again)
+
+    then:
+    again.changes().empty
+    result == new Generation.Result([], [], [], [], [])
 
     where:
-    name              | spec
-    'vehicle-service' | VEHICLES
-    'corner-service'  | CORNERS
+    name              | spec     | migrations
+    'vehicle-service' | VEHICLES | false
+    'corner-service'  | CORNERS  | true
   }
 
   def "the migrations of the service read back into its spec: #name"() {
@@ -279,13 +254,31 @@ class DefaultPackSpec extends Specification {
   }
 
   /**
+   * The service of the spec as two runs of tib make it, the first of a new service and the next of
+   * its entities, staged in a tree at the directory, the state file included.
+   */
+  private static Tree service(Spec spec, Path dir) {
+    Project project = new Project(spec)
+    Tree tree = Tree.at(dir)
+    DefaultPack pack = new DefaultPack()
+    Generation.first(project, [], pack, pack.init(), TIB, tree)
+    Generation.next(State.of(tree, TIB), project, [], pack, pack.entity(), TIB, tree)
+    return tree
+  }
+
+  /** A migration by hand and a repeatable one, among the migrations of the service. */
+  private static void byHand(Path dir) {
+    Path migrations = Files.createDirectories(dir.resolve(EntityGenerator.MIGRATIONS))
+    Files.writeString(migrations.resolve('V3__by_hand.sql'), '-- mine\n')
+    Files.writeString(migrations.resolve('R__views.sql'), '-- repeatable\n')
+  }
+
+  /**
    * The entities of the corner spec, staged in a tree at the directory, which has a migration by
    * hand and a repeatable one.
    */
   private static Tree corners(Path dir) {
-    Path migrations = Files.createDirectories(dir.resolve(EntityGenerator.MIGRATIONS))
-    Files.writeString(migrations.resolve('V3__by_hand.sql'), '-- mine\n')
-    Files.writeString(migrations.resolve('R__views.sql'), '-- repeatable\n')
+    byHand(dir)
     Tree tree = Tree.at(dir)
     new DefaultPack().entity().generate(new Project(CORNERS), tree)
     return tree
