@@ -16,11 +16,8 @@
 package me.yakar.tib.cli;
 
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import me.yakar.tib.ddl.DdlReader;
-import me.yakar.tib.generate.Pack;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.state.State;
@@ -47,7 +44,7 @@ public class GenerateEntityCommand implements Callable<Integer> {
         names = "--spec",
         required = true,
         paramLabel = "FILE",
-        description = "The spec file of the service.")
+        description = GenerationOptions.SPEC_FILE)
     Path spec;
 
     @Option(
@@ -68,39 +65,38 @@ public class GenerateEntityCommand implements Callable<Integer> {
   public Integer call() {
     Tree tree = directory.tree();
     State state = directory.state(tree);
-    Spec project = state.spec();
-    if (source.spec == null) {
-      String ddl = State.Input.read(source.ddl);
-      return options.generate(
-          Optional.of(state),
-          DdlReader.parse(ddl, project),
-          List.of(State.Input.of(State.Input.Kind.DDL, tree.root(), source.ddl, ddl)),
-          Pack::entity,
-          tree);
+    Path file = source.spec != null ? source.spec : source.ddl;
+    String content = State.Input.read(file);
+    State.Input.Kind kind;
+    Spec service;
+    if (source.spec != null) {
+      kind = State.Input.Kind.SPEC;
+      service = SpecReader.parse(content);
+      sameService(service, state.spec());
+    } else {
+      kind = State.Input.Kind.DDL;
+      service = DdlReader.parse(content, state.spec());
     }
-    String yaml = State.Input.read(source.spec);
-    Spec service = SpecReader.parse(yaml);
-    if (!service.service().equals(project.service())) {
+    return options.entity(state, service, State.Input.of(kind, tree.root(), file, content), tree);
+  }
+
+  /** Refuses the spec file of another service than the one of the project, or of another group. */
+  private void sameService(Spec read, Spec project) {
+    if (!read.service().equals(project.service())) {
       throw new RefusalException(
           source.spec
               + " is the spec of "
-              + service.service()
+              + read.service()
               + "; this project is "
               + project.service());
     }
-    if (!service.group().equals(project.group())) {
+    if (!read.group().equals(project.group())) {
       throw new RefusalException(
           source.spec
               + " is the spec of a service in "
-              + service.group()
+              + read.group()
               + "; this project is in "
               + project.group());
     }
-    return options.generate(
-        Optional.of(state),
-        service,
-        List.of(State.Input.of(State.Input.Kind.SPEC, tree.root(), source.spec, yaml)),
-        Pack::entity,
-        tree);
   }
 }

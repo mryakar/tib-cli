@@ -17,9 +17,7 @@ package me.yakar.tib.cli;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Callable;
-import me.yakar.tib.generate.Pack;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.state.State;
@@ -52,7 +50,7 @@ public class InitServiceCommand implements Callable<Integer> {
         names = "--spec",
         required = true,
         paramLabel = "FILE",
-        description = "The spec file of the service.")
+        description = GenerationOptions.SPEC_FILE)
     Path spec;
   }
 
@@ -77,6 +75,6 @@ public class InitServiceCommand implements Callable<Integer> {
       service = Spec.of(source.name);
       inputs = List.of();
     }
-    return options.generate(Optional.empty(), service, inputs, Pack::init, tree);
+    return options.init(service, inputs, tree);
   }
 }

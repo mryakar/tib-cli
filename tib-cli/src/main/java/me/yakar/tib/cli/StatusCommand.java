@@ -72,9 +72,9 @@ public class StatusCommand implements Callable<Integer> {
             + " "
             + state.pack().version()
             + ", "
-            + ServiceDirectory.count(entities, "entity", "entities")
+            + Messages.count(entities, "entity", "entities")
             + ", "
-            + ServiceDirectory.count(state.files().size(), "file", "files")
+            + Messages.count(state.files().size(), "file", "files")
             + ".");
     if (inputs.isEmpty() && !state.inputs().isEmpty()) {
       out.println("Every file that tib read the spec from is as it read it.");
