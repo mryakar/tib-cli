@@ -19,21 +19,14 @@ import spock.lang.Specification
 
 class RefusalExceptionSpec extends Specification {
 
-  def "one problem is the message"() {
-    when:
-    RefusalException e = new RefusalException('x is already a tib project')
-
-    then:
-    e.message == 'x is already a tib project'
-    e.problems() == ['x is already a tib project']
+  def "the problem is the message"() {
+    expect:
+    new RefusalException('x is already a tib project').message == 'x is already a tib project'
   }
 
-  def "the advice follows the message on a line of its own, and is no problem"() {
-    when:
-    RefusalException e = new RefusalException('x has changes:\n   M A.java', [' M A.java'], 'Commit them.')
-
-    then:
-    e.message == "x has changes:\n   M A.java${System.lineSeparator()}Commit them."
-    e.problems() == [' M A.java']
+  def "the advice follows the problem on a line of its own"() {
+    expect:
+    new RefusalException('x has changes:\n   M A.java', 'Commit them.').message ==
+        "x has changes:\n   M A.java${System.lineSeparator()}Commit them."
   }
 }

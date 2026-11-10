@@ -108,7 +108,6 @@ final class GenerationOptions {
       if (!allowDirty) {
         throw new RefusalException(
             uncommitted(tree, uncommitted),
-            uncommitted,
             "Commit or stash them first, so that the changes of tib can be told apart, or run"
                 + " again with --allow-dirty.");
       }
