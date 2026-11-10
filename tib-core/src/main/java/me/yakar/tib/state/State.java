@@ -18,7 +18,6 @@ package me.yakar.tib.state;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -127,7 +126,17 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
       return new Input(
           kind,
           path(service.toAbsolutePath().normalize(), file.toAbsolutePath().normalize()),
-          State.sha256(content));
+          State.sha256(content.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    /** Whether the file is not there, as far as can be told from the directory of the service. */
+    boolean absent(Path service) {
+      return Files.notExists(service.resolve(path));
+    }
+
+    /** Whether the content is the one that tib read. */
+    boolean holds(byte[] content) {
+      return State.sha256(content).equals(sha256);
     }
 
     /**
@@ -154,7 +163,12 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
 
     /** The file as tib writes it, with the hash of its bytes. */
     public static File of(String path, Owner owner, byte[] content) {
-      return new File(path, owner, digest("SHA-256", content));
+      return new File(path, owner, State.sha256(content));
+    }
+
+    /** Whether the content is the one that tib wrote. */
+    public boolean holds(byte[] content) {
+      return State.sha256(content).equals(sha256);
     }
   }
 
@@ -196,7 +210,7 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     Map<String, Input> read = new LinkedHashMap<>();
     if (inputs.stream().noneMatch(input -> input.kind() == Input.Kind.SPEC)) {
       this.inputs.stream()
-          .filter(input -> !Files.notExists(service.resolve(input.path())))
+          .filter(input -> !input.absent(service))
           .forEach(input -> read.put(input.path(), input));
     }
     inputs.forEach(input -> read.put(input.path(), input));
@@ -242,7 +256,7 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
         Optional<byte[]> content = tree.bytes(file.path());
         if (content.isEmpty()) {
           differences.add(new Difference(file.path(), Difference.Kind.MISSING));
-        } else if (!digest("SHA-256", content.get()).equals(file.sha256())) {
+        } else if (!file.holds(content.get())) {
           differences.add(new Difference(file.path(), Difference.Kind.EDITED));
         }
       } else if (!tree.exists(file.path())) {
@@ -269,18 +283,17 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   public List<Difference> inputDifferences(Path service) {
     List<Difference> differences = new ArrayList<>();
     for (Input input : inputs) {
-      Path file = service.resolve(input.path());
-      byte[] content;
-      try {
-        content = Files.readAllBytes(file);
-      } catch (NoSuchFileException e) {
+      if (input.absent(service)) {
         differences.add(new Difference(input.path(), Difference.Kind.ABSENT));
         continue;
+      }
+      Path file = service.resolve(input.path());
+      try {
+        if (!input.holds(Files.readAllBytes(file))) {
+          differences.add(new Difference(input.path(), Difference.Kind.CHANGED));
+        }
       } catch (IOException e) {
         throw new StateException("read", file, e);
-      }
-      if (!digest("SHA-256", content).equals(input.sha256())) {
-        differences.add(new Difference(input.path(), Difference.Kind.CHANGED));
       }
     }
     return List.copyOf(differences);
@@ -380,9 +393,9 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     }
   }
 
-  /** The SHA-256 of a text in UTF-8, in hex. */
-  static String sha256(String text) {
-    return digest("SHA-256", text.getBytes(StandardCharsets.UTF_8));
+  /** The SHA-256 of the bytes, in hex. */
+  static String sha256(byte[] bytes) {
+    return digest("SHA-256", bytes);
   }
 
   static String digest(String algorithm, byte[] bytes) {

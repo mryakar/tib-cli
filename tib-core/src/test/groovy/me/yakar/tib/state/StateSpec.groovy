@@ -389,7 +389,7 @@ class StateSpec extends Specification {
     given:
     Path spec = Files.writeString(dir.resolve('spec.yaml'), 'spec\n')
     State read = withInputs([
-      new State.Input(State.Input.Kind.SPEC, spec.toAbsolutePath().toString(), State.sha256('read\n'))
+      new State.Input(State.Input.Kind.SPEC, spec.toAbsolutePath().toString(), State.sha256('read\n'.getBytes('UTF-8')))
     ])
 
     expect:
