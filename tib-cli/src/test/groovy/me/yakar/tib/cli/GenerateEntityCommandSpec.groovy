@@ -128,7 +128,7 @@ class GenerateEntityCommandSpec extends Specification {
       Delete them if the service no longer needs them.
       tib no longer reads the spec from these files, and forgets them:
         ${Tib.state(dir).inputs()[0].path()}
-      The spec no longer makes these files, but they last, and tib leaves them:
+      The spec no longer generates these files, but they last, and tib leaves them:
         ${migration}
       Undo what they made with a file of yours, such as a migration that drops the table.
       """.stripIndent()
@@ -285,7 +285,7 @@ class GenerateEntityCommandSpec extends Specification {
     then: 'the migration stays as it was'
     result.exitCode() == 0
     result.err().contains("""\
-      The spec now makes these files otherwise, but they last, and tib leaves them:
+      The spec now generates these files otherwise, but they last, and tib leaves them:
       --- a/${migration}
       +++ b/${migration}
       """.stripIndent())
@@ -299,6 +299,41 @@ class GenerateEntityCommandSpec extends Specification {
     then:
     again.out() == 'Nothing to change.\n'
     again.err() == ''
+  }
+
+  def "the migration of an entity that comes back to the spec is named, once: #how"() {
+    given: 'the vehicle left the spec'
+    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
+    tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    String depot = Files.writeString(dir.resolve('depot.yaml'), Files.readString(Path.of(spec))
+        .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, '')).toString()
+    tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString())
+    String migration = Tib.state(dir).files()*.path().find { it.endsWith('__create_vehicle.sql') }
+    if (content != null) {
+      Files.writeString(dir.resolve(migration), content)
+    }
+    String before = Files.readString(dir.resolve(migration))
+
+    when:
+    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+
+    then: 'the migration stays as it is'
+    result.exitCode() == 0
+    result.err().contains('The spec generates these files again, but tib wrote them before, and leaves them:\n' + named(migration))
+    result.err().endsWith('Make sure the database has what they make, with a file of yours, such as a new migration.\n')
+    Files.readString(dir.resolve(migration)) == before
+
+    when: 'again'
+    Result again = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+
+    then:
+    again.out() == 'Nothing to change.\n'
+    again.err() == ''
+
+    where:
+    how                         | content  | named
+    'as the spec generates it'  | null     | { "  $it\nMake sure" }
+    'with the diff when edited' | 'mine\n' | { "--- a/$it\n+++ b/$it\n@@ -1 +1,".toString() }
   }
 
   def "a DDL file that is no longer where tib read it is forgotten by the next run"() {
