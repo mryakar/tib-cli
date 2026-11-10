@@ -15,14 +15,17 @@
  */
 package me.yakar.tib.generate
 
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermissions
 import me.yakar.tib.spec.Spec
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Owner
 import me.yakar.tib.tree.ProjectFiles
 import me.yakar.tib.tree.Tree
 import me.yakar.tib.tree.TreeException
+import spock.lang.Requires
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -374,6 +377,25 @@ class GenerationSpec extends Specification {
     State state = State.in(ran.tree, '1.2.4').get()
     state.files()*.path() == ['Generated.java', 'Service.java']
     state.files()[1] == State.File.of('Service.java', Owner.DEVELOPER, 'class Service {}\n')
+  }
+
+  @Requires({
+    FileSystems.default.supportedFileAttributeViews().contains('posix') && System.getProperty('user.name') != 'root'
+  })
+  def "a file of the developer's that is there and cannot be read ends the run: #path"() {
+    given:
+    run(two, entities).tree.apply(State.PATH)
+    Files.setPosixFilePermissions(dir.resolve(path), PosixFilePermissions.fromString('-w-------'))
+
+    when:
+    run(two, entities)
+
+    then:
+    TreeException e = thrown()
+    e.message == "cannot read ${dir.resolve(path)}: access denied"
+
+    where:
+    path << ['b/B.java', 'V2__b.sql']
   }
 
   def "a generator sees the files of the project and the ones it wrote, and what tib wrote before"() {

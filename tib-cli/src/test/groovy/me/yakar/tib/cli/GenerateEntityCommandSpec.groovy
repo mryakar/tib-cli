@@ -17,10 +17,13 @@ package me.yakar.tib.cli
 
 import static me.yakar.tib.cli.Tib.EXAMPLES
 
+import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermissions
 import me.yakar.tib.cli.Tib.Result
 import me.yakar.tib.state.State
+import spock.lang.Requires
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -446,6 +449,32 @@ class GenerateEntityCommandSpec extends Specification {
     tib.state().spec().entities()*.name() == ['Depot', 'Vehicle']
   }
 
+  @Requires({
+    FileSystems.default.supportedFileAttributeViews().contains('posix') && System.getProperty('user.name') != 'root'
+  })
+  def "a file of yours that tib cannot read is reported with exit code 1, and nothing is written: #run"() {
+    given:
+    tib.init('--spec', spec)
+    tib.generate('--spec', spec)
+    Path vehicle = dir.resolve('src/main/java/com/example/vehicleservice/vehicle/Vehicle.java')
+    Files.setPosixFilePermissions(vehicle, PosixFilePermissions.fromString('-w-------'))
+    Map<String, Set> before = permissions()
+
+    when:
+    Result result = tib.generate('--spec', tib.write('colored.yaml', COLORED), *options)
+
+    then:
+    result.exitCode() == 1
+    result.out() == ''
+    result.err() == "cannot read $vehicle: access denied\n"
+    permissions() == before
+
+    where:
+    run         | options
+    'a run'     | []
+    'a dry run' | ['--dry-run']
+  }
+
   def "a service generated for #stack is refused by #run, and tib status still reads it"() {
     given:
     tib.init('--spec', spec)
@@ -513,5 +542,19 @@ class GenerateEntityCommandSpec extends Specification {
     what      | content                                                    | message
     'service' | 'tib: 1\nservice: fleet-service\n'                         | 'is the spec of fleet-service; this project is vehicle-service'
     'group'   | 'tib: 1\nservice: vehicle-service\ngroup: com.acme\n'      | 'is the spec of a service in com.acme; this project is in com.example'
+  }
+
+  /** The files of the service by path, each with its permissions and when it was last written. */
+  private Map<String, Set> permissions() {
+    Files.walk(dir).withCloseable { paths ->
+      paths.filter {
+        Files.isRegularFile(it) && it.fileName.toString() != 'colored.yaml'
+      }.toList().collectEntries {
+        [
+          dir.relativize(it).toString(),
+          [Files.getPosixFilePermissions(it), Files.getLastModifiedTime(it)] as Set
+        ]
+      }
+    }
   }
 }
