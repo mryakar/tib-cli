@@ -89,7 +89,9 @@ tasks.withType<Test>().configureEach {
 }
 
 // ./gradlew test updateSnapshots --continue: the snapshots become what the unit tests wrote, and
-// git diff shows the change. Copied by hand, as Gradle's copies leave out .gitignore files.
+// git diff shows the change. Copied by hand, as Gradle's copies leave out .gitignore files. The
+// unit tests start with nothing under build/snapshots/test, so the snapshots become what this run
+// of them wrote: all of them, when the run is the whole suite.
 val snapshotsDir = layout.projectDirectory.dir("src/test/snapshots").asFile
 
 if (snapshotsDir.isDirectory) {
@@ -99,15 +101,17 @@ if (snapshotsDir.isDirectory) {
     gradle.startParameter.taskNames.any {
       it == "updateSnapshots" || it.endsWith(":updateSnapshots")
     }
+  val actual = layout.buildDirectory.dir("snapshots/test")
   tasks.test {
     outputs.cacheIf("the snapshots are not being updated") { !updating }
     outputs.upToDateWhen { !updating }
+    doFirst { actual.get().asFile.deleteRecursively() }
   }
   tasks.register("updateSnapshots") {
     group = "verification"
-    description = "Replaces the snapshots with what the unit tests wrote."
+    description =
+      "Replaces the snapshots with what the unit tests wrote: run it after the whole suite."
     mustRunAfter(tasks.test)
-    val actual = layout.buildDirectory.dir("snapshots/test")
     val expected = snapshotsDir
     doLast {
       val written = actual.get().asFile
