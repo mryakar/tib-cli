@@ -74,7 +74,7 @@ public class InitServiceCommand implements Callable<Integer> {
       service = SpecReader.parse(yaml);
       inputs = List.of(State.Input.of(State.Input.Kind.SPEC, tree.root(), source.spec, yaml));
     } else {
-      service = new Spec(Spec.VERSION, source.name, null, null, null).check();
+      service = Spec.of(source.name);
       inputs = List.of();
     }
     return options.generate(Optional.empty(), service, inputs, Pack::init, tree);

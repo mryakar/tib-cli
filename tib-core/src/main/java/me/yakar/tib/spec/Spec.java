@@ -45,17 +45,23 @@ public record Spec(
     @Doc(
             value = "The group of the service: the root of its packages and its Maven group.",
             pattern = Names.GROUP,
-            defaultValue = "com.example")
+            defaultValue = Spec.GROUP)
         String group,
     @Doc(
             value = "The template pack, by name, with its version after an at sign to pin it.",
             pattern = Names.PACK,
-            defaultValue = "default")
+            defaultValue = Spec.PACK)
         String pack,
     @Doc("The entities of the service.") List<Entity> entities) {
 
   /** The version of the spec format that this build reads. */
   public static final int VERSION = 1;
+
+  /** The group of a service whose spec gives none. */
+  static final String GROUP = "com.example";
+
+  /** The pack of a service whose spec gives none. */
+  static final String PACK = "default";
 
   // The marks of an entity while the relations are followed for cycles.
   private static final int NEW = 0;
@@ -63,16 +69,25 @@ public record Spec(
   private static final int DONE = 2;
 
   public Spec {
-    group = group == null ? "com.example" : group;
-    pack = pack == null ? "default" : pack;
+    group = group == null ? GROUP : group;
+    pack = pack == null ? PACK : pack;
     entities = list(entities);
+  }
+
+  /**
+   * The spec of a service that has only its name, checked.
+   *
+   * @throws SpecException when the name is not one of a service
+   */
+  public static Spec of(String service) {
+    return new Spec(VERSION, service, null, null, null).check();
   }
 
   /**
    * The list as the model keeps it: never null, never changed. A null item stays, for the check to
    * report.
    */
-  static <T> List<T> list(List<T> list) {
+  public static <T> List<T> list(List<T> list) {
     return list == null ? List.of() : Collections.unmodifiableList(new ArrayList<>(list));
   }
 
