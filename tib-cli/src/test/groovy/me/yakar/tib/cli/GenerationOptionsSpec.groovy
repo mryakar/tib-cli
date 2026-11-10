@@ -20,6 +20,7 @@ import static me.yakar.tib.cli.Tib.EXAMPLES
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.cli.Tib.Result
+import picocli.CommandLine
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -66,6 +67,27 @@ class GenerationOptionsSpec extends Specification {
     dryRun.exitCode() == 0
     dryRun.out().contains('+++ b/.tib/state.yaml\n')
     tib.files() == before
+  }
+
+  def "the lines of the message that refuses uncommitted changes end the same on every platform"() {
+    given:
+    tib.init('vehicle-service')
+    committed()
+    Files.writeString(dir.resolve('AGENTS.md'), 'mine\n')
+    Exception refused = null
+
+    when: 'the command runs without the application, which prints the message'
+    TibApplication.commandLine(new CommandFactory(new TibVersion('1.2.3')))
+        .setExecutionExceptionHandler { Exception e, CommandLine commandLine, CommandLine.ParseResult parsed ->
+          refused = e
+          1
+        }
+        .execute('generate', 'entity', '--spec', spec, '-d', dir.toString())
+
+    then:
+    refused.message == "${tib.root} has changes that are not committed:\n" +
+        '   M AGENTS.md\n' +
+        'Commit or stash them first, so that the changes of tib can be told apart, or run again with --allow-dirty.'
   }
 
   def "the diff of a dry run of text files is a patch that git applies, with the result of a real run that #run"() {
