@@ -43,10 +43,11 @@ public final class Generation {
    *     they were edited; in the order of their paths
    * @param forgotten the inputs of the previous state that the new one forgot; in the order of the
    *     previous state
-   * @param lastingChanged the files that last and that the spec now generates otherwise: from what
-   *     the previous spec generated to what this one generates; in the order of their paths
-   * @param lastingDropped the files that last and that the spec no longer generates; in the order
-   *     of their paths
+   * @param lastingChanged the files that last, that the spec now generates otherwise, and that tib
+   *     does not write: from what the previous spec generated to what this one generates; in the
+   *     order of their paths
+   * @param lastingDropped the files that last, that the spec no longer generates, and that are on
+   *     record or there; in the order of their paths
    * @param lastingReturned the files that last, that the previous spec did not generate and this
    *     one does, and that tib does not write, as it wrote them before or they are there: from the
    *     file as it is in the project to what the spec generates; in the order of their paths
@@ -153,6 +154,8 @@ public final class Generation {
               }
             });
     tree.own(State.PATH, next.yaml());
+    Set<String> recorded =
+        previous.files().stream().map(State.File::path).collect(Collectors.toSet());
     List<Lasting> changed = new ArrayList<>();
     List<String> gone = new ArrayList<>();
     before
@@ -161,8 +164,10 @@ public final class Generation {
             (path, made) -> {
               byte[] makes = now.lasting().get(path);
               if (makes == null) {
-                gone.add(path);
-              } else if (!Arrays.equals(made, makes)) {
+                if (recorded.contains(path) || tree.exists(path)) {
+                  gone.add(path);
+                }
+              } else if (!Arrays.equals(made, makes) && !staged.contains(path)) {
                 changed.add(new Lasting(path, made, makes));
               }
             });

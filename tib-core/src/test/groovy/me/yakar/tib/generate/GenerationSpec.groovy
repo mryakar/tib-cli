@@ -249,6 +249,37 @@ class GenerationSpec extends Specification {
     ran.tree.changes()*.path() == ['.tib/state.yaml']
   }
 
+  def "a file that lasts and that no run wrote is not named when the spec generates it otherwise or no longer: #dropped"() {
+    given: 'a first run that records the spec and writes no file that lasts, as the one of a new service'
+    Generator init = { Project p, ProjectFiles files ->
+      files.once('Init.java', 'class Init {}\n')
+    } as Generator
+    Generator lasting = { Project p, ProjectFiles files ->
+      files.lasting('V1.sql', p.name() == 'two' ? 'a two\n' : 'a\n')
+      if (p.name() == 'two') {
+        files.lasting('V2.sql', 'b\n')
+      }
+    } as Generator
+    run(two, init).tree.apply(State.PATH)
+    if (there) {
+      Files.writeString(dir.resolve('V2.sql'), 'mine\n')
+    }
+
+    when: 'the spec changes one file and drops the other'
+    Map ran = run(one, lasting)
+
+    then: 'the one that this run writes is not named, and the other one only when it is there'
+    ran.tree.changes()*.path() == ['.tib/state.yaml', 'V1.sql']
+    ran.result.lastingChanged() == []
+    ran.result.lastingDropped() == dropped
+    ran.result.lastingReturned() == []
+
+    where:
+    there | dropped
+    false | []
+    true  | ['V2.sql']
+  }
+
   def "the files that last and that the spec generates again are named when tib does not write them"() {
     given: 'a file that is there before tib runs'
     Generator lasting = { Project p, ProjectFiles files ->
