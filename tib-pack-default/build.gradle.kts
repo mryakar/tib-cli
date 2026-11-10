@@ -62,9 +62,6 @@ tasks.processResources {
   }
 }
 
-// The tests compare the version of the pack with the version of the build.
-tasks.test { systemProperty("tib.version", tibVersion) }
-
 // Coverage leaves out the classes that jte generates from the templates, and the jar of the Gradle
 // wrapper that the pack carries.
 tasks.withType<JacocoReportBase>().configureEach {
