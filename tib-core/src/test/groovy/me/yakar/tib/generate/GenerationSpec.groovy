@@ -166,8 +166,7 @@ class GenerationSpec extends Specification {
       'V1__a.sql',
       'V2__b.sql',
       'a/A.java',
-      'a/AGenerated.java',
-      'b/B.java'
+      'a/AGenerated.java'
     ]
 
     when:
@@ -182,7 +181,7 @@ class GenerationSpec extends Specification {
     Tree again = Tree.at(dir)
     result = Generation.run(State.in(again, '1.2.3'), one, [], pack, { entities }, '1.2.3', again)
 
-    then: 'the file that stayed is named once'
+    then: 'the file that stayed is named once, and has left the record'
     result.kept() == []
     again.changes() == []
 
@@ -192,6 +191,15 @@ class GenerationSpec extends Specification {
 
     then: 'the files that were deleted are written again, and the one that stayed is left as it is'
     back.changes()*.path() == ['.tib/state.yaml', 'b/BGenerated.java', 'b/BService.java', 'b/BTests.java']
+
+    when: 'the file that stayed is gone when the second entity comes back'
+    Files.delete(dir.resolve('b/B.java'))
+    Tree gone = Tree.at(dir)
+    Generation.run(State.in(gone, '1.2.3'), two, [], pack, { entities }, '1.2.3', gone)
+
+    then: 'it is written again, as tib has no record of it'
+    gone.changes()*.path() == ['.tib/state.yaml', 'b/B.java', 'b/BGenerated.java', 'b/BService.java', 'b/BTests.java']
+    gone.read('b/B.java') == Optional.of('class B {}\n')
   }
 
   private void run(Optional<State> previous, Project project, Generator generator, List<State.Input> inputs = []) {

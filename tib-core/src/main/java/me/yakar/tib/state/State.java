@@ -24,6 +24,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -177,11 +178,13 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
    * for those whose file is no longer there, as far as can be told: the state forgets where they
    * were, and the spec keeps what was read from them. Every file that the run staged takes the
    * place of the record of the same path, and the other records stay, but for the files that the
-   * run deleted: the spec no longer has what they were generated from. The files are in the order
+   * run dropped: the spec no longer has what they were generated from. The files are in the order
    * of their paths.
    *
    * @param previous the state before the run, if tib ran on the project before
    * @param tib the version of tib that ran
+   * @param dropped the paths of the files that the spec no longer generates, and that tib deleted
+   *     or left to the developer
    */
   public static State next(
       Optional<State> previous,
@@ -189,10 +192,10 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
       PackRef pack,
       List<Input> inputs,
       Spec spec,
+      Collection<String> dropped,
       Tree tree) {
     Map<String, Input> read = new LinkedHashMap<>();
     SortedMap<String, File> written = new TreeMap<>();
-    List<String> deleted = tree.deleted();
     previous.ifPresent(
         state -> {
           if (inputs.stream().noneMatch(input -> input.kind() == Input.Kind.SPEC)) {
@@ -201,7 +204,7 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
                 .forEach(input -> read.put(input.path(), input));
           }
           state.files().stream()
-              .filter(file -> !deleted.contains(file.path()))
+              .filter(file -> !dropped.contains(file.path()))
               .forEach(file -> written.put(file.path(), file));
         });
     inputs.forEach(input -> read.put(input.path(), input));
