@@ -23,6 +23,4 @@ the first release.
 
 ## Next
 
-These come after the MVP, in no fixed order:
-
-- A notice when the columns of a table changed after its migration was written.
+Every item that was to come after the MVP is done; phase 2 is next.

@@ -267,6 +267,11 @@ class TreeSpec extends Specification {
     tree.changes()*.path() == ['Mine.java', 'New.java', 'V1.sql']
     tree.changes()*.owner() == [Owner.DEVELOPER, Owner.GENERATOR, Owner.DEVELOPER]
     tree.generated() == ['Mine.java', 'New.java', 'Same.java']
+
+    and: 'what the generator made of every file that lasts is kept, staged or not'
+    tree.lasting().collectEntries { path, content ->
+      [path, new String(content, 'UTF-8')]
+    } == ['Before.sql': 'before\n', 'There.sql': 'other\n', 'V1.sql': 'v1\n']
   }
 
   def "a file that is not text is staged as bytes, and its diff says only that it differs"() {

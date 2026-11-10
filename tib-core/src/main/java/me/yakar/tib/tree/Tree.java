@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,6 +55,7 @@ public final class Tree {
   private final SortedSet<String> writtenBefore = new TreeSet<>();
   private final SortedSet<String> generated = new TreeSet<>();
   private final SortedSet<String> deleted = new TreeSet<>();
+  private final SortedMap<String, byte[]> lasting = new TreeMap<>();
 
   private Tree(Path root) {
     this.root = root;
@@ -161,7 +163,17 @@ public final class Tree {
    * generates it, as a migration that a database may have run.
    */
   public void lasting(String path, String content) {
-    stageOnce(key(path), utf8(content), false);
+    String key = key(path);
+    lasting.put(key, utf8(content));
+    stageOnce(key, utf8(content), false);
+  }
+
+  /**
+   * The files that last, by path, with the content that the generator gave them in this tree,
+   * whether that staged them or not.
+   */
+  public SortedMap<String, byte[]> lasting() {
+    return Collections.unmodifiableSortedMap(lasting);
   }
 
   private void stageOnce(String key, byte[] content, boolean executable) {

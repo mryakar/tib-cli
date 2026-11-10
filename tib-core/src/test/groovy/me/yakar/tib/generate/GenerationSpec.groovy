@@ -46,7 +46,7 @@ class GenerationSpec extends Specification {
     }, '1.2.3', tree)
 
     then:
-    result == new Generation.Result([], [])
+    result == new Generation.Result([], [], [])
     tree.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'Service.java']
     tree.changes()*.owner() == [Owner.GENERATOR, Owner.GENERATOR, Owner.DEVELOPER]
 
@@ -80,7 +80,7 @@ class GenerationSpec extends Specification {
     state.tib() == '1.2.4'
     state.inputs() == [spec]
     state.files()*.path() == ['Service.java', 'test.txt']
-    result == new Generation.Result([], [])
+    result == new Generation.Result([], [], [])
 
     when:
     second.apply()
@@ -164,6 +164,33 @@ class GenerationSpec extends Specification {
     Tree tree = Tree.at(dir)
     Generation.run(previous, project, inputs, pack, { generator }, '1.2.3', tree)
     tree.apply()
+  }
+
+  def "the files that last and that the spec makes otherwise, or no longer, are named, and left as they are"() {
+    given:
+    Generator lasting = { Project p, Tree tree ->
+      tree.lasting('V1.sql', p.name() == 'two' ? 'a two\n' : 'a\n')
+      tree.lasting('V0.sql', '0\n')
+      if (p.name() == 'two') {
+        tree.lasting('V2.sql', 'b\n')
+      }
+    } as Generator
+    run(Optional.empty(), new Project(new Spec(1, 'two', null, 'p', null)), lasting)
+
+    when:
+    Tree tree = Tree.at(dir)
+    Generation.Result result = Generation.run(State.in(tree, '1.2.3'), new Project(new Spec(1, 'one', null, 'p', null)), [], pack, {
+      lasting
+    }, '1.2.3', tree)
+
+    then: 'each a change from what the previous spec made, to what this one makes, or none'
+    result.lasting()*.path() == ['V1.sql', 'V2.sql']
+    new String(result.lasting()[0].before(), 'UTF-8') == 'a two\n'
+    new String(result.lasting()[0].after(), 'UTF-8') == 'a\n'
+    result.lasting()[1].deletes()
+
+    and: 'nothing of them is staged'
+    tree.changes()*.path() == ['.tib/state.yaml']
   }
 
   def "the inputs that the state forgot are named"() {

@@ -35,7 +35,7 @@ public record Change(String path, byte[] before, byte[] after, Owner owner, bool
    * The change as a unified diff; a file that is not text, as git tells, shows as one line that
    * says it differs.
    */
-  String diff() {
+  public String diff() {
     if (binary(before) || binary(after)) {
       return "Binary files "
           + (before == null ? "/dev/null" : "a/" + path)

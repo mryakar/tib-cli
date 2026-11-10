@@ -28,6 +28,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   share. A test changes one value through the builder, and the samples follow the spec when a
   field is added. The tests that an earlier tib wrote are left as they are.
 
+- A run whose spec changes the columns of a table that has its migration says so on the standard
+  error, with the diff from the migration that tib wrote to the one it would write now, and names
+  the migration of a table that left the spec. The migrations stay as they are; changing or
+  dropping the table is a migration of yours.
+
 ### Changed
 
 - The tests of a generated service run against PostgreSQL 18 instead of 17. A service generated
