@@ -31,42 +31,46 @@ class StatusCommandSpec extends Specification {
   @TempDir
   Path dir
 
-  Tib tib = new Tib()
+  Tib tib
+
+  def setup() {
+    tib = new Tib(dir)
+  }
 
   def "a directory that is not a tib project is refused"() {
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     result.exitCode() == 1
     result.out() == ''
-    result.err() == "${dir.toAbsolutePath().normalize()} is not a tib project: there is no .tib/state.yaml\nRun tib init service first.\n"
+    result.err() == "${tib.root} is not a tib project: there is no .tib/state.yaml\nRun tib init service first.\n"
   }
 
   def "a state file that a newer tib wrote is refused"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
 
     when:
-    Result result = new Tib('1.2.2').run('status', '-d', dir.toString())
+    Result result = new Tib(dir, '1.2.2').status()
 
     then:
     result.exitCode() == 1
     result.out() == ''
-    result.err() == "${dir.toAbsolutePath().normalize()}: .tib/state.yaml was written by tib 1.2.3, which is newer than this tib 1.2.2; upgrade tib\n"
+    result.err() == "${tib.root}: .tib/state.yaml was written by tib 1.2.3, which is newer than this tib 1.2.2; upgrade tib\n"
   }
 
   def "a service whose files are as tib wrote them"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
 
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     result.exitCode() == 0
     result.out() == """\
-      vehicle-service: tib 1.2.3, pack default ${Tib.state(dir).pack().version()}, 0 entities, ${Tib.state(dir).files().size()} files.
+      vehicle-service: tib 1.2.3, pack default ${tib.state().pack().version()}, 0 entities, ${tib.state().files().size()} files.
       Every file of tib's is as it wrote it.
       """.stripIndent()
     result.err() == ''
@@ -78,7 +82,7 @@ class StatusCommandSpec extends Specification {
     Files.writeString(dir.resolve(ENTITY + 'Vehicle.java'), 'edited\n')
 
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     result.exitCode() == 0
@@ -91,7 +95,7 @@ class StatusCommandSpec extends Specification {
     Files.delete(dir.resolve(ENTITY + 'VehicleController.java'))
 
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     result.exitCode() == 0
@@ -113,12 +117,12 @@ class StatusCommandSpec extends Specification {
     Files.delete(dir.resolve(ENTITY + 'VehicleController.java'))
 
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     result.exitCode() == 1
     result.out() == """\
-      vehicle-service: tib 1.2.3, pack default ${Tib.state(dir).pack().version()}, 2 entities, ${Tib.state(dir).files().size()} files.
+      vehicle-service: tib 1.2.3, pack default ${tib.state().pack().version()}, 2 entities, ${tib.state().files().size()} files.
       Every file that tib read the spec from is as it read it.
 
       Files:
@@ -133,8 +137,8 @@ class StatusCommandSpec extends Specification {
     result.err() == ''
 
     when: 'tib runs again'
-    tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
-    Result again = tib.run('status', '-d', dir.toString())
+    tib.generate('--spec', spec)
+    Result again = tib.status()
 
     then:
     again.exitCode() == 0
@@ -142,13 +146,11 @@ class StatusCommandSpec extends Specification {
 
   def "an entity that left the spec leaves nothing of tib's to report"() {
     given:
-    String spec = generated()
-    Path depot = Files.writeString(dir.resolve('depot.yaml'), Files.readString(Path.of(spec))
-        .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, ''))
-    tib.run('generate', 'entity', '--spec', depot.toString(), '-d', dir.toString())
+    generated()
+    tib.generate('--spec', tib.write('depot.yaml', Tib.DEPOT_ONLY))
 
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     !Files.exists(dir.resolve(ENTITY))
@@ -164,12 +166,12 @@ class StatusCommandSpec extends Specification {
     Files.writeString(spec, Files.readString(spec) + '# changed\n')
 
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     result.exitCode() == 1
     result.out() == """\
-      vehicle-service: tib 1.2.3, pack default ${Tib.state(dir).pack().version()}, 2 entities, ${Tib.state(dir).files().size()} files.
+      vehicle-service: tib 1.2.3, pack default ${tib.state().pack().version()}, 2 entities, ${tib.state().files().size()} files.
       Every file of tib's is as it wrote it.
 
       Read from:
@@ -180,8 +182,8 @@ class StatusCommandSpec extends Specification {
     result.err() == ''
 
     when: 'tib runs with it again'
-    tib.run('generate', 'entity', '--spec', spec.toString(), '-d', dir.toString())
-    Result again = tib.run('status', '-d', dir.toString())
+    tib.generate('--spec', spec.toString())
+    Result again = tib.status()
 
     then:
     again.exitCode() == 0
@@ -199,7 +201,7 @@ class StatusCommandSpec extends Specification {
     Files.writeString(dir.resolve(ENTITY + 'VehicleGenerated.java'), 'edited\n')
 
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     result.exitCode() == 1
@@ -217,13 +219,13 @@ class StatusCommandSpec extends Specification {
 
     when: 'tib runs with the spec where it is now'
     String moved = EXAMPLES.resolve('vehicle-service.yaml').toString()
-    tib.run('generate', 'entity', '--spec', moved, '-d', dir.toString())
-    Result again = tib.run('status', '-d', dir.toString())
+    tib.generate('--spec', moved)
+    Result again = tib.status()
 
     then: 'the state forgot where the spec was'
     again.exitCode() == 0
     !again.out().contains('Read from:')
-    Tib.state(dir).inputs()*.path() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(moved), '').path()]
+    tib.state().inputs()*.path() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(moved), '').path()]
   }
 
   def "a spec file that is there but cannot be read is reported"() {
@@ -234,7 +236,7 @@ class StatusCommandSpec extends Specification {
     Files.createDirectory(spec)
 
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     result.exitCode() == 1
@@ -248,7 +250,7 @@ class StatusCommandSpec extends Specification {
     Files.writeString(dir.resolve(State.PATH), state)
 
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     result.out().readLines()[0] == "s: tib 1, pack p 2, $what."
@@ -259,23 +261,30 @@ class StatusCommandSpec extends Specification {
     '1 entity, 1 file'   | 'tib: 1\npack: {name: p, version: 2}\nspec: {tib: 1, service: s, entities: [{name: A}]}\nfiles: [{path: A.java, owner: developer, sha256: x}]\n'
   }
 
-  def "a state file that tib cannot read is reported"() {
+  def "a state file that tib cannot read is reported: #state"() {
     given:
     Files.createDirectories(dir.resolve('.tib'))
-    Files.writeString(dir.resolve(State.PATH), '[')
+    Files.writeString(dir.resolve(State.PATH), state)
 
     when:
-    Result result = tib.run('status', '-d', dir.toString())
+    Result result = tib.status()
 
     then:
     result.exitCode() == 1
-    result.err().startsWith("${dir.toAbsolutePath().normalize()}: the state file has a problem: state: ")
+    result.out() == ''
+    result.err().startsWith("${tib.root}: $message")
+    result.err().readLines().size() == 1
+
+    where:
+    state                                                                         | message
+    '['                                                                           | 'the state file has a problem: state: '
+    'tib: 1.2.3\npack: { name: default, version: 1 }\nspec:\n  tib: 1\n  service: int\n' | "the state file has a problem: spec.service: 'int' makes the package 'int'"
   }
 
   /** Scaffolds the service of the spec and generates its entities; the spec file. */
   private String generated(String spec = EXAMPLES.resolve('vehicle-service.yaml').toString()) {
-    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
-    tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+    tib.init('--spec', spec)
+    tib.generate('--spec', spec)
     spec
   }
 }

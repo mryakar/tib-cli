@@ -27,11 +27,49 @@ class Tib {
   /** The examples of the documentation: the spec and the DDL of a service. */
   static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
 
+  /** The spec of the documentation without its vehicle: the depot only. */
+  static final String DEPOT_ONLY = Files.readString(EXAMPLES.resolve('vehicle-service.yaml'))
+  .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, '')
+
   /** What a run printed, with the line separator of every platform, and its exit code. */
   record Result(int exitCode, String out, String err) {}
 
+  /** The directory of the service that the commands of the test work on, if any. */
+  final Path service
+
+  /** The directory of the service as the messages of tib name it. */
+  final String root
+
+  private final String version
+
+  Tib(Path service = null, String version = '1.2.3') {
+    this.service = service
+    this.root = service?.toAbsolutePath()?.normalize()?.toString()
+    this.version = version
+  }
+
+  /** Runs {@code tib init service} on the service. */
+  Result init(String... args) {
+    run('init', 'service', *args, '-d', service.toString())
+  }
+
+  /** Runs {@code tib generate entity} on the service. */
+  Result generate(String... args) {
+    run('generate', 'entity', *args, '-d', service.toString())
+  }
+
+  /** Runs {@code tib status} on the service. */
+  Result status() {
+    run('status', '-d', service.toString())
+  }
+
+  /** Writes the file into the service; its path. */
+  String write(String name, String content) {
+    Files.writeString(service.resolve(name), content).toString()
+  }
+
   /** The state file of the service, as a tib newer than those of the tests reads it. */
-  static State state(Path service) {
+  State state() {
     State.of(Tree.at(service), '9.9.9')
   }
 
@@ -39,7 +77,7 @@ class Tib {
    * Every file and directory of the service by path, with the content of each file, a character for
    * each byte; git's own files are not the service's.
    */
-  static Map<String, String> files(Path service) {
+  Map<String, String> files() {
     Files.walk(service).withCloseable { paths ->
       paths.filter {
         it != service && !service.relativize(it).startsWith('.git')
@@ -50,12 +88,6 @@ class Tib {
         ]
       }
     }
-  }
-
-  private final String version
-
-  Tib(String version = '1.2.3') {
-    this.version = version
   }
 
   Result run(String... args) {

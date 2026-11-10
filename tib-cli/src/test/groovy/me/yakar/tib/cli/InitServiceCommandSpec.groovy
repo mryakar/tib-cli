@@ -29,7 +29,11 @@ class InitServiceCommandSpec extends Specification {
   @TempDir
   Path dir
 
-  Tib tib = new Tib()
+  Tib tib
+
+  def setup() {
+    tib = new Tib(dir)
+  }
 
   def "the name or the spec is required"() {
     when:
@@ -45,7 +49,7 @@ class InitServiceCommandSpec extends Specification {
 
   def "the name and the spec exclude each other"() {
     when:
-    Result result = tib.run('init', 'service', 'vehicle-service', '--spec', EXAMPLES.resolve('vehicle-service.yaml').toString(), '-d', dir.toString())
+    Result result = tib.init('vehicle-service', '--spec', EXAMPLES.resolve('vehicle-service.yaml').toString())
 
     then:
     result.exitCode() == 2
@@ -56,7 +60,7 @@ class InitServiceCommandSpec extends Specification {
 
   def "a dry run prints the diff and writes nothing"() {
     when:
-    Result result = tib.run('init', 'service', 'vehicle-service', '--dir', dir.toString(), '--dry-run')
+    Result result = tib.init('vehicle-service', '--dry-run')
 
     then:
     result.exitCode() == 0
@@ -67,12 +71,12 @@ class InitServiceCommandSpec extends Specification {
 
   def "scaffolds the service and records what it wrote"() {
     when:
-    Result result = tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    Result result = tib.init('vehicle-service')
 
     then:
     result.exitCode() == 0
-    State state = Tib.state(dir)
-    result.out() == "Wrote ${state.files().size() + 1} files to ${dir.toAbsolutePath().normalize()}.\n"
+    State state = tib.state()
+    result.out() == "Wrote ${state.files().size() + 1} files to ${tib.root}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/VehicleServiceApplication.java'))
     state.tib() == '1.2.3'
     state.pack().name() == 'default'
@@ -82,17 +86,17 @@ class InitServiceCommandSpec extends Specification {
 
   def "a directory that is a tib project already is refused"() {
     given:
-    tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    tib.init('vehicle-service')
 
     when:
-    Result result = tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())
+    Result result = tib.init('vehicle-service')
 
     then:
     result.exitCode() == 1
-    result.err() == "${dir.toAbsolutePath().normalize()} is already a tib project: .tib/state.yaml is there\n"
+    result.err() == "${tib.root} is already a tib project: .tib/state.yaml is there\n"
 
     when: 'the spec has a problem too'
-    Result broken = tib.run('init', 'service', '--spec', Files.writeString(dir.resolve('spec.yaml'), 'tib: 2\n').toString(), '-d', dir.toString())
+    Result broken = tib.init('--spec', Files.writeString(dir.resolve('spec.yaml'), 'tib: 2\n').toString())
 
     then: 'the project is what is reported'
     broken.exitCode() == 1
@@ -101,11 +105,11 @@ class InitServiceCommandSpec extends Specification {
 
   def "scaffolds the service of a spec file"() {
     when:
-    Result result = tib.run('init', 'service', '--spec', EXAMPLES.resolve('vehicle-service.yaml').toString(), '-d', dir.toString())
+    Result result = tib.init('--spec', EXAMPLES.resolve('vehicle-service.yaml').toString())
 
     then:
     result.exitCode() == 0
-    State state = Tib.state(dir)
+    State state = tib.state()
     state.spec().entities()*.name() == ['Vehicle', 'Depot']
     state.inputs() == [
       State.Input.of(State.Input.Kind.SPEC, dir, EXAMPLES.resolve('vehicle-service.yaml'), Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
@@ -118,18 +122,18 @@ class InitServiceCommandSpec extends Specification {
     Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), dir.resolve('vehicle-service.yaml'))
 
     when:
-    Result result = tib.run('init', 'service', '--spec', dir.resolve('vehicle-service.yaml').toString(), '-d', service.toString())
+    Result result = new Tib(service).init('--spec', dir.resolve('vehicle-service.yaml').toString())
 
     then:
     result.exitCode() == 0
-    State.Input input = Tib.state(service).inputs()[0]
+    State.Input input = new Tib(service).state().inputs()[0]
     input.kind() == State.Input.Kind.SPEC
     input.path() == '../vehicle-service.yaml'
   }
 
   def "a name that is not the name of a service is reported"() {
     when:
-    Result result = tib.run('init', 'service', 'Vehicle Service', '-d', dir.toString())
+    Result result = tib.init('Vehicle Service')
 
     then:
     result.exitCode() == 1
@@ -141,7 +145,7 @@ class InitServiceCommandSpec extends Specification {
     Path spec = Files.writeString(dir.resolve('spec.yaml'), yaml)
 
     when:
-    Result result = tib.run('init', 'service', '--spec', spec.toString(), '-d', dir.resolve('service').toString())
+    Result result = new Tib(dir.resolve('service')).init('--spec', spec.toString())
 
     then:
     result.exitCode() == 1
@@ -155,7 +159,7 @@ class InitServiceCommandSpec extends Specification {
 
   def "a spec file that is not there is reported"() {
     when:
-    Result result = tib.run('init', 'service', '--spec', 'no-such-spec.yaml', '-d', dir.toString())
+    Result result = tib.init('--spec', 'no-such-spec.yaml')
 
     then:
     result.exitCode() == 1
@@ -167,7 +171,7 @@ class InitServiceCommandSpec extends Specification {
     Path file = Files.writeString(dir.resolve('file'), '')
 
     when:
-    Result result = tib.run('init', 'service', 's', '-d', file.toString())
+    Result result = new Tib(file).init('s')
 
     then:
     result.exitCode() == 1
