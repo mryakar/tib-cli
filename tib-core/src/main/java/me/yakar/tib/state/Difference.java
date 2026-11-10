@@ -37,6 +37,11 @@ public record Difference(String path, Kind kind) {
     /** A file of the developer's was removed; tib does not write it again. */
     REMOVED;
 
+    /** Whether the difference is a problem: tib needs the file as it read or wrote it. */
+    public boolean problem() {
+      return this != ABSENT && this != REMOVED;
+    }
+
     /** The name in the output of tib. */
     @Override
     public String toString() {

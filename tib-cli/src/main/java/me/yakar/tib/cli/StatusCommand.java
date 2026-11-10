@@ -16,9 +16,7 @@
 package me.yakar.tib.cli;
 
 import java.io.PrintWriter;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 import me.yakar.tib.state.Difference;
@@ -52,10 +50,6 @@ import picocli.CommandLine.Model.CommandSpec;
       "3:tib failed; a bug, reported with its stack trace."
     })
 public class StatusCommand implements Callable<Integer> {
-
-  /** The differences that are no problem: tib does not need the file. */
-  private static final Set<Difference.Kind> FINE =
-      EnumSet.of(Difference.Kind.ABSENT, Difference.Kind.REMOVED);
 
   @CommandLine.Spec private CommandSpec commandSpec;
 
@@ -100,7 +94,7 @@ public class StatusCommand implements Callable<Integer> {
         out.println(explanation(kind));
       }
     }
-    boolean wrong = differences.stream().anyMatch(difference -> !FINE.contains(difference.kind()));
+    boolean wrong = differences.stream().anyMatch(difference -> difference.kind().problem());
     return wrong ? ExitCode.SOFTWARE : ExitCode.OK;
   }
 
