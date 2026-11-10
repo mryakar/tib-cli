@@ -77,8 +77,12 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
           .enable(YAMLWriteFeature.MINIMIZE_QUOTES)
           .build();
 
-  /** The pack that generated the files. */
-  public record PackRef(String name, String version) {}
+  /**
+   * The pack that generated the files.
+   *
+   * @param stack the stack that the pack generates for; none in a state written before tib named it
+   */
+  public record PackRef(String name, String version, String stack) {}
 
   /**
    * A file that the spec of the service was read from, with the SHA-256 of its content when it was

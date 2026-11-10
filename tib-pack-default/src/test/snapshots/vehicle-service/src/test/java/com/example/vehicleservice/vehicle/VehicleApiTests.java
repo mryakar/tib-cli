@@ -4,21 +4,23 @@ package com.example.vehicleservice.vehicle;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.vehicleservice.TestcontainersConfiguration;
-import com.fasterxml.jackson.databind.JsonNode;
 import java.math.BigDecimal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import tools.jackson.databind.JsonNode;
 
 /** The API of vehicles, over HTTP, against PostgreSQL in a container. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 @Import(TestcontainersConfiguration.class)
 class VehicleApiTests {
 
@@ -94,7 +96,7 @@ class VehicleApiTests {
     ResponseEntity<JsonNode> list = http.getForEntity("/api/vehicles", JsonNode.class);
 
     assertThat(list.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(list.getBody().findValuesAsText("id")).contains(vehicle.id().toString());
+    assertThat(list.getBody().findValuesAsString("id")).contains(vehicle.id().toString());
   }
 
   @Test
@@ -126,7 +128,7 @@ class VehicleApiTests {
     ResponseEntity<JsonNode> created = http.postForEntity("/api/vehicles", dto(), JsonNode.class);
 
     assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    assertThat(created.getBody().path("detail").asText())
+    assertThat(created.getBody().path("detail").asString())
         .isEqualTo("The request breaks a constraint of the database.");
   }
 

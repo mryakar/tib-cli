@@ -43,6 +43,11 @@ public final class TestPack implements Pack {
   }
 
   @Override
+  public String stack() {
+    return "Test " + version;
+  }
+
+  @Override
   public Generator init() {
     return (Project project, Tree tree) -> tree.own("test.txt", project.name() + "\n");
   }

@@ -286,6 +286,30 @@ class GenerateEntityCommandSpec extends Specification {
     Tib.state(dir).spec().entities()*.name() == ['Depot', 'Vehicle']
   }
 
+  def "a service generated for #stack is refused, and tib status still reads it"() {
+    given:
+    tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
+    Path state = dir.resolve('.tib/state.yaml')
+    String pack = Tib.state(dir).pack().version()
+    Files.writeString(state, Files.readString(state).replace('  stack: Spring Boot 4\n', line))
+
+    when:
+    Result result = tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
+
+    then:
+    result.exitCode() == 1
+    result.err() == """\
+      ${dir.toAbsolutePath().normalize()} was generated for $stack by tib 1.2.3; pack default $pack generates for Spring Boot 4
+      Run tib 1.2.3 on it until the service moves to Spring Boot 4.
+      """.stripIndent()
+    tib.run('status', '-d', dir.toString()).exitCode() == 0
+
+    where:
+    stack               | line
+    'an earlier stack'  | ''
+    'Spring Boot 3'     | '  stack: Spring Boot 3\n'
+  }
+
   def "#problem is reported with exit code 1"() {
     given:
     tib.run('init', 'service', 'vehicle-service', '-d', dir.toString())

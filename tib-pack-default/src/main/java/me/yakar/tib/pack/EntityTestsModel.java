@@ -144,9 +144,9 @@ public record EntityTestsModel(EntityModel entity) {
       statics.add("org.assertj.core.api.Assertions.assertThatThrownBy");
       imports.add("org.springframework.dao.DataIntegrityViolationException");
     }
-    imports.add("org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase");
-    imports.add("org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest");
-    imports.add("org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager");
+    imports.add("org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest");
+    imports.add("org.springframework.boot.jdbc.test.autoconfigure.AutoConfigureTestDatabase");
+    imports.add("org.springframework.boot.jpa.test.autoconfigure.TestEntityManager");
     return staticImports(statics) + EntityModel.imports(imports);
   }
 
@@ -176,10 +176,12 @@ public record EntityTestsModel(EntityModel entity) {
     statics.add("org.assertj.core.api.Assertions.assertThat");
     SortedSet<String> imports = containerTestsImports();
     imports.addAll(entity.idImports());
-    imports.add("com.fasterxml.jackson.databind.JsonNode");
     imports.add("org.junit.jupiter.api.AfterEach");
+    imports.add("org.springframework.boot.resttestclient.TestRestTemplate");
+    imports.add(
+        "org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate");
     imports.add("org.springframework.boot.test.context.SpringBootTest");
-    imports.add("org.springframework.boot.test.web.client.TestRestTemplate");
+    imports.add("tools.jackson.databind.JsonNode");
     imports.add("org.springframework.http.HttpEntity");
     imports.add("org.springframework.http.HttpMethod");
     imports.add("org.springframework.http.HttpStatus");

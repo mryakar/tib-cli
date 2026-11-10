@@ -9,6 +9,7 @@ package ${entity.packageName()};
 
 ${tests.apiTestsImports()}/** The API of ${entity.plural()}, over HTTP, against PostgreSQL in a container. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 @Import(TestcontainersConfiguration.class)
 class ${entity.name()}ApiTests {
 
@@ -107,7 +108,7 @@ class ${entity.name()}ApiTests {
     ResponseEntity<JsonNode> list = http.getForEntity("${path}", JsonNode.class);
 
     assertThat(list.getStatusCode()).isEqualTo(HttpStatus.OK);
-    assertThat(list.getBody().findValuesAsText("${entity.idField()}")).contains(${entity.variable()}.${entity.idField()}().toString());
+    assertThat(list.getBody().findValuesAsString("${entity.idField()}")).contains(${entity.variable()}.${entity.idField()}().toString());
   }
 
   @Test
@@ -142,7 +143,7 @@ class ${entity.name()}ApiTests {
     ResponseEntity<JsonNode> created = http.postForEntity("${path}", dto(), JsonNode.class);
 
     assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    assertThat(created.getBody().path("detail").asText())
+    assertThat(created.getBody().path("detail").asString())
         .isEqualTo("The request breaks a constraint of the database.");
   }
   @endif<%-- keeps the blank line below --%>

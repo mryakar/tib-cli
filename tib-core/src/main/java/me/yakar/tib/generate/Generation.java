@@ -74,7 +74,7 @@ public final class Generation {
         State.next(
             previous,
             tibVersion,
-            new State.PackRef(pack.name(), pack.version()),
+            new State.PackRef(pack.name(), pack.version(), pack.stack()),
             inputs,
             project.spec(),
             tree);
