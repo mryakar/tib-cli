@@ -46,6 +46,7 @@ tasks.processResources {
     mapOf(
       "version" to tibVersion,
       "boot" to libs.versions.generated.spring.boot.get(),
+      "java" to libs.versions.generated.java.get(),
       "postgres" to libs.versions.generated.postgres.get(),
       "googleJavaFormat" to libs.versions.google.java.format.get(),
     )
