@@ -28,9 +28,10 @@ import spock.lang.TempDir
 
 /**
  * The services of the example spec, of its DDL and of the corner spec of the snapshots, generated
- * and then built with their own Gradle wrapper, as a user would build them. Where Docker runs Linux containers, the
- * build includes the tests of the service, which start PostgreSQL in a container; elsewhere the
- * build compiles the service and its tests. On Linux under CI, Docker has to be there.
+ * and then built with their own Gradle wrapper, as a user would build them. Where Docker runs
+ * Linux containers, the build includes the tests of the service, which start PostgreSQL in a
+ * container; elsewhere the build compiles the service and its tests. On Linux under CI, Docker has
+ * to be there.
  */
 class GeneratedServiceSpec extends Specification {
 
@@ -69,7 +70,7 @@ class GeneratedServiceSpec extends Specification {
     println Files.readString(log)
 
     then:
-    assert gradle.exitValue() == 0 : Files.readString(log)
+    gradle.exitValue() == 0
     String classes = project.packagePath() + '/' + project.applicationClass()
     Files.exists(dir.resolve("build/classes/java/main/${classes}.class"))
     Files.exists(dir.resolve("build/classes/java/test/${project.packagePath()}/Test${project.applicationClass()}.class"))
