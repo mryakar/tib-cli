@@ -1,4 +1,4 @@
-// Written by tib on every run. Do not edit: your changes would be lost. Your code goes in Item.
+// Written by tib on every run. Do not edit: your changes would be lost.
 package me.yakar.cornerservice.item;
 
 import jakarta.persistence.Column;

@@ -1,4 +1,4 @@
-// Written by tib on every run. Do not edit: your changes would be lost. Your code goes in Depot.
+// Written by tib on every run. Do not edit: your changes would be lost.
 package com.example.vehicleservice.depot;
 
 import jakarta.persistence.Column;

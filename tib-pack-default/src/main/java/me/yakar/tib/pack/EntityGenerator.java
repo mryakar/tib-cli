@@ -88,8 +88,7 @@ final class EntityGenerator implements Generator {
     String test = entity.testDirectory() + "/" + entity.name();
     Map<String, Object> model = Map.of("entity", entity);
     Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity));
-    String generated = EVERY_RUN + " Your code goes in " + entity.name() + ".";
-    own(tree, main + "Generated.java", generated, "entity/generated_java.jte", model);
+    own(tree, main + "Generated.java", EVERY_RUN, "entity/generated_java.jte", model);
     once(tree, main + ".java", ONCE, "entity/entity_java.jte", model);
     once(tree, main + "Repository.java", ONCE, "entity/repository_java.jte", model);
     if (entity.dto()) {
@@ -99,12 +98,7 @@ final class EntityGenerator implements Generator {
     String migration = migration(tree, entity);
     tree.lasting(
         migration, Templates.render(migration, MIGRATION, "entity/migration_sql.jte", model));
-    own(
-        tree,
-        test + "Samples.java",
-        EVERY_RUN + " A test changes a sample through its builder.",
-        "entity/samples_java.jte",
-        tests);
+    own(tree, test + "Samples.java", EVERY_RUN, "entity/samples_java.jte", tests);
     once(tree, test + "RepositoryTests.java", ONCE, "entity/repository_tests_java.jte", tests);
     if (entity.layer()) {
       own(tree, main + "Mapper.java", EVERY_RUN, "entity/mapper_java.jte", model);
