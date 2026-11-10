@@ -52,9 +52,12 @@ tasks.processResources {
   inputs.properties(properties)
   filesMatching("**/pack.properties") { expand(properties) }
   // The Gradle wrapper of this build, which the pack writes into a new service.
-  from(layout.settingsDirectory) {
-    include("gradlew", "gradlew.bat", "gradle/wrapper/gradle-wrapper.*")
-    into("me/yakar/tib/pack/wrapper")
+  val root = layout.settingsDirectory
+  from(root.files("gradlew", "gradlew.bat")) { into("me/yakar/tib/pack/wrapper") }
+  from(
+    root.files("gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties"),
+  ) {
+    into("me/yakar/tib/pack/wrapper/gradle/wrapper")
   }
 }
 
