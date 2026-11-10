@@ -4,7 +4,6 @@ package com.example.vehicleservice.depot;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.vehicleservice.TestcontainersConfiguration;
-import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -101,7 +100,7 @@ class DepotApiTests {
 
   @Test
   void refusesADepotWithoutItsRequiredValues() {
-    DepotDto empty = new DepotDto(null, null, null);
+    DepotDto empty = DepotSamples.emptyDto().build();
 
     ResponseEntity<String> created = http.postForEntity("/api/depots", empty, String.class);
 
@@ -126,11 +125,11 @@ class DepotApiTests {
 
   /** A depot as the API takes it, with the first sample values. */
   private DepotDto dto() {
-    return new DepotDto(null, "One", LocalDate.of(2026, 1, 1));
+    return DepotSamples.dto().build();
   }
 
   /** A depot as the API takes it, with the second sample values. */
   private DepotDto otherDto() {
-    return new DepotDto(null, "Two", LocalDate.of(2026, 1, 2));
+    return DepotSamples.otherDto().build();
   }
 }

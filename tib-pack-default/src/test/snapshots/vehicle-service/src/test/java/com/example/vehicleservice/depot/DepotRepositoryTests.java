@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.example.vehicleservice.TestcontainersConfiguration;
-import java.time.LocalDate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -25,26 +24,19 @@ class DepotRepositoryTests {
 
   @Test
   void savesAndFindsADepot() {
-    Depot depot = depots.saveAndFlush(newDepot());
+    Depot depot = depots.saveAndFlush(DepotSamples.depot().build());
     entityManager.clear();
 
     Depot found = depots.findById(depot.getId()).orElseThrow();
-    assertThat(found.getCode()).isEqualTo("One");
-    assertThat(found.getOpenedOn()).isEqualTo(LocalDate.of(2026, 1, 1));
+    assertThat(found.getCode()).isEqualTo(depot.getCode());
+    assertThat(found.getOpenedOn()).isEqualTo(depot.getOpenedOn());
   }
 
   @Test
   void refusesADepotWhoseUniqueValuesAreTaken() {
-    depots.saveAndFlush(newDepot());
+    depots.saveAndFlush(DepotSamples.depot().build());
 
-    assertThatThrownBy(() -> depots.saveAndFlush(newDepot()))
+    assertThatThrownBy(() -> depots.saveAndFlush(DepotSamples.depot().build()))
         .isInstanceOf(DataIntegrityViolationException.class);
-  }
-
-  private Depot newDepot() {
-    Depot depot = new Depot();
-    depot.setCode("One");
-    depot.setOpenedOn(LocalDate.of(2026, 1, 1));
-    return depot;
   }
 }

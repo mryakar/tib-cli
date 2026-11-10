@@ -23,6 +23,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   once. A file that is not text, such as the jar of the wrapper, shows in the diff of `--dry-run`
   as a line that says it differs, as in git, and `gradlew` is written as a file to run.
 
+- `tib generate entity` writes `XSamples` among the tests of an entity, on every run: builders of
+  the entity and of its DTO with the first or the second sample values, which the generated tests
+  share. A test changes one value through the builder, and the samples follow the spec when a
+  field is added. The tests that an earlier tib wrote are left as they are.
+
 ### Changed
 
 - The Java that the default pack generates is formatted with google-java-format, its imports

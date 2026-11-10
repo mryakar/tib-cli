@@ -3,13 +3,10 @@ package me.yakar.cornerservice.tag;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.UUID;
 import me.yakar.cornerservice.TestcontainersConfiguration;
 import me.yakar.cornerservice.branch.Branch;
 import me.yakar.cornerservice.branch.BranchRepository;
+import me.yakar.cornerservice.branch.BranchSamples;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,7 +35,7 @@ class TagApiTests {
 
   @BeforeEach
   void saveWhatATagNeeds() {
-    branch = branches.saveAndFlush(newBranch());
+    branch = branches.saveAndFlush(BranchSamples.branch().build());
   }
 
   @AfterEach
@@ -114,7 +111,7 @@ class TagApiTests {
 
   @Test
   void refusesATagWithoutItsRequiredValues() {
-    TagDto empty = new TagDto(null, null, null, null);
+    TagDto empty = TagSamples.emptyDto().build();
 
     ResponseEntity<String> created = http.postForEntity("/api/tags", empty, String.class);
 
@@ -128,24 +125,11 @@ class TagApiTests {
 
   /** A tag as the API takes it, with the first sample values. */
   private TagDto dto() {
-    return new TagDto(null, "One", branch.getId(), null);
+    return TagSamples.dto(branch.getId()).build();
   }
 
   /** A tag as the API takes it, with the second sample values. */
   private TagDto otherDto() {
-    return new TagDto(null, "Two", branch.getId(), null);
-  }
-
-  private Branch newBranch() {
-    Branch branch = new Branch();
-    branch.setCode("One");
-    branch.setCount(1L);
-    branch.setOpen(true);
-    branch.setOpenedAt(LocalDateTime.of(2026, 1, 1, 12, 0));
-    branch.setSeenAt(Instant.parse("2026-01-01T12:00:00Z"));
-    branch.setToken(UUID.fromString("00000000-0000-0000-0000-000000000001"));
-    branch.setRatio(new BigDecimal("1"));
-    branch.setAmount(new BigDecimal("1"));
-    return branch;
+    return TagSamples.otherDto(branch.getId()).build();
   }
 }

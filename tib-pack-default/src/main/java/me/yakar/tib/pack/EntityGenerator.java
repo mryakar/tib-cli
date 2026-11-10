@@ -99,6 +99,12 @@ final class EntityGenerator implements Generator {
     String migration = migration(tree, entity);
     tree.lasting(
         migration, Templates.render(migration, MIGRATION, "entity/migration_sql.jte", model));
+    own(
+        tree,
+        test + "Samples.java",
+        EVERY_RUN + " A test changes a sample through its builder.",
+        "entity/samples_java.jte",
+        tests);
     once(tree, test + "RepositoryTests.java", ONCE, "entity/repository_tests_java.jte", tests);
     if (entity.layer()) {
       own(tree, main + "Mapper.java", EVERY_RUN, "entity/mapper_java.jte", model);

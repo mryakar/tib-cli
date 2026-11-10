@@ -76,7 +76,7 @@ $ tib generate entity --spec vehicle-service.yaml --dry-run
 +++ b/.tib/state.yaml
 ...
 $ tib generate entity --spec vehicle-service.yaml
-Wrote 24 files to /home/you/vehicle-service.
+Wrote 26 files to /home/you/vehicle-service.
 ----
 
 For `Vehicle` that is, in the package `com.example.vehicleservice.vehicle`: `VehicleGenerated`,
@@ -107,9 +107,12 @@ Its tests come with it, written once, in the same package under `src/test/java`:
 `VehicleRepositoryTests` saves and reads a vehicle, `VehicleApiTests` calls every operation of
 the API over HTTP, both against PostgreSQL in a container, and `VehicleServiceTests` tests the
 service with its repository and mapper mocked. For an entity with a unique value,
-`VehicleApiTests` also checks that a second one with the same value gets `409 Conflict`. They fill the entity with sample values that fit
-its columns; `./gradlew build` runs them. An entity without a service and a controller, because
-its spec turns off its DTO or its mapper, gets the repository test only.
+`VehicleApiTests` also checks that a second one with the same value gets `409 Conflict`. They take
+their vehicles from `VehicleSamples`, written on every run, which builds a vehicle or its DTO with
+sample values that fit its columns; a test changes a value through the builder, as in
+`VehicleSamples.vehicle().capacity(40).build()`, and the samples follow the spec when it changes.
+`./gradlew build` runs them. An entity without a service and a controller, because its spec turns
+off its DTO or its mapper, gets the repository test only.
 
 The state file now also names the spec file that the entities came from, relative to the service,
 with the hash of its content when tib read it:
@@ -182,7 +185,7 @@ forgets it:
 [source,bash]
 ----
 $ tib status
-vehicle-service: tib 0.3.0, pack default 0.3.0, 2 entities, 37 files.
+vehicle-service: tib 0.3.0, pack default 0.3.0, 2 entities, 39 files.
 
 Read from:
 changed  vehicle-service.sql

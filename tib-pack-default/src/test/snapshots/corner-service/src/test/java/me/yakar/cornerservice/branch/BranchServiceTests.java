@@ -8,11 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -84,18 +80,6 @@ class BranchServiceTests {
   }
 
   private static BranchDto dto() {
-    return new BranchDto(
-        ID,
-        "One",
-        1L,
-        true,
-        LocalDateTime.of(2026, 1, 1, 12, 0),
-        Instant.parse("2026-01-01T12:00:00Z"),
-        UUID.fromString("00000000-0000-0000-0000-000000000001"),
-        new BigDecimal("1"),
-        new BigDecimal("1"),
-        1L,
-        null,
-        null);
+    return BranchSamples.dto().id(ID).build();
   }
 }

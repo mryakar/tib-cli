@@ -4,7 +4,6 @@ package com.example.vehicleservice.vehicle;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.example.vehicleservice.TestcontainersConfiguration;
-import java.math.BigDecimal;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -114,7 +113,7 @@ class VehicleApiTests {
 
   @Test
   void refusesAVehicleWithoutItsRequiredValues() {
-    VehicleDto empty = new VehicleDto(null, null, null, null, null, null, null);
+    VehicleDto empty = VehicleSamples.emptyDto().build();
 
     ResponseEntity<String> created = http.postForEntity("/api/vehicles", empty, String.class);
 
@@ -139,11 +138,11 @@ class VehicleApiTests {
 
   /** A vehicle as the API takes it, with the first sample values. */
   private VehicleDto dto() {
-    return new VehicleDto(null, "One", 1, new BigDecimal("1.00"), null, null, null);
+    return VehicleSamples.dto().build();
   }
 
   /** A vehicle as the API takes it, with the second sample values. */
   private VehicleDto otherDto() {
-    return new VehicleDto(null, "Two", 2, new BigDecimal("2.00"), null, null, null);
+    return VehicleSamples.otherDto().build();
   }
 }

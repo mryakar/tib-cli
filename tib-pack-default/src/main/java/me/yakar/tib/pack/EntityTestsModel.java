@@ -58,44 +58,90 @@ public record EntityTestsModel(EntityModel entity) {
     return Names.property(entity.plural());
   }
 
-  /**
-   * The arguments of a DTO that the API takes, with the first or the second sample values: no
-   * identifier, a relation that is not nullable to the saved target in its variable, the others to
-   * none, and no audit times.
-   */
-  public List<String> dtoSamples(int variant) {
-    List<String> arguments = new ArrayList<>();
-    arguments.add("null");
-    for (FieldModel field : entity.fields()) {
-      arguments.add(field.sample(variant));
-    }
-    for (RelationModel relation : entity.relations()) {
-      arguments.add(relation.nullable() ? "null" : relation.target().variable() + ".getId()");
-    }
-    auditArguments(arguments);
-    return arguments;
+  /** Whether the entity has a DTO, and so do its samples. */
+  public boolean dto() {
+    return entity.dto();
   }
 
   /**
-   * The arguments of a DTO for the test of the service, which uses no database: the identifier
-   * {@code ID}, the first sample values, and a sample identifier for every relation.
+   * The parameters of the samples of the entity: the saved targets of its required relations, as in
+   * {@code Depot depot}.
    */
-  public List<String> serviceDtoArguments() {
-    List<String> arguments = new ArrayList<>();
-    arguments.add("ID");
-    for (FieldModel field : entity.fields()) {
-      arguments.add(field.sample(1));
-    }
-    for (RelationModel relation : entity.relations()) {
-      arguments.add(new EntityTestsModel(relation.target()).sampleId());
-    }
-    auditArguments(arguments);
-    return arguments;
+  public String requiredParameters() {
+    return String.join(
+        ", ",
+        entity.requiredRelations().stream()
+            .map(relation -> relation.target().name() + " " + relation.field())
+            .toList());
   }
 
-  /** The arguments of a DTO without any value. */
-  public List<String> emptyDtoArguments() {
-    return entity.dtoComponents().stream().map(component -> "null").toList();
+  /**
+   * The parameters of the DTO samples of the entity: the identifiers of the targets of its required
+   * relations, as in {@code Long depotId}.
+   */
+  public String requiredIdParameters() {
+    return String.join(
+        ", ",
+        entity.requiredRelations().stream()
+            .map(relation -> relation.target().idType() + " " + relation.idField())
+            .toList());
+  }
+
+  /**
+   * The arguments of the samples of an entity in a test that saved what the entity needs first,
+   * each in the variable of its entity.
+   */
+  public static String requiredArguments(EntityModel model) {
+    return String.join(
+        ", ",
+        model.requiredRelations().stream().map(relation -> relation.target().variable()).toList());
+  }
+
+  /** The arguments of the DTO samples in a test that saved what the entity needs first. */
+  public String requiredIdArguments() {
+    return String.join(
+        ", ",
+        entity.requiredRelations().stream()
+            .map(relation -> relation.target().variable() + ".getId()")
+            .toList());
+  }
+
+  /**
+   * The arguments of the DTO samples in the test of the service, which uses no database: a sample
+   * identifier for every required relation.
+   */
+  public String sampleIdArguments() {
+    return String.join(
+        ", ",
+        entity.requiredRelations().stream()
+            .map(relation -> new EntityTestsModel(relation.target()).sampleId())
+            .toList());
+  }
+
+  /** The arguments of the DTO that its builder builds: every value, and no audit times. */
+  public String dtoBuilderArguments() {
+    List<String> arguments = new ArrayList<>();
+    arguments.add(entity.idField());
+    entity.fields().forEach(field -> arguments.add(field.name()));
+    entity.relations().forEach(relation -> arguments.add(relation.idField()));
+    auditArguments(arguments);
+    return String.join(", ", arguments);
+  }
+
+  /**
+   * The imports of the samples: the types of the values and of the targets of the relations; the
+   * formatter leaves out those that the samples do not use.
+   */
+  public String samplesImports() {
+    SortedSet<String> imports = entity.typeImports();
+    entity.relationIdImports(imports);
+    for (RelationModel relation : entity.relations()) {
+      EntityModel target = relation.target();
+      if (!target.packageName().equals(entity.packageName())) {
+        imports.add(target.packageName() + "." + target.name());
+      }
+    }
+    return EntityModel.imports(imports);
   }
 
   /** Whether a DTO without values breaks a constraint: a field or a relation is not nullable. */
@@ -199,7 +245,8 @@ public record EntityTestsModel(EntityModel entity) {
 
   /**
    * The imports of a test against PostgreSQL in a container: the sample values of this entity and
-   * of the entities it needs, those entities and their repositories, and what saves them first.
+   * of the entities it needs, those entities, their repositories and samples, and what saves them
+   * first.
    */
   private SortedSet<String> containerTestsImports() {
     SortedSet<String> imports = EntityModel.fieldImports(entity.fields());
@@ -207,6 +254,7 @@ public record EntityTestsModel(EntityModel entity) {
       imports.addAll(EntityModel.fieldImports(target.fields()));
       imports.add(target.packageName() + "." + target.name());
       imports.add(target.packageName() + "." + target.name() + "Repository");
+      imports.add(target.packageName() + "." + target.name() + "Samples");
     }
     if (!requiredTargets().isEmpty()) {
       imports.add("org.junit.jupiter.api.BeforeEach");

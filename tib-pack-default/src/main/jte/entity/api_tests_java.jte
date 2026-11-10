@@ -1,4 +1,3 @@
-@import gg.jte.support.ForSupport
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.EntityTestsModel
 @param EntityTestsModel tests
@@ -27,7 +26,7 @@ class ${entity.name()}ApiTests {
   @BeforeEach
   void saveWhatA${entity.name()}Needs() {
     @for(var target : tests.requiredTargets())
-    ${target.variable()} = ${target.plural()}.saveAndFlush(new${target.name()}());
+    ${target.variable()} = ${target.plural()}.saveAndFlush(${target.name()}Samples.${target.variable()}(${EntityTestsModel.requiredArguments(target)}).build());
     @endfor
   }
   @endif<%-- keeps the blank line below --%>
@@ -127,7 +126,7 @@ class ${entity.name()}ApiTests {
 
   @Test
   void refuses${tests.article()}${entity.name()}WithoutItsRequiredValues() {
-    ${dto} empty = new ${dto}(${String.join(", ", tests.emptyDtoArguments())});
+    ${dto} empty = ${entity.name()}Samples.emptyDto().build();
 
     ResponseEntity<String> created = http.postForEntity("${path}", empty, String.class);
 
@@ -155,30 +154,11 @@ class ${entity.name()}ApiTests {
 
   /** ${tests.article()} ${entity.variable()} as the API takes it, with the first sample values. */
   private ${dto} dto() {
-    return new ${dto}(
-        @for(var argument : ForSupport.of(tests.dtoSamples(1)))
-        ${argument.get()}${argument.isLast() ? ");" : ","}
-        @endfor
+    return ${entity.name()}Samples.dto(${tests.requiredIdArguments()}).build();
   }
 
   /** ${tests.article()} ${entity.variable()} as the API takes it, with the second sample values. */
   private ${dto} otherDto() {
-    return new ${dto}(
-        @for(var argument : ForSupport.of(tests.dtoSamples(2)))
-        ${argument.get()}${argument.isLast() ? ");" : ","}
-        @endfor
+    return ${entity.name()}Samples.otherDto(${tests.requiredIdArguments()}).build();
   }
-  @for(var model : tests.requiredTargets())<%-- keeps the blank line below --%>
-
-  private ${model.name()} new${model.name()}() {
-    ${model.name()} ${model.variable()} = new ${model.name()}();
-    @for(var field : model.fields())
-    ${model.variable()}.set${field.property()}(${field.sample(1)});
-    @endfor
-    @for(var relation : model.requiredRelations())
-    ${model.variable()}.set${relation.property()}(${relation.target().variable()});
-    @endfor
-    return ${model.variable()};
-  }
-  @endfor
 }

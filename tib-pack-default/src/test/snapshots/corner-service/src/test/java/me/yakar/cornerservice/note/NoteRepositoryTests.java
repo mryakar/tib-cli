@@ -22,16 +22,10 @@ class NoteRepositoryTests {
 
   @Test
   void savesAndFindsANote() {
-    Note note = notes.saveAndFlush(newNote());
+    Note note = notes.saveAndFlush(NoteSamples.note().build());
     entityManager.clear();
 
     Note found = notes.findById(note.getId()).orElseThrow();
-    assertThat(found.getText()).isEqualTo("One");
-  }
-
-  private Note newNote() {
-    Note note = new Note();
-    note.setText("One");
-    return note;
+    assertThat(found.getText()).isEqualTo(note.getText());
   }
 }

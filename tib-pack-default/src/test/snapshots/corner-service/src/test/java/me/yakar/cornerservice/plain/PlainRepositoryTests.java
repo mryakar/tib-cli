@@ -22,16 +22,10 @@ class PlainRepositoryTests {
 
   @Test
   void savesAndFindsAPlain() {
-    Plain plain = plains.saveAndFlush(newPlain());
+    Plain plain = plains.saveAndFlush(PlainSamples.plain().build());
     entityManager.clear();
 
     Plain found = plains.findById(plain.getId()).orElseThrow();
-    assertThat(found.getLabel()).isEqualTo("One");
-  }
-
-  private Plain newPlain() {
-    Plain plain = new Plain();
-    plain.setLabel("One");
-    return plain;
+    assertThat(found.getLabel()).isEqualTo(plain.getLabel());
   }
 }

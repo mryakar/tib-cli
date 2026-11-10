@@ -147,7 +147,7 @@ class GenerateEntityCommandSpec extends Specification {
     result.exitCode() == 0
     result.out() == """\
       Wrote 1 file to ${dir.toAbsolutePath().normalize()}.
-      Deleted 9 files that the spec no longer generates:
+      Deleted 10 files that the spec no longer generates:
         ${vehicle}VehicleController.java
         ${vehicle}VehicleDto.java
         ${vehicle}VehicleGenerated.java
@@ -156,6 +156,7 @@ class GenerateEntityCommandSpec extends Specification {
         ${vehicle}VehicleService.java
         ${tests}VehicleApiTests.java
         ${tests}VehicleRepositoryTests.java
+        ${tests}VehicleSamples.java
         ${tests}VehicleServiceTests.java
       """.stripIndent()
     result.err() == notice
