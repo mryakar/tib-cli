@@ -24,10 +24,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   field is added.
 - A run whose spec changes the columns of a table that has its migration says so on the standard
   error, with the diff from the migration that tib wrote to the one it would write now, and names
-  the migration of a table that left the spec. When a table comes back to the spec, the run names
-  the migration that tib wrote for it before, with the diff from the file as it is to the one the
-  spec generates now. The migrations stay as they are; changing, dropping or creating the table
-  again is a migration of yours.
+  the migration of a table that left the spec. When the spec generates a migration that is there
+  already or that tib wrote before, as for a table that comes back to the spec, the run names it,
+  with the diff from the file as it is to the one the spec generates now. The migrations stay as
+  they are; changing, dropping or creating the table again is a migration of yours.
 
 ### Changed
 
