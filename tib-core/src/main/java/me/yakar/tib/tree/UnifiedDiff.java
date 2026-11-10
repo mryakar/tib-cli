@@ -29,12 +29,15 @@ final class UnifiedDiff {
 
   private UnifiedDiff() {}
 
-  /** The diff of the file at the path, from its content before (null when new) to after. */
+  /**
+   * The diff of the file at the path, from its content before (null when new) to after (null when
+   * deleted).
+   */
   static String of(String path, String before, String after) {
     List<Edit> edits = edits(lines(before), lines(after));
     StringBuilder diff = new StringBuilder();
     diff.append(before == null ? "--- /dev/null" : "--- a/" + path).append('\n');
-    diff.append("+++ b/").append(path).append('\n');
+    diff.append(after == null ? "+++ /dev/null" : "+++ b/" + path).append('\n');
     int first = nextChange(edits, 0);
     while (first < edits.size()) {
       int last = first;

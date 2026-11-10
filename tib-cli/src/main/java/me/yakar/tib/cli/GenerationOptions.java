@@ -28,6 +28,7 @@ import me.yakar.tib.generate.Project;
 import me.yakar.tib.git.Git;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.state.State;
+import me.yakar.tib.tree.Change;
 import me.yakar.tib.tree.Tree;
 import picocli.CommandLine;
 import picocli.CommandLine.ExitCode;
@@ -65,9 +66,11 @@ final class GenerationOptions {
 
   /**
    * Runs the generator that the function picks from the pack of the service, then prints the diff
-   * of a dry run, or writes the files and says how many. A dry run that changes nothing says so on
-   * the standard error. A run that would write into a service with uncommitted changes is refused
-   * unless {@code --allow-dirty}. The inputs are the files the spec was read from.
+   * of a dry run, or writes the files, says how many, and names the files it deleted. A dry run
+   * that changes nothing says so on the standard error. A run that would write into a service with
+   * uncommitted changes is refused unless {@code --allow-dirty}. The files that the spec no longer
+   * generates and that stay, as they were edited, are named on the standard error. The inputs are
+   * the files the spec was read from.
    */
   int generate(
       Optional<State> previous,
@@ -75,7 +78,7 @@ final class GenerationOptions {
       List<State.Input> inputs,
       Function<Pack, Generator> generator,
       Tree tree) {
-    List<String> forgotten =
+    List<String> kept =
         Generation.run(
             previous,
             new Project(service),
@@ -93,7 +96,7 @@ final class GenerationOptions {
       if (files == 0) {
         err.println(NOTHING_TO_CHANGE);
       }
-      forgotten(err, forgotten);
+      kept(err, kept);
       return ExitCode.OK;
     }
     if (files == 0) {
@@ -112,19 +115,33 @@ final class GenerationOptions {
       err.println(uncommitted(tree, uncommitted));
       err.println("tib writes anyway, as --allow-dirty asks.");
     }
+    List<String> deleted =
+        tree.changes().stream().filter(Change::deletes).map(Change::path).toList();
     tree.apply();
     out.println(
-        "Wrote " + ServiceDirectory.count(files, "file", "files") + " to " + tree.root() + ".");
-    forgotten(err, forgotten);
+        "Wrote "
+            + ServiceDirectory.count(files - deleted.size(), "file", "files")
+            + " to "
+            + tree.root()
+            + ".");
+    if (!deleted.isEmpty()) {
+      out.println(
+          "Deleted "
+              + ServiceDirectory.count(deleted.size(), "file", "files")
+              + " that the spec no longer generates:");
+      deleted.forEach(path -> out.println("  " + path));
+    }
+    kept(err, kept);
     return ExitCode.OK;
   }
 
-  /** Names the files of tib's that the run forgot, as the spec no longer generates them. */
-  private static void forgotten(PrintWriter err, List<String> paths) {
+  /** Names the files that the spec no longer generates and that stay, as they were edited. */
+  private static void kept(PrintWriter err, List<String> paths) {
     if (!paths.isEmpty()) {
-      err.println("tib no longer generates these files from the spec, and forgets them:");
+      err.println(
+          "tib no longer generates these files from the spec; they stay, as they were edited:");
       paths.forEach(path -> err.println("  " + path));
-      err.println("Delete them: tib status no longer checks them.");
+      err.println("Delete them if the service no longer needs them.");
     }
   }
 

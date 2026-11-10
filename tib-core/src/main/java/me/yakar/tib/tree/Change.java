@@ -17,9 +17,14 @@ package me.yakar.tib.tree;
 
 /**
  * A change that a run of tib stages for one file: its content before, null when the file is new,
- * and after.
+ * and after, null when the file is deleted.
  */
 public record Change(String path, String before, String after, Owner owner) {
+
+  /** Whether the change deletes the file. */
+  public boolean deletes() {
+    return after == null;
+  }
 
   /** The change as a unified diff. */
   String diff() {

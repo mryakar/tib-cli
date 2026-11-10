@@ -106,6 +106,20 @@ entities:
     'renamed' | ['V1__a.sql']
   }
 
+  def "the migration of a table lasts: it is not among the files that the spec generates"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new EntityGenerator().generate(new Project(SpecReader.parse('tib: 1\nservice: s\nentities:\n  - name: A\n')), tree)
+
+    then: 'it is written, and a run whose spec has no A does not delete it'
+    String migration = "${EntityGenerator.MIGRATIONS}/V1__create_a.sql"
+    tree.changes()*.path().contains(migration)
+    !tree.generated().contains(migration)
+    tree.generated().contains('src/main/java/com/example/s/a/A.java')
+  }
+
   def "the first entity with an API brings the handler of conflicts, once: #entities"() {
     given:
     Tree tree = Tree.at(dir)

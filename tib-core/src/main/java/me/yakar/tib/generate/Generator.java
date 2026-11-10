@@ -20,9 +20,11 @@ import me.yakar.tib.tree.Tree;
 /**
  * Generates files of a project into a tree. A pack provides the generators.
  *
- * <p>A run forgets every file that tib owned before and that the generator does not {@link Tree#own
+ * <p>A run deletes every file that tib owned before and that the generator does not {@link Tree#own
  * own} again, so a file that tib keeps in step with the spec is owned by the generator that runs on
- * every {@code generate}.
+ * every {@code generate}. It also deletes a file that the generator wrote {@link Tree#once once}
+ * from the previous spec and no longer does, unless the developer edited it; a file that the
+ * generator wrote as {@link Tree#lasting lasting} stays.
  */
 public interface Generator {
 

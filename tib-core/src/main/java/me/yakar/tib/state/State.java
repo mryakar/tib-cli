@@ -165,8 +165,8 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
    * The state after a run that staged its files in the tree. The inputs of the run take the place
    * of those of the same path in the previous state, and the others stay, in their order; every
    * file that the run staged takes the place of the record of the same path, and the other records
-   * stay, but for the files of the generator's that the run did not stage again: the spec no longer
-   * has what they were generated from. The files are in the order of their paths.
+   * stay, but for the files that the run deleted: the spec no longer has what they were generated
+   * from. The files are in the order of their paths.
    *
    * @param previous the state before the run, if tib ran on the project before
    * @param tib the version of tib that ran
@@ -180,17 +180,19 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
       Tree tree) {
     Map<String, Input> read = new LinkedHashMap<>();
     SortedMap<String, File> written = new TreeMap<>();
-    List<String> owned = tree.owned();
+    List<String> deleted = tree.deleted();
     previous.ifPresent(
         state -> {
           state.inputs().forEach(input -> read.put(input.path(), input));
           state.files().stream()
-              .filter(file -> file.owner() != Owner.GENERATOR || owned.contains(file.path()))
+              .filter(file -> !deleted.contains(file.path()))
               .forEach(file -> written.put(file.path(), file));
         });
     inputs.forEach(input -> read.put(input.path(), input));
     for (Change change : tree.changes()) {
-      written.put(change.path(), File.of(change.path(), change.owner(), change.after()));
+      if (!change.deletes()) {
+        written.put(change.path(), File.of(change.path(), change.owner(), change.after()));
+      }
     }
     return new State(tib, pack, List.copyOf(read.values()), spec, List.copyOf(written.values()));
   }

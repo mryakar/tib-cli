@@ -49,7 +49,8 @@ public final class Tree {
   private final Path root;
   private final SortedMap<String, Change> changes = new TreeMap<>();
   private final SortedSet<String> writtenBefore = new TreeSet<>();
-  private final SortedSet<String> owned = new TreeSet<>();
+  private final SortedSet<String> generated = new TreeSet<>();
+  private final SortedSet<String> deleted = new TreeSet<>();
 
   private Tree(Path root) {
     this.root = root;
@@ -68,13 +69,14 @@ public final class Tree {
   public Optional<String> read(String path) {
     String key = key(path);
     Change change = changes.get(key);
-    return change != null ? Optional.of(change.after()) : onDisk(key);
+    return change != null ? Optional.ofNullable(change.after()) : onDisk(key);
   }
 
   /** Whether the file is there, as the run sees it; it is not read. */
   public boolean exists(String path) {
     String key = key(path);
-    return changes.containsKey(key) || Files.isRegularFile(root.resolve(key));
+    Change change = changes.get(key);
+    return change != null ? !change.deletes() : Files.isRegularFile(root.resolve(key));
   }
 
   /** The paths of the files under the directory, at any depth, on disk or staged, in order. */
@@ -82,7 +84,16 @@ public final class Tree {
     String prefix = key(directory) + "/";
     SortedSet<String> paths = new TreeSet<>();
     list(root.resolve(prefix).toFile(), prefix, paths);
-    changes.keySet().stream().filter(path -> path.startsWith(prefix)).forEach(paths::add);
+    for (Change change : changes.values()) {
+      if (!change.path().startsWith(prefix)) {
+        continue;
+      }
+      if (change.deletes()) {
+        paths.remove(change.path());
+      } else {
+        paths.add(change.path());
+      }
+    }
     return List.copyOf(paths);
   }
 
@@ -103,16 +114,8 @@ public final class Tree {
   /** Stages a file that the generator owns, whatever is there. */
   public void own(String path, String content) {
     String key = key(path);
-    owned.add(key);
+    generated.add(key);
     stage(key, content, Owner.GENERATOR);
-  }
-
-  /**
-   * The paths of the files that the generator owns and that were staged in this tree, in order,
-   * whether that changed them or not.
-   */
-  public List<String> owned() {
-    return List.copyOf(owned);
   }
 
   /**
@@ -121,9 +124,46 @@ public final class Tree {
    */
   public void once(String path, String content) {
     String key = key(path);
+    generated.add(key);
+    stageOnce(key, content);
+  }
+
+  /**
+   * Stages a file that the developer owns as {@link #once} does, but one that lasts: it is not
+   * among the {@link #generated()} files, so tib does not delete it when the spec no longer
+   * generates it, as a migration that a database may have run.
+   */
+  public void lasting(String path, String content) {
+    stageOnce(key(path), content);
+  }
+
+  private void stageOnce(String key, String content) {
     if (!writtenBefore.contains(key) && !exists(key)) {
       stage(key, content, Owner.DEVELOPER);
     }
+  }
+
+  /**
+   * The paths of the files that the generator owns or writes once and that were staged in this
+   * tree, in order, whether that changed them or not; the files that last are not among them.
+   */
+  public List<String> generated() {
+    return List.copyOf(generated);
+  }
+
+  /**
+   * Stages the deletion of a file of the owner's that tib no longer generates. A file that is not
+   * there stages nothing, and is deleted all the same.
+   */
+  public void delete(String path, Owner owner) {
+    String key = key(path);
+    deleted.add(key);
+    onDisk(key).ifPresent(before -> changes.put(key, new Change(key, before, null, owner)));
+  }
+
+  /** The paths of the files that were deleted in this tree, there or not, in order. */
+  public List<String> deleted() {
+    return List.copyOf(deleted);
   }
 
   /** Stages an edit of a shared file; the file has to be there. */
@@ -160,7 +200,9 @@ public final class Tree {
    * Writes the staged changes to disk. Every file is first written next to its target, as {@code
    * <name>.tib.tmp} with the permissions of a new file or of the file it replaces, and then moved
    * over it in one step, so a file is either the old one or the new one, never half written; when a
-   * write fails, the files written next to their targets are removed. Afterwards nothing is staged.
+   * write fails, the files written next to their targets are removed. Then the files to delete are
+   * deleted, and with them every directory that this leaves empty, up to the root. Afterwards
+   * nothing is staged.
    */
   public void apply() {
     // The files written next to their targets, by target, in the order of the paths.
@@ -169,6 +211,9 @@ public final class Tree {
     Path target = root;
     try {
       for (Change change : changes.values()) {
+        if (change.deletes()) {
+          continue;
+        }
         Path file = root.resolve(change.path());
         target = file.getParent();
         Files.createDirectories(target);
@@ -193,7 +238,28 @@ public final class Tree {
       staged.values().forEach(staging -> staging.toFile().delete());
       throw new TreeException("write", target, e);
     }
+    try {
+      for (Change change : changes.values()) {
+        if (change.deletes()) {
+          target = root.resolve(change.path());
+          Files.deleteIfExists(target);
+          for (target = target.getParent();
+              !target.equals(root) && empty(target);
+              target = target.getParent()) {
+            Files.delete(target);
+          }
+        }
+      }
+    } catch (IOException e) {
+      throw new TreeException("delete", target, e);
+    }
     changes.clear();
+  }
+
+  private static boolean empty(Path directory) throws IOException {
+    try (Stream<Path> files = Files.list(directory)) {
+      return files.findAny().isEmpty();
+    }
   }
 
   /** Gives the file written next to its target the attributes of the target, if it is there. */

@@ -112,42 +112,64 @@ class GenerateEntityCommandSpec extends Specification {
     dryRun.err() == 'Nothing to change.\n'
   }
 
-  def "the files of an entity that left the spec are forgotten, and named to be deleted"() {
+  def "the files of an entity that left the spec are deleted, but for those that were edited"() {
     given:
     tib.run('init', 'service', '--spec', spec, '-d', dir.toString())
     tib.run('generate', 'entity', '--spec', spec, '-d', dir.toString())
     String depot = Files.writeString(dir.resolve('depot.yaml'), Files.readString(Path.of(spec))
         .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, '')).toString()
     String vehicle = 'src/main/java/com/example/vehicleservice/vehicle/'
+    String tests = 'src/test/java/com/example/vehicleservice/vehicle/'
+    Files.writeString(dir.resolve(vehicle + 'Vehicle.java'), 'mine\n')
+    String migration = Tib.state(dir).files()*.path().find { it.endsWith('__create_vehicle.sql') }
     String notice = """\
-      tib no longer generates these files from the spec, and forgets them:
-        ${vehicle}VehicleDto.java
-        ${vehicle}VehicleGenerated.java
-        ${vehicle}VehicleMapper.java
-      Delete them: tib status no longer checks them.
+      tib no longer generates these files from the spec; they stay, as they were edited:
+        ${vehicle}Vehicle.java
+      Delete them if the service no longer needs them.
       """.stripIndent()
 
     when:
     Result dryRun = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString(), '--dry-run')
 
-    then:
+    then: 'the diff deletes them, and nothing is deleted'
     dryRun.exitCode() == 0
-    dryRun.out().contains("-- path: ${vehicle}VehicleDto.java\n")
+    dryRun.out().contains("--- a/${vehicle}VehicleGenerated.java\n+++ /dev/null\n")
+    dryRun.out().contains("--- a/${vehicle}VehicleService.java\n+++ /dev/null\n")
     dryRun.err() == notice
+    Files.exists(dir.resolve(vehicle + 'VehicleGenerated.java'))
 
     when:
     Result result = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString())
 
     then:
     result.exitCode() == 0
-    result.out().startsWith('Wrote ')
+    result.out() == """\
+      Wrote 1 file to ${dir.toAbsolutePath().normalize()}.
+      Deleted 9 files that the spec no longer generates:
+        ${vehicle}VehicleController.java
+        ${vehicle}VehicleDto.java
+        ${vehicle}VehicleGenerated.java
+        ${vehicle}VehicleMapper.java
+        ${vehicle}VehicleRepository.java
+        ${vehicle}VehicleService.java
+        ${tests}VehicleApiTests.java
+        ${tests}VehicleRepositoryTests.java
+        ${tests}VehicleServiceTests.java
+      """.stripIndent()
     result.err() == notice
+    Files.readString(dir.resolve(vehicle + 'Vehicle.java')) == 'mine\n'
+    !Files.exists(dir.resolve(vehicle + 'VehicleService.java'))
+    !Files.exists(dir.resolve(tests))
+
+    and: 'the migration lasts, and the file that stayed stays on record'
+    Files.exists(dir.resolve(migration))
+    Tib.state(dir).files()*.path().containsAll([migration, vehicle + 'Vehicle.java'])
     !Tib.state(dir).files()*.path().any { it.startsWith(vehicle + 'VehicleGenerated') }
 
     when: 'again'
     Result again = tib.run('generate', 'entity', '--spec', depot, '-d', dir.toString())
 
-    then: 'they are forgotten once'
+    then: 'the file that stayed is named once'
     again.out() == 'Nothing to change.\n'
     again.err() == ''
   }

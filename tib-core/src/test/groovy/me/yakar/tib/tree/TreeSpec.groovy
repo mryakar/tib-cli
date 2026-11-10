@@ -246,19 +246,98 @@ class TreeSpec extends Specification {
     tree.changes()*.path() == ['Generated.java', 'src/Controller.java']
   }
 
-  def "the files that the generator owns are the ones staged for it, changed or not"() {
+  def "the files that the generator owns or writes once are the ones staged for it, changed or not, and the lasting ones are not"() {
     given:
     Files.writeString(project.resolve('Same.java'), 'class Same {}\n')
+    Files.writeString(project.resolve('There.sql'), 'there\n')
     Tree tree = Tree.at(project)
+    tree.writtenBefore(['Before.sql'])
 
     when:
     tree.own('./Same.java', 'class Same {}\n')
     tree.own('New.java', 'class New {}\n')
     tree.once('Mine.java', 'class Mine {}\n')
+    tree.lasting('V1.sql', 'v1\n')
+    tree.lasting('There.sql', 'other\n')
+    tree.lasting('Before.sql', 'before\n')
+
+    then: 'a lasting file is written once, as a file of the developer\'s'
+    tree.changes()*.path() == ['Mine.java', 'New.java', 'V1.sql']
+    tree.changes()*.owner() == [Owner.DEVELOPER, Owner.GENERATOR, Owner.DEVELOPER]
+    tree.generated() == ['Mine.java', 'New.java', 'Same.java']
+  }
+
+  def "a deleted file is gone from what the run sees, and its diff ends in /dev/null"() {
+    given:
+    Files.writeString(project.resolve('a.txt'), 'a\n')
+    Files.createDirectories(project.resolve('src'))
+    Files.writeString(project.resolve('src/B.java'), 'class B {}\n')
+    Tree tree = Tree.at(project)
+
+    when:
+    tree.delete('./a.txt', Owner.GENERATOR)
+    tree.delete('src/B.java', Owner.DEVELOPER)
+    tree.delete('gone.txt', Owner.DEVELOPER)
+    tree.own('src/C.java', 'class C {}\n')
+    tree.own('other/D.java', 'class D {}\n')
 
     then:
-    tree.changes()*.path() == ['Mine.java', 'New.java']
-    tree.owned() == ['New.java', 'Same.java']
+    !tree.exists('a.txt')
+    tree.read('a.txt').empty
+    tree.list('src') == ['src/C.java']
+    tree.deleted() == ['a.txt', 'gone.txt', 'src/B.java']
+
+    and: 'a file that is not there stages nothing'
+    tree.changes()*.path() == ['a.txt', 'other/D.java', 'src/B.java', 'src/C.java']
+    tree.changes()*.deletes() == [true, false, true, false]
+    tree.changes()[0] == new Change('a.txt', 'a\n', null, Owner.GENERATOR)
+
+    and:
+    tree.diff().startsWith('''\
+--- a/a.txt
++++ /dev/null
+@@ -1 +0,0 @@
+-a
+''')
+  }
+
+  def "applying deletes the files, and the directories that this leaves empty, up to the root"() {
+    given:
+    ['top.txt', 'x/y/z.txt', 'src/main/B.java', 'src/C.java'].each {
+      Files.createDirectories(project.resolve(it).parent)
+      Files.writeString(project.resolve(it), it)
+    }
+    Tree tree = Tree.at(project)
+    tree.delete('top.txt', Owner.GENERATOR)
+    tree.delete('x/y/z.txt', Owner.GENERATOR)
+    tree.delete('src/main/B.java', Owner.DEVELOPER)
+    tree.own('n.txt', 'n\n')
+
+    when:
+    tree.apply()
+
+    then:
+    project.toFile().list() as Set == ['n.txt', 'src'] as Set
+    project.resolve('src').toFile().list() == ['C.java'] as String[]
+    tree.changes().empty
+  }
+
+  def "a file that cannot be deleted fails the apply"() {
+    given: 'the file is a directory with a file in it by the time it is deleted'
+    Files.writeString(project.resolve('d'), 'd')
+    Tree tree = Tree.at(project)
+    tree.delete('d', Owner.GENERATOR)
+    Files.delete(project.resolve('d'))
+    Files.createDirectories(project.resolve('d'))
+    Files.writeString(project.resolve('d/e'), 'e')
+
+    when:
+    tree.apply()
+
+    then:
+    TreeException e = thrown()
+    e.message.startsWith("cannot delete ${project.resolve('d')}: ")
+    tree.changes()*.path() == ['d']
   }
 
   def "lists the files under a directory that tib wrote before, there or not, in order"() {

@@ -27,7 +27,7 @@ public interface Pack {
 
   /**
    * The generator of a new service. It writes its files once, for the developer, and owns none: the
-   * runs of {@link #entity()} that follow would forget them.
+   * runs of {@link #entity()} that follow would delete them.
    */
   Generator init();
 
