@@ -243,8 +243,8 @@ public final class EntityModel {
 
   // The DTO.
 
-  /** The components of the record: its type and name, after their validation. */
-  public List<String> dtoComponents() {
+  /** The components of the record: the type and the name of each, after its validation. */
+  public String dtoComponents() {
     List<String> components = new ArrayList<>();
     components.add(idType() + " " + idField());
     for (FieldModel field : fields) {
@@ -257,7 +257,38 @@ public final class EntityModel {
       components.add("Instant createdAt");
       components.add("Instant updatedAt");
     }
-    return components;
+    return String.join(", ", components);
+  }
+
+  // The mapper.
+
+  /** The parameters of the mapper's constructor: the repositories of the relations' targets. */
+  public String repositoryParameters() {
+    return String.join(
+        ", ",
+        targets.stream().map(target -> target.name() + "Repository " + target.plural()).toList());
+  }
+
+  /**
+   * The arguments of the DTO of an entity, in the order of its components; a relation is the
+   * identifier of its target, or null.
+   */
+  public String dtoArguments() {
+    String variable = variable();
+    List<String> arguments = new ArrayList<>();
+    arguments.add(variable + ".getId()");
+    for (FieldModel field : fields) {
+      arguments.add(variable + ".get" + field.property() + "()");
+    }
+    for (RelationModel relation : relations) {
+      String target = variable + ".get" + relation.property() + "()";
+      arguments.add(target + " == null ? null : " + target + ".getId()");
+    }
+    if (entity.audit()) {
+      arguments.add(variable + ".getCreatedAt()");
+      arguments.add(variable + ".getUpdatedAt()");
+    }
+    return String.join(", ", arguments);
   }
 
   // The migration.
