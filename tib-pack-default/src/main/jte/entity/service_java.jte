@@ -2,7 +2,9 @@
 @param EntityModel entity
 package ${entity.packageName()};
 
+@if(entity.uuid())
 import java.util.UUID;
+@endif
 @if(entity.paginated())
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

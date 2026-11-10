@@ -7,11 +7,17 @@
 !{String dtoBuilder = name + "DtoBuilder";}
 package ${entity.packageName()};
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+@if(entity.uuid())
 import java.util.UUID;
+@endif
+@for(var field : entity.fields())
+${field.typeImport()}
+@endfor
+@for(var relation : entity.relations())
+@if(relation.target().uuid())
+import java.util.UUID;
+@endif
+@endfor
 @for(var target : entity.otherTargets())
 import ${target.packageName()}.${target.name()};
 @endfor

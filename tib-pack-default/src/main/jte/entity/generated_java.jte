@@ -3,22 +3,29 @@
 package ${entity.packageName()};
 
 import jakarta.persistence.Column;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.OneToOne;
+@if(entity.idSequence())
 import jakarta.persistence.SequenceGenerator;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+@endif
+@for(var relation : entity.relations())
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.${relation.annotation()};
+@endfor
+@if(entity.uuid())
 import java.util.UUID;
+@endif
+@for(var field : entity.fields())
+${field.typeImport()}
+@endfor
+@if(entity.audited())
+import java.time.Instant;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+@endif
 @for(var target : entity.otherTargets())
 import ${target.packageName()}.${target.name()};
 @endfor

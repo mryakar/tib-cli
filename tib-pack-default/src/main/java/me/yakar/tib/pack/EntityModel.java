@@ -131,7 +131,7 @@ public final class EntityModel {
   }
 
   /** Whether the identifier is a UUID. */
-  boolean uuid() {
+  public boolean uuid() {
     return entity.id().type() == IdType.UUID;
   }
 
