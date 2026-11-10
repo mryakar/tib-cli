@@ -27,6 +27,6 @@ class RefusalExceptionSpec extends Specification {
   def "the advice follows the problem on a line of its own"() {
     expect:
     new RefusalException('x has changes:\n   M A.java', 'Commit them.').message ==
-        "x has changes:\n   M A.java${System.lineSeparator()}Commit them."
+        "x has changes:\n   M A.java\nCommit them."
   }
 }

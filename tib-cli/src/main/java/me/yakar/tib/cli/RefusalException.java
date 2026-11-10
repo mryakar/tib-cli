@@ -33,6 +33,6 @@ final class RefusalException extends TibException {
 
   /** The problem, with the advice on the line after it. */
   RefusalException(String problem, String advice) {
-    this(problem + System.lineSeparator() + advice);
+    this(problem + "\n" + advice);
   }
 }

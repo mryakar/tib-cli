@@ -186,6 +186,6 @@ final class GenerationOptions {
     if (changes.size() > LISTED) {
       lines.add("  and " + (changes.size() - LISTED) + " more");
     }
-    return String.join(System.lineSeparator(), lines);
+    return String.join("\n", lines);
   }
 }
