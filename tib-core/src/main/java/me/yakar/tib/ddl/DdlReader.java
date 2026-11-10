@@ -123,6 +123,12 @@ public final class DdlReader {
     Map<String, Table> tables = new LinkedHashMap<>();
     for (Statement statement : statements) {
       if (statement instanceof CreateTable create) {
+        if (create.getColumnDefinitions() == null) {
+          problems.add(
+              unquote(create.getTable().getName())
+                  + ": a table that is created from another one is not supported");
+          continue;
+        }
         Table table = new Table(create, problems);
         if (tables.putIfAbsent(key(table.name), table) != null) {
           problems.add(table.name + ": the table is created twice");
