@@ -158,8 +158,9 @@ final class GenerationOptions {
   }
 
   /**
-   * Names the files that the spec no longer generates and that stay, as they were edited, and the
-   * inputs that the state forgot.
+   * Names the files that the spec no longer generates and that stay, as they were edited, the
+   * inputs that the state forgot, and the files that last and that the spec now makes otherwise,
+   * with the diff, or no longer makes.
    */
   private static void notices(PrintWriter err, Generation.Result result) {
     if (!result.kept().isEmpty()) {
@@ -171,6 +172,20 @@ final class GenerationOptions {
     if (!result.forgotten().isEmpty()) {
       err.println("tib no longer reads the spec from these files, and forgets them:");
       result.forgotten().forEach(path -> err.println("  " + path));
+    }
+    List<Change> changed = result.lasting().stream().filter(change -> !change.deletes()).toList();
+    if (!changed.isEmpty()) {
+      err.println("The spec now makes these files otherwise, but they last, and tib leaves them:");
+      changed.forEach(change -> err.print(change.diff()));
+      err.println("Make the change with a file of yours, such as a new migration.");
+    }
+    List<String> dropped =
+        result.lasting().stream().filter(Change::deletes).map(Change::path).toList();
+    if (!dropped.isEmpty()) {
+      err.println("The spec no longer makes these files, but they last, and tib leaves them:");
+      dropped.forEach(path -> err.println("  " + path));
+      err.println(
+          "Undo what they made with a file of yours, such as a migration that drops the table.");
     }
   }
 
