@@ -90,7 +90,7 @@ public class StatusCommand implements Callable<Integer> {
       }
     }
     boolean wrong = differences.stream().anyMatch(difference -> difference.kind().problem());
-    return wrong ? ExitCode.SOFTWARE : ExitCode.OK;
+    return wrong ? TibApplication.PROBLEM : ExitCode.OK;
   }
 
   /** The differences under their heading, after an empty line; nothing when there are none. */
