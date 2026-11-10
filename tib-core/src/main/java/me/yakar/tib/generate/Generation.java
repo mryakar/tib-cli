@@ -20,8 +20,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import me.yakar.tib.state.State;
+import me.yakar.tib.tree.Change;
 import me.yakar.tib.tree.Owner;
 import me.yakar.tib.tree.Tree;
 
@@ -45,12 +47,16 @@ public final class Generation {
    *     the previous spec generated to what this one generates; in the order of their paths
    * @param lastingDropped the files that last and that the spec no longer generates; in the order
    *     of their paths
+   * @param lastingReturned the files that last, that the previous spec did not generate and this
+   *     one does, and that tib does not write, as it wrote them before or they are there: from the
+   *     file as it is in the project to what the spec generates; in the order of their paths
    */
   public record Result(
       List<String> kept,
       List<String> forgotten,
       List<Lasting> lastingChanged,
-      List<String> lastingDropped) {}
+      List<String> lastingDropped,
+      List<Lasting> lastingReturned) {}
 
   /**
    * The first run on a project: runs the generator and stages the state file; the tree holds the
@@ -71,7 +77,7 @@ public final class Generation {
     State first =
         new State(tibVersion, ref(pack), inputs, project.spec(), List.copyOf(recorder.written()));
     tree.own(State.PATH, first.yaml());
-    return new Result(List.of(), List.of(), List.of(), List.of());
+    return new Result(List.of(), List.of(), List.of(), List.of(), List.of());
   }
 
   /**
@@ -137,6 +143,15 @@ public final class Generation {
             tree.root(),
             now.written(),
             Stream.concat(dropped.deleted().stream(), dropped.kept().stream()).toList());
+    Set<String> staged = tree.changes().stream().map(Change::path).collect(Collectors.toSet());
+    List<Lasting> returned = new ArrayList<>();
+    now.lasting()
+        .forEach(
+            (path, makes) -> {
+              if (!before.lasting().containsKey(path) && !staged.contains(path)) {
+                returned.add(new Lasting(path, tree.bytes(path).orElse(null), makes));
+              }
+            });
     tree.own(State.PATH, next.yaml());
     List<Lasting> changed = new ArrayList<>();
     List<String> gone = new ArrayList<>();
@@ -158,7 +173,8 @@ public final class Generation {
             .filter(path -> next.inputs().stream().noneMatch(input -> input.path().equals(path)))
             .toList(),
         List.copyOf(changed),
-        List.copyOf(gone));
+        List.copyOf(gone),
+        List.copyOf(returned));
   }
 
   private static State.PackRef ref(Pack pack) {

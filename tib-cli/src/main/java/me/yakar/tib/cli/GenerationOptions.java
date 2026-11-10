@@ -137,8 +137,8 @@ final class GenerationOptions {
 
   /**
    * Names the files that the spec no longer generates and that stay, as they were edited, the
-   * inputs that the state forgot, and the files that last and that the spec now makes otherwise,
-   * with the diff, or no longer makes.
+   * inputs that the state forgot, and the files that last and that the spec now generates
+   * otherwise, no longer generates, or generates again.
    */
   private static void notices(PrintWriter err, Generation.Result result) {
     if (!result.kept().isEmpty()) {
@@ -151,18 +151,31 @@ final class GenerationOptions {
       err.println("tib no longer reads the spec from these files, and forgets them:");
       result.forgotten().forEach(path -> err.println("  " + path));
     }
-    List<Lasting> changed = result.lastingChanged();
-    if (!changed.isEmpty()) {
-      err.println("The spec now makes these files otherwise, but they last, and tib leaves them:");
-      changed.forEach(lasting -> err.print(lasting.diff()));
+    if (!result.lastingChanged().isEmpty()) {
+      err.println(
+          "The spec now generates these files otherwise, but they last, and tib leaves them:");
+      result.lastingChanged().forEach(lasting -> err.print(lasting.diff()));
       err.println("Make the change with a file of yours, such as a new migration.");
     }
-    List<String> dropped = result.lastingDropped();
-    if (!dropped.isEmpty()) {
-      err.println("The spec no longer makes these files, but they last, and tib leaves them:");
-      dropped.forEach(path -> err.println("  " + path));
+    if (!result.lastingDropped().isEmpty()) {
+      err.println("The spec no longer generates these files, but they last, and tib leaves them:");
+      result.lastingDropped().forEach(path -> err.println("  " + path));
       err.println(
           "Undo what they made with a file of yours, such as a migration that drops the table.");
+    }
+    if (!result.lastingReturned().isEmpty()) {
+      err.println(
+          "The spec generates these files again, but tib wrote them before, and leaves them:");
+      for (Lasting lasting : result.lastingReturned()) {
+        if (lasting.diff().isEmpty()) {
+          err.println("  " + lasting.path());
+        } else {
+          err.print(lasting.diff());
+        }
+      }
+      err.println(
+          "Make sure the database has what they make, with a file of yours, such as a new"
+              + " migration.");
     }
   }
 

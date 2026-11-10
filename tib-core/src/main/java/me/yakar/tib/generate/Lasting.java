@@ -15,6 +15,7 @@
  */
 package me.yakar.tib.generate;
 
+import java.util.Arrays;
 import me.yakar.tib.tree.Change;
 
 /**
@@ -23,8 +24,10 @@ import me.yakar.tib.tree.Change;
  */
 public record Lasting(String path, byte[] before, byte[] after) {
 
-  /** The unified diff from the content before to the content after. */
+  /**
+   * The unified diff from the content before to the content after; empty when they are the same.
+   */
   public String diff() {
-    return Change.diff(path, before, after);
+    return Arrays.equals(before, after) ? "" : Change.diff(path, before, after);
   }
 }

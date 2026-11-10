@@ -60,7 +60,7 @@ class GenerationSpec extends Specification {
     Map ran = run(project, generator)
 
     then:
-    ran.result == new Generation.Result([], [], [], [])
+    ran.result == new Generation.Result([], [], [], [], [])
     ran.tree.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'Service.java']
     ran.tree.changes()*.owner() == [Owner.GENERATOR, Owner.GENERATOR, Owner.DEVELOPER]
 
@@ -92,7 +92,7 @@ class GenerationSpec extends Specification {
     state.tib() == '1.2.4'
     state.inputs() == [spec]
     state.files()*.path() == ['Service.java', 'test.txt']
-    ran.result == new Generation.Result([], [], [], [])
+    ran.result == new Generation.Result([], [], [], [], [])
 
     when:
     ran.tree.apply(State.PATH)
@@ -247,6 +247,52 @@ class GenerationSpec extends Specification {
 
     and: 'nothing of them is staged'
     ran.tree.changes()*.path() == ['.tib/state.yaml']
+  }
+
+  def "the files that last and that the spec generates again are named when tib does not write them"() {
+    given: 'a file that is there before tib runs'
+    Generator lasting = { Project p, ProjectFiles files ->
+      files.lasting('V1.sql', 'a\n')
+      if (p.name() == 'two') {
+        files.lasting('V2.sql', 'b\n')
+        files.lasting('V3.sql', 'c\n')
+        files.lasting('V4.sql', 'd\n')
+      }
+    } as Generator
+    Files.writeString(dir.resolve('V4.sql'), 'mine\n')
+    run(one, lasting).tree.apply(State.PATH)
+
+    when: 'the spec generates the files for the first time'
+    Map ran = run(two, lasting)
+
+    then: 'the ones that the run writes are not named'
+    ran.result.lastingReturned()*.path() == ['V4.sql']
+    ran.tree.changes()*.path() == ['.tib/state.yaml', 'V2.sql', 'V3.sql']
+
+    when: 'the spec no longer generates them, one is deleted, and the spec generates them again'
+    ran.tree.apply(State.PATH)
+    run(one, lasting).tree.apply(State.PATH)
+    Files.delete(dir.resolve('V3.sql'))
+    ran = run(two, lasting)
+
+    then: 'from the file as it is, if it is there, to what the spec generates'
+    ran.result.lastingReturned()*.path() == ['V2.sql', 'V3.sql', 'V4.sql']
+    ran.result.lastingReturned()*.diff() == [
+      '',
+      '--- /dev/null\n+++ b/V3.sql\n@@ -0,0 +1 @@\n+c\n',
+      '--- a/V4.sql\n+++ b/V4.sql\n@@ -1 +1 @@\n-mine\n+d\n'
+    ]
+    ran.result.lastingChanged() == []
+    ran.result.lastingDropped() == []
+
+    and: 'none of them is written'
+    ran.tree.changes()*.path() == ['.tib/state.yaml']
+
+    when: 'again'
+    ran.tree.apply(State.PATH)
+
+    then: 'they are named once'
+    run(two, lasting).result == new Generation.Result([], [], [], [], [])
   }
 
   def "a service that was generated for #stack is refused, before anything is staged"() {
