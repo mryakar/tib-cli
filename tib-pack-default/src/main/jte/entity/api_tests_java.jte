@@ -93,7 +93,7 @@ class ${entity.name()}ApiTests {
   @Test
   void updates${entity.article()}${entity.name()}() {
     ${dto} ${entity.variable()} = create();
-    ${dto} dto = otherDto();
+    ${dto} dto = ${entity.name()}Samples.otherDto(${tests.requiredIdArguments()}).build();
 
     ResponseEntity<${dto}> updated =
         http.exchange(
@@ -166,10 +166,5 @@ class ${entity.name()}ApiTests {
   /** ${entity.article()} ${entity.variable()} as the API takes it, with the first sample values. */
   private ${dto} dto() {
     return ${entity.name()}Samples.dto(${tests.requiredIdArguments()}).build();
-  }
-
-  /** ${entity.article()} ${entity.variable()} as the API takes it, with the second sample values. */
-  private ${dto} otherDto() {
-    return ${entity.name()}Samples.otherDto(${tests.requiredIdArguments()}).build();
   }
 }
