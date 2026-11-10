@@ -62,7 +62,7 @@ final class EntityGenerator implements Generator {
   public void generate(Project project, Tree tree) {
     Map<String, EntityModel> models = models(project);
     models.values().forEach(model -> generateEntity(model, tree));
-    // Once, by the run that first generates an API: a service scaffolded before it gets it too.
+    // Written here and not by init: only a service with an API needs it.
     if (models.values().stream().anyMatch(EntityModel::layer)) {
       String handler = DefaultPack.MAIN + project.packagePath() + "/ConflictHandler.java";
       once(
