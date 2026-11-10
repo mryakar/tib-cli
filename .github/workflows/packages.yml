@@ -1,4 +1,5 @@
-# Builds the packages of each platform and installs them, as a user would, before it uploads them.
+# Builds the packages of each platform and installs them, as a user would, before it uploads them:
+# each installed tib has its start-up cache and scaffolds a service.
 # The build workflow runs it on every change, and the release workflow for the files of a release.
 name: Packages
 
@@ -41,6 +42,9 @@ jobs:
           sudo apt-get install -y ./tib-cli/build/packages/tib_*.deb
           command -v tib
           tib --version
+          if [[ ! -f /opt/tib/lib/app/tib.aot ]]; then echo "the package built no start-up cache" >&2; exit 1; fi
+          tib init service smoke -d "$RUNNER_TEMP/deb/smoke"
+          if [[ ! -x "$RUNNER_TEMP/deb/smoke/gradlew" ]]; then echo "the service has no gradlew to run" >&2; exit 1; fi
           sudo apt-get remove -y tib
           if [[ -e /usr/bin/tib ]]; then echo "/usr/bin/tib is still there" >&2; exit 1; fi
           if [[ -e /opt/tib ]]; then find /opt/tib >&2; echo "/opt/tib is still there" >&2; exit 1; fi
@@ -57,16 +61,31 @@ jobs:
           tib --version
           if ($LASTEXITCODE -ne 0) { throw "tib --version exited with $LASTEXITCODE" }
           $installDir = Split-Path (Get-Command tib).Source
+          if (-not (Test-Path "$installDir\app\tib.aot")) { throw "the installer built no start-up cache" }
+          tib init service smoke -d "$env:RUNNER_TEMP\msi\smoke"
+          if ($LASTEXITCODE -ne 0) { throw "tib init service exited with $LASTEXITCODE" }
+          if (-not (Test-Path "$env:RUNNER_TEMP\msi\smoke\gradlew.bat")) { throw "the service has no gradlew.bat" }
           $uninstall = Start-Process msiexec -ArgumentList "/x `"$msi`" /qn" -Wait -PassThru
           if ($uninstall.ExitCode -ne 0) { throw "uninstall exited with $($uninstall.ExitCode)" }
           $machinePath = [Environment]::GetEnvironmentVariable('Path', 'Machine')
           if ($machinePath -like '*\tib*') { throw "the uninstaller left tib on the PATH: $machinePath" }
           if (Test-Path $installDir) { Get-ChildItem -Recurse $installDir; throw "the uninstaller left $installDir" }
+      # The zip has no start-up cache until its script has run, as the install page says.
       - name: Unpack the portable zip and run tib
         run: |
           mkdir portable && cd portable
           unzip -q ../tib-cli/build/packages/tib-*.zip
-          if [[ "$RUNNER_OS" == Windows ]]; then tib/tib.exe --version; else tib/bin/tib --version; fi
+          if [[ "$RUNNER_OS" == Windows ]]; then
+            tib=tib/tib.exe app=tib/app
+            cmd.exe //c 'tib\app\startup-cache.cmd'
+          else
+            tib=tib/bin/tib app=tib/lib/app
+            "$app/startup-cache.sh"
+          fi
+          "$tib" --version
+          if [[ ! -f "$app/tib.aot" ]]; then echo "the script built no start-up cache" >&2; exit 1; fi
+          "$tib" init service smoke -d "$RUNNER_TEMP/portable/smoke"
+          if [[ ! -f "$RUNNER_TEMP/portable/smoke/gradlew" ]]; then echo "the service has no gradlew" >&2; exit 1; fi
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
