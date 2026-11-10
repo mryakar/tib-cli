@@ -1,6 +1,7 @@
 [versions]
-# The stack that the default pack generates. generated-postgres is the tag of the postgres Docker
-# image, which Dependabot does not update.
+# The stack that the default pack generates. Dependabot updates neither generated-java, the Java
+# of the generated service, nor generated-postgres, the tag of the postgres Docker image.
+generated-java = "21"
 generated-postgres = "18"
 generated-spring-boot = "4.1.2"
 google-java-format = "1.36.1"
