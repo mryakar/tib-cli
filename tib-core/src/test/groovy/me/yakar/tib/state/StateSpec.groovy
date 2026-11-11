@@ -88,12 +88,13 @@ class StateSpec extends Specification {
     released.spec() == state.spec()
     released.files() == state.files()
     released.inputs() == inputs
-    released.pack().stack() == null
+    released.pack().stack() == stack
 
     where: 'the state of the snapshot, as each release wrote it'
-    version | inputs
-    '0.1.0' | []
-    '0.2.0' | state.inputs()
+    version | inputs         | stack
+    '0.1.0' | []             | null
+    '0.2.0' | state.inputs() | null
+    '0.3.0' | state.inputs() | 'Spring Boot 4'
   }
 
   def "the state of a project is in its tree, if tib ran on it before"() {
