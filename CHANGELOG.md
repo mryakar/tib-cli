@@ -53,7 +53,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The Java that the default pack generates is formatted with google-java-format, its imports
   sorted and the unused ones left out, so that the formatter leaves the files of tib's as tib
   wrote them; `AGENTS.md` says which version. The packages carry the compiler of the JDK that it
-  needs, without the commands `javac` and `serialver`, and are about 20 MB larger; their start-up
+  needs, without the commands `javac` and `serialver`, and are about 13 MB larger; their start-up
   cache is trained on a dry run of `tib init service`.
 - `tib status` lists the files of tib's that differ under `Files:`, and says in a line of its own
   when every file that the spec was read from is as tib read it. Its help is one paragraph, and
