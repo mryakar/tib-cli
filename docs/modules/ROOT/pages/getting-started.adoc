@@ -6,7 +6,7 @@ With tib xref:install.adoc[installed], check that it answers:
 [source,bash]
 ----
 $ tib --version
-tib 0.2.0
+tib 0.3.0
 ----
 
 == A new service
