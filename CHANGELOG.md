@@ -7,6 +7,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- The tests of an entity with a field named as the entity, such as a table `city` with a column
+  `city`, compile: `XSamples` built the entity with itself as the value of that field.
+
 ## [0.3.0] - 2026-11-11
 
 ### Added

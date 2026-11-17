@@ -64,10 +64,10 @@ public final class ${name}Samples {
     public ${name} build() {
       ${name} ${entity.variable()} = new ${name}();
       @for(var field : entity.fields())
-      ${entity.variable()}.set${field.property()}(${field.name()});
+      ${entity.variable()}.set${field.property()}(this.${field.name()});
       @endfor
       @for(var relation : entity.relations())
-      ${entity.variable()}.set${relation.property()}(${relation.field()});
+      ${entity.variable()}.set${relation.property()}(this.${relation.field()});
       @endfor
       return ${entity.variable()};
     }

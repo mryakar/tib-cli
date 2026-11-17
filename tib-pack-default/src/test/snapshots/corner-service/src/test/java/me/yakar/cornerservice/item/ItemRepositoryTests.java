@@ -39,6 +39,7 @@ class ItemRepositoryTests {
 
     Item found = items.findById(item.getId()).orElseThrow();
     assertThat(found.getLabel()).isEqualTo(item.getLabel());
+    assertThat(found.getItem()).isEqualTo(item.getItem());
     assertThat(found.getBranch().getId()).isEqualTo(branch.getId());
   }
 }

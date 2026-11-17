@@ -59,7 +59,8 @@ class DefaultPackSpec extends Specification {
   static final Spec CORNERS_READ_BACK = SpecReader.parse(CORNER_SPEC
   .replace('{ name: amount, type: BigDecimal, precision: 10 }', '{ name: amount, type: Long }')
   .replace('type: String, nullable: false }', 'type: String, length: 255, nullable: false }')
-  .replace('{ name: label, type: String }', '{ name: label, type: String, length: 255 }'))
+  .replace('{ name: label, type: String }', '{ name: label, type: String, length: 255 }')
+  .replace('{ name: item, type: String }', '{ name: item, type: String, length: 255 }'))
 
   /** The first line of a generated file, without its comment marks, starts with one of these. */
   static final Map<Owner, List<String>> HEADERS = [
