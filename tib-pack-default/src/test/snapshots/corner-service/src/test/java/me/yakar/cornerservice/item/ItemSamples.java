@@ -13,12 +13,12 @@ public final class ItemSamples {
 
   /** An item with the first sample values, and the saved entities it needs. */
   public static ItemBuilder item(Branch branch) {
-    return new ItemBuilder().label("One").branch(branch);
+    return new ItemBuilder().label("One").item("One").branch(branch);
   }
 
   /** An item with the second sample values, and the saved entities it needs. */
   public static ItemBuilder otherItem(Branch branch) {
-    return new ItemBuilder().label("Two").branch(branch);
+    return new ItemBuilder().label("Two").item("Two").branch(branch);
   }
 
   /**
@@ -26,7 +26,7 @@ public final class ItemSamples {
    * it needs.
    */
   public static ItemDtoBuilder dto(Long branchId) {
-    return new ItemDtoBuilder().label("One").branchId(branchId);
+    return new ItemDtoBuilder().label("One").item("One").branchId(branchId);
   }
 
   /**
@@ -34,7 +34,7 @@ public final class ItemSamples {
    * it needs.
    */
   public static ItemDtoBuilder otherDto(Long branchId) {
-    return new ItemDtoBuilder().label("Two").branchId(branchId);
+    return new ItemDtoBuilder().label("Two").item("Two").branchId(branchId);
   }
 
   /** An item as the API takes it, without any value. */
@@ -45,12 +45,18 @@ public final class ItemSamples {
   /** An item to build, one value at a time. */
   public static final class ItemBuilder {
     private String label;
+    private String item;
     private Branch branch;
 
     private ItemBuilder() {}
 
     public ItemBuilder label(String label) {
       this.label = label;
+      return this;
+    }
+
+    public ItemBuilder item(String item) {
+      this.item = item;
       return this;
     }
 
@@ -61,8 +67,9 @@ public final class ItemSamples {
 
     public Item build() {
       Item item = new Item();
-      item.setLabel(label);
-      item.setBranch(branch);
+      item.setLabel(this.label);
+      item.setItem(this.item);
+      item.setBranch(this.branch);
       return item;
     }
   }
@@ -71,6 +78,7 @@ public final class ItemSamples {
   public static final class ItemDtoBuilder {
     private Long id;
     private String label;
+    private String item;
     private Long branchId;
 
     private ItemDtoBuilder() {}
@@ -85,13 +93,18 @@ public final class ItemSamples {
       return this;
     }
 
+    public ItemDtoBuilder item(String item) {
+      this.item = item;
+      return this;
+    }
+
     public ItemDtoBuilder branchId(Long branchId) {
       this.branchId = branchId;
       return this;
     }
 
     public ItemDto build() {
-      return new ItemDto(id, label, branchId);
+      return new ItemDto(id, label, item, branchId);
     }
   }
 }

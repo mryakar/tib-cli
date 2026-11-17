@@ -16,12 +16,16 @@ public class ItemMapper {
 
   public ItemDto toDto(Item item) {
     return new ItemDto(
-        item.getId(), item.getLabel(), item.getBranch() == null ? null : item.getBranch().getId());
+        item.getId(),
+        item.getLabel(),
+        item.getItem(),
+        item.getBranch() == null ? null : item.getBranch().getId());
   }
 
   /** Copies the DTO onto the entity, all but its identifier. */
   public void update(ItemDto dto, Item item) {
     item.setLabel(dto.label());
+    item.setItem(dto.item());
     item.setBranch(dto.branchId() == null ? null : branches.getReferenceById(dto.branchId()));
   }
 }

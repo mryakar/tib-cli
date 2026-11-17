@@ -69,10 +69,10 @@ public final class VehicleSamples {
 
     public Vehicle build() {
       Vehicle vehicle = new Vehicle();
-      vehicle.setPlateNumber(plateNumber);
-      vehicle.setCapacity(capacity);
-      vehicle.setPrice(price);
-      vehicle.setDepot(depot);
+      vehicle.setPlateNumber(this.plateNumber);
+      vehicle.setCapacity(this.capacity);
+      vehicle.setPrice(this.price);
+      vehicle.setDepot(this.depot);
       return vehicle;
     }
   }

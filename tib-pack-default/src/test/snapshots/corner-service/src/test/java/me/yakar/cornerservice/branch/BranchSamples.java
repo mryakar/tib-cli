@@ -132,15 +132,15 @@ public final class BranchSamples {
 
     public Branch build() {
       Branch branch = new Branch();
-      branch.setCode(code);
-      branch.setCount(count);
-      branch.setOpen(open);
-      branch.setOpenedAt(openedAt);
-      branch.setSeenAt(seenAt);
-      branch.setToken(token);
-      branch.setRatio(ratio);
-      branch.setAmount(amount);
-      branch.setParent(parent);
+      branch.setCode(this.code);
+      branch.setCount(this.count);
+      branch.setOpen(this.open);
+      branch.setOpenedAt(this.openedAt);
+      branch.setSeenAt(this.seenAt);
+      branch.setToken(this.token);
+      branch.setRatio(this.ratio);
+      branch.setAmount(this.amount);
+      branch.setParent(this.parent);
       return branch;
     }
   }

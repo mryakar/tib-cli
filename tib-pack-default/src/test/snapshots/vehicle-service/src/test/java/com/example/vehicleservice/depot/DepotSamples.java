@@ -56,8 +56,8 @@ public final class DepotSamples {
 
     public Depot build() {
       Depot depot = new Depot();
-      depot.setCode(code);
-      depot.setOpenedOn(openedOn);
+      depot.setCode(this.code);
+      depot.setOpenedOn(this.openedOn);
       return depot;
     }
   }

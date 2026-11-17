@@ -47,7 +47,7 @@ public final class PlainSamples {
 
     public Plain build() {
       Plain plain = new Plain();
-      plain.setLabel(label);
+      plain.setLabel(this.label);
       return plain;
     }
   }

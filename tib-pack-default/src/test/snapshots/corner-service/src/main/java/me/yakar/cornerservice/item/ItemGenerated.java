@@ -23,6 +23,9 @@ public abstract class ItemGenerated {
   @Column(name = "LABEL", length = 255)
   private String label;
 
+  @Column(name = "ITEM", length = 255)
+  private String item;
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "BRANCH_ID", nullable = false)
   private Branch branch;
@@ -41,6 +44,14 @@ public abstract class ItemGenerated {
 
   public void setLabel(String label) {
     this.label = label;
+  }
+
+  public String getItem() {
+    return item;
+  }
+
+  public void setItem(String item) {
+    this.item = item;
   }
 
   public Branch getBranch() {

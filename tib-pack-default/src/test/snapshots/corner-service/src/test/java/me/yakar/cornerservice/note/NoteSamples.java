@@ -32,7 +32,7 @@ public final class NoteSamples {
 
     public Note build() {
       Note note = new Note();
-      note.setText(text);
+      note.setText(this.text);
       return note;
     }
   }

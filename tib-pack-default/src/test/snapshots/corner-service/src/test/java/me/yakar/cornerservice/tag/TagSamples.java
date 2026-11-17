@@ -67,9 +67,9 @@ public final class TagSamples {
 
     public Tag build() {
       Tag tag = new Tag();
-      tag.setLabel(label);
-      tag.setBranch(branch);
-      tag.setOther(other);
+      tag.setLabel(this.label);
+      tag.setBranch(this.branch);
+      tag.setOther(this.other);
       return tag;
     }
   }
