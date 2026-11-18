@@ -24,6 +24,7 @@ public class BranchMapper {
         branch.getToken(),
         branch.getRatio(),
         branch.getAmount(),
+        branch.getMemo(),
         branch.getParent() == null ? null : branch.getParent().getId(),
         branch.getCreatedAt(),
         branch.getUpdatedAt());
@@ -39,6 +40,7 @@ public class BranchMapper {
     branch.setToken(dto.token());
     branch.setRatio(dto.ratio());
     branch.setAmount(dto.amount());
+    branch.setMemo(dto.memo());
     branch.setParent(dto.parentId() == null ? null : branches.getReferenceById(dto.parentId()));
   }
 }

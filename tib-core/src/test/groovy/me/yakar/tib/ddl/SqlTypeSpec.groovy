@@ -43,9 +43,9 @@ class SqlTypeSpec extends Specification {
     'CHAR(2)'                        | FieldType.STRING          | 2      | null      | null
     'CHARACTER(2)'                   | FieldType.STRING          | 2      | null      | null
     'NCHAR(2)'                       | FieldType.STRING          | 2      | null      | null
-    'TEXT'                           | FieldType.STRING          | null   | null      | null
-    'CLOB'                           | FieldType.STRING          | null   | null      | null
-    'NCLOB'                          | FieldType.STRING          | null   | null      | null
+    'TEXT'                           | FieldType.TEXT            | null   | null      | null
+    'CLOB'                           | FieldType.TEXT            | null   | null      | null
+    'NCLOB'                          | FieldType.TEXT            | null   | null      | null
     'SMALLINT'                       | FieldType.INTEGER         | null   | null      | null
     'INT'                            | FieldType.INTEGER         | null   | null      | null
     'INTEGER'                        | FieldType.INTEGER         | null   | null      | null

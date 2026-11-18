@@ -24,7 +24,8 @@ public final class BranchSamples {
         .seenAt(Instant.parse("2026-01-01T12:00:00Z"))
         .token(UUID.fromString("00000000-0000-0000-0000-000000000001"))
         .ratio(new BigDecimal("1"))
-        .amount(new BigDecimal("1"));
+        .amount(new BigDecimal("1"))
+        .memo("One");
   }
 
   /** A branch with the second sample values. */
@@ -37,7 +38,8 @@ public final class BranchSamples {
         .seenAt(Instant.parse("2026-01-02T12:00:00Z"))
         .token(UUID.fromString("00000000-0000-0000-0000-000000000002"))
         .ratio(new BigDecimal("2"))
-        .amount(new BigDecimal("2"));
+        .amount(new BigDecimal("2"))
+        .memo("Two");
   }
 
   /** A branch as the API takes it, with the first sample values. */
@@ -50,7 +52,8 @@ public final class BranchSamples {
         .seenAt(Instant.parse("2026-01-01T12:00:00Z"))
         .token(UUID.fromString("00000000-0000-0000-0000-000000000001"))
         .ratio(new BigDecimal("1"))
-        .amount(new BigDecimal("1"));
+        .amount(new BigDecimal("1"))
+        .memo("One");
   }
 
   /** A branch as the API takes it, with the second sample values. */
@@ -63,7 +66,8 @@ public final class BranchSamples {
         .seenAt(Instant.parse("2026-01-02T12:00:00Z"))
         .token(UUID.fromString("00000000-0000-0000-0000-000000000002"))
         .ratio(new BigDecimal("2"))
-        .amount(new BigDecimal("2"));
+        .amount(new BigDecimal("2"))
+        .memo("Two");
   }
 
   /** A branch as the API takes it, without any value. */
@@ -81,6 +85,7 @@ public final class BranchSamples {
     private UUID token;
     private BigDecimal ratio;
     private BigDecimal amount;
+    private String memo;
     private Branch parent;
 
     private BranchBuilder() {}
@@ -125,6 +130,11 @@ public final class BranchSamples {
       return this;
     }
 
+    public BranchBuilder memo(String memo) {
+      this.memo = memo;
+      return this;
+    }
+
     public BranchBuilder parent(Branch parent) {
       this.parent = parent;
       return this;
@@ -140,6 +150,7 @@ public final class BranchSamples {
       branch.setToken(this.token);
       branch.setRatio(this.ratio);
       branch.setAmount(this.amount);
+      branch.setMemo(this.memo);
       branch.setParent(this.parent);
       return branch;
     }
@@ -156,6 +167,7 @@ public final class BranchSamples {
     private UUID token;
     private BigDecimal ratio;
     private BigDecimal amount;
+    private String memo;
     private Long parentId;
 
     private BranchDtoBuilder() {}
@@ -205,6 +217,11 @@ public final class BranchSamples {
       return this;
     }
 
+    public BranchDtoBuilder memo(String memo) {
+      this.memo = memo;
+      return this;
+    }
+
     public BranchDtoBuilder parentId(Long parentId) {
       this.parentId = parentId;
       return this;
@@ -212,7 +229,8 @@ public final class BranchSamples {
 
     public BranchDto build() {
       return new BranchDto(
-          id, code, count, open, openedAt, seenAt, token, ratio, amount, parentId, null, null);
+          id, code, count, open, openedAt, seenAt, token, ratio, amount, memo, parentId, null,
+          null);
     }
   }
 }

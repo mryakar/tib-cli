@@ -34,6 +34,7 @@ class BranchRepositoryTests {
     assertThat(found.getToken()).isEqualTo(branch.getToken());
     assertThat(found.getRatio()).isEqualTo(branch.getRatio());
     assertThat(found.getAmount()).isEqualTo(branch.getAmount());
+    assertThat(found.getMemo()).isEqualTo(branch.getMemo());
     assertThat(found.getCreatedAt()).isNotNull();
     assertThat(found.getUpdatedAt()).isNotNull();
   }

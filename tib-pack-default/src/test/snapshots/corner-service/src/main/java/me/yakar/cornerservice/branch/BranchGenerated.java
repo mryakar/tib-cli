@@ -51,6 +51,9 @@ public abstract class BranchGenerated {
   @Column(name = "AMOUNT", precision = 10)
   private BigDecimal amount;
 
+  @Column(name = "MEMO", columnDefinition = "TEXT")
+  private String memo;
+
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "PARENT_ID", unique = true)
   private Branch parent;
@@ -133,6 +136,14 @@ public abstract class BranchGenerated {
 
   public void setAmount(BigDecimal amount) {
     this.amount = amount;
+  }
+
+  public String getMemo() {
+    return memo;
+  }
+
+  public void setMemo(String memo) {
+    this.memo = memo;
   }
 
   public Branch getParent() {
