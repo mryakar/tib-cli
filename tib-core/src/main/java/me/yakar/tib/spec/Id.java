@@ -19,6 +19,10 @@ package me.yakar.tib.spec;
 public record Id(
     @Doc(value = "The name of the field.", pattern = Names.MEMBER, defaultValue = Id.FIELD)
         String field,
+    @Doc(
+            value = "The name of the column. Without one, the field's name in upper snake case.",
+            pattern = Names.SQL)
+        String column,
     @Doc(value = "The Java type of the identifier.", defaultValue = "Long") IdType type,
     @Doc(
             value =
@@ -30,30 +34,24 @@ public record Id(
 
   public Id {
     field = field == null ? FIELD : field;
+    column = column == null ? Names.sql(field) : column;
     type = type == null ? IdType.LONG : type;
     strategy = strategy == null ? IdStrategy.defaultFor(type) : strategy;
   }
 
-  /** The column of the identifier: the field in upper snake case. */
-  public String column() {
-    return Names.sql(field);
-  }
-
   /** The identifier an entity gets when the spec gives none. */
   static Id defaults() {
-    return new Id(null, null, null);
+    return new Id(null, null, null, null);
   }
 
   void check(Problems problems, String path) {
     if (Names.isKeyword(field)) {
       problems.add(path + ".field", "'" + field + "' is a Java keyword");
     }
-    if (Names.isReserved(column())) {
+    if (Names.isReserved(column)) {
       problems.add(
-          path + ".field",
-          "the column '"
-              + column()
-              + "' is a reserved word in SQL; give the identifier another field");
+          path + ".column",
+          "'" + column + "' is a reserved word in SQL; give the identifier a column");
     }
     if (!strategy.fits(type)) {
       problems.add(path, "the strategy " + strategy + " does not fit the type " + type);

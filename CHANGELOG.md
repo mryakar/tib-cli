@@ -16,6 +16,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   statements other than `CREATE TABLE` and `ALTER TABLE` are no longer parsed, so SQL that tib
   cannot parse in them is no longer a problem; one that tib cannot parse in a table is named with
   its line and column in the DDL, each of them.
+- The identifier of an entity in the spec may name its column, as `id: { column: ... }`, as a
+  field and a relation do; without one, its column is the field in upper snake case, as before.
+  The DDL keeps the name of the column of the primary key, as `city_id`, which tib wrote as
+  `CITY_ID` before.
 
 ### Changed
 

@@ -467,7 +467,7 @@ public final class DdlReader {
     Id id(String table, Map<String, String> members, List<String> problems) {
       String field = member(members, name);
       if (is(FieldType.UUID)) {
-        return new Id(field, IdType.UUID, IdStrategy.UUID);
+        return new Id(field, name, IdType.UUID, IdStrategy.UUID);
       }
       if (!is(FieldType.INTEGER) && !is(FieldType.LONG)) {
         problems.add(
@@ -481,6 +481,7 @@ public final class DdlReader {
       }
       return new Id(
           field,
+          name,
           IdType.LONG,
           identity || type.serial() ? IdStrategy.IDENTITY : IdStrategy.SEQUENCE);
     }

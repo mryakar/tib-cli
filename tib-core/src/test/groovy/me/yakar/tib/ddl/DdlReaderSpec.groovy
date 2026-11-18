@@ -45,11 +45,11 @@ class DdlReaderSpec extends Specification {
     spec.service() == 'vehicle-service'
     spec.group() == 'me.yakar'
     spec.entities() == [
-      new Entity('Depot', 'depots', new Id('id', IdType.UUID, IdStrategy.UUID), [
+      new Entity('Depot', 'depots', new Id('id', 'id', IdType.UUID, IdStrategy.UUID), [
         new Field('code', 'code', FieldType.STRING, 8, null, null, false, true),
         new Field('openedOn', 'opened_on', FieldType.LOCAL_DATE, null, null, null, true, false),
       ], [], false, null),
-      new Entity('Vehicle', 'vehicles', new Id('id', IdType.LONG, IdStrategy.IDENTITY), [
+      new Entity('Vehicle', 'vehicles', new Id('id', 'id', IdType.LONG, IdStrategy.IDENTITY), [
         new Field('plateNumber', 'plate_number', FieldType.STRING, 16, null, null, false, true),
         new Field('capacity', 'capacity', FieldType.INTEGER, null, null, null, true, false),
         new Field('price', 'price', FieldType.BIG_DECIMAL, null, 12, 2, true, false),
@@ -87,7 +87,7 @@ class DdlReaderSpec extends Specification {
   def "a keyword in a string literal says nothing of the column: #literal"() {
     expect:
     entity("CREATE TABLE T (ID BIGINT PRIMARY KEY $literal, A INT $literal);") == new Entity(
-        'T', 'T', new Id('id', IdType.LONG, IdStrategy.SEQUENCE),
+        'T', 'T', new Id('id', null, IdType.LONG, IdStrategy.SEQUENCE),
         [new Field('a', 'A', FieldType.INTEGER, null, null, null, true, false)],
         [], false, null)
 
@@ -106,7 +106,7 @@ class DdlReaderSpec extends Specification {
 
   def "the primary key #sql is an identifier of #type by #strategy"() {
     expect:
-    entity("CREATE TABLE T (ID $sql);").id() == new Id('id', type, strategy)
+    entity("CREATE TABLE T (ID $sql);").id() == new Id('id', null, type, strategy)
 
     where:
     sql                                                | type        | strategy
@@ -363,7 +363,7 @@ class DdlReaderSpec extends Specification {
       ALTER TABLE ONLY T ALTER COLUMN A SET DEFAULT 0;
       ALTER TABLE ONLY T ADD CONSTRAINT T_PK PRIMARY KEY (ID);
       ''') == new Entity(
-        'T', 'T', new Id('id', IdType.LONG, IdStrategy.SEQUENCE),
+        'T', 'T', new Id('id', null, IdType.LONG, IdStrategy.SEQUENCE),
         [new Field('a', 'A', FieldType.INTEGER, null, null, null, true, false)],
         [], false, null)
   }
@@ -373,13 +373,13 @@ class DdlReaderSpec extends Specification {
     entity('''
       CREATE TABLE T (ID INT NOT NULL PRIMARY KEY);
       ALTER TABLE ONLY T ALTER COLUMN ID SET DEFAULT nextval('T_SEQ'::regclass);
-      ''').id() == new Id('id', IdType.LONG, IdStrategy.IDENTITY)
+      ''').id() == new Id('id', null, IdType.LONG, IdStrategy.IDENTITY)
   }
 
   def "ALTER TABLE may make the column of the primary key an identity: #how"() {
     expect:
     entity("CREATE TABLE T (ID BIGINT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN ID ADD GENERATED $how AS IDENTITY$options;")
-        .id() == new Id('id', IdType.LONG, IdStrategy.IDENTITY)
+        .id() == new Id('id', null, IdType.LONG, IdStrategy.IDENTITY)
 
     where:
     how          | options
@@ -393,12 +393,12 @@ class DdlReaderSpec extends Specification {
 
     then:
     spec.entities() == [
-      new Entity('Depot', 'depots', new Id('id', IdType.UUID, IdStrategy.UUID), [
+      new Entity('Depot', 'depots', new Id('id', 'id', IdType.UUID, IdStrategy.UUID), [
         new Field('code', 'code', FieldType.STRING, 8, null, null, false, true),
         new Field('openedOn', 'opened_on', FieldType.LOCAL_DATE, null, null, null, true, false),
       ], [], false, null),
-      new Entity('Driver', 'drivers', new Id('id', IdType.LONG, IdStrategy.IDENTITY), [new Field('name', 'name', FieldType.STRING, null, null, null, false, false),], [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'vehicle', 'vehicle_id', true)], false, null),
-      new Entity('Vehicle', 'vehicles', new Id('id', IdType.LONG, IdStrategy.IDENTITY), [
+      new Entity('Driver', 'drivers', new Id('id', 'id', IdType.LONG, IdStrategy.IDENTITY), [new Field('name', 'name', FieldType.STRING, null, null, null, false, false),], [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'vehicle', 'vehicle_id', true)], false, null),
+      new Entity('Vehicle', 'vehicles', new Id('id', 'id', IdType.LONG, IdStrategy.IDENTITY), [
         new Field('plateNumber', 'plate_number', FieldType.STRING, 16, null, null, false, true),
         new Field('capacity', 'capacity', FieldType.INTEGER, null, null, null, true, false),
         new Field('price', 'price', FieldType.BIG_DECIMAL, null, 12, 2, true, false),

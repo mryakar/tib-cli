@@ -68,7 +68,7 @@ class SpecSpec extends Specification {
     'tib: 1\nservice: s\nentities:\n  - name: Class'                           | "entities[0].name: 'Class' makes the package 'class', which is a Java keyword"
     'tib: 1\nservice: s\nentities:\n  - name: User'                            | "entities[0].table: 'USER' is a reserved word in SQL; give the entity a table"
     entity('id: { field: int }')                                                | "entities[0].id.field: 'int' is a Java keyword"
-    entity('id: { field: user }')                                               | "entities[0].id.field: the column 'USER' is a reserved word in SQL; give the identifier another field"
+    entity('id: { field: user }')                                               | "entities[0].id.column: 'USER' is a reserved word in SQL; give the identifier a column"
     field('{ name: class, type: String }')                                      | "entities[0].fields[0].name: 'class' is a Java keyword"
     field('{ name: order, type: Integer }')                                     | "entities[0].fields[0].column: 'ORDER' is a reserved word in SQL; give the field a column"
     entity('relations:\n      - { kind: manyToOne, target: Vehicle, field: package }') | "entities[0].relations[0].field: 'package' is a Java keyword"
