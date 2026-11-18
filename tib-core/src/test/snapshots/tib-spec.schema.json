@@ -51,6 +51,11 @@
           "pattern": "^[a-z][A-Za-z0-9]*$",
           "default": "id"
         },
+        "column": {
+          "description": "The name of the column. Without one, the field's name in upper snake case.",
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
         "type": {
           "description": "The Java type of the identifier.",
           "type": "string",

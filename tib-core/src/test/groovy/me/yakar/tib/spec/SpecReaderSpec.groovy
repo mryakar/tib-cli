@@ -37,7 +37,7 @@ class SpecReaderSpec extends Specification {
     and: 'the vehicle takes the defaults'
     Entity vehicle = spec.entities()[0]
     vehicle.table() == 'VEHICLE'
-    vehicle.id() == new Id('id', IdType.LONG, IdStrategy.IDENTITY)
+    vehicle.id() == new Id('id', null, IdType.LONG, IdStrategy.IDENTITY)
     vehicle.audit()
     vehicle.options() == new Options(true, true, true)
     vehicle.fields()[0] == new Field('plateNumber', 'PLATE_NUMBER', FieldType.STRING, 16, null, null, false, true)
@@ -49,7 +49,7 @@ class SpecReaderSpec extends Specification {
     and: 'the depot keeps what the spec says'
     Entity depot = spec.entities()[1]
     depot.table() == 'DEPOTS'
-    depot.id() == new Id('id', IdType.UUID, IdStrategy.UUID)
+    depot.id() == new Id('id', null, IdType.UUID, IdStrategy.UUID)
     depot.fields()[0].column() == 'DEPOT_CODE'
     depot.fields()[1].type() == FieldType.LOCAL_DATE
     !depot.audit()

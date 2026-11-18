@@ -21,6 +21,7 @@ spec:
     table: DEPOTS
     id:
       field: key
+      column: KEY
       type: UUID
       strategy: uuid
     fields: []
@@ -34,6 +35,7 @@ spec:
     table: VEHICLE
     id:
       field: id
+      column: ID
       type: Long
       strategy: sequence
     fields:

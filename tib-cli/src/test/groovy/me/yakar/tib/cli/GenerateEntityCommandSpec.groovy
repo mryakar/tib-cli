@@ -328,7 +328,8 @@ class GenerateEntityCommandSpec extends Specification {
     then: 'the spec file names the tables in its own case, which the migrations do not follow'
     dryRun.exitCode() == 0
     dryRun.err().startsWith(forgotten)
-    dryRun.err().contains('-CREATE TABLE depots (\n+CREATE TABLE DEPOTS (\n')
+    dryRun.err().contains('-CREATE TABLE depots (\n-  id UUID PRIMARY KEY,\n')
+    dryRun.err().contains('+CREATE TABLE DEPOTS (\n+  ID UUID PRIMARY KEY,\n')
 
     when:
     Result result = tib.generate('--spec', specFile.toString())
