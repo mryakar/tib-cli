@@ -330,16 +330,69 @@ class DdlReaderSpec extends Specification {
     DdlReader.parse('CREATE TABLE VEHICLE (VEHICLE_ID BIGINT PRIMARY KEY);', service).entities()[0].id().field() == 'vehicleId'
   }
 
-  def "statements other than CREATE TABLE and ALTER TABLE are skipped"() {
+  def "statements other than CREATE TABLE and ALTER TABLE are skipped without being parsed"() {
     expect:
     DdlReader.parse('''
+      \\restrict key
       CREATE SEQUENCE T_SEQ START WITH 1 INCREMENT BY 50;
+      ALTER SEQUENCE T_SEQ OWNER TO postgres;
       DROP TABLE IF EXISTS T;
-      CREATE TABLE T (ID BIGINT PRIMARY KEY);
+      CREATE UNLOGGED TABLE T (ID BIGINT PRIMARY KEY);
       CREATE INDEX T_ID ON T (ID);
-      COMMENT ON TABLE T IS 'A table.';
+      COMMENT ON TABLE T IS 'A table; with a semicolon.';
       INSERT INTO T VALUES (1);
+      CREATE FUNCTION F() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF NEW.ID > 0 THEN RETURN NEW; END IF;
+      END;
+      $$;
+      THIS IS NOT SQL;
+      \\unrestrict key
       ''', SERVICE).entities()*.name() == ['T']
+  }
+
+  def "ALTER TABLE may set a default or an owner, which say nothing of the entity"() {
+    expect:
+    entity('''
+      ALTER TABLE T_SEQ OWNER TO postgres;
+      CREATE TABLE T (ID INT NOT NULL, A INT);
+      ALTER TABLE T OWNER TO "Some One";
+      ALTER TABLE ONLY T ALTER COLUMN ID SET DEFAULT nextval('T_SEQ'::regclass);
+      ALTER TABLE ONLY T ADD CONSTRAINT T_PK PRIMARY KEY (ID);
+      ''') == new Entity(
+        'T', 'T', new Id('id', IdType.LONG, IdStrategy.SEQUENCE),
+        [new Field('a', 'A', FieldType.INTEGER, null, null, null, true, false)],
+        [], false, null)
+  }
+
+  def "ALTER TABLE may make the column of the primary key an identity: #how"() {
+    expect:
+    entity("CREATE TABLE T (ID BIGINT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN ID ADD GENERATED $how AS IDENTITY$options;")
+        .id() == new Id('id', IdType.LONG, IdStrategy.IDENTITY)
+
+    where:
+    how          | options
+    'ALWAYS'     | ''
+    'BY DEFAULT' | ' (\n    SEQUENCE NAME T_ID_SEQ\n    START WITH 1\n    CACHE 1\n)'
+  }
+
+  def "reads the output of pg_dump --schema-only"() {
+    when:
+    Spec spec = DdlReader.parse(DdlReaderSpec.getResource('pg-dump-18.sql').text, SERVICE)
+
+    then:
+    spec.entities() == [
+      new Entity('Depot', 'depots', new Id('id', IdType.UUID, IdStrategy.UUID), [
+        new Field('code', 'code', FieldType.STRING, 8, null, null, false, true),
+        new Field('openedOn', 'opened_on', FieldType.LOCAL_DATE, null, null, null, true, false),
+      ], [], false, null),
+      new Entity('Driver', 'drivers', new Id('id', IdType.LONG, IdStrategy.SEQUENCE), [new Field('name', 'name', FieldType.STRING, null, null, null, false, false),], [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'vehicle', 'vehicle_id', true)], false, null),
+      new Entity('Vehicle', 'vehicles', new Id('id', IdType.LONG, IdStrategy.IDENTITY), [
+        new Field('plateNumber', 'plate_number', FieldType.STRING, 16, null, null, false, true),
+        new Field('capacity', 'capacity', FieldType.INTEGER, null, null, null, true, false),
+        new Field('price', 'price', FieldType.BIG_DECIMAL, null, 12, 2, true, false),
+      ], [new Relation(RelationKind.MANY_TO_ONE, 'Depot', 'depot', 'depot_id', true)], true, null),
+    ]
   }
 
   def "a DDL that tib cannot use is refused: #problem"() {
@@ -356,8 +409,14 @@ class DdlReaderSpec extends Specification {
     '-- nothing\n'                                                                | 'there is no CREATE TABLE'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nCREATE TABLE t (ID INT PRIMARY KEY);'  | 't: the table is created twice'
     'ALTER TABLE T ADD UNIQUE (A);\nCREATE TABLE T (ID INT PRIMARY KEY, A INT);'  | 'T: ALTER TABLE comes before the table is created'
-    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ADD COLUMN A INT;'       | 'T: ALTER TABLE may only add keys'
-    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T DROP COLUMN ID;'         | 'T: ALTER TABLE may only add keys'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ADD COLUMN A INT;'       | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T DROP COLUMN ID;'         | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN ID TYPE BIGINT;' | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN ID DROP DEFAULT;' | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T SET SCHEMA S;'           | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T RENAME TO U;'           | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN X ADD GENERATED ALWAYS AS IDENTITY;' | 'T: there is no column X'
+    'ALTER TABLE T OWNER TO ME;\nALTER TABLE T ADD UNIQUE (ID);\nCREATE TABLE T (ID INT PRIMARY KEY);' | 'T: ALTER TABLE comes before the table is created'
   }
 
   def "SQL that the parser cannot read is refused with where the parser stopped"() {
@@ -369,6 +428,23 @@ class DdlReaderSpec extends Specification {
     e.problems().size() == 1
     e.problems()[0].startsWith('it is not SQL that tib reads: ')
     e.problems()[0].contains('line 2')
+  }
+
+  def "each table statement that the parser cannot read is a problem, at its line and column in the DDL"() {
+    when:
+    DdlReader.parse('''CREATE TABLE A (ID INT PRIMARY KEY);
+      CREATE TABLE B (ID INT PRIMARY KEY,
+        X NUMBER(*, 0));
+      ALTER TABLE A ADD CONSTRAINT C CHECK ((;
+      CREATE TABLE C (ID INT \\ PRIMARY KEY);''', SERVICE)
+
+    then:
+    DdlException e = thrown()
+    e.problems() == [
+      'it is not SQL that tib reads: Encountered: <OPENING_BRACKET> / "(", at line 3, column 17',
+      'it is not SQL that tib reads: Encountered: <EOF>, at line 4, column 45',
+      'it is not SQL that tib reads: Encountered: "\\\\" (92) after: ""',
+    ]
   }
 
   def "the spec that the DDL gives is checked as a spec"() {

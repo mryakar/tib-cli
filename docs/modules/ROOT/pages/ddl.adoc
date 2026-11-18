@@ -78,13 +78,28 @@ their spec: a `BigDecimal` without a scale is a `NUMERIC(p, 0)`, which reads bac
 which reads back with `length: 255`.
 
 `ALTER TABLE` statements may add primary, foreign and unique keys to the tables created before
-them. Every other statement, such as one that creates a sequence or an index, a comment or data,
-or drops a table, is skipped; so are the defaults and checks of the columns and the unique keys of
-several columns. SQL that tib cannot parse, DDL without a `CREATE TABLE`, a column of another
-type, a table without a primary key, a primary or foreign key
-of several columns, a reference to a table that is neither in the DDL nor in the service, a table
-created twice, and an `ALTER TABLE` that changes anything else or comes before its table are
-problems: tib reports each with the table and the column it is about, and writes nothing.
+them, and make a column an identity (`ALTER COLUMN ... ADD GENERATED ... AS IDENTITY`); they may
+also set the default of a column or the owner of a table, which tib skips. Every other statement,
+such as one that creates a sequence, an index, a function or a view, a comment or data, or drops a
+table, is skipped without being parsed; so are the defaults and checks of the columns and the
+unique keys of several columns. A `CREATE TABLE` or an `ALTER TABLE` that tib cannot parse, DDL
+without a `CREATE TABLE`, a column of another type, a table without a primary key, a primary or
+foreign key of several columns, a reference to a table that is neither in the DDL nor in the
+service, a table created twice, and an `ALTER TABLE` that changes anything else or comes before
+its table are problems: tib reports each with the table and the column it is about, or with its
+line and column in the DDL, and writes nothing.
+
+So tib reads the schema of a PostgreSQL database as `pg_dump` writes it, with the commands of
+psql in it, such as `\restrict`, and the functions, the triggers and the views of the database:
+
+[source,bash]
+----
+$ pg_dump --schema-only --table=depots --table=vehicles vehicles > vehicle-service.sql
+$ tib generate entity --ddl vehicle-service.sql
+----
+
+A column that `pg_dump` writes as `integer` with a default of `nextval(...)`, which was a
+`SERIAL`, reads as an integer that a sequence gives its values.
 
 The spec that the DDL yields is checked as a xref:spec.adoc#_the_rules[spec file] is. A table or a
 column named like a word that SQL reserves, or a column named like a Java keyword, is a problem
