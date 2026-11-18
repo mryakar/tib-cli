@@ -17,6 +17,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   cannot parse in them is no longer a problem; one that tib cannot parse in a table is named with
   its line and column in the DDL, each of them.
 
+### Changed
+
+- A primary key of DDL whose default is the next value of a sequence, `nextval(...)`, as `pg_dump`
+  writes a `SERIAL`, is an identity, as a `SERIAL` is: the database assigns its values.
+
 ### Fixed
 
 - The tests of an entity with a field named as the entity, such as a table `city` with a column

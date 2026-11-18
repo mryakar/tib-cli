@@ -61,6 +61,11 @@ public final class DdlReader {
   private static final Pattern UNIQUE = Pattern.compile("\\bUNIQUE\\b", Pattern.CASE_INSENSITIVE);
   private static final Pattern IDENTITY =
       Pattern.compile("\\b(IDENTITY|AUTO_INCREMENT)\\b", Pattern.CASE_INSENSITIVE);
+
+  /** A default of the next value of a sequence, which the database assigns as for an identity. */
+  private static final Pattern NEXTVAL =
+      Pattern.compile("\\bNEXTVAL\\s*\\(", Pattern.CASE_INSENSITIVE);
+
   private static final Pattern QUOTED = Pattern.compile("^[\"`\\[](.*)[\"`\\]]$");
   private static final Pattern REFERENCES =
       Pattern.compile("\\bREFERENCES\\s+([^\\s(]+)", Pattern.CASE_INSENSITIVE);
@@ -298,16 +303,16 @@ public final class DdlReader {
       for (AlterExpression expression : alter.getAlterExpressions()) {
         if (expression.getOperation() == AlterOperation.ADD && expression.getIndex() != null) {
           take(expression.getIndex(), problems);
-        } else if (owner(expression) || expression.getColumnSetDefaultList() != null) {
-          // The defaults of the columns and the owner of the table say nothing of the entity.
+        } else if (owner(expression)) {
+          // The owner of the table says nothing of the entity.
+        } else if (expression.getColumnSetDefaultList() != null) {
+          for (AlterExpression.ColumnSetDefault set : expression.getColumnSetDefaultList()) {
+            String value = LITERAL.matcher(set.toString()).replaceAll("''");
+            identify(set.getColumnName(), NEXTVAL.matcher(value).find(), problems);
+          }
         } else if (identities(expression)) {
           for (AlterExpression.ColumnDataType identity : expression.getColDataTypeList()) {
-            String column = unquote(identity.getColumnName());
-            if (columns.containsKey(key(column))) {
-              column(column).identity = true;
-            } else {
-              problems.add(name + ": there is no column " + column);
-            }
+            identify(identity.getColumnName(), true, problems);
           }
         } else {
           problems.add(
@@ -315,6 +320,18 @@ public final class DdlReader {
                   + ": ALTER TABLE may only add keys, make a column an identity, or set a default"
                   + " or the owner");
         }
+      }
+    }
+
+    /**
+     * Makes the column an identity, when it becomes one; a column that is not there is a problem.
+     */
+    private void identify(String name, boolean identity, List<String> problems) {
+      Column column = column(unquote(name));
+      if (column == null) {
+        problems.add(this.name + ": there is no column " + unquote(name));
+      } else {
+        column.identity |= identity;
       }
     }
 
@@ -429,7 +446,7 @@ public final class DdlReader {
               : LITERAL.matcher(String.join(" ", definition.getColumnSpecs())).replaceAll("''");
       notNull = NOT_NULL.matcher(specs).find();
       primary = PRIMARY_KEY.matcher(specs).find();
-      identity = IDENTITY.matcher(specs).find();
+      identity = IDENTITY.matcher(specs).find() || NEXTVAL.matcher(specs).find();
       unique = UNIQUE.matcher(specs).find();
       Matcher target = REFERENCES.matcher(specs);
       if (target.find()) {

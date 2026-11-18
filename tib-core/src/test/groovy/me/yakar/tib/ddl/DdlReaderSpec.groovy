@@ -100,6 +100,7 @@ class DdlReaderSpec extends Specification {
       "COMMENT 'an identity, or auto_increment'",
       "COMMENT 'references the order'",
       "COMMENT 'it''s unique'",
+      "DEFAULT 'nextval(1)'",
     ]
   }
 
@@ -113,6 +114,7 @@ class DdlReaderSpec extends Specification {
     'BIGINT AUTO_INCREMENT PRIMARY KEY'                | IdType.LONG | IdStrategy.IDENTITY
     'BIGSERIAL PRIMARY KEY'                            | IdType.LONG | IdStrategy.IDENTITY
     'SERIAL PRIMARY KEY'                               | IdType.LONG | IdStrategy.IDENTITY
+    "INTEGER DEFAULT nextval('T_SEQ'::regclass) PRIMARY KEY" | IdType.LONG | IdStrategy.IDENTITY
     'NUMBER(19) PRIMARY KEY'                           | IdType.LONG | IdStrategy.SEQUENCE
     'INT PRIMARY KEY'                                  | IdType.LONG | IdStrategy.SEQUENCE
     'UUID PRIMARY KEY'                                 | IdType.UUID | IdStrategy.UUID
@@ -357,12 +359,21 @@ class DdlReaderSpec extends Specification {
       ALTER TABLE T_SEQ OWNER TO postgres;
       CREATE TABLE T (ID INT NOT NULL, A INT);
       ALTER TABLE T OWNER TO "Some One";
-      ALTER TABLE ONLY T ALTER COLUMN ID SET DEFAULT nextval('T_SEQ'::regclass);
+      ALTER TABLE ONLY T ALTER COLUMN ID SET DEFAULT 'nextval(1)';
+      ALTER TABLE ONLY T ALTER COLUMN A SET DEFAULT 0;
       ALTER TABLE ONLY T ADD CONSTRAINT T_PK PRIMARY KEY (ID);
       ''') == new Entity(
         'T', 'T', new Id('id', IdType.LONG, IdStrategy.SEQUENCE),
         [new Field('a', 'A', FieldType.INTEGER, null, null, null, true, false)],
         [], false, null)
+  }
+
+  def "a default of the next value of a sequence that ALTER TABLE sets makes the column an identity"() {
+    expect:
+    entity('''
+      CREATE TABLE T (ID INT NOT NULL PRIMARY KEY);
+      ALTER TABLE ONLY T ALTER COLUMN ID SET DEFAULT nextval('T_SEQ'::regclass);
+      ''').id() == new Id('id', IdType.LONG, IdStrategy.IDENTITY)
   }
 
   def "ALTER TABLE may make the column of the primary key an identity: #how"() {
@@ -386,7 +397,7 @@ class DdlReaderSpec extends Specification {
         new Field('code', 'code', FieldType.STRING, 8, null, null, false, true),
         new Field('openedOn', 'opened_on', FieldType.LOCAL_DATE, null, null, null, true, false),
       ], [], false, null),
-      new Entity('Driver', 'drivers', new Id('id', IdType.LONG, IdStrategy.SEQUENCE), [new Field('name', 'name', FieldType.STRING, null, null, null, false, false),], [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'vehicle', 'vehicle_id', true)], false, null),
+      new Entity('Driver', 'drivers', new Id('id', IdType.LONG, IdStrategy.IDENTITY), [new Field('name', 'name', FieldType.STRING, null, null, null, false, false),], [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'vehicle', 'vehicle_id', true)], false, null),
       new Entity('Vehicle', 'vehicles', new Id('id', IdType.LONG, IdStrategy.IDENTITY), [
         new Field('plateNumber', 'plate_number', FieldType.STRING, 16, null, null, false, true),
         new Field('capacity', 'capacity', FieldType.INTEGER, null, null, null, true, false),
@@ -416,6 +427,7 @@ class DdlReaderSpec extends Specification {
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T SET SCHEMA S;'           | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T RENAME TO U;'           | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN X ADD GENERATED ALWAYS AS IDENTITY;' | 'T: there is no column X'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN X SET DEFAULT 0;' | 'T: there is no column X'
     'ALTER TABLE T OWNER TO ME;\nALTER TABLE T ADD UNIQUE (ID);\nCREATE TABLE T (ID INT PRIMARY KEY);' | 'T: ALTER TABLE comes before the table is created'
   }
 
