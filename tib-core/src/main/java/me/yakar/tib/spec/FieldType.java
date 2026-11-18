@@ -15,9 +15,13 @@
  */
 package me.yakar.tib.spec;
 
-/** The Java type of a field. The pack maps it to the SQL type of the column. */
+/**
+ * The type of a field: the Java type of its value, or {@code Text}, a String without a length. The
+ * pack maps it to the SQL type of the column.
+ */
 public enum FieldType {
   STRING("String"),
+  TEXT("Text", "String"),
   INTEGER("Integer"),
   LONG("Long"),
   BIG_DECIMAL("BigDecimal"),
@@ -28,12 +32,23 @@ public enum FieldType {
   UUID("UUID");
 
   private final String name;
+  private final String javaType;
 
   FieldType(String name) {
-    this.name = name;
+    this(name, name);
   }
 
-  /** The name in the spec, which is the Java type's. */
+  FieldType(String name, String javaType) {
+    this.name = name;
+    this.javaType = javaType;
+  }
+
+  /** The simple name of the Java type of the value. */
+  public String javaType() {
+    return javaType;
+  }
+
+  /** The name in the spec. */
   @Override
   public String toString() {
     return name;

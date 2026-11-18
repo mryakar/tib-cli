@@ -18,6 +18,7 @@ entities:
       - { name: token, type: UUID }
       - { name: ratio, type: BigDecimal }
       - { name: amount, type: BigDecimal, precision: 10 }
+      - { name: memo, type: Text }
     relations:
       - { kind: oneToOne, target: Branch, field: parent, nullable: true }
     options: { pagination: false }

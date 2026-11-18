@@ -44,8 +44,11 @@ alone.
 |===
 |SQL type |Field type
 
-|`VARCHAR(n)`, `VARCHAR2(n)`, `NVARCHAR(n)`, `NVARCHAR2(n)`, `CHARACTER VARYING(n)`, `CHAR(n)`, `CHARACTER(n)`, `NCHAR(n)`, `TEXT`, `CLOB`, `NCLOB`
+|`VARCHAR(n)`, `VARCHAR2(n)`, `NVARCHAR(n)`, `NVARCHAR2(n)`, `CHARACTER VARYING(n)`, `CHAR(n)`, `CHARACTER(n)`, `NCHAR(n)`
 |`String`, of length _n_ when there is one
+
+|`TEXT`, `CLOB`, `NCLOB`
+|`Text`
 
 |`SMALLINT`, `INT`, `INTEGER`, `INT2`, `INT4`, `SMALLSERIAL`, `SERIAL`; `NUMERIC(p)`, `DECIMAL(p)` and `NUMBER(p)`, also with a scale of 0, up to nine digits
 |`Integer`

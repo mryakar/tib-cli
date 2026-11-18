@@ -87,7 +87,7 @@ class SpecReaderSpec extends Specification {
 
     where:
     yaml                                                    | problem
-    SpecSpec.field('{ name: x, type: Strng }')              | "entities[0].fields[0].type: 'Strng' is not one of String, Integer, Long, BigDecimal, Boolean, LocalDate, LocalDateTime, Instant, UUID"
+    SpecSpec.field('{ name: x, type: Strng }')              | "entities[0].fields[0].type: 'Strng' is not one of String, Text, Integer, Long, BigDecimal, Boolean, LocalDate, LocalDateTime, Instant, UUID"
     SpecSpec.field('{ name: x, type: String, lenght: 3 }')  | "entities[0].fields[0].lenght: unknown property; the properties are column, length, name, nullable, precision, scale, type, unique"
     SpecSpec.field('{ name: x, type: String, length: abc }') | "entities[0].fields[0].length: 'abc' is not of type Integer"
   }

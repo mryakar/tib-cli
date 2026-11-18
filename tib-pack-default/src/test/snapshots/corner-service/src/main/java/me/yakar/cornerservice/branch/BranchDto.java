@@ -22,6 +22,7 @@ public record BranchDto(
     UUID token,
     BigDecimal ratio,
     BigDecimal amount,
+    String memo,
     Long parentId,
     Instant createdAt,
     Instant updatedAt) {}

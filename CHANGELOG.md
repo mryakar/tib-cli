@@ -20,6 +20,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   field and a relation do; without one, its column is the field in upper snake case, as before.
   The DDL keeps the name of the column of the primary key, as `city_id`, which tib wrote as
   `CITY_ID` before.
+- A field of the spec may be of the type `Text`: a `String` without a length, which the default
+  pack writes as a `TEXT` column, without a limit in the validation of the DTO. A `TEXT`, `CLOB`
+  or `NCLOB` column of DDL is such a field; it was a `String` of 255 characters, into which a
+  longer value of the table did not fit.
 
 ### Changed
 

@@ -80,11 +80,9 @@ record SqlType(FieldType type, Integer length, Integer precision, Integer scale,
           "CHARACTER VARYING",
           "CHAR",
           "CHARACTER",
-          "NCHAR",
-          "TEXT",
-          "CLOB",
-          "NCLOB" ->
+          "NCHAR" ->
           new SqlType(FieldType.STRING, first, null, null, false);
+      case "TEXT", "CLOB", "NCLOB" -> plain(FieldType.TEXT);
       case "SMALLINT", "INT", "INTEGER", "INT2", "INT4" -> plain(FieldType.INTEGER);
       case "SMALLSERIAL", "SERIAL" -> new SqlType(FieldType.INTEGER, null, null, null, true);
       case "BIGINT", "INT8" -> plain(FieldType.LONG);

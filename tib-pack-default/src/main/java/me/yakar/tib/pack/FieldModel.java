@@ -31,7 +31,7 @@ public record FieldModel(Field field) {
   }
 
   public String javaType() {
-    return field.type().toString();
+    return field.type().javaType();
   }
 
   /** The import of the Java type, as a line of Java; nothing for a type of {@code java.lang}. */
@@ -42,7 +42,7 @@ public record FieldModel(Field field) {
       case LOCAL_DATE_TIME -> "import java.time.LocalDateTime;";
       case INSTANT -> "import java.time.Instant;";
       case UUID -> "import java.util.UUID;";
-      case STRING, INTEGER, LONG, BOOLEAN -> "";
+      case STRING, TEXT, INTEGER, LONG, BOOLEAN -> "";
     };
   }
 
@@ -79,6 +79,9 @@ public record FieldModel(Field field) {
     if (length() != null) {
       column.append(", length = ").append(length());
     }
+    if (field.type() == FieldType.TEXT) {
+      column.append(", columnDefinition = \"TEXT\"");
+    }
     if (field.precision() != null) {
       column.append(", precision = ").append(field.precision());
     }
@@ -110,6 +113,7 @@ public record FieldModel(Field field) {
         String text = variant == 1 ? "One" : "Two";
         yield "\"" + text.substring(0, Math.min(text.length(), length())) + "\"";
       }
+      case TEXT -> variant == 1 ? "\"One\"" : "\"Two\"";
       case INTEGER -> String.valueOf(variant);
       case LONG -> variant + "L";
       case BIG_DECIMAL -> "new BigDecimal(\"" + decimal(variant) + "\")";
@@ -166,6 +170,7 @@ public record FieldModel(Field field) {
   private static String sqlType(FieldType type, Integer length, Integer precision, Integer scale) {
     return switch (type) {
       case STRING -> "VARCHAR(" + length + ")";
+      case TEXT -> "TEXT";
       case INTEGER -> "INTEGER";
       case LONG -> "BIGINT";
       case BIG_DECIMAL ->

@@ -397,7 +397,7 @@ class DdlReaderSpec extends Specification {
         new Field('code', 'code', FieldType.STRING, 8, null, null, false, true),
         new Field('openedOn', 'opened_on', FieldType.LOCAL_DATE, null, null, null, true, false),
       ], [], false, null),
-      new Entity('Driver', 'drivers', new Id('id', 'id', IdType.LONG, IdStrategy.IDENTITY), [new Field('name', 'name', FieldType.STRING, null, null, null, false, false),], [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'vehicle', 'vehicle_id', true)], false, null),
+      new Entity('Driver', 'drivers', new Id('id', 'id', IdType.LONG, IdStrategy.IDENTITY), [new Field('name', 'name', FieldType.TEXT, null, null, null, false, false),], [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'vehicle', 'vehicle_id', true)], false, null),
       new Entity('Vehicle', 'vehicles', new Id('id', 'id', IdType.LONG, IdStrategy.IDENTITY), [
         new Field('plateNumber', 'plate_number', FieldType.STRING, 16, null, null, false, true),
         new Field('capacity', 'capacity', FieldType.INTEGER, null, null, null, true, false),
