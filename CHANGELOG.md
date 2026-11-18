@@ -7,6 +7,16 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `tib generate entity --ddl` reads the schema that `pg_dump --schema-only` writes, as it writes
+  it: the commands of psql in it, such as the `\restrict` of PostgreSQL 17.6 and 18, the owners and
+  the defaults that `ALTER TABLE` sets, and the functions, triggers and views of the database, which
+  tib skips; an identity that `ALTER TABLE` adds to a column makes the identifier an identity. The
+  statements other than `CREATE TABLE` and `ALTER TABLE` are no longer parsed, so SQL that tib
+  cannot parse in them is no longer a problem; one that tib cannot parse in a table is named with
+  its line and column in the DDL, each of them.
+
 ### Fixed
 
 - The tests of an entity with a field named as the entity, such as a table `city` with a column
