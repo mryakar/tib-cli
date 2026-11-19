@@ -32,6 +32,28 @@ final class Problems {
     messages.add(path + ": " + message);
   }
 
+  /** Adds the problem of a Java name that is a keyword of the language. */
+  void javaName(String path, String name) {
+    if (Names.isKeyword(name)) {
+      add(path, "'" + name + "' is a Java keyword");
+    }
+  }
+
+  /**
+   * Adds the problem of an SQL name that the database reserves.
+   *
+   * @param path the path of what has the name: a field, a relation, an identifier or an entity
+   * @param property the property that names it: {@code column} or {@code table}
+   * @param owner what the path is of, in a word, as in {@code give the field a column}
+   */
+  void sqlName(String path, String property, String name, String owner) {
+    if (Names.isReserved(name)) {
+      add(
+          path + "." + property,
+          "'" + name + "' is a reserved word in SQL; give the " + owner + " a " + property);
+    }
+  }
+
   boolean isEmpty() {
     return messages.isEmpty();
   }

@@ -42,13 +42,7 @@ public record Relation(
   }
 
   void check(Problems problems, String path) {
-    if (Names.isKeyword(field)) {
-      problems.add(path + ".field", "'" + field + "' is a Java keyword");
-    }
-    if (Names.isReserved(column)) {
-      problems.add(
-          path + ".column",
-          "'" + column + "' is a reserved word in SQL; give the relation a column");
-    }
+    problems.javaName(path + ".field", field);
+    problems.sqlName(path, "column", column, "relation");
   }
 }
