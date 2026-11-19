@@ -22,7 +22,7 @@ import me.yakar.tib.spec.Names;
 /** A field as the templates see it. */
 public record FieldModel(Field field) {
 
-  /** The length of a String that the spec gives none. */
+  /** The length of a String whose spec gives none. */
   static final int DEFAULT_LENGTH = 255;
 
   public String name() {
@@ -157,7 +157,7 @@ public record FieldModel(Field field) {
     return sql.toString();
   }
 
-  /** The SQL type of a Java type. */
+  /** The SQL type of a field type. */
   private String sqlType() {
     return switch (field.type()) {
       case STRING -> "VARCHAR(" + length() + ")";
