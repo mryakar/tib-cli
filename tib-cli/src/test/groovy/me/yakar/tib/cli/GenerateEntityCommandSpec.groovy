@@ -41,6 +41,19 @@ class GenerateEntityCommandSpec extends Specification {
   '      - { name: capacity, type: Integer }\n',
   '      - { name: color, type: String, length: 20 }\n      - { name: capacity, type: Integer }\n')
 
+  /** DDL with a table after the first whose column the parser cannot read. */
+  static final String ONE_STOP = '''\
+    CREATE TABLE DEPOTS (ID BIGINT PRIMARY KEY);
+
+    CREATE TABLE VEHICLES (
+      ID BIGINT PRIMARY KEY,
+      PLATES VARCHAR(20)[ )
+    );
+    '''.stripIndent()
+
+  /** The same DDL with one more statement that the parser cannot read. */
+  static final String STOPS = ONE_STOP + 'CREATE TABLE DRIVERS (ID BIGINT PRIMARY KEY, NAMES VARCHAR(20)[ ));\n'
+
   def "the spec or the DDL is required"() {
     when:
     Result result = tib.run('generate', 'entity')
@@ -503,6 +516,28 @@ class GenerateEntityCommandSpec extends Specification {
     'a spec file that is not there' | '--spec' | 'no-such-spec.yaml' | null                               | 'cannot read no-such-spec.yaml: no such file'
     'DDL that tib cannot use'       | '--ddl'  | 'tables.sql'        | 'CREATE TABLE T (A INT);\n'        | 'the DDL has a problem: T: there is no primary key'
     'a DDL file that is not there'  | '--ddl'  | 'no-such-ddl.sql'   | null                               | 'cannot read no-such-ddl.sql: no such file'
+  }
+
+  def "DDL that the parser cannot read is reported where it stops in the file, and nothing is written: #problems"() {
+    given:
+    tib.init('vehicle-service')
+    String file = tib.write('tables.sql', sql)
+    Map<String, String> before = tib.files()
+
+    when:
+    Result result = tib.generate('--ddl', file, *options)
+
+    then:
+    result.exitCode() == 1
+    result.out() == ''
+    result.err() == message
+    tib.files() == before
+
+    where:
+    problems               | options       | sql      | message
+    'one'                  | []            | ONE_STOP | 'the DDL has a problem: it is not SQL that tib reads: Encountered: "[" / "[", at line 5, column 21\n'
+    'one, in a dry run'    | ['--dry-run'] | ONE_STOP | 'the DDL has a problem: it is not SQL that tib reads: Encountered: "[" / "[", at line 5, column 21\n'
+    'several, a line each' | []            | STOPS    | 'the DDL has 2 problems:\n  it is not SQL that tib reads: Encountered: "[" / "[", at line 5, column 21\n  it is not SQL that tib reads: Encountered: "[" / "[", at line 7, column 63\n'
   }
 
   def "the spec of another #what is refused, and nothing is written"() {
