@@ -45,6 +45,9 @@ updates:
         patterns: ["*"]
   - package-ecosystem: npm
     directory: /docs
+    # package.json overrides the js-yaml of the Antora Collector, which asks for ~4.1, a range with
+    # no release past the known vulnerabilities: remove the override once a Collector release asks
+    # for js-yaml 4.3 or later.
     schedule:
       interval: weekly
     cooldown:
