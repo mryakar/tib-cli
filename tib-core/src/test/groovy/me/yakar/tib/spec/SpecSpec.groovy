@@ -54,6 +54,8 @@ class SpecSpec extends Specification {
     field('{ name: n, type: String, column: "plate number" }')                  | "entities[0].fields[0].column: 'plate number' does not match ${Names.SQL}"
     field('{ name: key, type: Long, column: id }')                              | "entities[0].fields[0].column: 'id' is already a column"
     entity('fields:\n      - { name: a, type: Long }\n      - { name: b, type: Long, column: A }') | "entities[0].fields[1].column: 'A' is already a column"
+    entity('id: { column: vehicle_id }\n    fields:\n      - { name: key, type: Long, column: VEHICLE_ID }') | "entities[0].fields[0].column: 'VEHICLE_ID' is already a column"
+    entity('audit: true\n    id: { column: created_at }')                       | "entities[0].id.column: 'created_at' is already a column"
     entity('audit: true\n    fields:\n      - { name: created, type: Instant, column: created_at }') | "entities[0].fields[0].column: 'created_at' is already a column"
     entity('audit: true\n    fields:\n      - { name: createdAt, type: Instant, column: CREATION }') | "entities[0].fields[0].name: 'createdAt' is already a member of an audited entity"
     entity('audit: true\n    relations:\n      - { kind: manyToOne, target: Vehicle, field: updatedAt }') | "entities[0].relations[0].field: 'updatedAt' is already a member of an audited entity"

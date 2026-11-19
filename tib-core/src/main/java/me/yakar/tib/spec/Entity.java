@@ -86,16 +86,17 @@ public record Entity(
       generated.put("createdAt", "'createdAt' is already a member of an audited entity");
       generated.put("updatedAt", "'updatedAt' is already a member of an audited entity");
     }
-    if (generated.containsKey(id.field())) {
-      problems.add(path + ".id.field", generated.get(id.field()));
-    }
     Set<String> members = new HashSet<>(generated.keySet());
     members.add(id.field());
     // The columns, in upper case: SQL names are the same in any case.
     Set<String> columns = new HashSet<>();
-    columns.add(id.column());
     if (audit) {
       columns.addAll(List.of(CREATED_AT, UPDATED_AT));
+    }
+    if (generated.containsKey(id.field())) {
+      problems.add(path + ".id.field", generated.get(id.field()));
+    } else {
+      column(problems, path + ".id", id.column(), columns);
     }
     for (int i = 0; i < fields.size(); i++) {
       Field field = fields.get(i);
