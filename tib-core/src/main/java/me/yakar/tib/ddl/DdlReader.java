@@ -35,9 +35,8 @@ import net.sf.jsqlparser.statement.create.table.CreateTable;
  * Reads SQL DDL into the spec of a service. Each table that a {@code CREATE TABLE} statement
  * creates is an entity, named after the table in the singular: its primary key is the identifier, a
  * column that references another table is a relation and every other column a field. {@code ALTER
- * TABLE} may add keys to the tables, make a column an identity, set a default or an owner, as the
- * output of {@code pg_dump --schema-only} does; other statements, such as those that create
- * sequences, indexes, functions or comments, are skipped without being parsed.
+ * TABLE} may add keys to the tables and make a column an identity; the defaults and the owners that
+ * it sets are skipped. Every other statement is skipped without being parsed.
  */
 public final class DdlReader {
 
@@ -106,7 +105,9 @@ public final class DdlReader {
         .check();
   }
 
-  /** The tables that the DDL creates, by their keys, with the keys that it adds to them. */
+  /**
+   * The tables that the DDL creates, by the keys of their names, with what ALTER TABLE gives them.
+   */
   private static Map<String, Table> tables(String ddl, List<String> problems) {
     Map<String, Table> tables = new LinkedHashMap<>();
     for (Statement statement : statements(ddl, problems)) {
@@ -127,7 +128,7 @@ public final class DdlReader {
         String name = unquote(alter.getTable().getName());
         Table table = tables.get(key(name));
         if (table == null && alter.getAlterExpressions().stream().allMatch(Table::owner)) {
-          // pg_dump gives sequences their owner with ALTER TABLE too.
+          // An older pg_dump gives a sequence or a view its owner with ALTER TABLE.
           continue;
         }
         if (table == null) {

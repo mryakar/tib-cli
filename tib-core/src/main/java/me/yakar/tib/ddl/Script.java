@@ -21,9 +21,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * An SQL script split into its statements, as psql splits it: a semicolon ends a statement unless
- * it is in a string, a quoted name, a dollar-quoted body or a comment. A backslash between two
- * statements starts a command of psql, such as the {@code \restrict} that pg_dump writes, which
+ * An SQL script split into its statements, much as psql splits it: a semicolon ends a statement
+ * unless it is in a string, a quoted name, a dollar-quoted body or a comment. A backslash between
+ * two statements starts a command of psql, such as the {@code \restrict} that pg_dump writes, which
  * runs to the end of its line and is no statement.
  */
 final class Script {

@@ -92,7 +92,7 @@
           "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
         },
         "type": {
-          "description": "The Java type of the field, or Text: a String without a length.",
+          "description": "The Java type of the field, or Text: a String without a limit.",
           "type": "string",
           "enum": [
             "String",
