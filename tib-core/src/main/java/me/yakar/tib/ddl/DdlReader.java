@@ -21,31 +21,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import me.yakar.tib.spec.Entity;
-import me.yakar.tib.spec.Field;
-import me.yakar.tib.spec.FieldType;
-import me.yakar.tib.spec.Id;
-import me.yakar.tib.spec.IdStrategy;
-import me.yakar.tib.spec.IdType;
 import me.yakar.tib.spec.Names;
-import me.yakar.tib.spec.Relation;
-import me.yakar.tib.spec.RelationKind;
 import me.yakar.tib.spec.Spec;
 import net.sf.jsqlparser.JSQLParserException;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.alter.Alter;
-import net.sf.jsqlparser.statement.alter.AlterExpression;
-import net.sf.jsqlparser.statement.alter.AlterOperation;
-import net.sf.jsqlparser.statement.create.table.ColumnDefinition;
 import net.sf.jsqlparser.statement.create.table.CreateTable;
-import net.sf.jsqlparser.statement.create.table.ForeignKeyIndex;
-import net.sf.jsqlparser.statement.create.table.Index;
 
 /**
  * Reads SQL DDL into the spec of a service. Each table that a {@code CREATE TABLE} statement
@@ -57,24 +41,7 @@ import net.sf.jsqlparser.statement.create.table.Index;
  */
 public final class DdlReader {
 
-  private static final Pattern NOT_NULL =
-      Pattern.compile("\\bNOT\\s+NULL\\b", Pattern.CASE_INSENSITIVE);
-  private static final Pattern PRIMARY_KEY =
-      Pattern.compile("\\bPRIMARY\\s+KEY\\b", Pattern.CASE_INSENSITIVE);
-  private static final Pattern UNIQUE = Pattern.compile("\\bUNIQUE\\b", Pattern.CASE_INSENSITIVE);
-  private static final Pattern IDENTITY =
-      Pattern.compile("\\b(IDENTITY|AUTO_INCREMENT)\\b", Pattern.CASE_INSENSITIVE);
-
-  /** A default of the next value of a sequence, which the database assigns as for an identity. */
-  private static final Pattern NEXTVAL =
-      Pattern.compile("\\bNEXTVAL\\s*\\(", Pattern.CASE_INSENSITIVE);
-
   private static final Pattern QUOTED = Pattern.compile("^[\"`\\[](.*)[\"`\\]]$");
-  private static final Pattern REFERENCES =
-      Pattern.compile("\\bREFERENCES\\s+([^\\s(]+)", Pattern.CASE_INSENSITIVE);
-
-  /** A string literal, which the keywords above are never found in. */
-  private static final Pattern LITERAL = Pattern.compile("'(?:[^']|'')*'");
 
   /** The first words of a statement that tib parses. */
   private static final Pattern TABLE_STATEMENT =
@@ -98,18 +65,6 @@ public final class DdlReader {
 
   /** The line and the column where the parser stopped. */
   private static final Pattern POSITION = Pattern.compile("at line (\\d+), column (\\d+)");
-
-  /** A column that an {@code ALTER TABLE} makes an identity, as {@code ID ADD GENERATED ... }. */
-  private static final Pattern ADD_IDENTITY =
-      Pattern.compile(
-          "^\\S+\\s+ADD\\s+GENERATED\\s+(?:ALWAYS|BY\\s+DEFAULT)\\s+AS\\s+IDENTITY$",
-          Pattern.CASE_INSENSITIVE);
-
-  /** The owner that an {@code ALTER TABLE} gives the table. */
-  private static final Pattern OWNER = Pattern.compile("^OWNER\\s+TO\\b", Pattern.CASE_INSENSITIVE);
-
-  /** The suffix of the column of a relation, after the name of the relation. */
-  private static final Pattern ID_SUFFIX = Pattern.compile("(?i)(?<=[^_])_ID$");
 
   private DdlReader() {}
 
@@ -172,7 +127,7 @@ public final class DdlReader {
         Alter alter = (Alter) statement;
         String name = unquote(alter.getTable().getName());
         Table table = tables.get(key(name));
-        if (table == null && alter.getAlterExpressions().stream().allMatch(DdlReader::owner)) {
+        if (table == null && alter.getAlterExpressions().stream().allMatch(Table::owner)) {
           // pg_dump gives sequences their owner with ALTER TABLE too.
           continue;
         }
@@ -210,12 +165,6 @@ public final class DdlReader {
       }
     }
     return statements;
-  }
-
-  /** Whether the change gives the table an owner, which tib does not need. */
-  private static boolean owner(AlterExpression expression) {
-    return expression.getOperation() == AlterOperation.UNSPECIFIC
-        && OWNER.matcher(String.valueOf(expression.getOptionalSpecifier())).find();
   }
 
   /**
@@ -256,302 +205,14 @@ public final class DdlReader {
   }
 
   /** The key of an SQL name, under which the same name in another case is the same. */
-  private static String key(String name) {
+  static String key(String name) {
     return unquote(name).toUpperCase(Locale.ROOT);
   }
 
   /**
    * An SQL name without the quotes around it, which may be double quotes, backticks or brackets.
    */
-  private static String unquote(String name) {
+  static String unquote(String name) {
     return QUOTED.matcher(name).replaceFirst("$1");
-  }
-
-  /**
-   * The names of the members of the entity of the spec, by the keys of their columns: a column that
-   * the spec has keeps the name the spec gives it.
-   */
-  private static Map<String, String> members(Entity known) {
-    Map<String, String> members = new HashMap<>();
-    if (known != null) {
-      members.put(key(known.id().column()), known.id().field());
-      known.fields().forEach(field -> members.put(key(field.column()), field.name()));
-      known.relations().forEach(relation -> members.put(key(relation.column()), relation.field()));
-    }
-    return members;
-  }
-
-  /** A table that the DDL creates, with the keys that it gives the table. */
-  private static final class Table {
-
-    final String name;
-    final Map<String, Column> columns = new LinkedHashMap<>();
-    List<String> primaryKey = List.of();
-
-    Table(CreateTable create, List<String> problems) {
-      name = unquote(create.getTable().getName());
-      for (ColumnDefinition definition : create.getColumnDefinitions()) {
-        Column column = new Column(definition);
-        columns.put(key(column.name), column);
-        if (column.primary) {
-          primaryKey = List.of(column.name);
-        }
-      }
-      for (Index index : create.getIndexes()) {
-        take(index, problems);
-      }
-    }
-
-    /**
-     * Takes the keys that the statement adds to the table and the columns that it makes identities,
-     * and skips the defaults and the owner that it sets; any other change is a problem.
-     */
-    void alter(Alter alter, List<String> problems) {
-      for (AlterExpression expression : alter.getAlterExpressions()) {
-        if (expression.getOperation() == AlterOperation.ADD && expression.getIndex() != null) {
-          take(expression.getIndex(), problems);
-        } else if (owner(expression)) {
-          // The owner of the table says nothing of the entity.
-        } else if (expression.getColumnSetDefaultList() != null) {
-          for (AlterExpression.ColumnSetDefault set : expression.getColumnSetDefaultList()) {
-            String value = LITERAL.matcher(set.toString()).replaceAll("''");
-            identify(set.getColumnName(), NEXTVAL.matcher(value).find(), problems);
-          }
-        } else if (identities(expression)) {
-          for (AlterExpression.ColumnDataType identity : expression.getColDataTypeList()) {
-            identify(identity.getColumnName(), true, problems);
-          }
-        } else {
-          problems.add(
-              name
-                  + ": ALTER TABLE may only add keys, make a column an identity, or set a default"
-                  + " or the owner");
-        }
-      }
-    }
-
-    /**
-     * Makes the column an identity, when it becomes one; a column that is not there is a problem.
-     */
-    private void identify(String name, boolean identity, List<String> problems) {
-      Column column = column(unquote(name));
-      if (column == null) {
-        problems.add(this.name + ": there is no column " + unquote(name));
-      } else {
-        column.identity |= identity;
-      }
-    }
-
-    /** Whether each column that the change alters becomes an identity. */
-    private static boolean identities(AlterExpression expression) {
-      return expression.getOperation() == AlterOperation.ALTER
-          && expression.getColDataTypeList() != null
-          && expression.getColDataTypeList().stream()
-              .allMatch(column -> ADD_IDENTITY.matcher(column.toString()).find());
-    }
-
-    /** Takes a primary, foreign or unique key; a unique key of several columns is not kept. */
-    void take(Index index, List<String> problems) {
-      List<String> names = index.getColumnsNames().stream().map(DdlReader::unquote).toList();
-      for (String column : names) {
-        if (!columns.containsKey(key(column))) {
-          problems.add(name + ": there is no column " + column);
-          return;
-        }
-      }
-      // A check constraint has no type.
-      String type = String.valueOf(index.getType()).toUpperCase(Locale.ROOT);
-      if (index instanceof ForeignKeyIndex foreignKey) {
-        if (names.size() > 1) {
-          problems.add(name + ": a foreign key of several columns is not supported");
-        } else {
-          column(names.get(0)).references = unquote(foreignKey.getTable().getName());
-        }
-      } else if (type.equals("PRIMARY KEY")) {
-        primaryKey = names;
-      } else if (type.startsWith("UNIQUE") && names.size() == 1) {
-        column(names.get(0)).unique = true;
-      }
-    }
-
-    Column column(String name) {
-      return columns.get(key(name));
-    }
-
-    /** Whether a Java name comes of the SQL name; one of underscores alone is a problem. */
-    private static boolean named(String sqlName, String path, List<String> problems) {
-      if (Names.type(sqlName).isEmpty()) {
-        problems.add(path + ": a name of underscores alone is not supported");
-        return false;
-      }
-      return true;
-    }
-
-    /** The entity of the table; null when the table has a problem, which the problems get. */
-    Entity entity(Map<String, String> names, Entity known, List<String> problems) {
-      boolean named = named(name, name, problems);
-      for (Column column : columns.values()) {
-        named &= named(column.name, name + "." + column.name, problems);
-      }
-      if (!named) {
-        return null;
-      }
-      if (primaryKey.size() != 1) {
-        problems.add(
-            name
-                + (primaryKey.isEmpty()
-                    ? ": there is no primary key"
-                    : ": a primary key of several columns is not supported"));
-        return null;
-      }
-      Column key = column(primaryKey.get(0));
-      Map<String, String> members = members(known);
-      Id id = key.id(name, members, problems);
-      Column created = column(Entity.CREATED_AT);
-      Column updated = column(Entity.UPDATED_AT);
-      boolean audit =
-          created != null
-              && updated != null
-              && created.is(FieldType.INSTANT)
-              && updated.is(FieldType.INSTANT);
-      List<Field> fields = new ArrayList<>();
-      List<Relation> relations = new ArrayList<>();
-      for (Column column : columns.values()) {
-        if (column == key || audit && (column == created || column == updated)) {
-          continue;
-        }
-        String path = name + "." + column.name;
-        if (column.references != null) {
-          String target = names.get(key(column.references));
-          if (target == null) {
-            problems.add(
-                path + ": there is no table " + column.references + " in the DDL or the service");
-          } else {
-            relations.add(column.relation(target, members));
-          }
-        } else {
-          Field field = column.field(path, members, problems);
-          if (field != null) {
-            fields.add(field);
-          }
-        }
-      }
-      return new Entity(
-          names.get(key(name)),
-          name,
-          id,
-          fields,
-          relations,
-          audit,
-          known == null ? null : known.options());
-    }
-  }
-
-  /** A column of a table, with what its definition and the keys of the table say of it. */
-  private static final class Column {
-
-    final String name;
-    final ColumnDefinition definition;
-    final SqlType type;
-    final boolean notNull;
-    final boolean primary;
-    boolean identity;
-    boolean unique;
-    String references;
-
-    Column(ColumnDefinition definition) {
-      this.definition = definition;
-      name = unquote(definition.getColumnName());
-      type = SqlType.of(definition.getColDataType());
-      List<String> specs = Objects.requireNonNullElse(definition.getColumnSpecs(), List.of());
-      // An expression in parentheses, as that of a check, says nothing of the column.
-      String constraints = text(specs.stream().filter(spec -> !spec.startsWith("(")));
-      notNull = NOT_NULL.matcher(constraints).find();
-      primary = PRIMARY_KEY.matcher(constraints).find();
-      identity =
-          IDENTITY.matcher(constraints).find() || NEXTVAL.matcher(text(specs.stream())).find();
-      unique = UNIQUE.matcher(constraints).find();
-      Matcher target = REFERENCES.matcher(constraints);
-      if (target.find()) {
-        String[] parts = target.group(1).split("\\.");
-        references = unquote(parts[parts.length - 1]);
-      }
-    }
-
-    /** The words of the definition as one text, with its string literals emptied. */
-    private static String text(Stream<String> specs) {
-      return LITERAL.matcher(specs.collect(Collectors.joining(" "))).replaceAll("''");
-    }
-
-    /** Whether the column holds values of the field type. */
-    boolean is(FieldType fieldType) {
-      return type != null && type.type() == fieldType;
-    }
-
-    /**
-     * The identifier that the column holds: a Long that the database assigns, by identity or by a
-     * sequence, or a UUID.
-     */
-    Id id(String table, Map<String, String> members, List<String> problems) {
-      String field = member(members, name);
-      if (is(FieldType.UUID)) {
-        return new Id(field, name, IdType.UUID, IdStrategy.UUID);
-      }
-      if (!is(FieldType.INTEGER) && !is(FieldType.LONG)) {
-        problems.add(
-            table
-                + "."
-                + name
-                + ": the primary key is "
-                + SqlType.text(definition.getColDataType())
-                + ", and only an integer or a UUID is supported");
-        return null;
-      }
-      return new Id(
-          field,
-          name,
-          IdType.LONG,
-          identity || type.serial() ? IdStrategy.IDENTITY : IdStrategy.SEQUENCE);
-    }
-
-    Field field(String path, Map<String, String> members, List<String> problems) {
-      if (type == null) {
-        problems.add(
-            path + ": the type " + SqlType.text(definition.getColDataType()) + " is not supported");
-        return null;
-      }
-      String field = member(members, name);
-      return new Field(
-          field,
-          name,
-          type.type(),
-          type.length(),
-          type.precision(),
-          type.scale(),
-          !notNull,
-          unique);
-    }
-
-    /**
-     * The relation that the column holds: one to one when the column is unique. Its field is named
-     * after the column without {@code _ID}.
-     */
-    Relation relation(String target, Map<String, String> members) {
-      String field = member(members, ID_SUFFIX.matcher(name).replaceFirst(""));
-      return new Relation(
-          unique ? RelationKind.ONE_TO_ONE : RelationKind.MANY_TO_ONE,
-          target,
-          field,
-          name,
-          !notNull);
-    }
-
-    /**
-     * The name of the member of the column: the one the spec gives it, or one derived from the
-     * name.
-     */
-    private String member(Map<String, String> members, String derivedFrom) {
-      return members.getOrDefault(key(name), Names.member(Names.type(derivedFrom)));
-    }
   }
 }
