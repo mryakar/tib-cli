@@ -65,12 +65,13 @@ final class EntityGenerator implements Generator {
     // Written here and not by init: only a service with an API needs it.
     if (models.values().stream().anyMatch(EntityModel::layer)) {
       String handler = DefaultPack.MAIN + project.packagePath() + "/ConflictHandler.java";
-      once(
-          files,
+      files.once(
           handler,
-          FIRST_ENTITY,
-          "entity/conflict_handler_java.jte",
-          Map.of("project", project));
+          Templates.render(
+              handler,
+              FIRST_ENTITY,
+              "entity/conflict_handler_java.jte",
+              Map.of("project", project)));
     }
   }
 
@@ -88,45 +89,37 @@ final class EntityGenerator implements Generator {
     String test = entity.testDirectory() + "/" + entity.name();
     Map<String, Object> model = Map.of("entity", entity);
     Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity));
-    own(files, main + "Generated.java", EVERY_RUN, "entity/generated_java.jte", model);
-    once(files, main + ".java", ONCE, "entity/entity_java.jte", model);
-    once(files, main + "Repository.java", ONCE, "entity/repository_java.jte", model);
+    own(files, main + "Generated.java", "entity/generated_java.jte", model);
+    once(files, main + ".java", "entity/entity_java.jte", model);
+    once(files, main + "Repository.java", "entity/repository_java.jte", model);
     if (entity.dto()) {
-      own(files, main + "Dto.java", EVERY_RUN, "entity/dto_java.jte", model);
+      own(files, main + "Dto.java", "entity/dto_java.jte", model);
     }
     // A migration lasts: a database may have run it, so it stays when the entity leaves the spec.
     String migration = migration(files, entity);
     files.lasting(
         migration, Templates.render(migration, MIGRATION, "entity/migration_sql.jte", model));
-    own(files, test + "Samples.java", EVERY_RUN, "entity/samples_java.jte", tests);
-    once(files, test + "RepositoryTests.java", ONCE, "entity/repository_tests_java.jte", tests);
+    own(files, test + "Samples.java", "entity/samples_java.jte", tests);
+    once(files, test + "RepositoryTests.java", "entity/repository_tests_java.jte", tests);
     if (entity.layer()) {
-      own(files, main + "Mapper.java", EVERY_RUN, "entity/mapper_java.jte", model);
-      once(files, main + "Service.java", ONCE, "entity/service_java.jte", model);
-      once(files, main + "Controller.java", ONCE, "entity/controller_java.jte", model);
-      once(files, test + "ServiceTests.java", ONCE, "entity/service_tests_java.jte", tests);
-      once(files, test + "ApiTests.java", ONCE, "entity/api_tests_java.jte", tests);
+      own(files, main + "Mapper.java", "entity/mapper_java.jte", model);
+      once(files, main + "Service.java", "entity/service_java.jte", model);
+      once(files, main + "Controller.java", "entity/controller_java.jte", model);
+      once(files, test + "ServiceTests.java", "entity/service_tests_java.jte", tests);
+      once(files, test + "ApiTests.java", "entity/api_tests_java.jte", tests);
     }
   }
 
   /** Writes a file of tib's: on every run. */
   private static void own(
-      ProjectFiles files,
-      String path,
-      String header,
-      String template,
-      Map<String, Object> parameters) {
-    files.own(path, Templates.render(path, header, template, parameters));
+      ProjectFiles files, String path, String template, Map<String, Object> parameters) {
+    files.own(path, Templates.render(path, EVERY_RUN, template, parameters));
   }
 
   /** Writes a file of the developer's: once. */
   private static void once(
-      ProjectFiles files,
-      String path,
-      String header,
-      String template,
-      Map<String, Object> parameters) {
-    files.once(path, Templates.render(path, header, template, parameters));
+      ProjectFiles files, String path, String template, Map<String, Object> parameters) {
+    files.once(path, Templates.render(path, ONCE, template, parameters));
   }
 
   /**
