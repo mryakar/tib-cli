@@ -37,6 +37,19 @@ class DdlReaderSpec extends Specification {
 
   static final Spec SERVICE = SpecReader.parse('tib: 1\nservice: vehicle-service\ngroup: me.yakar\n')
 
+  /** The depot of the example DDL, which the output of pg_dump has too. */
+  static final Entity DEPOT = new Entity('Depot', 'depots', new Id('id', 'id', IdType.UUID, IdStrategy.UUID), [
+    new Field('code', 'code', FieldType.STRING, 8, null, null, false, true),
+    new Field('openedOn', 'opened_on', FieldType.LOCAL_DATE, null, null, null, true, false),
+  ], [], false, null)
+
+  /** The vehicle of the example DDL, which the output of pg_dump has too. */
+  static final Entity VEHICLE = new Entity('Vehicle', 'vehicles', new Id('id', 'id', IdType.LONG, IdStrategy.IDENTITY), [
+    new Field('plateNumber', 'plate_number', FieldType.STRING, 16, null, null, false, true),
+    new Field('capacity', 'capacity', FieldType.INTEGER, null, null, null, true, false),
+    new Field('price', 'price', FieldType.BIG_DECIMAL, null, 12, 2, true, false),
+  ], [new Relation(RelationKind.MANY_TO_ONE, 'Depot', 'depot', 'depot_id', true)], true, null)
+
   def "reads the tables of the example DDL into the spec of the service"() {
     when:
     Spec spec = DdlReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.sql')), SERVICE)
@@ -44,17 +57,7 @@ class DdlReaderSpec extends Specification {
     then:
     spec.service() == 'vehicle-service'
     spec.group() == 'me.yakar'
-    spec.entities() == [
-      new Entity('Depot', 'depots', new Id('id', 'id', IdType.UUID, IdStrategy.UUID), [
-        new Field('code', 'code', FieldType.STRING, 8, null, null, false, true),
-        new Field('openedOn', 'opened_on', FieldType.LOCAL_DATE, null, null, null, true, false),
-      ], [], false, null),
-      new Entity('Vehicle', 'vehicles', new Id('id', 'id', IdType.LONG, IdStrategy.IDENTITY), [
-        new Field('plateNumber', 'plate_number', FieldType.STRING, 16, null, null, false, true),
-        new Field('capacity', 'capacity', FieldType.INTEGER, null, null, null, true, false),
-        new Field('price', 'price', FieldType.BIG_DECIMAL, null, 12, 2, true, false),
-      ], [new Relation(RelationKind.MANY_TO_ONE, 'Depot', 'depot', 'depot_id', true)], true, null),
-    ]
+    spec.entities() == [DEPOT, VEHICLE,]
   }
 
   def "a column of a supported SQL type is a field of its type, with its sizes"() {
@@ -123,9 +126,15 @@ class DdlReaderSpec extends Specification {
     'UUID PRIMARY KEY'                                 | IdType.UUID | IdStrategy.UUID
   }
 
-  def "the identifier is named after its column"() {
+  def "the identifier is named after its column #column, which it keeps"() {
     expect:
-    entity('CREATE TABLE T (T_ID BIGINT, CONSTRAINT T_PK PRIMARY KEY (T_ID));').id().field() == 'tId'
+    entity("CREATE TABLE T ($column BIGINT, CONSTRAINT T_PK PRIMARY KEY ($column));").id() ==
+        new Id(field, column, IdType.LONG, IdStrategy.SEQUENCE)
+
+    where:
+    column        | field
+    'T_ID'        | 'tId'
+    'Vehicle_Key' | 'vehicleKey'
   }
 
   def "a primary key of the type #sql is a problem"() {
@@ -372,6 +381,11 @@ class DdlReaderSpec extends Specification {
       ''', SERVICE).entities()*.name() == ['T']
   }
 
+  def "lines without anything in a statement do not end it"() {
+    expect:
+    entity('CREATE TABLE T (\n  ID BIGINT PRIMARY KEY,\n\n\n  A INT,\r\n \t\r\n\r\n  B INT\n);').fields()*.name() == ['a', 'b']
+  }
+
   def "ALTER TABLE may set a default or an owner, which say nothing of the entity"() {
     expect:
     entity('''
@@ -412,16 +426,9 @@ class DdlReaderSpec extends Specification {
 
     then:
     spec.entities() == [
-      new Entity('Depot', 'depots', new Id('id', 'id', IdType.UUID, IdStrategy.UUID), [
-        new Field('code', 'code', FieldType.STRING, 8, null, null, false, true),
-        new Field('openedOn', 'opened_on', FieldType.LOCAL_DATE, null, null, null, true, false),
-      ], [], false, null),
+      DEPOT,
       new Entity('Driver', 'drivers', new Id('id', 'id', IdType.LONG, IdStrategy.IDENTITY), [new Field('name', 'name', FieldType.TEXT, null, null, null, false, false),], [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'vehicle', 'vehicle_id', true)], false, null),
-      new Entity('Vehicle', 'vehicles', new Id('id', 'id', IdType.LONG, IdStrategy.IDENTITY), [
-        new Field('plateNumber', 'plate_number', FieldType.STRING, 16, null, null, false, true),
-        new Field('capacity', 'capacity', FieldType.INTEGER, null, null, null, true, false),
-        new Field('price', 'price', FieldType.BIG_DECIMAL, null, 12, 2, true, false),
-      ], [new Relation(RelationKind.MANY_TO_ONE, 'Depot', 'depot', 'depot_id', true)], true, null),
+      VEHICLE,
     ]
   }
 
@@ -448,17 +455,6 @@ class DdlReaderSpec extends Specification {
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN X ADD GENERATED ALWAYS AS IDENTITY;' | 'T: there is no column X'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN X SET DEFAULT 0;' | 'T: there is no column X'
     'ALTER TABLE T OWNER TO ME;\nALTER TABLE T ADD UNIQUE (ID);\nCREATE TABLE T (ID INT PRIMARY KEY);' | 'T: ALTER TABLE comes before the table is created'
-  }
-
-  def "SQL that the parser cannot read is refused with where the parser stopped"() {
-    when:
-    DdlReader.parse('CREATE TABLE T (A INT,\n B NUMBER(*, 0));', SERVICE)
-
-    then:
-    DdlException e = thrown()
-    e.problems().size() == 1
-    e.problems()[0].startsWith('it is not SQL that tib reads: ')
-    e.problems()[0].contains('line 2')
   }
 
   def "each table statement that the parser cannot read is a problem, at its line and column in the DDL"() {

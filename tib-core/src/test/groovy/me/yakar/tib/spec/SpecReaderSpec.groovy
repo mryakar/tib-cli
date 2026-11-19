@@ -67,11 +67,12 @@ class SpecReaderSpec extends Specification {
 
   def "what the spec says explicitly is kept"() {
     when:
-    Spec spec = SpecReader.parse(SpecSpec.entity('audit: false\n    options: { dto: false, mapper: false, pagination: false }\n'
+    Spec spec = SpecReader.parse(SpecSpec.entity('audit: false\n    id: { column: VEHICLE_KEY }\n    options: { dto: false, mapper: false, pagination: false }\n'
         + '    relations:\n      - { kind: oneToOne, target: Vehicle, field: twin, column: TWIN_REF, nullable: false }'))
 
     then:
     !spec.entities()[0].audit()
+    spec.entities()[0].id() == new Id('id', 'VEHICLE_KEY', IdType.LONG, IdStrategy.IDENTITY)
     spec.entities()[0].options() == new Options(false, false, false)
     spec.entities()[0].relations() == [new Relation(RelationKind.ONE_TO_ONE, 'Vehicle', 'twin', 'TWIN_REF', false)]
   }
