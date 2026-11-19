@@ -24,7 +24,7 @@ public abstract class BranchGenerated {
   @Id
   @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "branch")
   @SequenceGenerator(name = "branch", sequenceName = "BRANCH_SEQ", allocationSize = 50)
-  @Column(name = "BRANCH_KEY", nullable = false)
+  @Column(name = "BRANCH_KEY")
   private Long id;
 
   @Column(name = "CODE", nullable = false, length = 255)

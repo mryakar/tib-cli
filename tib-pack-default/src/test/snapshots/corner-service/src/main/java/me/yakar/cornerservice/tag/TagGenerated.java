@@ -17,7 +17,7 @@ public abstract class TagGenerated {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "ID", nullable = false)
+  @Column(name = "ID")
   private Long id;
 
   @Column(name = "LABEL", length = 255)
