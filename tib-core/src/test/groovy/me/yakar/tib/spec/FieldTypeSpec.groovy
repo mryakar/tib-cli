@@ -19,15 +19,14 @@ import spock.lang.Specification
 
 class FieldTypeSpec extends Specification {
 
-  def "#type is named #name in the spec and holds a #javaType"() {
+  def "#type is named #name in the spec"() {
     expect:
     type.toString() == name
-    type.javaType() == javaType
 
     where:
-    type                  | name         | javaType
-    FieldType.STRING      | 'String'     | 'String'
-    FieldType.TEXT        | 'Text'       | 'String'
-    FieldType.BIG_DECIMAL | 'BigDecimal' | 'BigDecimal'
+    type                  | name
+    FieldType.STRING      | 'String'
+    FieldType.TEXT        | 'Text'
+    FieldType.BIG_DECIMAL | 'BigDecimal'
   }
 }

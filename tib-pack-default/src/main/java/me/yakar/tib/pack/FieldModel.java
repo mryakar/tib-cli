@@ -29,8 +29,12 @@ public record FieldModel(Field field) {
     return field.name();
   }
 
+  /** The simple name of the Java type of the value: a Text is a String. */
   public String javaType() {
-    return field.type().javaType();
+    return switch (field.type()) {
+      case TEXT -> "String";
+      default -> field.type().toString();
+    };
   }
 
   /** The import of the Java type, as a line of Java; nothing for a type of {@code java.lang}. */

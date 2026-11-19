@@ -21,6 +21,17 @@ import spock.lang.Specification
 
 class FieldModelSpec extends Specification {
 
+  def "the value of a #type is a #javaType"() {
+    expect:
+    field("{ name: label, type: $type }").javaType() == javaType
+
+    where:
+    type         | javaType
+    'String'     | 'String'
+    'Text'       | 'String'
+    'BigDecimal' | 'BigDecimal'
+  }
+
   def "a sample BigDecimal fits the precision and the scale of its column: #precision, #scale"() {
     given:
     FieldModel field = field("{ name: amount, type: BigDecimal$size }")
