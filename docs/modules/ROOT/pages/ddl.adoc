@@ -27,7 +27,7 @@ names of its fields are the names of their columns in lower camel case: `plate_n
 
 The primary key, of one column, is the identifier. A UUID gets its value from the application; an
 integer is a `Long` that the database assigns, by identity when the column says so
-(`GENERATED ... AS IDENTITY`, `IDENTITY`, `AUTO_INCREMENT`, `SMALLSERIAL`, `SERIAL`,
+(`GENERATED ... AS IDENTITY`, `IDENTITY`, `AUTO_INCREMENT`, a serial type such as `SERIAL` or
 `BIGSERIAL`, or a default of `nextval(...)`), by a sequence otherwise.
 
 A column that references another table, with `REFERENCES` or a foreign key, is a relation to the
@@ -50,10 +50,10 @@ alone.
 |`TEXT`, `CLOB`, `NCLOB`
 |`Text`
 
-|`SMALLINT`, `INT`, `INTEGER`, `INT2`, `INT4`, `SMALLSERIAL`, `SERIAL`; `NUMERIC(p)`, `DECIMAL(p)` and `NUMBER(p)`, also with a scale of 0, up to nine digits
+|`SMALLINT`, `INT`, `INTEGER`, `INT2`, `INT4`, `SMALLSERIAL`, `SERIAL`, `SERIAL2`, `SERIAL4`; `NUMERIC(p)`, `DECIMAL(p)` and `NUMBER(p)`, also with a scale of 0, up to nine digits
 |`Integer`
 
-|`BIGINT`, `INT8`, `BIGSERIAL`; `NUMERIC(p)`, `DECIMAL(p)` and `NUMBER(p)`, also with a scale of 0, up to nineteen digits
+|`BIGINT`, `INT8`, `BIGSERIAL`, `SERIAL8`; `NUMERIC(p)`, `DECIMAL(p)` and `NUMBER(p)`, also with a scale of 0, up to nineteen digits
 |`Long`
 
 |`NUMERIC`, `DECIMAL` and `NUMBER` without digits, with a scale above 0, or with more digits
@@ -84,7 +84,7 @@ which reads back with `length: 255`.
 them, and make a column an identity, with `ALTER COLUMN ... ADD GENERATED ... AS IDENTITY` or
 `ALTER COLUMN ... SET DEFAULT nextval(...)`. tib skips any other default that they set, the checks
 that they add, the owner that they give, row level security, a replica identity and the
-statistics of a column.
+statistics of a column, also on what is no table of the DDL, such as a sequence.
 
 Every other statement, such as one that creates a sequence, an index, a function or a view, a
 comment, or one that drops a table, is skipped without being parsed, and so are the rows of the
