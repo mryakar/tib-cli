@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.Callable;
 import me.yakar.tib.spec.Spec;
-import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
 import picocli.CommandLine.ArgGroup;
@@ -50,7 +49,7 @@ class InitServiceCommand implements Callable<Integer> {
         names = "--spec",
         required = true,
         paramLabel = "FILE",
-        description = GenerationOptions.SPEC_FILE)
+        description = SpecFile.DESCRIPTION)
     Path spec;
   }
 
@@ -65,16 +64,10 @@ class InitServiceCommand implements Callable<Integer> {
       throw new RefusalException(
           tree.root() + " is already a tib project: " + State.PATH + " is there");
     }
-    Spec service;
-    List<State.Input> inputs;
     if (source.spec != null) {
-      String yaml = State.Input.read(source.spec);
-      service = SpecReader.parse(yaml);
-      inputs = List.of(State.Input.of(State.Input.Kind.SPEC, tree.root(), source.spec, yaml));
-    } else {
-      service = Spec.of(source.name);
-      inputs = List.of();
+      SpecFile file = SpecFile.read(source.spec, tree);
+      return options.init(file.spec(), List.of(file.input()), tree);
     }
-    return options.init(service, inputs, tree);
+    return options.init(Spec.of(source.name), List.of(), tree);
   }
 }

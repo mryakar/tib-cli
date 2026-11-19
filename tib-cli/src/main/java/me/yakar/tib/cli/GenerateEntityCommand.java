@@ -19,7 +19,6 @@ import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import me.yakar.tib.ddl.DdlReader;
 import me.yakar.tib.spec.Spec;
-import me.yakar.tib.spec.SpecReader;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
 import picocli.CommandLine.ArgGroup;
@@ -44,7 +43,7 @@ class GenerateEntityCommand implements Callable<Integer> {
         names = "--spec",
         required = true,
         paramLabel = "FILE",
-        description = GenerationOptions.SPEC_FILE)
+        description = SpecFile.DESCRIPTION)
     Path spec;
 
     @Option(
@@ -65,19 +64,17 @@ class GenerateEntityCommand implements Callable<Integer> {
   public Integer call() {
     Tree tree = directory.tree();
     State state = directory.state(tree);
-    Path file = source.spec != null ? source.spec : source.ddl;
-    String content = State.Input.read(file);
-    State.Input.Kind kind;
-    Spec service;
     if (source.spec != null) {
-      kind = State.Input.Kind.SPEC;
-      service = SpecReader.parse(content);
-      sameService(service, state.spec());
-    } else {
-      kind = State.Input.Kind.DDL;
-      service = DdlReader.parse(content, state.spec());
+      SpecFile file = SpecFile.read(source.spec, tree);
+      sameService(file.spec(), state.spec());
+      return options.entity(state, file.spec(), file.input(), tree);
     }
-    return options.entity(state, service, State.Input.of(kind, tree.root(), file, content), tree);
+    String sql = State.Input.read(source.ddl);
+    return options.entity(
+        state,
+        DdlReader.parse(sql, state.spec()),
+        State.Input.of(State.Input.Kind.DDL, tree.root(), source.ddl, sql),
+        tree);
   }
 
   /** Refuses the spec file of another service than the one of the project, or of another group. */
