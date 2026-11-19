@@ -46,7 +46,9 @@ jobs:
             echo "::error::no Build check ran on $GITHUB_SHA"
             exit 1
           fi
-          if grep -v ': success$' <<<"$builds" | sed 's/^/::error::did not pass: /'; then
+          failed="$(grep -v ': success$' <<<"$builds" || true)"
+          if [[ -n "$failed" ]]; then
+            sed 's/^/::error::did not pass: /' <<<"$failed"
             exit 1
           fi
         env:
