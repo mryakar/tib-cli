@@ -29,8 +29,8 @@ Some values follow from others, always the same way:
 * An identifier without a strategy gets `identity` when it is a `Long` and `uuid` when it is a
   `UUID`.
 * A `String` without a length gets 255 from the default pack: in its column, in the validation of
-  its DTO and in its migration. A field of the type `Text` is a `String` without a length: a
-  `TEXT` column in its migration, and no limit in the validation of its DTO.
+  its DTO and in its migration. A `Text` is a `String` in Java that has no limit: a `TEXT` column
+  in its migration, and no `@Size` in its DTO.
 * Without the DTO, or without the mapper, an entity has no service and no controller either. A
   DTO without a mapper is there for a mapper that you write.
 * `pagination` acts when the entity is created: the service and the controller are written once,
