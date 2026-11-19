@@ -84,9 +84,9 @@ record SqlType(FieldType type, Integer length, Integer precision, Integer scale,
           new SqlType(FieldType.STRING, first, null, null, false);
       case "TEXT", "CLOB", "NCLOB" -> plain(FieldType.TEXT);
       case "SMALLINT", "INT", "INTEGER", "INT2", "INT4" -> plain(FieldType.INTEGER);
-      case "SMALLSERIAL", "SERIAL" -> new SqlType(FieldType.INTEGER, null, null, null, true);
+      case "SMALLSERIAL", "SERIAL", "SERIAL2", "SERIAL4" -> serial(FieldType.INTEGER);
       case "BIGINT", "INT8" -> plain(FieldType.LONG);
-      case "BIGSERIAL" -> new SqlType(FieldType.LONG, null, null, null, true);
+      case "BIGSERIAL", "SERIAL8" -> serial(FieldType.LONG);
       case "NUMERIC", "DECIMAL", "NUMBER" -> number(sizes);
       case "BOOLEAN", "BOOL" -> plain(FieldType.BOOLEAN);
       case "DATE" -> plain(FieldType.LOCAL_DATE);
@@ -100,6 +100,10 @@ record SqlType(FieldType type, Integer length, Integer precision, Integer scale,
 
   private static SqlType plain(FieldType type) {
     return new SqlType(type, null, null, null, false);
+  }
+
+  private static SqlType serial(FieldType type) {
+    return new SqlType(type, null, null, null, true);
   }
 
   /**
