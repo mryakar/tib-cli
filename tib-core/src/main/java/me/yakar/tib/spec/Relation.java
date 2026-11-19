@@ -35,9 +35,12 @@ public record Relation(
             defaultValue = "true")
         Boolean nullable) {
 
+  /** What the column of a relation has after the name of its field, as in {@code DEPOT_ID}. */
+  public static final String COLUMN_SUFFIX = "_ID";
+
   public Relation {
     field = field == null && target != null ? Names.member(target) : field;
-    column = column == null && field != null ? Names.sql(field) + "_ID" : column;
+    column = column == null && field != null ? Names.sql(field) + COLUMN_SUFFIX : column;
     nullable = nullable == null || nullable;
   }
 

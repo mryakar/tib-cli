@@ -59,7 +59,8 @@ final class Column {
   private static final Pattern LITERAL = Pattern.compile("'(?:[^']|'')*'");
 
   /** The suffix of the column of a relation, after the name of the relation. */
-  private static final Pattern ID_SUFFIX = Pattern.compile("(?i)(?<=[^_])_ID$");
+  private static final Pattern ID_SUFFIX =
+      Pattern.compile("(?<=[^_])" + Relation.COLUMN_SUFFIX + "$", Pattern.CASE_INSENSITIVE);
 
   final String name;
   private final ColumnDefinition definition;
