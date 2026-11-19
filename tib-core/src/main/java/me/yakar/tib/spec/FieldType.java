@@ -16,7 +16,7 @@
 package me.yakar.tib.spec;
 
 /**
- * The type of a field: the Java type of its value, or {@code Text}, a String without a length. The
+ * The type of a field: the Java type of its value, or {@code Text}, a String without a limit. The
  * pack maps it to the SQL type of the column.
  */
 public enum FieldType {

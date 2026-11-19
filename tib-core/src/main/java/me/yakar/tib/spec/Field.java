@@ -26,7 +26,7 @@ public record Field(
             value = "The name of the column. Without one, the field's name in upper snake case.",
             pattern = Names.SQL)
         String column,
-    @Doc(value = "The Java type of the field, or Text: a String without a length.", required = true)
+    @Doc(value = "The Java type of the field, or Text: a String without a limit.", required = true)
         FieldType type,
     @Doc(value = "The length of a String; the pack picks one when there is none.", minimum = 1)
         Integer length,
