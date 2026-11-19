@@ -51,6 +51,7 @@ class ScriptSpec extends Specification {
     'a string with escapes, as e'    | "SELECT e'a\\';b'"
     'a quoted name'                  | 'SELECT "a;""b"'
     'a dollar-quoted body'           | 'SELECT $$a;b$$'
+    'a body that starts the statement' | '$$a;b$$'
     'a body with a tag'              | 'SELECT $body$ a; $$ b; $body$'
     'a body with a tag of any letters' | 'SELECT $gövde1$ a; $$ b; $gövde1$'
     'a line comment'                 | 'SELECT 1 -- a; b\n'
@@ -79,7 +80,6 @@ class ScriptSpec extends Specification {
     'SELECT $1; B'     | ['SELECT $1', 'B']
     'SELECT x$y$; B'   | ['SELECT x$y$', 'B']
     'SELECT $1$; B'    | ['SELECT $1$', 'B']
-    '$$a;b$$; B'       | ['$$a;b$$', 'B']
     'SELECT _$y$; B'   | ['SELECT _$y$', 'B']
     'SELECT x$$; B'    | ['SELECT x$$', 'B']
   }

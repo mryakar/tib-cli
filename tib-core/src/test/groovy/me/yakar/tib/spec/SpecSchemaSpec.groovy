@@ -44,9 +44,14 @@ class SpecSchemaSpec extends Specification {
     SpecSchema.json() == snapshot
   }
 
-  def "the example spec of the documentation is valid"() {
+  def "the schema accepts #spec"() {
     expect:
-    schema.validate(Files.readString(EXAMPLES.resolve('vehicle-service.yaml')), InputFormat.YAML).empty
+    schema.validate(yaml, InputFormat.YAML).empty
+
+    where:
+    spec                                    | yaml
+    'the example spec of the documentation' | Files.readString(EXAMPLES.resolve('vehicle-service.yaml'))
+    'a Text and the column of an identifier' | 'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    id: { column: VEHICLE_KEY }\n    fields:\n      - { name: notes, type: Text }'
   }
 
   def "the schema refuses a spec of the wrong structure: #yaml"() {
@@ -63,6 +68,7 @@ class SpecSchemaSpec extends Specification {
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x, type: String, lenght: 3 }',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x, type: String, length: 0 }',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x }',
+      'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    id: { column: "vehicle id" }',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    relations:\n      - { kind: manyToMany, target: Depot }',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    relations:\n      - { kind: manyToOne, target: Depot, nullable: maybe }',
     ]

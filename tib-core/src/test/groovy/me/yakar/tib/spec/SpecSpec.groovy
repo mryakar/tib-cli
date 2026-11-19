@@ -43,6 +43,8 @@ class SpecSpec extends Specification {
     entity('fields:\n      - { name: self, type: Long }\n    relations:\n      - { kind: oneToOne, target: Vehicle, field: self }') | "entities[0].relations[0].field: 'self' is already a member"
     entity('id: { type: UUID, strategy: identity }')                            | 'entities[0].id: the strategy identity does not fit the type UUID'
     field('{ name: n, type: Integer, length: 3 }')                              | 'entities[0].fields[0].length: only a String has a length'
+    field('{ name: n, type: Text, length: 3 }')                                 | 'entities[0].fields[0].length: only a String has a length'
+    field('{ name: n, type: Text, precision: 3 }')                              | 'entities[0].fields[0]: only a BigDecimal has a precision and a scale'
     field('{ name: n, type: String, precision: 3 }')                            | 'entities[0].fields[0]: only a BigDecimal has a precision and a scale'
     field('{ name: n, type: BigDecimal, precision: 3, scale: 4 }')              | 'entities[0].fields[0].scale: the scale is above the precision'
     field('{ name: n, type: String, length: 0 }')                               | 'entities[0].fields[0].length: 0 is below 1'
@@ -52,6 +54,7 @@ class SpecSpec extends Specification {
     'tib: 1\nservice: s\nentities:\n  - { audit: true }'                         | 'entities[0].name: required'
     entity('relations:\n      - { kind: manyToOne }')                           | 'entities[0].relations[0].target: required'
     field('{ name: n, type: String, column: "plate number" }')                  | "entities[0].fields[0].column: 'plate number' does not match ${Names.SQL}"
+    entity('id: { column: "vehicle id" }')                                      | "entities[0].id.column: 'vehicle id' does not match ${Names.SQL}"
     field('{ name: key, type: Long, column: id }')                              | "entities[0].fields[0].column: 'id' is already a column"
     entity('fields:\n      - { name: a, type: Long }\n      - { name: b, type: Long, column: A }') | "entities[0].fields[1].column: 'A' is already a column"
     entity('id: { column: vehicle_id }\n    fields:\n      - { name: key, type: Long, column: VEHICLE_ID }') | "entities[0].fields[0].column: 'VEHICLE_ID' is already a column"
