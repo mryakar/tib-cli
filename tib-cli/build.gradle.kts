@@ -234,33 +234,31 @@ val commandReference =
     }
   }
 
-// A task that runs a class of the documentation, which writes one file of the site.
-fun docsFile(name: String, text: String, mainClass: String, path: String) =
-  tasks.register<JavaExec>(name) {
-    description = text
+// The schema of the site is the one that tib schema prints.
+val schemaAttachment =
+  tasks.register<JavaExec>("schemaAttachment") {
+    description = "Writes the JSON Schema of the spec file for the documentation site."
+    group = "documentation"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass = "me.yakar.tib.cli.TibApplication"
+    args("schema")
+    jvmArgs("-Dstdout.encoding=UTF-8")
+    val file = layout.buildDirectory.file("docs/schema/tib-spec.schema.json")
+    outputs.file(file)
+    doFirst { (this as JavaExec).standardOutput = file.get().asFile.outputStream() }
+    doLast { (this as JavaExec).standardOutput.close() }
+  }
+
+val specReference =
+  tasks.register<JavaExec>("specReference") {
+    description = "Writes the properties of the spec file as tables for the documentation site."
     group = "documentation"
     classpath = docs.runtimeClasspath
-    this.mainClass = "me.yakar.tib.cli.docs.$mainClass"
-    val file = layout.buildDirectory.file(path)
+    mainClass = "me.yakar.tib.cli.docs.SpecReference"
+    val file = layout.buildDirectory.file("docs/spec/spec-properties.adoc")
     outputs.file(file)
     argumentProviders.add(CommandLineArgumentProvider { listOf(file.get().asFile.absolutePath) })
   }
-
-val schemaAttachment =
-  docsFile(
-    "schemaAttachment",
-    "Writes the JSON Schema of the spec file for the documentation site.",
-    "SchemaAttachment",
-    "docs/schema/tib-spec.schema.json",
-  )
-
-val specReference =
-  docsFile(
-    "specReference",
-    "Writes the properties of the spec file as tables for the documentation site.",
-    "SpecReference",
-    "docs/spec/spec-properties.adoc",
-  )
 
 // The Collector adds the antora.yml of the scanned directory to the version of the site. A build
 // between two releases, whose version ends in -SNAPSHOT, is a prerelease there: the site opens on
