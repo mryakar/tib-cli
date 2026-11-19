@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.yakar.tib.git;
+package me.yakar.tib.cli;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -22,7 +22,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 /** What git says about the directory of a project, asked through the git command of the machine. */
-public final class Git {
+final class Git {
 
   private Git() {}
 
@@ -31,7 +31,7 @@ public final class Git {
    * not, as {@code git status --porcelain} prints them: {@code " M path"}, the path from the root
    * of the repository. None when the directory is not in a repository, or there is no git to ask.
    */
-  public static List<String> uncommitted(Path directory) {
+  static List<String> uncommitted(Path directory) {
     return uncommitted(directory, "git");
   }
 
