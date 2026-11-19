@@ -246,6 +246,30 @@ class DdlReaderSpec extends Specification {
     ]
   }
 
+  def "the relation of the column #column is named #field"() {
+    expect:
+    entity("CREATE TABLE T (ID BIGINT PRIMARY KEY, $column BIGINT REFERENCES T);").relations()*.field() == [field]
+
+    where:
+    column   | field
+    'b_id'   | 'b'
+    'b__id'  | 'b'
+    'B_C_ID' | 'bC'
+    'b_idx'  | 'bIdx'
+  }
+
+  def "the column #column of a relation, which has no name before its suffix, keeps the suffix"() {
+    when:
+    entity("CREATE TABLE T (ID BIGINT PRIMARY KEY, $column BIGINT REFERENCES T);")
+
+    then: 'the relation is named id, as the identifier is'
+    SpecException e = thrown()
+    e.problems() == ["entities[0].relations[0].field: 'id' is already a member"]
+
+    where:
+    column << ['_id', '__ID']
+  }
+
   def "a column may reference the table of an entity of the service"() {
     given:
     Spec service = SpecReader.parse('''
