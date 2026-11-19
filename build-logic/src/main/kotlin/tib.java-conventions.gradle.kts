@@ -52,8 +52,6 @@ val testJavaVersion =
   providers.gradleProperty("testJavaVersion").map(String::toInt).orElse(javaVersion)
 
 // The tests read the examples of the documentation, and know the root and the version of the build.
-// The unit tests of a module that has snapshots of what it generates also read them, and write what
-// they generate under build/snapshots/test.
 val tibVersion = version.toString()
 
 tasks.withType<Test>().configureEach {
@@ -65,29 +63,20 @@ tasks.withType<Test>().configureEach {
   systemProperty("tib.version", tibVersion)
   val root = layout.settingsDirectory
   val examples = root.dir("docs/modules/ROOT/examples")
-  val snapshots =
-    layout.projectDirectory.dir("src/test/snapshots").takeIf {
-      name == "test" && it.asFile.isDirectory
-    }
-  val actual = snapshots?.let { layout.buildDirectory.dir("snapshots/$name") }
   inputs.dir(examples).withPropertyName("examples").withPathSensitivity(PathSensitivity.RELATIVE)
-  snapshots?.let {
-    inputs.dir(it).withPropertyName("snapshots").withPathSensitivity(PathSensitivity.RELATIVE)
-  }
-  actual?.let { outputs.dir(it).withPropertyName("actualSnapshots") }
   // As arguments, the absolute paths are no inputs, so the cached results fit any checkout.
   jvmArgumentProviders.add(
     CommandLineArgumentProvider {
-      listOfNotNull(
+      listOf(
         "-Dtib.root=${root.asFile.absolutePath}",
         "-Dtib.examples=${examples.asFile.absolutePath}",
-        snapshots?.let { "-Dtib.snapshots=${it.asFile.absolutePath}" },
-        actual?.let { "-Dtib.snapshots.actual=${it.get().asFile.absolutePath}" },
       )
     },
   )
 }
 
+// The unit tests of a module that has snapshots of what it generates read them, and write what they
+// generate under build/snapshots/test.
 // ./gradlew test updateSnapshots --continue: the snapshots become what the unit tests wrote, and
 // git diff shows the change. Copied by hand, as Gradle's copies leave out .gitignore files. The
 // unit tests start with nothing under build/snapshots/test, so the snapshots become what this run
@@ -104,8 +93,19 @@ if (snapshotsDir.isDirectory) {
   // A run of some of the unit tests writes only their snapshots, and the others would be deleted.
   val filtered =
     gradle.startParameter.taskNames.any { it == "--tests" || it.startsWith("--tests=") }
+  val expected = snapshotsDir
   val actual = layout.buildDirectory.dir("snapshots/test")
   tasks.test {
+    inputs.dir(expected).withPropertyName("snapshots").withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(actual).withPropertyName("actualSnapshots")
+    jvmArgumentProviders.add(
+      CommandLineArgumentProvider {
+        listOf(
+          "-Dtib.snapshots=${expected.absolutePath}",
+          "-Dtib.snapshots.actual=${actual.get().asFile.absolutePath}",
+        )
+      },
+    )
     outputs.cacheIf("the snapshots are not being updated") { !updating }
     outputs.upToDateWhen { !updating }
     doFirst { actual.get().asFile.deleteRecursively() }
@@ -115,7 +115,6 @@ if (snapshotsDir.isDirectory) {
     description =
       "Replaces the snapshots with what the unit tests wrote: run it after the whole suite."
     mustRunAfter(tasks.test)
-    val expected = snapshotsDir
     doLast {
       check(!filtered) {
         "updateSnapshots replaces every snapshot with what the unit tests of this run wrote:" +
