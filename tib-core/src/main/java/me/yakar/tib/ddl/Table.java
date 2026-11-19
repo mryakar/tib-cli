@@ -48,8 +48,13 @@ final class Table {
           "^\\S+\\s+ADD\\s+GENERATED\\s+(?:ALWAYS|BY\\s+DEFAULT)\\s+AS\\s+IDENTITY$",
           Pattern.CASE_INSENSITIVE);
 
-  /** The owner that an {@code ALTER TABLE} gives the table. */
-  private static final Pattern OWNER = Pattern.compile("^OWNER\\s+TO\\b", Pattern.CASE_INSENSITIVE);
+  /** The owner or the replica identity that an {@code ALTER TABLE} gives the table. */
+  private static final Pattern OWNER_OR_REPLICA_IDENTITY =
+      Pattern.compile("^(?:OWNER\\s+TO|REPLICA\\s+IDENTITY)\\b", Pattern.CASE_INSENSITIVE);
+
+  /** A column whose statistics an {@code ALTER TABLE} sets, as {@code ID SET STATISTICS 100}. */
+  private static final Pattern SET_STATISTICS =
+      Pattern.compile("\\sSET\\s+STATISTICS\\s+\\S+$", Pattern.CASE_INSENSITIVE);
 
   final String name;
   private final Map<String, Column> columns = new LinkedHashMap<>();
@@ -71,14 +76,15 @@ final class Table {
 
   /**
    * Takes the keys that the statement adds to the table and the columns that it makes identities,
-   * and skips the defaults and the owner that it sets; any other change is a problem.
+   * and skips the defaults that it sets and what says nothing of the entity; any other change is a
+   * problem.
    */
   void alter(Alter alter, List<String> problems) {
     for (AlterExpression expression : alter.getAlterExpressions()) {
       if (expression.getOperation() == AlterOperation.ADD && expression.getIndex() != null) {
         take(expression.getIndex(), problems);
-      } else if (owner(expression)) {
-        // The owner of the table says nothing of the entity.
+      } else if (skipped(expression)) {
+        // The change says nothing of the entity.
       } else if (expression.getColumnSetDefaultList() != null) {
         for (AlterExpression.ColumnSetDefault set : expression.getColumnSetDefaultList()) {
           identify(set.getColumnName(), Column.nextval(set.toString()), problems);
@@ -210,10 +216,27 @@ final class Table {
         known == null ? null : known.options());
   }
 
-  /** Whether the change gives the table an owner, which tib does not need. */
-  static boolean owner(AlterExpression expression) {
-    return expression.getOperation() == AlterOperation.UNSPECIFIC
-        && OWNER.matcher(String.valueOf(expression.getOptionalSpecifier())).find();
+  /**
+   * Whether the change says nothing of the entity: the owner of the table, its row level security,
+   * its replica identity, or the statistics of a column.
+   */
+  static boolean skipped(AlterExpression expression) {
+    return switch (expression.getOperation()) {
+      case ENABLE_ROW_LEVEL_SECURITY,
+          DISABLE_ROW_LEVEL_SECURITY,
+          FORCE_ROW_LEVEL_SECURITY,
+          NO_FORCE_ROW_LEVEL_SECURITY ->
+          true;
+      case UNSPECIFIC ->
+          OWNER_OR_REPLICA_IDENTITY
+              .matcher(String.valueOf(expression.getOptionalSpecifier()))
+              .find();
+      case ALTER ->
+          expression.getColDataTypeList() != null
+              && expression.getColDataTypeList().stream()
+                  .allMatch(column -> SET_STATISTICS.matcher(column.toString()).find());
+      default -> false;
+    };
   }
 
   /**

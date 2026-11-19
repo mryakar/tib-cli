@@ -401,6 +401,33 @@ class DdlReaderSpec extends Specification {
         [], false, null)
   }
 
+  def "ALTER TABLE that says nothing of the entity is skipped: #change"() {
+    expect:
+    entity("""
+      ALTER TABLE ONLY OTHER $change;
+      CREATE TABLE T (ID INT PRIMARY KEY, A INT);
+      ALTER TABLE ONLY public.T $change;
+      """) == new Entity(
+        'T', 'T', new Id('id', null, IdType.LONG, IdStrategy.SEQUENCE),
+        [new Field('a', 'A', FieldType.INTEGER, null, null, null, true, false)],
+        [], false, null)
+
+    where:
+    change << [
+      'ENABLE ROW LEVEL SECURITY',
+      'DISABLE ROW LEVEL SECURITY',
+      'FORCE ROW LEVEL SECURITY',
+      'NO FORCE ROW LEVEL SECURITY',
+      'REPLICA IDENTITY FULL',
+      'REPLICA IDENTITY NOTHING',
+      'REPLICA IDENTITY DEFAULT',
+      'REPLICA IDENTITY USING INDEX T_PKEY',
+      'ALTER COLUMN A SET STATISTICS 1000',
+      'ALTER A SET STATISTICS -1',
+      'ALTER COLUMN "No Such" SET STATISTICS 0',
+    ]
+  }
+
   def "a default of the next value of a sequence that ALTER TABLE sets makes the column an identity"() {
     expect:
     entity('''
@@ -451,6 +478,11 @@ class DdlReaderSpec extends Specification {
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN ID TYPE BIGINT;' | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN ID DROP DEFAULT;' | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T SET SCHEMA S;'           | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ATTACH PARTITION P FOR VALUES FROM (1) TO (2);' | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ENABLE TRIGGER X;' | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T CLUSTER ON T_PKEY;' | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN ID SET STORAGE EXTERNAL;' | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
+    'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T DISABLE ROW LEVEL SECURITY, ADD COLUMN A INT;' | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T RENAME TO U;'           | 'T: ALTER TABLE may only add keys, make a column an identity, or set a default or the owner'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN X ADD GENERATED ALWAYS AS IDENTITY;' | 'T: there is no column X'
     'CREATE TABLE T (ID INT PRIMARY KEY);\nALTER TABLE T ALTER COLUMN X SET DEFAULT 0;' | 'T: there is no column X'

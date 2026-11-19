@@ -36,7 +36,8 @@ import net.sf.jsqlparser.statement.create.table.CreateTable;
  * creates is an entity, named after the table in the singular: its primary key is the identifier, a
  * column that references another table is a relation and every other column a field. {@code ALTER
  * TABLE} may add keys to the tables and make a column an identity; the defaults and the owners that
- * it sets are skipped. Every other statement is skipped without being parsed.
+ * it sets are skipped, and so are row level security, a replica identity and the statistics of a
+ * column. Every other statement is skipped without being parsed.
  */
 public final class DdlReader {
 
@@ -127,8 +128,9 @@ public final class DdlReader {
         Alter alter = (Alter) statement;
         String name = unquote(alter.getTable().getName());
         Table table = tables.get(key(name));
-        if (table == null && alter.getAlterExpressions().stream().allMatch(Table::owner)) {
-          // An older pg_dump gives a sequence or a view its owner with ALTER TABLE.
+        if (table == null && alter.getAlterExpressions().stream().allMatch(Table::skipped)) {
+          // An older pg_dump gives a sequence or a view its owner with ALTER TABLE; what says
+          // nothing of a table says nothing of what is no table.
           continue;
         }
         if (table == null) {
