@@ -41,10 +41,7 @@ jobs:
         run: |
           sudo apt-get install -y ./tib-cli/build/packages/tib_*.deb
           command -v tib
-          tib --version
-          if [[ ! -f /opt/tib/lib/app/tib.aot ]]; then echo "the package built no start-up cache" >&2; exit 1; fi
-          tib init service smoke -d "$RUNNER_TEMP/deb/smoke"
-          if [[ ! -x "$RUNNER_TEMP/deb/smoke/gradlew" ]]; then echo "the service has no gradlew to run" >&2; exit 1; fi
+          .github/scripts/smoke-tib.sh tib /opt/tib/lib/app "$RUNNER_TEMP/deb"
           sudo apt-get remove -y tib
           if [[ -e /usr/bin/tib ]]; then echo "/usr/bin/tib is still there" >&2; exit 1; fi
           if [[ -e /opt/tib ]]; then find /opt/tib >&2; echo "/opt/tib is still there" >&2; exit 1; fi
@@ -73,19 +70,16 @@ jobs:
       # The zip has no start-up cache until its script has run, as the install page says.
       - name: Unpack the portable zip and run tib
         run: |
-          mkdir portable && cd portable
-          unzip -q ../tib-cli/build/packages/tib-*.zip
+          mkdir portable
+          unzip -q -d portable tib-cli/build/packages/tib-*.zip
           if [[ "$RUNNER_OS" == Windows ]]; then
-            tib=tib/tib.exe app=tib/app
-            cmd.exe //c 'tib\app\startup-cache.cmd'
+            tib=portable/tib/tib.exe app=portable/tib/app
+            cmd.exe //c 'portable\tib\app\startup-cache.cmd'
           else
-            tib=tib/bin/tib app=tib/lib/app
+            tib=portable/tib/bin/tib app=portable/tib/lib/app
             "$app/startup-cache.sh"
           fi
-          "$tib" --version
-          if [[ ! -f "$app/tib.aot" ]]; then echo "the script built no start-up cache" >&2; exit 1; fi
-          "$tib" init service smoke -d "$RUNNER_TEMP/portable/smoke"
-          if [[ ! -f "$RUNNER_TEMP/portable/smoke/gradlew" ]]; then echo "the service has no gradlew" >&2; exit 1; fi
+          .github/scripts/smoke-tib.sh "$tib" "$app" "$RUNNER_TEMP/portable"
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
