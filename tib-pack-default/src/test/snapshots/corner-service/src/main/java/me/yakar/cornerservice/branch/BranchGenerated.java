@@ -15,7 +15,9 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
 
 /** The columns of BRANCH, as the spec names them; {@link Branch} is the entity. */
 @MappedSuperclass
@@ -51,7 +53,8 @@ public abstract class BranchGenerated {
   @Column(name = "AMOUNT", precision = 10)
   private BigDecimal amount;
 
-  @Column(name = "MEMO", columnDefinition = "TEXT")
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+  @Column(name = "MEMO")
   private String memo;
 
   @OneToOne(fetch = FetchType.LAZY)

@@ -49,6 +49,11 @@ public record FieldModel(Field field) {
     };
   }
 
+  /** Whether the field is a Text: a String that the database keeps without a limit. */
+  public boolean text() {
+    return field.type() == FieldType.TEXT;
+  }
+
   /** The name with its first letter in upper case, for the accessors. */
   public String property() {
     return Names.property(field.name());
@@ -81,9 +86,6 @@ public record FieldModel(Field field) {
     }
     if (length() != null) {
       column.append(", length = ").append(length());
-    }
-    if (field.type() == FieldType.TEXT) {
-      column.append(", columnDefinition = \"TEXT\"");
     }
     if (field.precision() != null) {
       column.append(", precision = ").append(field.precision());
