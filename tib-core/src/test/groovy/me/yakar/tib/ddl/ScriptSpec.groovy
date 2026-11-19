@@ -43,6 +43,7 @@ class ScriptSpec extends Specification {
     'a body with a tag'              | 'SELECT $body$ a; $$ b; $body$'
     'a line comment'                 | 'SELECT 1 -- a; b\n'
     'a block comment'                | 'SELECT 1 /* a; b */'
+    'a comment in a block comment'   | 'SELECT 1 /* a; /* b; */ c; /* d */ e; */'
   }
 
   def "a backslash is an escape only in a string that starts with E: #sql"() {
@@ -86,7 +87,16 @@ class ScriptSpec extends Specification {
     Script.split(sql) == []
 
     where:
-    sql << ['', ' \n', ';;', '-- only a comment', '/* a */\n-- b\n;', '/* never closed; ']
+    sql << [
+      '',
+      ' \n',
+      ';;',
+      '-- only a comment',
+      '/* a */\n-- b\n;',
+      '/* never closed; ',
+      '/* a /* closed */ never closed; ',
+      '/* a; /* b; */ c; */'
+    ]
   }
 
   def "a string, a name or a body that is not closed runs to the end: #sql"() {
