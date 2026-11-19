@@ -55,7 +55,7 @@ class InitServiceCommand implements Callable<Integer> {
 
   @Mixin private ServiceDirectory directory;
 
-  @Mixin private GenerationOptions options;
+  @Mixin private GenerationRun run;
 
   @Override
   public Integer call() {
@@ -66,8 +66,8 @@ class InitServiceCommand implements Callable<Integer> {
     }
     if (source.spec != null) {
       SpecFile file = SpecFile.read(source.spec, tree);
-      return options.init(file.spec(), List.of(file.input()), tree);
+      return run.init(file.spec(), List.of(file.input()), tree);
     }
-    return options.init(Spec.of(source.name), List.of(), tree);
+    return run.init(Spec.of(source.name), List.of(), tree);
   }
 }
