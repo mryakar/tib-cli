@@ -81,17 +81,29 @@ their spec: a `BigDecimal` without a scale is a `NUMERIC(p, 0)`, which reads bac
 which reads back with `length: 255`.
 
 `ALTER TABLE` statements may add primary, foreign and unique keys to the tables created before
-them, and make a column an identity (`ALTER COLUMN ... ADD GENERATED ... AS IDENTITY`, or `ALTER
-COLUMN ... SET DEFAULT nextval(...)`); they may also set another default of a column, or the owner
-of a table, which tib skips. Every other statement,
-such as one that creates a sequence, an index, a function or a view, a comment or data, or drops a
-table, is skipped without being parsed; so are the defaults and checks of the columns and the
-unique keys of several columns. A `CREATE TABLE` or an `ALTER TABLE` that tib cannot parse, DDL
-without a `CREATE TABLE`, a column of another type, a table without a primary key, a primary or
-foreign key of several columns, a reference to a table that is neither in the DDL nor in the
-service, a table created twice, and an `ALTER TABLE` that changes anything else or comes before
-its table are problems: tib reports each with the table and the column it is about, or with its
-line and column in the DDL, and writes nothing.
+them, and make a column an identity, with `ALTER COLUMN ... ADD GENERATED ... AS IDENTITY` or
+`ALTER COLUMN ... SET DEFAULT nextval(...)`. tib skips any other default that they set, the checks
+that they add, the owner that they give, row level security, a replica identity and the
+statistics of a column.
+
+Every other statement, such as one that creates a sequence, an index, a function or a view, a
+comment, or one that drops a table, is skipped without being parsed, and so are the rows of the
+tables in a dump with data, after `COPY ... FROM stdin`. In a table, the defaults and checks of
+the columns and the unique keys of several columns are skipped too.
+
+These are problems, and tib writes nothing:
+
+* a `CREATE TABLE` or an `ALTER TABLE` that tib cannot parse, and DDL without a `CREATE TABLE`;
+* a table created twice, or from another one, as with `AS SELECT` or `LIKE`;
+* a table without a primary key, and a primary or foreign key of several columns;
+* a column of another type, a table or a column named with underscores alone, and a key or a
+  change of a column that the table does not have;
+* a reference to a table that is neither in the DDL nor in the service;
+* an `ALTER TABLE` that changes anything else, as for a partition or a trigger, or comes before
+  its table.
+
+tib reports each with the table and the column it is about, or with the line and column in the
+DDL where the parser stopped.
 
 So tib reads the schema of a PostgreSQL database as `pg_dump` writes it, with the commands of
 psql in it, such as `\restrict`, and the functions, the triggers and the views of the database:
