@@ -76,16 +76,7 @@ public record Entity(
           path + ".table", "'" + table + "' is a reserved word in SQL; give the entity a table");
     }
     id.check(problems, path + ".id");
-    // The members that the generated code has whatever the spec says, each with its problem.
-    Map<String, String> generated = new HashMap<>();
-    if (!id.field().equals("id")) {
-      generated.put(
-          "id", "'id' is already a member: the accessors of the identifier are getId and setId");
-    }
-    if (audit) {
-      generated.put("createdAt", "'createdAt' is already a member of an audited entity");
-      generated.put("updatedAt", "'updatedAt' is already a member of an audited entity");
-    }
+    Map<String, String> generated = generated();
     Set<String> members = new HashSet<>(generated.keySet());
     members.add(id.field());
     // The columns, in upper case: SQL names are the same in any case.
@@ -98,6 +89,35 @@ public record Entity(
     } else {
       column(problems, path + ".id", id.column(), columns);
     }
+    checkFields(problems, path, generated, members, columns);
+    checkTargetIds(
+        problems,
+        entities,
+        checkRelations(problems, path, entities, generated, members, columns),
+        members);
+  }
+
+  /** The members that the generated code has whatever the spec says, each with its problem. */
+  private Map<String, String> generated() {
+    Map<String, String> generated = new HashMap<>();
+    if (!id.field().equals(Id.FIELD)) {
+      generated.put(
+          Id.FIELD,
+          "'id' is already a member: the accessors of the identifier are getId and setId");
+    }
+    if (audit) {
+      generated.put("createdAt", "'createdAt' is already a member of an audited entity");
+      generated.put("updatedAt", "'updatedAt' is already a member of an audited entity");
+    }
+    return generated;
+  }
+
+  private void checkFields(
+      Problems problems,
+      String path,
+      Map<String, String> generated,
+      Set<String> members,
+      Set<String> columns) {
     for (int i = 0; i < fields.size(); i++) {
       Field field = fields.get(i);
       String fieldPath = path + ".fields[" + i + "]";
@@ -108,7 +128,16 @@ public record Entity(
         column(problems, fieldPath, field.column(), columns);
       }
     }
-    // The relations whose field is a member of its own, by path.
+  }
+
+  /** Checks the relations, and gives those whose field is a member of its own, by path. */
+  private Map<String, Relation> checkRelations(
+      Problems problems,
+      String path,
+      Map<String, Entity> entities,
+      Map<String, String> generated,
+      Set<String> members,
+      Set<String> columns) {
     Map<String, Relation> accepted = new LinkedHashMap<>();
     for (int i = 0; i < relations.size(); i++) {
       Relation relation = relations.get(i);
@@ -124,8 +153,16 @@ public record Entity(
         column(problems, relationPath, relation.column(), columns);
       }
     }
-    // The DTO holds the identifier of a relation's target in a member of its own: depotId.
-    accepted.forEach(
+    return accepted;
+  }
+
+  /** The DTO holds the identifier of a relation's target in a member of its own: depotId. */
+  private static void checkTargetIds(
+      Problems problems,
+      Map<String, Entity> entities,
+      Map<String, Relation> relations,
+      Set<String> members) {
+    relations.forEach(
         (relationPath, relation) -> {
           Entity target = entities.get(relation.target());
           if (target != null) {
