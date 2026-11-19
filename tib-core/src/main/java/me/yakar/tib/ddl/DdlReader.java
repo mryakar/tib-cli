@@ -105,7 +105,7 @@ public final class DdlReader {
   private static final Pattern OWNER = Pattern.compile("^OWNER\\s+TO\\b", Pattern.CASE_INSENSITIVE);
 
   /** The suffix of the column of a relation, after the name of the relation. */
-  private static final Pattern ID_SUFFIX = Pattern.compile("(?i)(.)_ID$");
+  private static final Pattern ID_SUFFIX = Pattern.compile("(?i)(?<=[^_])_ID$");
 
   private DdlReader() {}
 
@@ -371,8 +371,24 @@ public final class DdlReader {
       return columns.get(key(name));
     }
 
+    /** Whether a Java name comes of the SQL name; one of underscores alone is a problem. */
+    private static boolean named(String sqlName, String path, List<String> problems) {
+      if (Names.type(sqlName).isEmpty()) {
+        problems.add(path + ": a name of underscores alone is not supported");
+        return false;
+      }
+      return true;
+    }
+
     /** The entity of the table; null when the table has a problem, which the problems get. */
     Entity entity(Map<String, String> names, Entity known, List<String> problems) {
+      boolean named = named(name, name, problems);
+      for (Column column : columns.values()) {
+        named &= named(column.name, name + "." + column.name, problems);
+      }
+      if (!named) {
+        return null;
+      }
       if (primaryKey.size() != 1) {
         problems.add(
             name
@@ -509,7 +525,7 @@ public final class DdlReader {
      * after the column without {@code _ID}.
      */
     Relation relation(String target, Map<String, String> members) {
-      String field = member(members, ID_SUFFIX.matcher(name).replaceFirst("$1"));
+      String field = member(members, ID_SUFFIX.matcher(name).replaceFirst(""));
       return new Relation(
           unique ? RelationKind.ONE_TO_ONE : RelationKind.MANY_TO_ONE,
           target,
