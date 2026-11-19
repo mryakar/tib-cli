@@ -17,7 +17,6 @@ package me.yakar.tib.pack;
 
 import me.yakar.tib.spec.Field;
 import me.yakar.tib.spec.FieldType;
-import me.yakar.tib.spec.IdType;
 import me.yakar.tib.spec.Names;
 
 /** A field as the templates see it. */
@@ -147,11 +146,7 @@ public record FieldModel(Field field) {
 
   /** The definition of the column in SQL. */
   String sql() {
-    StringBuilder sql =
-        new StringBuilder(
-            field.column()
-                + " "
-                + sqlType(field.type(), length(), field.precision(), field.scale()));
+    StringBuilder sql = new StringBuilder(field.column() + " " + sqlType());
     if (!field.nullable()) {
       sql.append(" NOT NULL");
     }
@@ -161,22 +156,21 @@ public record FieldModel(Field field) {
     return sql.toString();
   }
 
-  /** The SQL type of an identifier, and of a column that refers to one. */
-  static String sqlType(IdType type) {
-    return sqlType(type == IdType.UUID ? FieldType.UUID : FieldType.LONG, null, null, null);
-  }
-
   /** The SQL type of a Java type. */
-  private static String sqlType(FieldType type, Integer length, Integer precision, Integer scale) {
-    return switch (type) {
-      case STRING -> "VARCHAR(" + length + ")";
+  private String sqlType() {
+    return switch (field.type()) {
+      case STRING -> "VARCHAR(" + length() + ")";
       case TEXT -> "TEXT";
       case INTEGER -> "INTEGER";
       case LONG -> "BIGINT";
       case BIG_DECIMAL ->
-          precision == null
+          field.precision() == null
               ? "NUMERIC"
-              : "NUMERIC(" + precision + ", " + (scale == null ? 0 : scale) + ")";
+              : "NUMERIC("
+                  + field.precision()
+                  + ", "
+                  + (field.scale() == null ? 0 : field.scale())
+                  + ")";
       case BOOLEAN -> "BOOLEAN";
       case LOCAL_DATE -> "DATE";
       case LOCAL_DATE_TIME -> "TIMESTAMP";
