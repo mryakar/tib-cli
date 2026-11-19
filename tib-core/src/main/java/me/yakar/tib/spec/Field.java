@@ -44,13 +44,8 @@ public record Field(
   }
 
   void check(Problems problems, String path) {
-    if (Names.isKeyword(name)) {
-      problems.add(path + ".name", "'" + name + "' is a Java keyword");
-    }
-    if (Names.isReserved(column)) {
-      problems.add(
-          path + ".column", "'" + column + "' is a reserved word in SQL; give the field a column");
-    }
+    problems.javaName(path + ".name", name);
+    problems.sqlName(path, "column", column, "field");
     if (length != null && type != FieldType.STRING) {
       problems.add(path + ".length", "only a String has a length");
     }

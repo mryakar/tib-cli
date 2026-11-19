@@ -71,10 +71,7 @@ public record Entity(
           path + ".name",
           "'" + name + "' makes the package '" + packageSegment() + "', which is a Java keyword");
     }
-    if (Names.isReserved(table)) {
-      problems.add(
-          path + ".table", "'" + table + "' is a reserved word in SQL; give the entity a table");
-    }
+    problems.sqlName(path, "table", table, "entity");
     id.check(problems, path + ".id");
     Map<String, String> generated = generated();
     Set<String> members = new HashSet<>(generated.keySet());
