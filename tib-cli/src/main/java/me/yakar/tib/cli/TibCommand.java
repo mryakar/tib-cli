@@ -16,6 +16,7 @@
 package me.yakar.tib.cli;
 
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.ScopeType;
 
 /** {@code tib}. */
@@ -28,9 +29,10 @@ import picocli.CommandLine.ScopeType;
     exitCodeListHeading = "Exit codes:%n",
     exitCodeList = {
       "0:Done, or nothing to change.",
-      "1:The spec, the DDL, the pack or the project has a problem; the message says which.",
-      TibCommand.USAGE,
-      TibCommand.BUG
+      TibApplication.PROBLEM
+          + ":The spec, the DDL, the pack or the project has a problem; the message says which.",
+      TibCommand.USAGE_MEANS,
+      TibCommand.BUG_MEANS
     },
     subcommands = {
       InitCommand.class,
@@ -41,8 +43,9 @@ import picocli.CommandLine.ScopeType;
 public class TibCommand {
 
   /** What exit code 2 means, for every command. */
-  static final String USAGE = "2:The command line is wrong.";
+  static final String USAGE_MEANS = ExitCode.USAGE + ":The command line is wrong.";
 
   /** What exit code 3 means, for every command. */
-  static final String BUG = "3:tib failed; a bug, reported with its stack trace.";
+  static final String BUG_MEANS =
+      TibApplication.BUG + ":tib failed; a bug, reported with its stack trace.";
 }
