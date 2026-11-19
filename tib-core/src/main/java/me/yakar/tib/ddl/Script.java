@@ -76,7 +76,7 @@ final class Script {
         i = endOfLine(i);
       } else if (sql.startsWith("/*", i)) {
         lineIsBlank = false;
-        i = after(i + 2, "*/");
+        i = afterComment(i);
       } else {
         lineIsBlank = false;
         if (c == ';') {
@@ -135,6 +135,28 @@ final class Script {
         i += 2;
       } else {
         return i + 1;
+      }
+    }
+    return sql.length();
+  }
+
+  /**
+   * The index after the end of the block comment that opens at the index; a comment in it has an
+   * end of its own.
+   */
+  private int afterComment(int open) {
+    int depth = 0;
+    int i = open;
+    while (i < sql.length()) {
+      if (sql.startsWith("/*", i)) {
+        depth++;
+        i += 2;
+      } else if (!sql.startsWith("*/", i)) {
+        i++;
+      } else if (--depth == 0) {
+        return i + 2;
+      } else {
+        i += 2;
       }
     }
     return sql.length();
