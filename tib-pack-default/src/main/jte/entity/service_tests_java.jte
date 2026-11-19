@@ -12,11 +12,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
-@if(entity.uuid())
+@if(entity.uuidId())
 import java.util.UUID;
 @endif
 @for(var relation : entity.relations())
-@if(relation.target().uuid())
+@if(relation.target().uuidId())
 import java.util.UUID;
 @endif
 @endfor

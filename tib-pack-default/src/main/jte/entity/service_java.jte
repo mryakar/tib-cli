@@ -2,7 +2,7 @@
 @param EntityModel entity
 package ${entity.packageName()};
 
-@if(entity.uuid())
+@if(entity.uuidId())
 import java.util.UUID;
 @endif
 @if(entity.paginated())
@@ -29,14 +29,13 @@ public class ${entity.name()}Service {
     this.mapper = mapper;
   }
 
-  @if(entity.paginated())
   @Transactional(readOnly = true)
+  @if(entity.paginated())
   public Page<${entity.name()}Dto> list(Pageable pageable) {
     return ${entity.plural()}.findAll(pageable).map(mapper::toDto);
   }
 
   @else
-  @Transactional(readOnly = true)
   public List<${entity.name()}Dto> list() {
     return ${entity.plural()}.findAll().stream().map(mapper::toDto).toList();
   }

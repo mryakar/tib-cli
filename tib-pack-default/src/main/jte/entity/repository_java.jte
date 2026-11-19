@@ -2,7 +2,7 @@
 @param EntityModel entity
 package ${entity.packageName()};
 
-@if(entity.uuid())
+@if(entity.uuidId())
 import java.util.UUID;
 @endif
 import org.springframework.data.jpa.repository.JpaRepository;

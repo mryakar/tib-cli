@@ -3,7 +3,7 @@
 package ${entity.packageName()};
 
 import jakarta.validation.Valid;
-@if(entity.uuid())
+@if(entity.uuidId())
 import java.util.UUID;
 @endif
 @if(entity.paginated())
@@ -34,14 +34,13 @@ public class ${entity.name()}Controller {
     this.service = service;
   }
 
-  @if(entity.paginated())
   @GetMapping
+  @if(entity.paginated())
   public Page<${entity.name()}Dto> list(Pageable pageable) {
     return service.list(pageable);
   }
 
   @else
-  @GetMapping
   public List<${entity.name()}Dto> list() {
     return service.list();
   }
