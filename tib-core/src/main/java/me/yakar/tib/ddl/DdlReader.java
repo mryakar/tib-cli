@@ -113,7 +113,7 @@ public final class DdlReader {
     Map<String, Table> tables = new LinkedHashMap<>();
     for (Statement statement : statements(ddl, problems)) {
       if (statement instanceof CreateTable create) {
-        if (create.getColumnDefinitions() == null) {
+        if (create.getColumnDefinitions() == null || create.getLikeTable() != null) {
           problems.add(
               unquote(create.getTable().getName())
                   + ": a table that is created from another one is not supported");

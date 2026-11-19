@@ -84,7 +84,13 @@ class DdlReaderSpec extends Specification {
     e.problems() == ['T: a table that is created from another one is not supported']
 
     where:
-    sql << ['CREATE TABLE T AS SELECT * FROM S', 'CREATE TABLE T LIKE S']
+    sql << [
+      'CREATE TABLE T AS SELECT * FROM S',
+      'CREATE TABLE T LIKE S',
+      'CREATE TABLE T (LIKE S)',
+      'CREATE TABLE T (LIKE public.S INCLUDING ALL, EXTRA INT PRIMARY KEY)',
+      'CREATE TABLE T (EXTRA INT PRIMARY KEY, LIKE S)',
+    ]
   }
 
   def "a keyword in a string literal or in an expression says nothing of the column: #literal"() {
