@@ -55,7 +55,7 @@ public record Spec(
     @Doc("The entities of the service.") List<Entity> entities) {
 
   /** The version of the spec format that this build reads. */
-  public static final int VERSION = 1;
+  static final int VERSION = 1;
 
   /** The group of a service whose spec gives none. */
   static final String GROUP = "com.example";
