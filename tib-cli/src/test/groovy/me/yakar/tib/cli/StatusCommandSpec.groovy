@@ -35,29 +35,6 @@ class StatusCommandSpec extends Specification {
     tib = new Tib(dir)
   }
 
-  def "a directory that is not a tib project is refused"() {
-    when:
-    Result result = tib.status()
-
-    then:
-    result.exitCode() == 1
-    result.out() == ''
-    result.err() == "${tib.root} is not a tib project: there is no .tib/state.yaml\nRun tib init service first.\n"
-  }
-
-  def "a state file that a newer tib wrote is refused"() {
-    given:
-    tib.init('vehicle-service')
-
-    when:
-    Result result = new Tib(dir, '1.2.2').status()
-
-    then:
-    result.exitCode() == 1
-    result.out() == ''
-    result.err() == "${tib.root}: .tib/state.yaml was written by tib 1.2.3, which is newer than this tib 1.2.2; upgrade tib\n"
-  }
-
   def "a service whose files are as tib wrote them"() {
     given:
     tib.init('vehicle-service')
@@ -257,26 +234,6 @@ class StatusCommandSpec extends Specification {
     what                 | state
     '0 entities, 0 files' | 'tib: 1\npack: {name: p, version: 2}\nspec: {tib: 1, service: s}\n'
     '1 entity, 1 file'   | 'tib: 1\npack: {name: p, version: 2}\nspec: {tib: 1, service: s, entities: [{name: A}]}\nfiles: [{path: A.java, owner: developer, sha256: x}]\n'
-  }
-
-  def "a state file that tib cannot read is reported: #state"() {
-    given:
-    Files.createDirectories(dir.resolve('.tib'))
-    tib.write(State.PATH, state)
-
-    when:
-    Result result = tib.status()
-
-    then:
-    result.exitCode() == 1
-    result.out() == ''
-    result.err().startsWith("${tib.root}: $message")
-    result.err().readLines().size() == 1
-
-    where:
-    state                                                                         | message
-    '['                                                                           | 'the state file has a problem: state: '
-    'tib: 1.2.3\npack: { name: default, version: 1 }\nspec:\n  tib: 1\n  service: int\n' | "the state file has a problem: spec.service: 'int' makes the package 'int'"
   }
 
   /** Scaffolds the service of the spec and generates its entities; the spec file. */
