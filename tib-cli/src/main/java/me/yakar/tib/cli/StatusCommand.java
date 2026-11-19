@@ -39,10 +39,11 @@ import picocli.CommandLine.Model.CommandSpec;
             + " and which of the files that it read the spec from were changed since.",
     exitCodeList = {
       "0:Nothing that tib needs differs.",
-      "1:A file of tib's was edited or is missing, a file that tib read the spec from was changed,"
-          + " or the project has a problem; the message says which.",
-      TibCommand.USAGE,
-      TibCommand.BUG
+      TibApplication.PROBLEM
+          + ":A file of tib's was edited or is missing, a file that tib read the spec from was"
+          + " changed, or the project has a problem; the message says which.",
+      TibCommand.USAGE_MEANS,
+      TibCommand.BUG_MEANS
     })
 class StatusCommand implements Callable<Integer> {
 
