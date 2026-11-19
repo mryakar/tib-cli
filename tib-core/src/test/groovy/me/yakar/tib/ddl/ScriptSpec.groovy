@@ -41,6 +41,7 @@ class ScriptSpec extends Specification {
     'a quoted name'                  | 'SELECT "a;""b"'
     'a dollar-quoted body'           | 'SELECT $$a;b$$'
     'a body with a tag'              | 'SELECT $body$ a; $$ b; $body$'
+    'a body with a tag of any letters' | 'SELECT $gövde1$ a; $$ b; $gövde1$'
     'a line comment'                 | 'SELECT 1 -- a; b\n'
     'a block comment'                | 'SELECT 1 /* a; b */'
     'a comment in a block comment'   | 'SELECT 1 /* a; /* b; */ c; /* d */ e; */'
