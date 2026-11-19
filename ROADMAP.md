@@ -17,11 +17,14 @@ table, upgrades, the assistant, native images, a DSL of its own, and more than o
 
 What is done today: `tib init service`, with the Gradle wrapper, and `tib generate entity` from a
 spec or from DDL, on Spring Boot 4, with `--dry-run`, the state file, which names the spec files
-and the DDL that the spec came from, the owner of every file and `AGENTS.md`; the tests of every
-entity and the samples they share; the deletion of the files that the spec no longer generates,
-and a notice when the spec changes a table that has its migration; `tib status`, for the files
-that tib wrote and those it read; writing only into a service whose changes are committed; the
-packages for Linux and Windows; the documentation site.
+and the DDL that the spec came from, the owner of every file and `AGENTS.md`; DDL as
+`pg_dump --schema-only` writes it, of which tib reads the tables and skips the rest; in the spec,
+the type `Text` for a string without a limit, and a column for the identifier, so that a table
+read from DDL keeps the names of its columns; the tests of every entity and the samples they
+share; the deletion of the files that the spec no longer generates, and a notice when the spec
+changes a table that has its migration; `tib status`, for the files that tib wrote and those it
+read; writing only into a service whose changes are committed; the packages for Linux and
+Windows; the documentation site.
 
 ## Next
 
