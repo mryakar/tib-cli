@@ -2,6 +2,9 @@
   "name": "tib-docs",
   "private": true,
   "description": "Builds the documentation site of tib with Antora.",
+  "engines": {
+    "node": ">=24"
+  },
   "devDependencies": {
     "@antora/collector-extension": "1.0.3",
     "antora": "3.2.2"
