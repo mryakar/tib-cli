@@ -58,9 +58,12 @@ final class Column {
   /** A string literal, which the keywords above are never found in. */
   private static final Pattern LITERAL = Pattern.compile("'(?:[^']|'')*'");
 
-  /** The suffix of the column of a relation, after the name of the relation. */
-  private static final Pattern ID_SUFFIX =
-      Pattern.compile("(?<=[^_])" + Relation.COLUMN_SUFFIX + "$", Pattern.CASE_INSENSITIVE);
+  /**
+   * The name of a relation before the suffix of its column, as {@code DEPOT} in {@code DEPOT_ID};
+   * underscores alone are no name.
+   */
+  private static final Pattern BEFORE_ID_SUFFIX =
+      Pattern.compile("^(.*[^_].*)" + Relation.COLUMN_SUFFIX + "$", Pattern.CASE_INSENSITIVE);
 
   final String name;
   private final ColumnDefinition definition;
@@ -148,7 +151,7 @@ final class Column {
    * after the column without {@code _ID}.
    */
   Relation relation(String target, Map<String, String> members) {
-    String field = member(members, ID_SUFFIX.matcher(name).replaceFirst(""));
+    String field = member(members, BEFORE_ID_SUFFIX.matcher(name).replaceFirst("$1"));
     return new Relation(
         unique ? RelationKind.ONE_TO_ONE : RelationKind.MANY_TO_ONE, target, field, name, !notNull);
   }
