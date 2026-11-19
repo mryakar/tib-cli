@@ -48,7 +48,19 @@ final class Script {
   }
 
   /** A statement without its semicolon, with the line and the column where it starts, from 1. */
-  record Statement(String text, int line, int column) {}
+  record Statement(String text, int line, int column) {
+
+    /**
+     * Where in the script a line and a column of the statement are, both from 1: {@code line 3,
+     * column 17}.
+     */
+    String at(int line, int column) {
+      return "line "
+          + (this.line + line - 1)
+          + ", column "
+          + (line == 1 ? this.column + column - 1 : column);
+    }
+  }
 
   /** The statements of the script, without those that are blank. */
   static List<Statement> split(String sql) {

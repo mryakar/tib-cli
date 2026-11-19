@@ -28,6 +28,17 @@ class ScriptSpec extends Specification {
     ]
   }
 
+  def "line #line, column #column of a statement is at #at of the script"() {
+    expect:
+    new Script.Statement('B (\n  X', 3, 5).at(line, column) == at
+
+    where:
+    line | column | at
+    1    | 1      | 'line 3, column 5'
+    1    | 3      | 'line 3, column 7'
+    2    | 3      | 'line 4, column 3'
+  }
+
   def "a semicolon in #where does not end the statement"() {
     expect:
     Script.split("$sql;\nB")*.text() == [sql.stripTrailing(), 'B']

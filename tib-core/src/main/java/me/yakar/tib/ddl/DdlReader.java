@@ -51,8 +51,7 @@ public final class DdlReader {
 
   /**
    * The options of the sequence of an identity, which the parser does not read and tib does not
-   * need: {@code AS IDENTITY (SEQUENCE NAME ... CACHE 1)}. Blanks take their place, so that what
-   * comes after them stays at its line and column.
+   * need: {@code AS IDENTITY (SEQUENCE NAME ... CACHE 1)}.
    */
   private static final Pattern IDENTITY_OPTIONS =
       Pattern.compile("(?<=\\bAS\\s{1,10}IDENTITY)\\s*\\([^()]*\\)", Pattern.CASE_INSENSITIVE);
@@ -151,20 +150,27 @@ public final class DdlReader {
       if (!TABLE_STATEMENT.matcher(statement.text()).find()) {
         continue;
       }
-      String sql =
-          BLANK_LINE
-              .matcher(
-                  IDENTITY_OPTIONS
-                      .matcher(statement.text())
-                      .replaceAll(options -> options.group().replaceAll("[^\\n]", " ")))
-              .replaceAll("--");
       try {
-        statements.add(CCJSqlParserUtil.parse(sql));
+        statements.add(CCJSqlParserUtil.parse(parseable(statement.text())));
       } catch (JSQLParserException e) {
         problems.add("it is not SQL that tib reads: " + reason(e, statement));
       }
     }
     return statements;
+  }
+
+  /**
+   * The statement as the parser reads it, with everything that it reads at its line and column:
+   * blanks in the place of the options of an identity, and a comment on every line without
+   * anything.
+   */
+  private static String parseable(String statement) {
+    return BLANK_LINE
+        .matcher(
+            IDENTITY_OPTIONS
+                .matcher(statement)
+                .replaceAll(options -> options.group().replaceAll("[^\\n]", " ")))
+        .replaceAll("--");
   }
 
   /**
@@ -193,14 +199,9 @@ public final class DdlReader {
         .results()
         .findFirst()
         .map(
-            at -> {
-              int line = Integer.parseInt(at.group(1));
-              int column = Integer.parseInt(at.group(2));
-              return ", at line "
-                  + (statement.line() + line - 1)
-                  + ", column "
-                  + (line == 1 ? statement.column() + column - 1 : column);
-            })
+            at ->
+                ", at "
+                    + statement.at(Integer.parseInt(at.group(1)), Integer.parseInt(at.group(2))))
         .orElse("");
   }
 
