@@ -100,6 +100,43 @@ class ScriptSpec extends Specification {
     Script.split('SELECT 1\n\\x\n;') == [new Script.Statement('SELECT 1\n\\x', 1, 1)]
   }
 
+  def "the rows after COPY FROM stdin are no statements: #rows"() {
+    expect:
+    Script.split("A;\n${copy};\n${rows}\\.\nB;") == [
+      new Script.Statement('A', 1, 1),
+      new Script.Statement(copy, 2, 1),
+      new Script.Statement('B', 4 + copy.count('\n') + rows.count('\n'), 1),
+    ]
+
+    where:
+    copy                                        | rows
+    'COPY public.t (id, name) FROM stdin'       | "1\tO'Brien\n"
+    'copy t from STDIN'                         | '1\ta; b\n2\tc;\n'
+    'COPY t FROM stdin WITH (FORMAT csv)'       | '1,$$\n2,$a$\n'
+    'COPY "T" (a)\n  FROM\n  stdin'             | '\\.x\n \\.\n\\N\n/* --\n'
+    'COPY t FROM stdin'                         | ''
+    'COPY t FROM stdin'                         | '1\r\n2\r\n'
+  }
+
+  def "rows that no line ends run to the end of the script"() {
+    expect:
+    Script.split("COPY t FROM stdin;\n1\tO'Brien\nCREATE TABLE A (ID INT);")*.text() == ['COPY t FROM stdin']
+    Script.split('COPY t FROM stdin;')*.text() == ['COPY t FROM stdin']
+  }
+
+  def "no rows follow #copy"() {
+    expect:
+    Script.split("$copy;\nB;\n\\.\nC")*.text() == [copy, 'B', 'C']
+
+    where:
+    copy << [
+      "COPY t FROM '/tmp/stdin'",
+      'COPY t TO stdout',
+      "COPY (SELECT ' FROM stdin') TO stdout",
+      'SELECT copy FROM stdin',
+    ]
+  }
+
   def "comments and blanks are no statements: #sql"() {
     expect:
     Script.split(sql) == []

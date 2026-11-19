@@ -24,12 +24,21 @@ import java.util.regex.Pattern;
  * An SQL script split into its statements, much as psql splits it: a semicolon ends a statement
  * unless it is in a string, a quoted name, a dollar-quoted body or a comment. A backslash between
  * two statements starts a command of psql, such as the {@code \restrict} that pg_dump writes, which
- * runs to the end of its line and is no statement.
+ * runs to the end of its line and is no statement. The lines after {@code COPY ... FROM stdin}, up
+ * to the line {@code \.}, are the rows of a table and no statements either.
  */
 final class Script {
 
   /** The tag of a dollar-quoted body, as in {@code $$} or {@code $body$}. */
   private static final Pattern DOLLAR = Pattern.compile("\\$(?:[\\p{L}_][\\p{L}\\p{N}_]*)?\\$");
+
+  /** The statement that the rows of a table follow in a dump with data. */
+  private static final Pattern COPY_FROM_STDIN =
+      Pattern.compile(
+          "COPY\\s[^']*?\\bFROM\\s+STDIN\\b", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+
+  /** The line that ends the rows of a table. */
+  private static final Pattern END_OF_DATA = Pattern.compile("^\\\\\\.$", Pattern.MULTILINE);
 
   private final String sql;
   private final List<Statement> statements = new ArrayList<>();
@@ -82,9 +91,10 @@ final class Script {
       } else if (sql.startsWith("/*", i)) {
         i = afterComment(i);
       } else if (c == ';') {
+        boolean data = start >= 0 && COPY_FROM_STDIN.matcher(sql).region(start, i).lookingAt();
         add(start, i);
         start = -1;
-        i++;
+        i = data ? afterData(i) : i + 1;
       } else {
         if (start < 0) {
           start = i;
@@ -167,6 +177,15 @@ final class Script {
   private int after(int from, String end) {
     int at = sql.indexOf(end, from);
     return at < 0 ? sql.length() : at + end.length();
+  }
+
+  /**
+   * The index after the line that ends the rows which follow the line of the index, or the length
+   * when no line ends them.
+   */
+  private int afterData(int from) {
+    Matcher end = END_OF_DATA.matcher(sql);
+    return end.find(endOfLine(from)) ? end.end() : sql.length();
   }
 
   private int endOfLine(int from) {

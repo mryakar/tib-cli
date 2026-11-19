@@ -401,6 +401,21 @@ class DdlReaderSpec extends Specification {
         [], false, null)
   }
 
+  def "the rows of a dump with data are skipped, and the keys after them are read"() {
+    expect:
+    entity('''
+      CREATE TABLE T (ID INT NOT NULL, NAME TEXT);
+      COPY T (ID, NAME) FROM stdin;
+1\tO'Brien; CREATE TABLE U (ID INT);
+2\t$$
+\\.
+      ALTER TABLE ONLY T ADD CONSTRAINT T_PK PRIMARY KEY (ID);
+      ''') == new Entity(
+        'T', 'T', new Id('id', null, IdType.LONG, IdStrategy.SEQUENCE),
+        [new Field('name', 'NAME', FieldType.TEXT, null, null, null, true, false)],
+        [], false, null)
+  }
+
   def "ALTER TABLE that says nothing of the entity is skipped: #change"() {
     expect:
     entity("""
