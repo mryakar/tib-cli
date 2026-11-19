@@ -21,7 +21,7 @@ spec:
     table: DEPOTS
     id:
       field: key
-      column: KEY
+      column: DEPOT_KEY
       type: UUID
       strategy: uuid
     fields: []
@@ -53,6 +53,14 @@ spec:
       length: null
       precision: 12
       scale: 2
+      nullable: true
+      unique: false
+    - name: notes
+      column: NOTES
+      type: Text
+      length: null
+      precision: null
+      scale: null
       nullable: true
       unique: false
     relations:

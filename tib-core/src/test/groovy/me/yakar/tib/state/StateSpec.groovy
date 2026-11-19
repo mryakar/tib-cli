@@ -43,7 +43,22 @@ class StateSpec extends Specification {
     new State.Input(State.Input.Kind.SPEC, 'vehicle-service.yaml', '345'),
     new State.Input(State.Input.Kind.DDL, '../db/vehicle.sql', '678')
   ],
-  SpecReader.parse('''\
+  spec('column: DEPOT_KEY, ', '- { name: notes, type: Text }'),
+  [
+    new State.File('AGENTS.md', Owner.GENERATOR, 'abc'),
+    new State.File('build.gradle.kts', Owner.DEVELOPER, 'def'),
+    new State.File('gradle/libs.versions.toml', Owner.SHARED, '012')
+  ])
+
+  /** The spec of the state as the released versions of tib wrote it. */
+  static final Spec RELEASED = spec('', '')
+
+  /**
+   * A spec that sets every value that the released versions of tib knew, and what came after them:
+   * the column of an identifier and a field of the type Text.
+   */
+  static Spec spec(String depotColumn, String notes) {
+    SpecReader.parse("""\
       tib: 1
       service: vehicle-service
       group: me.yakar
@@ -51,22 +66,19 @@ class StateSpec extends Specification {
       entities:
         - name: Depot
           table: DEPOTS
-          id: { field: key, type: UUID, strategy: uuid }
+          id: { field: key, ${depotColumn}type: UUID, strategy: uuid }
         - name: Vehicle
           id: { type: Long, strategy: sequence }
           fields:
             - { name: plateNumber, column: PLATE, type: String, length: 16, nullable: false, unique: true }
             - { name: price, type: BigDecimal, precision: 12, scale: 2 }
+            ${notes}
           relations:
             - { kind: manyToOne, target: Depot, field: home, column: HOME_ID, nullable: false }
           audit: true
           options: { dto: false, mapper: false, pagination: false }
-      '''.stripIndent()),
-  [
-    new State.File('AGENTS.md', Owner.GENERATOR, 'abc'),
-    new State.File('build.gradle.kts', Owner.DEVELOPER, 'def'),
-    new State.File('gradle/libs.versions.toml', Owner.SHARED, '012')
-  ])
+      """.stripIndent())
+  }
 
   def "the state file changes only on purpose, and tib reads it back"() {
     given:
@@ -84,8 +96,8 @@ class StateSpec extends Specification {
     when:
     State released = State.parse(StateSpec.getResource("state-${version}.yaml").text, version)
 
-    then: 'a state written before tib named the stack of the pack has none'
-    released.spec() == state.spec()
+    then: 'a state written before tib named the stack of the pack has none, and its spec is the one before the column of an identifier and the type Text'
+    released.spec() == RELEASED
     released.files() == state.files()
     released.inputs() == inputs
     released.pack().stack() == stack
