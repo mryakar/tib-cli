@@ -53,9 +53,12 @@ class SqlTypeSpec extends Specification {
     'INT4'                           | FieldType.INTEGER         | null   | null      | null
     'SERIAL'                         | FieldType.INTEGER         | null   | null      | null
     'SMALLSERIAL'                    | FieldType.INTEGER         | null   | null      | null
+    'SERIAL2'                        | FieldType.INTEGER         | null   | null      | null
+    'SERIAL4'                        | FieldType.INTEGER         | null   | null      | null
     'BIGINT'                         | FieldType.LONG            | null   | null      | null
     'INT8'                           | FieldType.LONG            | null   | null      | null
     'BIGSERIAL'                      | FieldType.LONG            | null   | null      | null
+    'SERIAL8'                        | FieldType.LONG            | null   | null      | null
     'NUMBER(9)'                      | FieldType.INTEGER         | null   | null      | null
     'NUMBER(10, 0)'                  | FieldType.LONG            | null   | null      | null
     'NUMBER(19)'                     | FieldType.LONG            | null   | null      | null
@@ -97,6 +100,9 @@ class SqlTypeSpec extends Specification {
     'SERIAL'      | true
     'SMALLSERIAL' | true
     'BIGSERIAL'   | true
+    'SERIAL2'     | true
+    'SERIAL4'     | true
+    'SERIAL8'     | true
     'BIGINT'      | false
   }
 
