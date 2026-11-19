@@ -37,8 +37,8 @@ public final class CommandFactory implements IFactory {
     if (cls == TibVersion.class) {
       return cls.cast(version);
     }
-    if (cls == GenerationOptions.class) {
-      return cls.cast(new GenerationOptions(version));
+    if (cls == GenerationRun.class) {
+      return cls.cast(new GenerationRun(version));
     }
     if (cls == ServiceDirectory.class) {
       return cls.cast(new ServiceDirectory(version));

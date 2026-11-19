@@ -59,7 +59,7 @@ class GenerateEntityCommand implements Callable<Integer> {
 
   @Mixin private ServiceDirectory directory;
 
-  @Mixin private GenerationOptions options;
+  @Mixin private GenerationRun run;
 
   @Override
   public Integer call() {
@@ -68,10 +68,10 @@ class GenerateEntityCommand implements Callable<Integer> {
     if (source.spec != null) {
       SpecFile file = SpecFile.read(source.spec, tree);
       sameService(file.spec(), state.spec());
-      return options.entity(state, file.spec(), file.input(), tree);
+      return run.entity(state, file.spec(), file.input(), tree);
     }
     String sql = State.Input.read(source.ddl);
-    return options.entity(
+    return run.entity(
         state,
         DdlReader.parse(sql, state.spec()),
         State.Input.of(State.Input.Kind.DDL, tree.root(), source.ddl, sql),
