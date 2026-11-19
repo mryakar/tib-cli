@@ -118,10 +118,15 @@ class ScriptSpec extends Specification {
     'COPY t FROM stdin'                         | '1\r\n2\r\n'
   }
 
-  def "rows that no line ends run to the end of the script"() {
+  def "rows that no line ends run to the end of the script, and their statement says so"() {
     expect:
-    Script.split("COPY t FROM stdin;\n1\tO'Brien\nCREATE TABLE A (ID INT);")*.text() == ['COPY t FROM stdin']
-    Script.split('COPY t FROM stdin;')*.text() == ['COPY t FROM stdin']
+    Script.split("A;\n COPY t FROM stdin;$rows") == [
+      new Script.Statement('A', 1, 1),
+      new Script.Statement('COPY t FROM stdin', 2, 2, true),
+    ]
+
+    where:
+    rows << ['', '\n', "\n1\tO'Brien\nCREATE TABLE A (ID INT);", '\n1\n\\.x\n']
   }
 
   def "no rows follow #copy"() {
@@ -133,6 +138,9 @@ class ScriptSpec extends Specification {
       "COPY t FROM '/tmp/stdin'",
       'COPY t TO stdout',
       "COPY (SELECT ' FROM stdin') TO stdout",
+      'COPY (SELECT * FROM stdin) TO stdout',
+      'COPY t (a) TO stdout',
+      'COPYRIGHT FROM stdin',
       'SELECT copy FROM stdin',
     ]
   }

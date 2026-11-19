@@ -32,10 +32,14 @@ final class Script {
   /** The tag of a dollar-quoted body, as in {@code $$} or {@code $body$}. */
   private static final Pattern DOLLAR = Pattern.compile("\\$(?:[\\p{L}_][\\p{L}\\p{N}_]*)?\\$");
 
-  /** The statement that the rows of a table follow in a dump with data. */
+  /**
+   * The statement that the rows of a table follow in a dump with data: {@code COPY}, the name of
+   * the table, its columns if it names them, and {@code FROM stdin}.
+   */
   private static final Pattern COPY_FROM_STDIN =
       Pattern.compile(
-          "COPY\\s[^']*?\\bFROM\\s+STDIN\\b", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+          "COPY\\s+(?:\"[^\"]*\"|[^\\s(\"';])+\\s*(?:\\([^()]*\\)\\s*)?FROM\\s+STDIN\\b",
+          Pattern.CASE_INSENSITIVE);
 
   /** The line that ends the rows of a table. */
   private static final Pattern END_OF_DATA = Pattern.compile("^\\\\\\.$", Pattern.MULTILINE);
@@ -56,8 +60,17 @@ final class Script {
     this.sql = sql;
   }
 
-  /** A statement without its semicolon, with the line and the column where it starts, from 1. */
-  record Statement(String text, int line, int column) {
+  /**
+   * A statement without its semicolon, with the line and the column where it starts, from 1.
+   *
+   * @param rowsWithoutEnd whether rows follow the statement that no line ends: they run to the end
+   *     of the script
+   */
+  record Statement(String text, int line, int column, boolean rowsWithoutEnd) {
+
+    Statement(String text, int line, int column) {
+      this(text, line, column, false);
+    }
 
     /**
      * Where in the script a line and a column of the statement are, both from 1: {@code line 3,
@@ -91,10 +104,11 @@ final class Script {
       } else if (sql.startsWith("/*", i)) {
         i = afterComment(i);
       } else if (c == ';') {
-        boolean data = start >= 0 && COPY_FROM_STDIN.matcher(sql).region(start, i).lookingAt();
-        add(start, i);
+        boolean rows = start >= 0 && COPY_FROM_STDIN.matcher(sql).region(start, i).lookingAt();
+        int next = rows ? afterRows(i) : i + 1;
+        add(start, i, next < 0);
         start = -1;
-        i = data ? afterData(i) : i + 1;
+        i = next < 0 ? length : next;
       } else {
         if (start < 0) {
           start = i;
@@ -102,7 +116,7 @@ final class Script {
         i = next(c, i);
       }
     }
-    add(start, length);
+    add(start, length, false);
   }
 
   /** The index after the character at the index, or after the string or body that it opens. */
@@ -180,12 +194,12 @@ final class Script {
   }
 
   /**
-   * The index after the line that ends the rows which follow the line of the index, or the length
-   * when no line ends them.
+   * The index after the line that ends the rows which follow the line of the index, or -1 when no
+   * line ends them.
    */
-  private int afterData(int from) {
+  private int afterRows(int from) {
     Matcher end = END_OF_DATA.matcher(sql);
-    return end.find(endOfLine(from)) ? end.end() : sql.length();
+    return end.find(endOfLine(from)) ? end.end() : -1;
   }
 
   private int endOfLine(int from) {
@@ -194,7 +208,7 @@ final class Script {
   }
 
   /** Adds the statement from the start to the end, unless there is none. */
-  private void add(int start, int end) {
+  private void add(int start, int end, boolean rowsWithoutEnd) {
     if (start < 0) {
       return;
     }
@@ -205,6 +219,10 @@ final class Script {
       }
     }
     statements.add(
-        new Statement(sql.substring(start, end).stripTrailing(), line, start - lineStart + 1));
+        new Statement(
+            sql.substring(start, end).stripTrailing(),
+            line,
+            start - lineStart + 1,
+            rowsWithoutEnd));
   }
 }

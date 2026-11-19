@@ -416,6 +416,15 @@ class DdlReaderSpec extends Specification {
         [], false, null)
   }
 
+  def "rows of a dump that no line ends are a problem, as the statements after them are lost"() {
+    when:
+    DdlReader.parse("CREATE TABLE T (ID INT PRIMARY KEY);\n\nCOPY T (ID) FROM stdin;\n1\n2\nCREATE TABLE U (ID INT PRIMARY KEY);\n", SERVICE)
+
+    then:
+    DdlException e = thrown()
+    e.problems() == ['the rows after the COPY at line 3 have no line \\. that ends them']
+  }
+
   def "ALTER TABLE that says nothing of the entity is skipped: #change"() {
     expect:
     entity("""

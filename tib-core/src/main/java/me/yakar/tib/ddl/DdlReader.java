@@ -145,11 +145,18 @@ public final class DdlReader {
 
   /**
    * The statements of the DDL that create or alter a table, parsed one by one; a statement that the
-   * parser cannot read is a problem, at its line and column in the DDL.
+   * parser cannot read is a problem, at its line and column in the DDL, and so are rows of a table
+   * that no line ends: the statements after them would be lost.
    */
   private static List<Statement> statements(String ddl, List<String> problems) {
     List<Statement> statements = new ArrayList<>();
     for (Script.Statement statement : Script.split(ddl)) {
+      if (statement.rowsWithoutEnd()) {
+        problems.add(
+            "the rows after the COPY at line "
+                + statement.line()
+                + " have no line \\. that ends them");
+      }
       if (!TABLE_STATEMENT.matcher(statement.text()).find()) {
         continue;
       }
