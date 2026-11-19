@@ -137,6 +137,22 @@ class DdlReaderSpec extends Specification {
     sql << ['VARCHAR(10)', 'MONEY']
   }
 
+  def "a name of underscores alone, which no Java name comes of, is a problem"() {
+    when:
+    DdlReader.parse('''
+      CREATE TABLE __ (ID BIGINT PRIMARY KEY);
+      CREATE TABLE T (_ BIGINT PRIMARY KEY, __ INT, ___ID BIGINT REFERENCES T);
+      ''', SERVICE)
+
+    then:
+    DdlException e = thrown()
+    e.problems() == [
+      '__: a name of underscores alone is not supported',
+      'T._: a name of underscores alone is not supported',
+      'T.__: a name of underscores alone is not supported',
+    ]
+  }
+
   def "a table without a primary key, or with one of several columns, is a problem"() {
     when:
     DdlReader.parse('CREATE TABLE A (X INT);\nCREATE TABLE B (X INT, Y INT, PRIMARY KEY (X, Y));', SERVICE)
