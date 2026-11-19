@@ -18,17 +18,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   its line and column in the DDL, each of them.
 - The identifier of an entity in the spec may name its column, as `id: { column: ... }`, as a
   field and a relation do; without one, its column is the field in upper snake case, as before.
-  The DDL keeps the name of the column of the primary key, as `city_id`, which tib wrote as
-  `CITY_ID` before.
-- A field of the spec may be of the type `Text`: a `String` without a length, which the default
-  pack writes as a `TEXT` column, without a limit in the validation of the DTO. A `TEXT`, `CLOB`
-  or `NCLOB` column of DDL is such a field; it was a `String` of 255 characters, into which a
-  longer value of the table did not fit.
+- A field of the spec may be of the type `Text`: a `String` without a limit, which the default
+  pack writes as a `TEXT` column, without a limit in the validation of the DTO.
 
 ### Changed
 
-- A primary key of DDL whose default is the next value of a sequence, `nextval(...)`, as `pg_dump`
-  writes a `SERIAL`, is an identity, as a `SERIAL` is: the database assigns its values.
+- Breaking: a primary key of DDL whose default is the next value of a sequence, `nextval(...)`, as
+  `pg_dump` writes a `SERIAL`, is an identity, as a `SERIAL` is: the database assigns its values.
+  It was an identifier with a sequence of tib's.
+- Breaking: a `TEXT`, `CLOB` or `NCLOB` column of DDL is a `Text`; it was a `String` of 255
+  characters, into which a longer value of the table did not fit. In a service that an earlier tib
+  read from such DDL, the next run takes the limit out of the DTO and says that the migration
+  would differ now: the column that tib's migration made is a `VARCHAR(255)`, and widening it is a
+  migration of yours.
+- The DDL keeps the name of the column of the primary key, as `city_id`, which tib wrote as
+  `CITY_ID` before. In a service that an earlier tib read from DDL in lower case, the next run
+  writes `XGenerated` with that name and says that the migration would differ now; PostgreSQL
+  takes the two names for one, so no migration is needed.
+- A reserved word as the column of an identifier is reported at `id.column`, as in
+  `entities[0].id.column: 'USER' is a reserved word in SQL; give the identifier a column`; it was
+  reported at `id.field`.
+- The help of `--ddl` says what the option reads: the `CREATE TABLE` and `ALTER TABLE` statements
+  of the DDL, as in the schema that `pg_dump` writes, and that tib skips the others.
 
 ### Fixed
 
