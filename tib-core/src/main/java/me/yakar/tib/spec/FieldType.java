@@ -21,7 +21,7 @@ package me.yakar.tib.spec;
  */
 public enum FieldType {
   STRING("String"),
-  TEXT("Text", "String"),
+  TEXT("Text"),
   INTEGER("Integer"),
   LONG("Long"),
   BIG_DECIMAL("BigDecimal"),
@@ -32,20 +32,9 @@ public enum FieldType {
   UUID("UUID");
 
   private final String name;
-  private final String javaType;
 
   FieldType(String name) {
-    this(name, name);
-  }
-
-  FieldType(String name, String javaType) {
     this.name = name;
-    this.javaType = javaType;
-  }
-
-  /** The simple name of the Java type of the value. */
-  public String javaType() {
-    return javaType;
   }
 
   /** The name in the spec. */
