@@ -192,13 +192,14 @@ tasks.register<Sync>("packages") {
 // Documentation. The command reference of the site is generated from the commands themselves, as
 // the man page that picocli-codegen writes, and the properties of the spec file and its schema from
 // the records of the spec. Antora runs antoraContent for each version of the site.
-val docs =
-  sourceSets.create("docs") {
-    compileClasspath += sourceSets.main.get().output + configurations.runtimeClasspath.get()
-    runtimeClasspath += output + compileClasspath
-  }
+val docs = sourceSets.create("docs") { runtimeClasspath += sourceSets.main.get().runtimeClasspath }
 
-dependencies { "docsImplementation"(libs.picocli.codegen) }
+dependencies {
+  "docsImplementation"(project(":tib-core"))
+  "docsImplementation"(platform(libs.jackson.bom))
+  "docsImplementation"(libs.jackson.databind)
+  "docsRuntimeOnly"(libs.picocli.codegen)
+}
 
 val commandReference =
   tasks.register<JavaExec>("commandReference") {
