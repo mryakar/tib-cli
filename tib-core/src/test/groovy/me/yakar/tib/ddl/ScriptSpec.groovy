@@ -72,14 +72,20 @@ class ScriptSpec extends Specification {
     'SELECT x$$; B'    | ['SELECT x$$', 'B']
   }
 
-  def "a line that starts with a backslash between statements is a command of psql"() {
+  def "a backslash between statements starts a command of psql, which runs to the end of its line"() {
     expect:
-    Script.split('\\restrict key\nSET A = 1;\n  \\unrestrict key\n') == [new Script.Statement('SET A = 1', 2, 1),]
+    Script.split(sql) == [new Script.Statement('SET A = 1', 2, 1)]
+
+    where:
+    sql << [
+      '\\restrict key\nSET A = 1;\n  \\unrestrict key\n',
+      '/* c */ \\connect db; \\x\nSET A = 1; \\d\n-- c\n\\q',
+    ]
   }
 
-  def "a backslash in a statement, or after something else on its line, is part of a statement"() {
+  def "a backslash in a statement is part of the statement"() {
     expect:
-    Script.split('SELECT 1\n\\x\n;/* c */ \\y') == [new Script.Statement('SELECT 1\n\\x', 1, 1), new Script.Statement('\\y', 3, 10),]
+    Script.split('SELECT 1\n\\x\n;') == [new Script.Statement('SELECT 1\n\\x', 1, 1)]
   }
 
   def "comments and blanks are no statements: #sql"() {

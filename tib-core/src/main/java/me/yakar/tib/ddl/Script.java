@@ -22,9 +22,9 @@ import java.util.regex.Pattern;
 
 /**
  * An SQL script split into its statements, as psql splits it: a semicolon ends a statement unless
- * it is in a string, a quoted name, a dollar-quoted body or a comment. A line that starts with a
- * backslash between two statements is a command of psql, such as the {@code \restrict} that pg_dump
- * writes, and no statement.
+ * it is in a string, a quoted name, a dollar-quoted body or a comment. A backslash between two
+ * statements starts a command of psql, such as the {@code \restrict} that pg_dump writes, which
+ * runs to the end of its line and is no statement.
  */
 final class Script {
 
@@ -60,31 +60,20 @@ final class Script {
   private void split() {
     int length = sql.length();
     int start = -1;
-    boolean lineIsBlank = true;
     int i = 0;
     while (i < length) {
       char c = sql.charAt(i);
-      if (c == '\n') {
-        lineIsBlank = true;
+      if (Character.isWhitespace(c)) {
         i++;
-      } else if (Character.isWhitespace(c)) {
-        i++;
-      } else if (c == '\\' && lineIsBlank && start < 0) {
-        i = endOfLine(i);
-      } else if (sql.startsWith("--", i)) {
-        lineIsBlank = false;
+      } else if (c == '\\' && start < 0 || sql.startsWith("--", i)) {
         i = endOfLine(i);
       } else if (sql.startsWith("/*", i)) {
-        lineIsBlank = false;
         i = afterComment(i);
+      } else if (c == ';') {
+        add(start, i);
+        start = -1;
+        i++;
       } else {
-        lineIsBlank = false;
-        if (c == ';') {
-          add(start, i);
-          start = -1;
-          i++;
-          continue;
-        }
         if (start < 0) {
           start = i;
         }
