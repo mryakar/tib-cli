@@ -20,6 +20,10 @@ import java.util.UUID;
 @endif
 @for(var field : entity.fields())
 ${field.typeImport()}
+@if(field.text())
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+@endif
 @endfor
 @if(entity.audited())
 import java.time.Instant;
@@ -41,6 +45,9 @@ public abstract class ${entity.name()}Generated {
   private ${entity.idType()} ${entity.idField()};
 
   @for(var field : entity.fields())
+  @if(field.text())
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+  @endif
   ${field.columnAnnotation()}
   private ${field.javaType()} ${field.name()};
 

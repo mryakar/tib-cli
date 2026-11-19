@@ -6,6 +6,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /** The columns of NOTE, as the spec names them; {@link Note} is the entity. */
 @MappedSuperclass
@@ -19,7 +21,8 @@ public abstract class NoteGenerated {
   @Column(name = "TEXT", length = 2000)
   private String text;
 
-  @Column(name = "BODY", nullable = false, columnDefinition = "TEXT")
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+  @Column(name = "BODY", nullable = false)
   private String body;
 
   public Long getId() {
