@@ -19,13 +19,45 @@ import java.nio.file.Path
 import me.yakar.tib.generate.Project
 import me.yakar.tib.spec.SpecReader
 import me.yakar.tib.tree.Tree
+import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.TempDir
 
 class TemplatesSpec extends Specification {
 
+  @Shared
   @TempDir
   Path dir
+
+  /** A service whose entities have the names of classes that the templates import. */
+  @Shared
+  Tree clashes
+
+  def setupSpec() {
+    clashes = Tree.at(dir)
+    new EntityGenerator().generate(new Project(SpecReader.parse('''\
+      tib: 1
+      service: s
+      entities:
+        - name: Instant
+          table: INSTANTS
+        - name: UUID
+          table: UUIDS
+          fields: [{ name: label, type: String, nullable: false }]
+        - name: Size
+          table: SIZES
+          fields: [{ name: label, type: String }]
+        - name: Valid
+          table: VALIDS
+        - name: BeforeEach
+          table: BEFORE
+        - name: Holder
+          audit: true
+          relations:
+            - { kind: manyToOne, target: Instant, nullable: false }
+            - { kind: manyToOne, target: UUID }
+      '''.stripIndent())), clashes)
+  }
 
   def "a header is a comment of the file's kind: #path"() {
     expect:
@@ -86,33 +118,8 @@ class A {
   }
 
   def "a file imports no class with the name of a class of the service that it names: #file"() {
-    given: 'entities with the names of classes that the templates import, and one that refers to them'
-    Tree tree = Tree.at(dir)
-    new EntityGenerator().generate(new Project(SpecReader.parse('''\
-      tib: 1
-      service: s
-      entities:
-        - name: Instant
-          table: INSTANTS
-        - name: UUID
-          table: UUIDS
-          fields: [{ name: label, type: String, nullable: false }]
-        - name: Size
-          table: SIZES
-          fields: [{ name: label, type: String }]
-        - name: Valid
-          table: VALIDS
-        - name: BeforeEach
-          table: BEFORE
-        - name: Holder
-          audit: true
-          relations:
-            - { kind: manyToOne, target: Instant, nullable: false }
-            - { kind: manyToOne, target: UUID }
-      '''.stripIndent())), tree)
-
     when:
-    List<String> imports = tree.read("src/$file").orElseThrow().readLines().findAll {
+    List<String> imports = clashes.read("src/$file").orElseThrow().readLines().findAll {
       it.startsWith('import ') && it.endsWith(".$name;")
     }
 
