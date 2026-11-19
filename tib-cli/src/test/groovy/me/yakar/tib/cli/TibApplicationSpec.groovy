@@ -37,7 +37,8 @@ class TibApplicationSpec extends Specification {
   def "a bug is reported with its stack trace, with exit code 3: #failure.class.simpleName"() {
     given: 'a command that fails with a throwable that is not tib\'s'
     Throwable thrown = failure
-    CommandFactory commands = new CommandFactory(new TibVersion('1.2.3'))
+    Tib tib = new Tib()
+    IFactory commands = tib.commands()
     IFactory factory = { Class cls ->
       cls == SchemaCommand ? new SchemaCommand() {
             @Override
@@ -50,7 +51,7 @@ class TibApplicationSpec extends Specification {
     StringWriter err = new StringWriter()
 
     when:
-    int exitCode = TibApplication.run(TibApplication.commandLine(factory)
+    int exitCode = TibApplication.run(tib.commandLine(factory)
         .setOut(new PrintWriter(out))
         .setErr(new PrintWriter(err)), 'schema')
 

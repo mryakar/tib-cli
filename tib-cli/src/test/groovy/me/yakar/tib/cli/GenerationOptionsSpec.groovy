@@ -77,7 +77,7 @@ class GenerationOptionsSpec extends Specification {
     Exception refused = null
 
     when: 'the command runs without the application, which prints the message'
-    TibApplication.commandLine(new CommandFactory(new TibVersion('1.2.3')))
+    tib.commandLine()
         .setExecutionExceptionHandler { Exception e, CommandLine commandLine, CommandLine.ParseResult parsed ->
           refused = e
           1
