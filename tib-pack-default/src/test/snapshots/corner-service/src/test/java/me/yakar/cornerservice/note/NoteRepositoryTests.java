@@ -27,5 +27,6 @@ class NoteRepositoryTests {
 
     Note found = notes.findById(note.getId()).orElseThrow();
     assertThat(found.getText()).isEqualTo(note.getText());
+    assertThat(found.getBody()).isEqualTo(note.getBody());
   }
 }

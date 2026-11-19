@@ -11,17 +11,18 @@ public final class NoteSamples {
 
   /** A note with the first sample values. */
   public static NoteBuilder note() {
-    return new NoteBuilder().text("One");
+    return new NoteBuilder().text("One").body("One");
   }
 
   /** A note with the second sample values. */
   public static NoteBuilder otherNote() {
-    return new NoteBuilder().text("Two");
+    return new NoteBuilder().text("Two").body("Two");
   }
 
   /** A note to build, one value at a time. */
   public static final class NoteBuilder {
     private String text;
+    private String body;
 
     private NoteBuilder() {}
 
@@ -30,9 +31,15 @@ public final class NoteSamples {
       return this;
     }
 
+    public NoteBuilder body(String body) {
+      this.body = body;
+      return this;
+    }
+
     public Note build() {
       Note note = new Note();
       note.setText(this.text);
+      note.setBody(this.body);
       return note;
     }
   }
