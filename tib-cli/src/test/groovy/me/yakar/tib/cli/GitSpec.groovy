@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.yakar.tib.git
+package me.yakar.tib.cli
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -81,6 +81,9 @@ class GitSpec extends Specification {
 
     then:
     changes == [' M A.java']
+    Thread.currentThread().interrupted
+
+    cleanup:
     Thread.interrupted()
   }
 
