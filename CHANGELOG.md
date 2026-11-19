@@ -42,6 +42,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - A reserved word as the column of an identifier is reported at `id.column`, as in
   `entities[0].id.column: 'USER' is a reserved word in SQL; give the identifier a column`; it was
   reported at `id.field`.
+- `XGenerated` no longer writes `nullable = false` on the column of the identifier: a primary key
+  is never null.
+- The test of a repository that tib writes for a new entity no longer carries
+  `@AutoConfigureTestDatabase(replace = Replace.NONE)`: Spring Boot 4 keeps the PostgreSQL of
+  Testcontainers without it.
 - The help of `--ddl` says what the option reads: the `CREATE TABLE` and `ALTER TABLE` statements
   of the DDL, as in the schema that `pg_dump` writes, and that tib skips the others.
 
