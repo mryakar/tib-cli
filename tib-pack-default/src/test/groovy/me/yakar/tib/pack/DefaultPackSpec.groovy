@@ -113,7 +113,8 @@ class DefaultPackSpec extends Specification {
     List<Change> changes = generate(VEHICLES, dir).changes()
 
     then:
-    snapshot('vehicle-service', changes)
+    write('vehicle-service', changes)
+    matches('vehicle-service', changes)
   }
 
   def "generates the corners of the entity layer as the snapshot says"() {
@@ -121,7 +122,8 @@ class DefaultPackSpec extends Specification {
     List<Change> changes = corners(dir).changes()
 
     then:
-    snapshot('corner-service', changes)
+    write('corner-service', changes)
+    matches('corner-service', changes)
   }
 
   def "a machine in Turkish, where the upper case of i is not I, generates the same services"() {
@@ -134,8 +136,8 @@ class DefaultPackSpec extends Specification {
     List<Change> corners = corners(other).changes()
 
     then:
-    snapshot('vehicle-service', vehicles)
-    snapshot('corner-service', corners)
+    matches('vehicle-service', vehicles)
+    matches('corner-service', corners)
 
     cleanup:
     Locale.setDefault(locale)
@@ -286,27 +288,36 @@ class DefaultPackSpec extends Specification {
   }
 
   /**
-   * The files are the ones of the snapshot, each as the snapshot says. What was generated is
-   * written where the build asks for it, to be copied over the snapshot on purpose.
+   * Writes what was generated where the build asks for it, to be copied over the snapshot on
+   * purpose.
    */
-  private static void snapshot(String name, List<Change> generated) {
-    List<Change> changes = generated.findAll { !(it.path() in InitGenerator.WRAPPER) }
+  private static void write(String name, List<Change> generated) {
     Path actual = ACTUAL.resolve(name)
     actual.toFile().deleteDir()
-    changes.each { change ->
+    snapshotted(generated).each { change ->
       Path file = actual.resolve(change.path())
       Files.createDirectories(file.parent)
       Files.write(file, change.after())
     }
+  }
+
+  /** The files are the ones of the snapshot, each as the snapshot says. */
+  private static void matches(String name, List<Change> generated) {
+    List<Change> changes = snapshotted(generated)
     Path expected = SNAPSHOTS.resolve(name)
     List<String> files = Files.walk(expected).withCloseable { paths ->
       paths.filter { Files.isRegularFile(it) }.collect {
         expected.relativize(it).toString().replace('\\', '/')
       }.sort()
     }
-    assert files == changes*.path() : "the files are not the snapshot's; the generated files are in $actual"
+    assert files == changes*.path() : "the files are not the ones of the snapshot $name"
     changes.each { change ->
-      assert new String(change.after(), 'UTF-8') == Files.readString(expected.resolve(change.path())) : "${change.path()}; the generated files are in $actual"
+      assert new String(change.after(), 'UTF-8') == Files.readString(expected.resolve(change.path())) : "${change.path()} is not as the snapshot $name says"
     }
+  }
+
+  /** What a snapshot holds of the generated files: all but the Gradle wrapper. */
+  private static List<Change> snapshotted(List<Change> generated) {
+    generated.findAll { !(it.path() in InitGenerator.WRAPPER) }
   }
 }
