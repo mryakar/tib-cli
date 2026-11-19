@@ -40,6 +40,12 @@ class Tib {
   /** What the DDL of the documentation says. */
   static final String DDL_SQL = Files.readString(Path.of(DDL))
 
+  /** The schema of the documentation as pg_dump 18 writes it: a depot, a driver and a vehicle. */
+  static final String PG_DUMP = EXAMPLES.resolve('pg-dump-18.sql')
+
+  /** What the schema that pg_dump wrote says. */
+  static final String PG_DUMP_SQL = Files.readString(Path.of(PG_DUMP))
+
   /** The spec of the documentation without its vehicle: the depot only. */
   static final String DEPOT_ONLY = SPEC_YAML
   .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, '')
