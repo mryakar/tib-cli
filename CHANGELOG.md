@@ -17,9 +17,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   cannot parse in them is no longer a problem; one that tib cannot parse in a table is named with
   its line and column in the DDL, each of them.
 - `--ddl` reads a dump with data too: the rows after `COPY ... FROM stdin` are skipped up to the
-  line `\.`, and the keys that `pg_dump` writes after them are read. Row level security, a replica
-  identity and the statistics of a column that `ALTER TABLE` sets are skipped, as the owner is; an
-  `ALTER TABLE` that changes anything else, as for a partition, is still a problem.
+  line `\.`, and the keys that `pg_dump` writes after them are read; rows that no such line ends
+  are a problem. Row level security, a replica identity and the statistics of a column that
+  `ALTER TABLE` sets are skipped, as the owner is; an `ALTER TABLE` that changes anything else, as
+  for a partition, is still a problem.
 - The identifier of an entity in the spec may name its column, as `id: { column: ... }`, as a
   field and a relation do; without one, its column is the field in upper snake case, as before.
 - A field of the spec may be of the type `Text`: a `String` without a limit, which the default
@@ -58,6 +59,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the DDL; tib failed on it.
 - A column of DDL whose check or generating expression has `NOT NULL` in it, as in
   `CHECK (n IS NOT NULL OR ...)`, is no longer read as a column that is `NOT NULL`.
+- A `CREATE TABLE` with a `LIKE` clause among its columns is refused as a table created from
+  another one; it gave an entity with only the columns that the statement names.
 - `SERIAL2`, `SERIAL4` and `SERIAL8` in DDL are the serial types that they name; they were
   problems.
 

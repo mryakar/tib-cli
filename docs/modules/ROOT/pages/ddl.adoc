@@ -88,12 +88,14 @@ statistics of a column, also on what is no table of the DDL, such as a sequence.
 
 Every other statement, such as one that creates a sequence, an index, a function or a view, a
 comment, or one that drops a table, is skipped without being parsed, and so are the rows of the
-tables in a dump with data, after `COPY ... FROM stdin`. In a table, the defaults and checks of
-the columns and the unique keys of several columns are skipped too.
+tables in a dump with data, from `COPY ... FROM stdin` to the line `\.` that ends them. In a
+table, the defaults and checks of the columns and the unique keys of several columns are skipped
+too.
 
 These are problems, and tib writes nothing:
 
-* a `CREATE TABLE` or an `ALTER TABLE` that tib cannot parse, and DDL without a `CREATE TABLE`;
+* a `CREATE TABLE` or an `ALTER TABLE` that tib cannot parse, DDL without a `CREATE TABLE`, and
+  rows of a table that no line `\.` ends;
 * a table created twice, or from another one, as with `AS SELECT` or `LIKE`;
 * a table without a primary key, and a primary or foreign key of several columns;
 * a column of another type, a table or a column named with underscores alone, and a key or a
