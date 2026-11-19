@@ -21,7 +21,7 @@ public abstract class VehicleGenerated {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "ID", nullable = false)
+  @Column(name = "ID")
   private Long id;
 
   @Column(name = "PLATE_NUMBER", nullable = false, unique = true, length = 16)

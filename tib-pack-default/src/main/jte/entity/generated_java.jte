@@ -37,7 +37,7 @@ public abstract class ${entity.name()}Generated {
   @for(var annotation : entity.idAnnotations())
   ${annotation}
   @endfor
-  @Column(name = "${entity.idColumn()}", nullable = false)
+  @Column(name = "${entity.idColumn()}")
   private ${entity.idType()} ${entity.idField()};
 
   @for(var field : entity.fields())

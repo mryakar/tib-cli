@@ -15,7 +15,7 @@ public abstract class DepotGenerated {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
-  @Column(name = "ID", nullable = false)
+  @Column(name = "ID")
   private UUID id;
 
   @Column(name = "DEPOT_CODE", nullable = false, unique = true, length = 8)
