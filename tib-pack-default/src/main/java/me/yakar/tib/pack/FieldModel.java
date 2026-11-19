@@ -60,10 +60,10 @@ public record FieldModel(Field field) {
 
   /** The length of a String: the spec's, or else the default; a field of another type has none. */
   Integer length() {
-    if (field.length() != null || field.type() != FieldType.STRING) {
-      return field.length();
+    if (field.type() == FieldType.STRING && field.length() == null) {
+      return DEFAULT_LENGTH;
     }
-    return DEFAULT_LENGTH;
+    return field.length();
   }
 
   /** The JPA annotation of the column. */
@@ -108,11 +108,12 @@ public record FieldModel(Field field) {
    */
   public String sample(int variant) {
     return switch (field.type()) {
-      case STRING -> {
+      case STRING, TEXT -> {
         String text = variant == 1 ? "One" : "Two";
-        yield "\"" + text.substring(0, Math.min(text.length(), length())) + "\"";
+        yield "\""
+            + (length() == null ? text : text.substring(0, Math.min(text.length(), length())))
+            + "\"";
       }
-      case TEXT -> variant == 1 ? "\"One\"" : "\"Two\"";
       case INTEGER -> String.valueOf(variant);
       case LONG -> variant + "L";
       case BIG_DECIMAL -> "new BigDecimal(\"" + decimal(variant) + "\")";

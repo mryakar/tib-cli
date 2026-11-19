@@ -36,6 +36,21 @@ class FieldModelSpec extends Specification {
     2         | 2     | ', precision: 2, scale: 2'    | ['0.01', '0.02']
   }
 
+  def "a sample String fits the length of its column, and a Text has none to fit: #type"() {
+    given:
+    FieldModel field = field("{ name: label, type: $type }")
+
+    expect:
+    [field.sample(1), field.sample(2)] == samples.collect { '"' + it + '"' }
+
+    where:
+    type                | samples
+    'String'            | ['One', 'Two']
+    'String, length: 2' | ['On', 'Tw']
+    'String, length: 1' | ['O', 'T']
+    'Text'              | ['One', 'Two']
+  }
+
   /** The model of the field of an entity of a spec. */
   private static FieldModel field(String field) {
     EntityGenerator.models(new Project(SpecReader.parse("tib: 1\nservice: s\nentities:\n  - name: A\n    fields: [$field]\n"))).A.fields()[0]
