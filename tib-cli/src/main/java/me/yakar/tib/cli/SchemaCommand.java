@@ -15,6 +15,7 @@
  */
 package me.yakar.tib.cli;
 
+import java.io.PrintWriter;
 import me.yakar.tib.spec.SpecSchema;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -31,7 +32,8 @@ class SchemaCommand implements Runnable {
 
   @Override
   public void run() {
-    commandSpec.commandLine().getOut().print(SpecSchema.json());
-    commandSpec.commandLine().getOut().flush();
+    PrintWriter out = commandSpec.commandLine().getOut();
+    out.print(SpecSchema.json());
+    out.flush();
   }
 }
