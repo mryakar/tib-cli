@@ -30,6 +30,9 @@ class GenerateEntityCommandSpec extends Specification {
   @TempDir
   Path dir
 
+  @TempDir
+  Path another
+
   Tib tib
 
   def setup() {
@@ -201,7 +204,7 @@ class GenerateEntityCommandSpec extends Specification {
     then:
     dryRun.exitCode() == 0
     dryRun.out().contains('+++ b/.tib/state.yaml\n')
-    dryRun.err() != ''
+    (dryRun.err() != '') == noticed
     tib.files() == before
 
     when:
@@ -222,58 +225,76 @@ class GenerateEntityCommandSpec extends Specification {
     again.err() == ''
 
     where:
-    scenario                                  | change
-    'an entity that left the spec'            | { Tib tib ->
+    scenario                                  | noticed | change
+    'an entity that left the spec'            | true    | { Tib tib ->
       tib.init('--spec', Tib.SPEC)
       tib.generate('--spec', Tib.SPEC)
       ['--spec', tib.write('depot.yaml', Tib.DEPOT_ONLY)]
     }
-    'a spec file that replaces the DDL'       | { Tib tib ->
+    'a spec file that replaces the DDL'       | true    | { Tib tib ->
       tib.init('vehicle-service')
       tib.generate('--ddl', tib.write('schema.sql', Tib.DDL_SQL))
       ['--spec', tib.write('spec.yaml', Tib.SPEC_YAML)]
     }
-    'DDL that was moved'                      | { Tib tib ->
+    'DDL that was moved'                      | true    | { Tib tib ->
       tib.init('vehicle-service')
       Path schema = Path.of(tib.write('schema.sql', Tib.DDL_SQL))
       tib.generate('--ddl', schema.toString())
       Files.createDirectories(tib.service.resolve('db'))
       ['--ddl', Files.move(schema, tib.service.resolve('db/schema.sql')).toString()]
     }
-    'a table whose columns changed'           | { Tib tib ->
+    'a table whose columns changed'           | true    | { Tib tib ->
       tib.init('--spec', Tib.SPEC)
       tib.generate('--spec', Tib.SPEC)
       ['--spec', tib.write('colored.yaml', COLORED)]
     }
-    'an entity that came back to the spec'    | { Tib tib ->
+    'an entity that came back to the spec'    | true    | { Tib tib ->
       tib.init('--spec', Tib.SPEC)
       tib.generate('--spec', Tib.SPEC)
       tib.generate('--spec', tib.write('depot.yaml', Tib.DEPOT_ONLY))
       ['--spec', Tib.SPEC]
     }
+    'the schema that pg_dump writes'          | false   | { Tib tib ->
+      tib.init('vehicle-service')
+      ['--ddl', Tib.PG_DUMP]
+    }
   }
 
-  def "generates the entity layer of the tables of the DDL into the service, once"() {
+  def "generates the entity layer of the tables of #ddl into the service, once, and the same into another"() {
     given:
     tib.init('vehicle-service')
     State before = tib.state()
 
     when:
-    Result result = tib.generate('--ddl', Tib.DDL)
+    Result result = tib.generate('--ddl', file)
 
     then:
     result.exitCode() == 0
     result.out() == "Wrote ${tib.state().files().size() - before.files().size() + 1} files to ${tib.root}.\n"
     Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/depot/DepotGenerated.java'))
-    tib.state().spec().entities()*.name() == ['Depot', 'Vehicle']
-    tib.state().inputs() == [State.Input.of(State.Input.Kind.DDL, dir, Path.of(Tib.DDL), Tib.DDL_SQL)]
+    tib.state().spec().entities()*.name() == entities
+    tib.state().inputs() == [State.Input.of(State.Input.Kind.DDL, dir, Path.of(file), sql)]
 
     when: 'again'
-    Result again = tib.generate('--ddl', Tib.DDL)
+    Result again = tib.generate('--ddl', file)
 
     then:
     again.exitCode() == 0
     again.out() == 'Nothing to change.\n'
+    again.err() == ''
+
+    when: 'another service is scaffolded and generated into'
+    Tib other = new Tib(another)
+    other.init('vehicle-service')
+    other.generate('--ddl', file)
+
+    then: 'its files are the same'
+    other.files() == tib.files()
+
+    where:
+    ddl                              | file        | sql             | entities
+    'the DDL'                        | Tib.DDL     | Tib.DDL_SQL     | ['Depot', 'Vehicle']
+    'the schema that pg_dump writes' | Tib.PG_DUMP | Tib.PG_DUMP_SQL | ['Depot', 'Driver', 'Vehicle']
   }
 
   def "a run that changes only the state file writes one file"() {
