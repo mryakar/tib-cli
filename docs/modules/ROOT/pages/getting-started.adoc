@@ -6,7 +6,7 @@ With tib xref:install.adoc[installed], check that it answers:
 [source,bash]
 ----
 $ tib --version
-tib 0.3.0
+tib 0.4.0
 ----
 
 == A new service
@@ -121,10 +121,10 @@ with the hash of its content when tib read it:
 [source,yaml]
 ----
 # Written by tib on every run. Do not edit: your changes would be lost.
-tib: 0.3.0
+tib: 0.4.0
 pack:
   name: default
-  version: 0.3.0
+  version: 0.4.0
   stack: Spring Boot 4
 inputs:
 - kind: spec
@@ -182,7 +182,7 @@ to run again, so that a build can check for it:
 [source,bash]
 ----
 $ tib status
-vehicle-service: tib 0.3.0, pack default 0.3.0, 2 entities, 39 files.
+vehicle-service: tib 0.4.0, pack default 0.4.0, 2 entities, 39 files.
 
 Read from:
 changed  vehicle-service.yaml
