@@ -1,7 +1,8 @@
 # The corners of the entity layer: an audited entity with a sequence identifier in a column that
 # the spec names, a one-to-one relation, a relation to itself and two relations to one target, an
-# entity without DTOs, one without a mapper, one without pagination, one with nothing to import, one
-# whose name takes "an" and has a required relation and a field named as itself, and every type.
+# entity without DTOs and with a Text that is required, one without a mapper, one without
+# pagination, one with nothing to import, one whose name takes "an" and has a required relation and
+# a field named as itself, and every type.
 tib: 1
 service: corner-service
 group: me.yakar
@@ -25,6 +26,7 @@ entities:
   - name: Note
     fields:
       - { name: text, type: String, length: 2000 }
+      - { name: body, type: Text, nullable: false }
     options: { dto: false }
   - name: Tag
     fields:

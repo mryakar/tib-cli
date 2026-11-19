@@ -19,6 +19,9 @@ public abstract class NoteGenerated {
   @Column(name = "TEXT", length = 2000)
   private String text;
 
+  @Column(name = "BODY", nullable = false, columnDefinition = "TEXT")
+  private String body;
+
   public Long getId() {
     return id;
   }
@@ -33,5 +36,13 @@ public abstract class NoteGenerated {
 
   public void setText(String text) {
     this.text = text;
+  }
+
+  public String getBody() {
+    return body;
+  }
+
+  public void setBody(String body) {
+    this.body = body;
   }
 }
