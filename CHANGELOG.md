@@ -34,6 +34,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - The tests of an entity with a field named as the entity, such as a table `city` with a column
   `city`, compile: `XSamples` built the entity with itself as the value of that field.
+- A table or a column of DDL that is named with underscores alone, such as `_`, is a problem of
+  the DDL; tib failed on it.
+- A column of DDL whose check or generating expression has `NOT NULL` in it, as in
+  `CHECK (n IS NOT NULL OR ...)`, is no longer read as a column that is `NOT NULL`.
+- `SERIAL2`, `SERIAL4` and `SERIAL8` in DDL are the serial types that they name; they were
+  problems.
 
 ## [0.3.0] - 2026-11-11
 
