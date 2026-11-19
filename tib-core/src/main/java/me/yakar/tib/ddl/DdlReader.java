@@ -81,7 +81,8 @@ public final class DdlReader {
 
   /**
    * The options of the sequence of an identity, which the parser does not read and tib does not
-   * need: {@code AS IDENTITY (SEQUENCE NAME ... CACHE 1)}.
+   * need: {@code AS IDENTITY (SEQUENCE NAME ... CACHE 1)}. Blanks take their place, so that what
+   * comes after them stays at its line and column.
    */
   private static final Pattern IDENTITY_OPTIONS =
       Pattern.compile("(?<=\\bAS\\s{1,10}IDENTITY)\\s*\\([^()]*\\)", Pattern.CASE_INSENSITIVE);
@@ -197,7 +198,7 @@ public final class DdlReader {
               .matcher(
                   IDENTITY_OPTIONS
                       .matcher(statement.text())
-                      .replaceAll(options -> options.group().replaceAll("[^\\n]", "")))
+                      .replaceAll(options -> options.group().replaceAll("[^\\n]", " ")))
               .replaceAll("--");
       try {
         statements.add(CCJSqlParserUtil.parse(sql));

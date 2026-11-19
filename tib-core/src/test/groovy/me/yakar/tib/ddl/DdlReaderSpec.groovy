@@ -475,6 +475,20 @@ class DdlReaderSpec extends Specification {
     ]
   }
 
+  def "what comes after the options of an identity is at its line and column: #problem"() {
+    when:
+    DdlReader.parse("CREATE TABLE T (\n  ID BIGINT GENERATED ALWAYS AS IDENTITY $options PRIMARY KEY, X INT[ );", SERVICE)
+
+    then:
+    DdlException e = thrown()
+    e.problems() == ["it is not SQL that tib reads: $problem"]
+
+    where:
+    options                                          | problem
+    '(START WITH 1 CACHE 1)'                         | 'Encountered: "[" / "[", at line 2, column 83'
+    '(\n    SEQUENCE NAME T_ID_SEQ\n    CACHE 1\n  )' | 'Encountered: "[" / "[", at line 5, column 23'
+  }
+
   def "the spec that the DDL gives is checked as a spec"() {
     when:
     entity('CREATE TABLE T (ID BIGINT PRIMARY KEY, A_ID BIGINT REFERENCES T, A BIGINT);')
