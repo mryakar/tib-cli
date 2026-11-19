@@ -66,7 +66,7 @@ final class Script {
   static List<Statement> split(String sql) {
     Script script = new Script(sql);
     script.split();
-    return script.statements;
+    return List.copyOf(script.statements);
   }
 
   private void split() {
