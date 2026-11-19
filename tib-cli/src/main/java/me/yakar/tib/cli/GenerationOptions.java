@@ -36,9 +36,6 @@ import picocli.CommandLine.Option;
 /** The options of a command that generates into a service, and the run that they steer. */
 final class GenerationOptions {
 
-  /** The description of the option that names the spec file. */
-  static final String SPEC_FILE = "The spec file of the service.";
-
   private static final String NOTHING_TO_CHANGE = "Nothing to change.";
 
   /** The uncommitted changes that a message lists; it counts the others. */
