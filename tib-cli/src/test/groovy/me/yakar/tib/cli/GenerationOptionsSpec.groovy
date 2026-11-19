@@ -15,9 +15,6 @@
  */
 package me.yakar.tib.cli
 
-import static me.yakar.tib.cli.Tib.EXAMPLES
-
-import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.cli.Tib.Result
 import picocli.CommandLine
@@ -38,17 +35,15 @@ class GenerationOptionsSpec extends Specification {
     tib = new Tib(dir)
   }
 
-  String spec = EXAMPLES.resolve('vehicle-service.yaml').toString()
-
   def "a service whose tracked files have uncommitted changes is refused, and nothing is written"() {
     given:
     tib.init('vehicle-service')
     committed()
-    Files.writeString(dir.resolve('AGENTS.md'), 'mine\n')
+    tib.write('AGENTS.md', 'mine\n')
     Map<String, String> before = tib.files()
 
     when:
-    Result result = tib.generate('--spec', spec)
+    Result result = tib.generate('--spec', Tib.SPEC)
 
     then:
     result.exitCode() == 1
@@ -61,7 +56,7 @@ class GenerationOptionsSpec extends Specification {
     tib.files() == before
 
     when: 'a dry run writes nothing anyway'
-    Result dryRun = tib.generate('--spec', spec, '--dry-run')
+    Result dryRun = tib.generate('--spec', Tib.SPEC, '--dry-run')
 
     then:
     dryRun.exitCode() == 0
@@ -73,7 +68,7 @@ class GenerationOptionsSpec extends Specification {
     given:
     tib.init('vehicle-service')
     committed()
-    Files.writeString(dir.resolve('AGENTS.md'), 'mine\n')
+    tib.write('AGENTS.md', 'mine\n')
     Exception refused = null
 
     when: 'the command runs without the application, which prints the message'
@@ -82,7 +77,7 @@ class GenerationOptionsSpec extends Specification {
           refused = e
           1
         }
-        .execute('generate', 'entity', '--spec', spec, '-d', dir.toString())
+        .execute('generate', 'entity', '--spec', Tib.SPEC, '-d', dir.toString())
 
     then:
     refused.message == "${tib.root} has changes that are not committed:\n" +
@@ -95,7 +90,7 @@ class GenerationOptionsSpec extends Specification {
     [dir, copy].each {
       Tib service = new Tib(it)
       service.init('vehicle-service')
-      String all = service.write('spec.yaml', Files.readString(Path.of(spec)))
+      String all = service.write('spec.yaml', Tib.SPEC_YAML)
       if (file != 'spec.yaml') {
         service.generate('--spec', all)
         service.write(file, Tib.DEPOT_ONLY)
@@ -105,7 +100,7 @@ class GenerationOptionsSpec extends Specification {
 
     when: 'the diff of a dry run is applied to the service, and the copy is generated into'
     Result dryRun = tib.generate('--spec', dir.resolve(file).toString(), '--dry-run')
-    Files.writeString(dir.resolve('.git/tib.diff'), dryRun.out())
+    tib.write('.git/tib.diff', dryRun.out())
     git('apply', '--check', '.git/tib.diff')
     git('apply', '.git/tib.diff')
     Result result = new Tib(copy).generate('--spec', copy.resolve(file).toString())
@@ -124,13 +119,13 @@ class GenerationOptionsSpec extends Specification {
     given:
     tib.init('vehicle-service')
     committed()
-    (1..12).each { Files.writeString(dir.resolve("File${it}.txt"), 'x\n') }
+    (1..12).each { tib.write("File${it}.txt", 'x\n') }
     git('add', '.')
     git('commit', '-q', '-m', 'files')
-    (1..12).each { Files.writeString(dir.resolve("File${it}.txt"), 'y\n') }
+    (1..12).each { tib.write("File${it}.txt", 'y\n') }
 
     when:
-    Result result = tib.generate('--spec', spec, '--allow-dirty')
+    Result result = tib.generate('--spec', Tib.SPEC, '--allow-dirty')
 
     then:
     result.exitCode() == 0
@@ -149,17 +144,17 @@ class GenerationOptionsSpec extends Specification {
     given:
     tib.init('vehicle-service')
     committed()
-    Files.writeString(dir.resolve('notes.txt'), 'untracked\n')
+    tib.write('notes.txt', 'untracked\n')
 
     when:
-    Result result = tib.generate('--spec', spec)
+    Result result = tib.generate('--spec', Tib.SPEC)
 
     then:
     result.exitCode() == 0
     result.out().startsWith('Wrote ')
 
     when: 'the files of tib are not committed, and the run changes nothing'
-    Result again = tib.generate('--spec', spec)
+    Result again = tib.generate('--spec', Tib.SPEC)
 
     then:
     again.exitCode() == 0

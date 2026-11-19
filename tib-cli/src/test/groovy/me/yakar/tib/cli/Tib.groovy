@@ -31,11 +31,17 @@ class Tib {
   /** The spec file of the documentation: a vehicle and a depot. */
   static final String SPEC = EXAMPLES.resolve('vehicle-service.yaml')
 
+  /** What the spec file of the documentation says. */
+  static final String SPEC_YAML = Files.readString(Path.of(SPEC))
+
   /** The DDL of the documentation: the tables of the vehicle and of the depot. */
   static final String DDL = EXAMPLES.resolve('vehicle-service.sql')
 
+  /** What the DDL of the documentation says. */
+  static final String DDL_SQL = Files.readString(Path.of(DDL))
+
   /** The spec of the documentation without its vehicle: the depot only. */
-  static final String DEPOT_ONLY = Files.readString(Path.of(SPEC))
+  static final String DEPOT_ONLY = SPEC_YAML
   .replaceFirst(/(?s)  - name: Vehicle.*(?=  - name: Depot)/, '')
 
   /** What a run printed, with the line separator of every platform, and its exit code. */
