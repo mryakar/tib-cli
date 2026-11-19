@@ -198,12 +198,13 @@ public final class EntityTestsModel {
         || entity.requiredRelations().stream().anyMatch(RelationModel::oneToOne);
   }
 
-  /** The fields of the DTO that the comparison of two of them leaves out, as Java strings. */
-  public String ignoredFields(boolean id) {
+  /**
+   * The fields of the DTO that the service ignores, which the comparison of what it took with what
+   * it answers leaves out, as Java strings.
+   */
+  public String ignoredFields() {
     List<String> ignored = new ArrayList<>();
-    if (id) {
-      ignored.add(entity.idField());
-    }
+    ignored.add(entity.idField());
     if (entity.audited()) {
       ignored.add("createdAt");
       ignored.add("updatedAt");
@@ -217,11 +218,11 @@ public final class EntityTestsModel {
   }
 
   private static String sampleId(EntityModel model) {
-    return model.uuid() ? FieldModel.uuid(1) : "1L";
+    return model.uuidId() ? FieldModel.sampleUuid(1) : "1L";
   }
 
   /** An identifier that no entity has, as Java. */
   public String unknownId() {
-    return entity.uuid() ? "UUID.randomUUID()" : "Long.MAX_VALUE";
+    return entity.uuidId() ? "UUID.randomUUID()" : "Long.MAX_VALUE";
   }
 }

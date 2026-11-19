@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Entity;
 import me.yakar.tib.spec.IdStrategy;
@@ -128,11 +129,11 @@ public final class EntityModel {
 
   /** The SQL type of the identifier, and of a column that refers to it. */
   String idSqlType() {
-    return uuid() ? "UUID" : "BIGINT";
+    return uuidId() ? "UUID" : "BIGINT";
   }
 
   /** Whether the identifier is a UUID. */
-  public boolean uuid() {
+  public boolean uuidId() {
     return entity.id().type() == IdType.UUID;
   }
 
@@ -266,9 +267,9 @@ public final class EntityModel {
 
   /** The parameters of the mapper's constructor: the repositories of the relations' targets. */
   public String repositoryParameters() {
-    return String.join(
-        ", ",
-        targets.stream().map(target -> target.name() + "Repository " + target.plural()).toList());
+    return targets.stream()
+        .map(target -> target.name() + "Repository " + target.plural())
+        .collect(Collectors.joining(", "));
   }
 
   /**

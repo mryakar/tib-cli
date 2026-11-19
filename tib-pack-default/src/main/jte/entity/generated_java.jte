@@ -15,7 +15,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.${relation.annotation()};
 @endfor
-@if(entity.uuid())
+@if(entity.uuidId())
 import java.util.UUID;
 @endif
 @for(var field : entity.fields())

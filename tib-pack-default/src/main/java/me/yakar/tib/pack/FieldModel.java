@@ -121,12 +121,12 @@ public record FieldModel(Field field) {
       case LOCAL_DATE -> "LocalDate.of(2026, 1, " + variant + ")";
       case LOCAL_DATE_TIME -> "LocalDateTime.of(2026, 1, " + variant + ", 12, 0)";
       case INSTANT -> "Instant.parse(\"2026-01-0" + variant + "T12:00:00Z\")";
-      case UUID -> uuid(variant);
+      case UUID -> sampleUuid(variant);
     };
   }
 
   /** A UUID for the tests, as Java. */
-  static String uuid(int variant) {
+  static String sampleUuid(int variant) {
     return "UUID.fromString(\"00000000-0000-0000-0000-00000000000" + variant + "\")";
   }
 

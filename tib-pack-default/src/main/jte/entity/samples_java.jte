@@ -7,14 +7,14 @@
 !{String dtoBuilder = name + "DtoBuilder";}
 package ${entity.packageName()};
 
-@if(entity.uuid())
+@if(entity.uuidId())
 import java.util.UUID;
 @endif
 @for(var field : entity.fields())
 ${field.typeImport()}
 @endfor
 @for(var relation : entity.relations())
-@if(relation.target().uuid())
+@if(relation.target().uuidId())
 import java.util.UUID;
 @endif
 @endfor

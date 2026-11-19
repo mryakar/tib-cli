@@ -14,7 +14,7 @@ import ${target.packageName()}.${target.name()};
 import ${target.packageName()}.${target.name()}Repository;
 import ${target.packageName()}.${target.name()}Samples;
 @endfor
-@if(entity.uuid())
+@if(entity.uuidId())
 import java.util.UUID;
 @endif
 import org.junit.jupiter.api.AfterEach;
@@ -64,7 +64,7 @@ class ${entity.name()}ApiTests {
     assertThat(created.getBody().${entity.idField()}()).isNotNull();
     assertThat(created.getBody())
         .usingRecursiveComparison()
-        .ignoringFields(${tests.ignoredFields(true)})
+        .ignoringFields(${tests.ignoredFields()})
         .isEqualTo(dto);
   }
 
@@ -79,7 +79,7 @@ class ${entity.name()}ApiTests {
     @if(entity.audited())
     assertThat(found.getBody())
         .usingRecursiveComparison()
-        .ignoringFields(${tests.ignoredFields(false)})
+        .ignoringFields("createdAt", "updatedAt")
         .isEqualTo(${entity.variable()});
     @else
     assertThat(found.getBody()).isEqualTo(${entity.variable()});
@@ -111,7 +111,7 @@ class ${entity.name()}ApiTests {
     assertThat(updated.getBody().${entity.idField()}()).isEqualTo(${entity.variable()}.${entity.idField()}());
     assertThat(updated.getBody())
         .usingRecursiveComparison()
-        .ignoringFields(${tests.ignoredFields(true)})
+        .ignoringFields(${tests.ignoredFields()})
         .isEqualTo(dto);
   }
 
