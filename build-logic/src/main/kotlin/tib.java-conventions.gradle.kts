@@ -95,7 +95,11 @@ if (snapshotsDir.isDirectory) {
     gradle.startParameter.taskNames.any { it == "--tests" || it.startsWith("--tests=") }
   val expected = snapshotsDir
   val actual = layout.buildDirectory.dir("snapshots/test")
+  // Tests that did not run in this build wrote nothing to copy: updateSnapshots asks for a run.
+  val testRun =
+    gradle.sharedServices.registerIfAbsent("$path:testRun", me.yakar.tib.gradle.TestRun::class) {}
   tasks.test {
+    usesService(testRun)
     inputs.dir(expected).withPropertyName("snapshots").withPathSensitivity(PathSensitivity.RELATIVE)
     outputs.dir(actual).withPropertyName("actualSnapshots")
     jvmArgumentProviders.add(
@@ -108,20 +112,28 @@ if (snapshotsDir.isDirectory) {
     )
     outputs.cacheIf("the snapshots are not being updated") { !updating }
     outputs.upToDateWhen { !updating }
-    doFirst { actual.get().asFile.deleteRecursively() }
+    doFirst {
+      actual.get().asFile.deleteRecursively()
+      testRun.get().ran.set(true)
+    }
   }
   tasks.register("updateSnapshots") {
     group = "verification"
     description =
       "Replaces the snapshots with what the unit tests wrote: run it after the whole suite."
     mustRunAfter(tasks.test)
+    usesService(testRun)
     doLast {
       check(!filtered) {
         "updateSnapshots replaces every snapshot with what the unit tests of this run wrote:" +
           " run it without --tests"
       }
+      check(testRun.get().ran.get()) {
+        "The unit tests did not run in this build, so there is nothing of theirs to copy:" +
+          " run them again with the full name of the task, as in test updateSnapshots --continue"
+      }
       val written = actual.get().asFile
-      check(written.isDirectory) { "$written is missing: run the unit tests first" }
+      check(written.isDirectory) { "$written is missing: the unit tests wrote no snapshot" }
       expected.deleteRecursively()
       written.copyRecursively(expected)
     }
