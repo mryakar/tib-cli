@@ -50,6 +50,19 @@ jobs:
     name: Packages
     uses: ./.github/workflows/packages.yml
 
+  # The scripts of the release and of the Pages site run only there: they are linted here, and the
+  # one that reads the changelog reads the section of a published release.
+  scripts:
+    name: Scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: shellcheck .github/scripts/*.sh
+      - run: .github/scripts/release-notes.sh 0.3.0 >/dev/null
+
   commit-messages:
     name: Commit messages
     if: github.event_name == 'pull_request'
