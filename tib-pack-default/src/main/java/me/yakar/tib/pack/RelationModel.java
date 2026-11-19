@@ -83,7 +83,7 @@ public record RelationModel(Relation relation, EntityModel target) {
   String sql() {
     return relation.column()
         + " "
-        + FieldModel.sqlType(target.entity().id().type())
+        + target.idSqlType()
         + (relation.nullable() ? "" : " NOT NULL")
         + (oneToOne() ? " UNIQUE" : "")
         + " REFERENCES "
