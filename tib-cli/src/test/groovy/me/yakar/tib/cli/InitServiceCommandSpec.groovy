@@ -15,8 +15,6 @@
  */
 package me.yakar.tib.cli
 
-import static me.yakar.tib.cli.Tib.EXAMPLES
-
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -51,7 +49,7 @@ class InitServiceCommandSpec extends Specification {
 
   def "the name and the spec exclude each other"() {
     when:
-    Result result = tib.init('vehicle-service', '--spec', EXAMPLES.resolve('vehicle-service.yaml').toString())
+    Result result = tib.init('vehicle-service', '--spec', Tib.SPEC)
 
     then:
     result.exitCode() == 2
@@ -112,7 +110,7 @@ class InitServiceCommandSpec extends Specification {
     result.err() == "${tib.root} is already a tib project: .tib/state.yaml is there\n"
 
     when: 'the spec has a problem too'
-    Result broken = tib.init('--spec', Files.writeString(dir.resolve('spec.yaml'), 'tib: 2\n').toString())
+    Result broken = tib.init('--spec', tib.write('spec.yaml', 'tib: 2\n'))
 
     then: 'the project is what is reported'
     broken.exitCode() == 1
@@ -121,21 +119,19 @@ class InitServiceCommandSpec extends Specification {
 
   def "scaffolds the service of a spec file"() {
     when:
-    Result result = tib.init('--spec', EXAMPLES.resolve('vehicle-service.yaml').toString())
+    Result result = tib.init('--spec', Tib.SPEC)
 
     then:
     result.exitCode() == 0
     State state = tib.state()
     state.spec().entities()*.name() == ['Vehicle', 'Depot']
-    state.inputs() == [
-      State.Input.of(State.Input.Kind.SPEC, dir, EXAMPLES.resolve('vehicle-service.yaml'), Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
-    ]
+    state.inputs() == [State.Input.of(State.Input.Kind.SPEC, dir, Path.of(Tib.SPEC), Tib.SPEC_YAML)]
   }
 
   def "the spec file is recorded with its path relative to the service"() {
     given:
     Path service = Files.createDirectories(dir.resolve('vehicle-service'))
-    Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), dir.resolve('vehicle-service.yaml'))
+    Files.copy(Path.of(Tib.SPEC), dir.resolve('vehicle-service.yaml'))
 
     when:
     Result result = new Tib(service).init('--spec', dir.resolve('vehicle-service.yaml').toString())
@@ -158,10 +154,10 @@ class InitServiceCommandSpec extends Specification {
 
   def "a spec that tib cannot use is reported: #message"() {
     given:
-    Path spec = Files.writeString(dir.resolve('spec.yaml'), yaml)
+    String spec = tib.write('spec.yaml', yaml)
 
     when:
-    Result result = new Tib(dir.resolve('service')).init('--spec', spec.toString())
+    Result result = new Tib(dir.resolve('service')).init('--spec', spec)
 
     then:
     result.exitCode() == 1

@@ -15,8 +15,6 @@
  */
 package me.yakar.tib.cli
 
-import static me.yakar.tib.cli.Tib.EXAMPLES
-
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.cli.Tib.Result
@@ -79,7 +77,7 @@ class StatusCommandSpec extends Specification {
   def "a file of yours that was edited is as it should be"() {
     given:
     generated()
-    Files.writeString(dir.resolve(ENTITY + 'Vehicle.java'), 'edited\n')
+    tib.write(ENTITY + 'Vehicle.java', 'edited\n')
 
     when:
     Result result = tib.status()
@@ -112,7 +110,7 @@ class StatusCommandSpec extends Specification {
   def "a file of tib's that was edited or is missing is reported with exit code 1, until tib runs again"() {
     given:
     String spec = generated()
-    Files.writeString(dir.resolve(ENTITY + 'VehicleGenerated.java'), 'edited\n')
+    tib.write(ENTITY + 'VehicleGenerated.java', 'edited\n')
     Files.delete(dir.resolve(ENTITY + 'VehicleDto.java'))
     Files.delete(dir.resolve(ENTITY + 'VehicleController.java'))
 
@@ -161,7 +159,7 @@ class StatusCommandSpec extends Specification {
 
   def "a spec file that was changed is reported with exit code 1, until tib runs with it again"() {
     given:
-    Path spec = Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), dir.resolve('vehicle-service.yaml'))
+    Path spec = Files.copy(Path.of(Tib.SPEC), dir.resolve('vehicle-service.yaml'))
     generated(spec.toString())
     Files.writeString(spec, Files.readString(spec) + '# changed\n')
 
@@ -195,10 +193,10 @@ class StatusCommandSpec extends Specification {
 
   def "a spec file that is no longer where tib read it is reported, and is no problem"() {
     given:
-    Path spec = Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), dir.resolve('vehicle-service.yaml'))
+    Path spec = Files.copy(Path.of(Tib.SPEC), dir.resolve('vehicle-service.yaml'))
     generated(spec.toString())
     Files.delete(spec)
-    Files.writeString(dir.resolve(ENTITY + 'VehicleGenerated.java'), 'edited\n')
+    tib.write(ENTITY + 'VehicleGenerated.java', 'edited\n')
 
     when:
     Result result = tib.status()
@@ -218,7 +216,7 @@ class StatusCommandSpec extends Specification {
     ]
 
     when: 'tib runs with the spec where it is now'
-    String moved = EXAMPLES.resolve('vehicle-service.yaml').toString()
+    String moved = Tib.SPEC
     tib.generate('--spec', moved)
     Result again = tib.status()
 
@@ -230,7 +228,7 @@ class StatusCommandSpec extends Specification {
 
   def "a spec file that is there but cannot be read is reported"() {
     given:
-    Path spec = Files.copy(EXAMPLES.resolve('vehicle-service.yaml'), dir.resolve('vehicle-service.yaml'))
+    Path spec = Files.copy(Path.of(Tib.SPEC), dir.resolve('vehicle-service.yaml'))
     generated(spec.toString())
     Files.delete(spec)
     Files.createDirectory(spec)
@@ -247,7 +245,7 @@ class StatusCommandSpec extends Specification {
   def "the count of entities and files is #what"() {
     given:
     Files.createDirectories(dir.resolve('.tib'))
-    Files.writeString(dir.resolve(State.PATH), state)
+    tib.write(State.PATH, state)
 
     when:
     Result result = tib.status()
@@ -264,7 +262,7 @@ class StatusCommandSpec extends Specification {
   def "a state file that tib cannot read is reported: #state"() {
     given:
     Files.createDirectories(dir.resolve('.tib'))
-    Files.writeString(dir.resolve(State.PATH), state)
+    tib.write(State.PATH, state)
 
     when:
     Result result = tib.status()
@@ -282,7 +280,7 @@ class StatusCommandSpec extends Specification {
   }
 
   /** Scaffolds the service of the spec and generates its entities; the spec file. */
-  private String generated(String spec = EXAMPLES.resolve('vehicle-service.yaml').toString()) {
+  private String generated(String spec = Tib.SPEC) {
     tib.init('--spec', spec)
     tib.generate('--spec', spec)
     spec
