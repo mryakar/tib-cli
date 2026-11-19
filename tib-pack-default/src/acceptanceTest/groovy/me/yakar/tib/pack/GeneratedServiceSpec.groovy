@@ -28,11 +28,11 @@ import spock.lang.Specification
 import spock.lang.TempDir
 
 /**
- * The services of the example spec, of its DDL and of the corner spec of the snapshots, generated
- * and then built with their own Gradle wrapper, as a user would build them. Where Docker runs
- * Linux containers, the build includes the tests of the service, which start PostgreSQL in a
- * container; elsewhere the build compiles the service and its tests. On Linux under CI, Docker has
- * to be there.
+ * The services of the example spec, of its DDL, of the example of what pg_dump writes and of the
+ * corner spec of the snapshots, generated and then built with their own Gradle wrapper, as a user
+ * would build them. Where Docker runs Linux containers, the build includes the tests of the
+ * service, which start PostgreSQL in a container; elsewhere the build compiles the service and its
+ * tests. On Linux under CI, Docker has to be there.
  */
 class GeneratedServiceSpec extends Specification {
 
@@ -95,6 +95,8 @@ class GeneratedServiceSpec extends Specification {
     input             | spec
     'example spec'    | SpecReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
     'example DDL'     | DdlReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
+    // What pg_dump 18 wrote of a database: an identifier in an integer column, a text, a one-to-one.
+    'example pg_dump' | DdlReader.parse(Files.readString(EXAMPLES.resolve('pg-dump-18.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
     // The corner spec is a resource of the unit tests, next to their snapshots.
     'corner spec'     | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text)
   }
