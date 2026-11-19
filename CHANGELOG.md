@@ -16,6 +16,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   statements other than `CREATE TABLE` and `ALTER TABLE` are no longer parsed, so SQL that tib
   cannot parse in them is no longer a problem; one that tib cannot parse in a table is named with
   its line and column in the DDL, each of them.
+- `--ddl` reads a dump with data too: the rows after `COPY ... FROM stdin` are skipped up to the
+  line `\.`, and the keys that `pg_dump` writes after them are read. Row level security, a replica
+  identity and the statistics of a column that `ALTER TABLE` sets are skipped, as the owner is; an
+  `ALTER TABLE` that changes anything else, as for a partition, is still a problem.
 - The identifier of an entity in the spec may name its column, as `id: { column: ... }`, as a
   field and a relation do; without one, its column is the field in upper snake case, as before.
 - A field of the spec may be of the type `Text`: a `String` without a limit, which the default
