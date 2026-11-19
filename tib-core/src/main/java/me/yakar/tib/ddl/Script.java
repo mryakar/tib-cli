@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 final class Script {
 
   /** The tag of a dollar-quoted body, as in {@code $$} or {@code $body$}. */
-  private static final Pattern DOLLAR = Pattern.compile("\\$(?:[A-Za-z_][A-Za-z0-9_]*)?\\$");
+  private static final Pattern DOLLAR = Pattern.compile("\\$(?:[\\p{L}_][\\p{L}\\p{N}_]*)?\\$");
 
   private final String sql;
   private final List<Statement> statements = new ArrayList<>();
