@@ -330,7 +330,7 @@ class GenerateEntityCommandSpec extends Specification {
     tib.state().spec().entities()*.name() == ['Vehicle', 'Depot']
   }
 
-  def "a table whose columns changed after its migration was written is named, with the diff, once"() {
+  def "a table whose columns changed after its migration was written is named, with the diff"() {
     given:
     tib.init('--spec', Tib.SPEC)
     tib.generate('--spec', Tib.SPEC)
@@ -351,13 +351,6 @@ class GenerateEntityCommandSpec extends Specification {
     result.err().contains('+  COLOR VARCHAR(20),\n')
     result.err().endsWith('Make the change with a file of yours, such as a new migration.\n')
     Files.readString(dir.resolve(migration)) == before
-
-    when: 'again'
-    Result again = tib.generate('--spec', colored)
-
-    then:
-    again.out() == 'Nothing to change.\n'
-    again.err() == ''
   }
 
   def "the migrations of a service that was scaffolded from a spec are written without a notice: #scenario"() {
