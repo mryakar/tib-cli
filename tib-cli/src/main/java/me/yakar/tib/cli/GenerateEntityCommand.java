@@ -51,8 +51,9 @@ class GenerateEntityCommand implements Callable<Integer> {
         required = true,
         paramLabel = "FILE",
         description =
-            "SQL DDL whose tables are the entities, added to the spec of the service: CREATE TABLE"
-                + " statements, and ALTER TABLE statements that add keys.")
+            "SQL DDL whose tables are the entities, added to the spec of the service: its CREATE"
+                + " TABLE and ALTER TABLE statements, as in the schema that pg_dump writes; tib"
+                + " skips the others.")
     Path ddl;
   }
 
