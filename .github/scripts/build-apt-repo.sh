@@ -35,6 +35,11 @@ elif [[ -z "${GPG_SECRET_KEY:-}" || -z "${GPG_PUBLIC_KEY:-}" ]]; then
   exit 1
 fi
 
+# The keys live only in this run, in a keyring of its own.
+export GNUPGHOME
+GNUPGHOME="$(mktemp -d)"
+trap 'rm -rf "$GNUPGHOME"' EXIT
+
 rm -rf "$out"
 mkdir -p "$out/$pool" "$out/$suite/$component"
 
@@ -81,10 +86,7 @@ if ((${#files[@]} == 0)); then
   exit 0
 fi
 
-# Signed: InRelease for current apt, Release.gpg for older ones. The key lives only in this run.
-export GNUPGHOME
-GNUPGHOME="$(mktemp -d)"
-trap 'rm -rf "$GNUPGHOME"' EXIT
+# Signed: InRelease for current apt, Release.gpg for older ones.
 gpg --batch --import <<<"$GPG_SECRET_KEY"
 # The passphrase comes on standard input, so that it shows in no process list.
 sign=(gpg --batch --yes --pinentry-mode loopback --passphrase-fd 0 --digest-algo SHA256)
