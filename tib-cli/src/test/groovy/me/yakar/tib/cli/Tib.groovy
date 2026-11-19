@@ -20,6 +20,7 @@ import java.nio.file.Path
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Tree
 import picocli.CommandLine
+import picocli.CommandLine.IFactory
 
 /** Runs the tib command in this JVM, as the application does, with a version of the test's own. */
 class Tib {
@@ -96,10 +97,20 @@ class Tib {
     }
   }
 
+  /** The commands of tib, with the version of the test. */
+  IFactory commands() {
+    new CommandFactory(new TibVersion(version))
+  }
+
+  /** The command line of tib as the application builds it, with the commands of the factory. */
+  CommandLine commandLine(IFactory factory = commands()) {
+    TibApplication.commandLine(factory)
+  }
+
   Result run(String... args) {
     StringWriter out = new StringWriter()
     StringWriter err = new StringWriter()
-    int exitCode = TibApplication.commandLine(new CommandFactory(new TibVersion(version)))
+    int exitCode = commandLine()
         .setOut(new PrintWriter(out))
         .setErr(new PrintWriter(err))
         // Without colors: whether picocli would use them depends on the platform and the console.
