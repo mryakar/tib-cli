@@ -464,7 +464,7 @@ class DdlReaderSpec extends Specification {
 
   def "reads the output of pg_dump --schema-only"() {
     when:
-    Spec spec = DdlReader.parse(DdlReaderSpec.getResource('pg-dump-18.sql').text, SERVICE)
+    Spec spec = DdlReader.parse(Files.readString(EXAMPLES.resolve('pg-dump-18.sql')), SERVICE)
 
     then:
     spec.entities() == [
