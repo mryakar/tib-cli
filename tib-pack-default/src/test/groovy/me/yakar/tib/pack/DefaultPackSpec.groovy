@@ -185,6 +185,18 @@ class DefaultPackSpec extends Specification {
     'corner-service'  | CORNERS
   }
 
+  def "the notes for agents name every header: #header"() {
+    given:
+    Tree tree = Tree.at(dir)
+    new DefaultPack().init().generate(new Project(VEHICLES), tree)
+
+    expect: 'what a header says after "Written by tib", up to its first mark'
+    tree.read('AGENTS.md').orElseThrow().replaceAll(/\s+/, ' ').contains((header - 'Written by tib ').split(/[;.]/)[0])
+
+    where:
+    header << HEADERS.values().flatten()
+  }
+
   def "the same spec gives the same files, the state included: #name"() {
     when:
     Tree first = service(spec, dir)
