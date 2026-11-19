@@ -84,7 +84,7 @@ class DdlReaderSpec extends Specification {
     sql << ['CREATE TABLE T AS SELECT * FROM S', 'CREATE TABLE T LIKE S']
   }
 
-  def "a keyword in a string literal says nothing of the column: #literal"() {
+  def "a keyword in a string literal or in an expression says nothing of the column: #literal"() {
     expect:
     entity("CREATE TABLE T (ID BIGINT PRIMARY KEY $literal, A INT $literal);") == new Entity(
         'T', 'T', new Id('id', null, IdType.LONG, IdStrategy.SEQUENCE),
@@ -101,6 +101,8 @@ class DdlReaderSpec extends Specification {
       "COMMENT 'references the order'",
       "COMMENT 'it''s unique'",
       "DEFAULT 'nextval(1)'",
+      'CHECK (ID IS NOT NULL OR (A IS NOT NULL AND A > 0))',
+      'GENERATED ALWAYS AS (CASE WHEN A IS NOT NULL THEN 1 END) STORED',
     ]
   }
 
@@ -115,6 +117,7 @@ class DdlReaderSpec extends Specification {
     'BIGSERIAL PRIMARY KEY'                            | IdType.LONG | IdStrategy.IDENTITY
     'SERIAL PRIMARY KEY'                               | IdType.LONG | IdStrategy.IDENTITY
     "INTEGER DEFAULT nextval('T_SEQ'::regclass) PRIMARY KEY" | IdType.LONG | IdStrategy.IDENTITY
+    "INTEGER DEFAULT (nextval('T_SEQ')) PRIMARY KEY"    | IdType.LONG | IdStrategy.IDENTITY
     'NUMBER(19) PRIMARY KEY'                           | IdType.LONG | IdStrategy.SEQUENCE
     'INT PRIMARY KEY'                                  | IdType.LONG | IdStrategy.SEQUENCE
     'UUID PRIMARY KEY'                                 | IdType.UUID | IdStrategy.UUID

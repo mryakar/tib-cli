@@ -21,8 +21,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import me.yakar.tib.spec.Entity;
 import me.yakar.tib.spec.Field;
 import me.yakar.tib.spec.FieldType;
@@ -460,19 +463,24 @@ public final class DdlReader {
       this.definition = definition;
       name = unquote(definition.getColumnName());
       type = SqlType.of(definition.getColDataType());
-      String specs =
-          definition.getColumnSpecs() == null
-              ? ""
-              : LITERAL.matcher(String.join(" ", definition.getColumnSpecs())).replaceAll("''");
-      notNull = NOT_NULL.matcher(specs).find();
-      primary = PRIMARY_KEY.matcher(specs).find();
-      identity = IDENTITY.matcher(specs).find() || NEXTVAL.matcher(specs).find();
-      unique = UNIQUE.matcher(specs).find();
-      Matcher target = REFERENCES.matcher(specs);
+      List<String> specs = Objects.requireNonNullElse(definition.getColumnSpecs(), List.of());
+      // An expression in parentheses, as that of a check, says nothing of the column.
+      String constraints = text(specs.stream().filter(spec -> !spec.startsWith("(")));
+      notNull = NOT_NULL.matcher(constraints).find();
+      primary = PRIMARY_KEY.matcher(constraints).find();
+      identity =
+          IDENTITY.matcher(constraints).find() || NEXTVAL.matcher(text(specs.stream())).find();
+      unique = UNIQUE.matcher(constraints).find();
+      Matcher target = REFERENCES.matcher(constraints);
       if (target.find()) {
         String[] parts = target.group(1).split("\\.");
         references = unquote(parts[parts.length - 1]);
       }
+    }
+
+    /** The words of the definition as one text, with its string literals emptied. */
+    private static String text(Stream<String> specs) {
+      return LITERAL.matcher(specs.collect(Collectors.joining(" "))).replaceAll("''");
     }
 
     /** Whether the column holds values of the field type. */
