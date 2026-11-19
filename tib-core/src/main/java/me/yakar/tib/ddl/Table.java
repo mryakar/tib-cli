@@ -121,7 +121,7 @@ final class Table {
   }
 
   /** Takes a primary, foreign or unique key; a unique key of several columns is not kept. */
-  void take(Index index, List<String> problems) {
+  private void take(Index index, List<String> problems) {
     List<String> names = index.getColumnsNames().stream().map(DdlReader::unquote).toList();
     for (String column : names) {
       if (!columns.containsKey(key(column))) {
@@ -144,7 +144,7 @@ final class Table {
     }
   }
 
-  Column column(String name) {
+  private Column column(String name) {
     return columns.get(key(name));
   }
 
