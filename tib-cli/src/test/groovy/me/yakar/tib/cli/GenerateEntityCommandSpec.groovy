@@ -334,7 +334,7 @@ class GenerateEntityCommandSpec extends Specification {
     tib.state().inputs()*.path() == ['spec.yaml', 'schema.sql']
   }
 
-  def "a spec file is the whole Tib.SPEC, so a run with one forgets the files that the spec was read from before"() {
+  def "a spec file is the whole spec, so a run with one forgets the files that the spec was read from before"() {
     given:
     tib.init('vehicle-service')
     Path schema = Path.of(tib.write('schema.sql', Tib.DDL_SQL))
