@@ -216,37 +216,40 @@ public final class DdlReader {
   }
 
   /**
-   * Where the parser stopped in the statement, as in {@code Encountered: "(", at line 2, column
-   * 10}, with the line and the column in the DDL.
+   * What the parser met where it stopped, as in {@code Encountered: "(", at line 2, column 10},
+   * with the line and the column in the DDL.
    */
   private static String reason(JSQLParserException e, Script.Statement statement) {
     Throwable cause = e;
     while (cause.getCause() != null) {
       cause = cause.getCause();
     }
-    return cause
-        .getMessage()
-        .lines()
-        .findFirst()
-        .orElse("")
-        .replaceFirst("^.*?(Encountered)", "$1")
-        .replaceFirst(", in lexical state.*$", "")
-        .transform(reason -> inDdl(reason, statement));
+    String message = cause.getMessage().lines().findFirst().orElse("");
+    return message
+            .replaceFirst("^.*?(Encountered)", "$1")
+            .replaceFirst(", at line \\d+, column \\d+.*$", "")
+        + inDdl(message, statement);
   }
 
-  /** The reason with the line and the column in the statement as those in the DDL. */
-  private static String inDdl(String reason, Script.Statement statement) {
-    Matcher at = POSITION.matcher(reason);
-    if (!at.find()) {
-      return reason;
-    }
-    int line = Integer.parseInt(at.group(1));
-    int column = Integer.parseInt(at.group(2));
-    return at.replaceFirst(
-        "at line "
-            + (statement.line() + line - 1)
-            + ", column "
-            + (line == 1 ? statement.column() + column - 1 : column));
+  /**
+   * The line and the column that the message of the parser names in the statement, as those in the
+   * DDL: {@code , at line 2, column 10}; nothing when the message names none.
+   */
+  private static String inDdl(String message, Script.Statement statement) {
+    return POSITION
+        .matcher(message)
+        .results()
+        .findFirst()
+        .map(
+            at -> {
+              int line = Integer.parseInt(at.group(1));
+              int column = Integer.parseInt(at.group(2));
+              return ", at line "
+                  + (statement.line() + line - 1)
+                  + ", column "
+                  + (line == 1 ? statement.column() + column - 1 : column);
+            })
+        .orElse("");
   }
 
   /** The key of an SQL name, under which the same name in another case is the same. */

@@ -471,7 +471,7 @@ class DdlReaderSpec extends Specification {
     e.problems() == [
       'it is not SQL that tib reads: Encountered: <OPENING_BRACKET> / "(", at line 3, column 17',
       'it is not SQL that tib reads: Encountered: <EOF>, at line 4, column 45',
-      'it is not SQL that tib reads: Encountered: "\\\\" (92) after: ""',
+      'it is not SQL that tib reads: Encountered: "\\\\" (92) after: "", at line 5, column 30',
     ]
   }
 
