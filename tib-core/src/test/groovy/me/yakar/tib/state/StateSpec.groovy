@@ -50,11 +50,11 @@ class StateSpec extends Specification {
     new State.File('gradle/libs.versions.toml', Owner.SHARED, '012')
   ])
 
-  /** The spec of the state as the released versions of tib wrote it. */
+  /** The spec of the state as the versions of tib before 0.4.0 wrote it. */
   static final Spec RELEASED = spec('', '')
 
   /**
-   * A spec that sets every value that the released versions of tib knew, and what came after them:
+   * A spec that sets every value that the versions of tib before 0.4.0 knew, and what 0.4.0 added:
    * the column of an identifier and a field of the type Text.
    */
   static Spec spec(String depotColumn, String notes) {
@@ -96,17 +96,18 @@ class StateSpec extends Specification {
     when:
     State released = State.parse(StateSpec.getResource("state-${version}.yaml").text, version)
 
-    then: 'a state written before tib named the stack of the pack has none, and its spec is the one before the column of an identifier and the type Text'
-    released.spec() == RELEASED
+    then: 'a state written before tib named the stack of the pack has none, and one written before 0.4.0 has a spec without the column of an identifier and the type Text'
+    released.spec() == spec
     released.files() == state.files()
     released.inputs() == inputs
     released.pack().stack() == stack
 
     where: 'the state of the snapshot, as each release wrote it'
-    version | inputs         | stack
-    '0.1.0' | []             | null
-    '0.2.0' | state.inputs() | null
-    '0.3.0' | state.inputs() | 'Spring Boot 4'
+    version | spec         | inputs         | stack
+    '0.1.0' | RELEASED     | []             | null
+    '0.2.0' | RELEASED     | state.inputs() | null
+    '0.3.0' | RELEASED     | state.inputs() | 'Spring Boot 4'
+    '0.4.0' | state.spec() | state.inputs() | 'Spring Boot 4'
   }
 
   def "the state of a project is in its tree, if tib ran on it before"() {
