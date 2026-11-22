@@ -60,9 +60,13 @@ class DdlReaderSpec extends Specification {
     spec.entities() == [DEPOT, VEHICLE,]
   }
 
-  def "the DDL keeps the Java of the service"() {
-    expect:
-    DdlReader.parse('CREATE TABLE T (ID BIGINT PRIMARY KEY);', SpecReader.parse('tib: 1\nservice: s\njava: 25\n')).java() == 25
+  def "the DDL keeps the Java and the tests of the service"() {
+    when:
+    Spec spec = DdlReader.parse('CREATE TABLE T (ID BIGINT PRIMARY KEY);', SpecReader.parse('tib: 1\nservice: s\njava: 25\ntests: [unit]\n'))
+
+    then:
+    spec.java() == 25
+    spec.tests()*.toString() == ['unit']
   }
 
   def "a column of a supported SQL type is a field of its type, with its sizes"() {

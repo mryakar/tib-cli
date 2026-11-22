@@ -17,6 +17,7 @@ package me.yakar.tib.spec;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -29,7 +30,9 @@ import java.util.Set;
  * Read from a YAML file, the spec carries the defaults for what the file left out, so that the same
  * spec means the same thing everywhere.
  */
-@Doc("The spec of a service: the service, its group, its pack, its Java and its entities.")
+@Doc(
+    "The spec of a service: the service, its group, its pack, its Java, its tests and its"
+        + " entities.")
 public record Spec(
     @Doc(
             value = "The version of the spec format; " + Spec.VERSION + ".",
@@ -59,6 +62,10 @@ public record Spec(
             values = {21, 25},
             defaultValue = "" + Spec.JAVA)
         Integer java,
+    @Doc(
+            "The kinds of tests that tib writes for the entities: unit, integration and api; all"
+                + " of them when the spec gives none, and none when it gives an empty list.")
+        List<TestKind> tests,
     @Doc("The entities of the service.") List<Entity> entities) {
 
   /** The version of the spec format that this build reads. */
@@ -82,18 +89,20 @@ public record Spec(
     group = group == null ? GROUP : group;
     pack = pack == null ? PACK : pack;
     java = java == null ? JAVA : java;
+    tests = tests == null ? List.of(TestKind.values()) : list(tests);
     entities = list(entities);
   }
 
   /**
-   * The spec of a service that has only its name and its Java version, checked.
+   * The spec of a service that has only its name, its Java version and its kinds of tests, checked.
    *
    * @param java the Java version, or null for the default
-   * @throws SpecException when the name is not one of a service, or the version not one of Java
-   *     that tib generates for
+   * @param tests the kinds of tests, or null for the default
+   * @throws SpecException when the name is not one of a service, the version not one of Java that
+   *     tib generates for, or a kind of test is there twice
    */
-  public static Spec of(String service, Integer java) {
-    return new Spec(VERSION, service, null, null, java, null).check();
+  public static Spec of(String service, Integer java, List<TestKind> tests) {
+    return new Spec(VERSION, service, null, null, java, tests, null).check();
   }
 
   /**
@@ -134,6 +143,12 @@ public record Spec(
     for (String segment : group.split("\\.")) {
       if (Names.isKeyword(segment)) {
         problems.add("group", "'" + group + "' has '" + segment + "', which is a Java keyword");
+      }
+    }
+    Set<TestKind> kinds = EnumSet.noneOf(TestKind.class);
+    for (int i = 0; i < tests.size(); i++) {
+      if (!kinds.add(tests.get(i))) {
+        problems.add("tests[" + i + "]", "'" + tests.get(i) + "' is already there");
       }
     }
     if (Names.isKeyword(packageSegment())) {
