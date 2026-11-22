@@ -79,6 +79,11 @@ class InitServiceCommand implements Callable<Integer> {
             "The kinds of tests that tib writes for the entities, separated by commas: unit,"
                 + " integration and api; all of them by default.")
     List<TestKind> tests;
+
+    @Option(
+        names = "--docker",
+        description = "Writes a Dockerfile that builds the service into an image.")
+    Boolean docker;
   }
 
   /** Reads a kind of test by its name in the spec, as in {@code unit}. */
@@ -117,6 +122,8 @@ class InitServiceCommand implements Callable<Integer> {
       return run.init(file.spec(), List.of(file.input()), tree);
     }
     return run.init(
-        Spec.of(source.named.name, source.named.java, source.named.tests, null), List.of(), tree);
+        Spec.of(source.named.name, source.named.java, source.named.tests, source.named.docker),
+        List.of(),
+        tree);
   }
 }

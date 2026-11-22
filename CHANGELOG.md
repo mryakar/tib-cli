@@ -19,6 +19,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   tests of their repositories and the test of the application, and `api` the tests of their API;
   a service with only unit tests builds without Docker. The kinds are chosen when the service is
   created, as its Java is.
+- A service may have a `Dockerfile`: `tib init service NAME --docker`, or `docker: true` in its
+  spec. tib writes it once, with a `.dockerignore`; it builds the service with its Gradle wrapper,
+  extracts the layers of its jar as Spring Boot does, and runs it on the Java runtime of the
+  service, as a user without root rights. Without the option, there is none, as before.
 
 ## [0.4.0] - 2026-11-19
 

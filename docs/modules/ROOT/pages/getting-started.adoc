@@ -76,8 +76,19 @@ the service needs no Docker:
 $ tib init service vehicle-service --tests unit,api
 ----
 
+`--docker` adds a `Dockerfile` and a `.dockerignore`, both yours. The `Dockerfile` builds the
+service with its Gradle wrapper and runs it on the Java runtime of its version, as a user without
+root rights; in a container, the service reaches its database through the environment, as
+`SPRING_DATASOURCE_URL`:
+
+[source,bash]
+----
+$ tib init service vehicle-service --docker
+$ docker build -t vehicle-service .
+----
+
 To scaffold the service from a xref:spec.adoc[spec file] instead of its name, which names its
-group, its pack, its Java, its kinds of tests and its entities, give the file instead of the name:
+group, its pack, its Java, its kinds of tests, whether it has a Dockerfile, and its entities, give the file instead of the name:
 
 [source,bash]
 ----

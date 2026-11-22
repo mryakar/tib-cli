@@ -2,7 +2,7 @@
 :description: The YAML file that tells tib what to generate, and its JSON Schema.
 
 A spec is a YAML file that says what tib generates: the service, its group, template pack, Java
-version and kinds of tests, and its entities with their fields and relations. `tib init service --spec` scaffolds the service
+version, kinds of tests and Dockerfile, and its entities with their fields and relations. `tib init service --spec` scaffolds the service
 from it, and `tib generate entity --spec` adds the entity layer of its entities.
 
 == An example
@@ -73,6 +73,7 @@ schema does not hold. A problem names the value it is about, as in
 * `tests` names each kind of test once, as in `tests: [unit, api]`, and is chosen when the
   service is created too: a spec with other kinds is refused, in any order. Without `tests`, the
   service has all three kinds; with `tests: []`, none.
+* `docker` is chosen when the service is created too, as its `Dockerfile` is written once.
 * Every entity has a name of its own and a table of its own, and every member of an entity, its
   identifier, fields and relations, a name of its own and a column of its own. Tables and columns
   are compared in any case; the columns of an audited entity include `CREATED_AT` and

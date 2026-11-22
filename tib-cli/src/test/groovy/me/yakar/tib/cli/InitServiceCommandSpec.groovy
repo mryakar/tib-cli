@@ -102,6 +102,22 @@ class InitServiceCommandSpec extends Specification {
     '--tests'   | ['--tests', 'unit', '--tests', 'api'] | ['unit', 'api']
   }
 
+  def "the service has a Dockerfile with --docker, and none without"() {
+    when:
+    Result result = tib.init(['vehicle-service'] + args as String[])
+
+    then:
+    result.exitCode() == 0
+    tib.state().spec().docker() == docker
+    Files.exists(dir.resolve('Dockerfile')) == docker
+    Files.exists(dir.resolve('.dockerignore')) == docker
+
+    where:
+    args         | docker
+    []           | false
+    ['--docker'] | true
+  }
+
   def "a kind of test that tib does not know is a mistake of the command line"() {
     when:
     Result result = tib.init('vehicle-service', '--tests', 'unit,e2e')
