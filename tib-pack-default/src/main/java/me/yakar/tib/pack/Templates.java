@@ -59,7 +59,7 @@ final class Templates {
   static String comment(String path, String text) {
     return switch (path.substring(path.lastIndexOf('.') + 1)) {
       case "java", "kts" -> "// " + text;
-      case "yaml", "gitignore", "gitattributes" -> "# " + text;
+      case "yaml", "gitignore", "gitattributes", "Dockerfile", "dockerignore" -> "# " + text;
       case "sql" -> "-- " + text;
       case "md" -> "<!-- " + text + " -->";
       default -> throw new IllegalArgumentException("there is no comment in " + path);

@@ -70,6 +70,8 @@ class TemplatesSpec extends Specification {
     'application.yaml'       | '# Mine.'
     '.gitignore'             | '# Mine.'
     '.gitattributes'         | '# Mine.'
+    'Dockerfile'             | '# Mine.'
+    '.dockerignore'          | '# Mine.'
     'db/migration/V1__a.sql' | '-- Mine.'
     'AGENTS.md'              | '<!-- Mine. -->'
   }
