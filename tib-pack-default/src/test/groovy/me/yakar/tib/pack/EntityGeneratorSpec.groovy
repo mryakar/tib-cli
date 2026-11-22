@@ -57,6 +57,32 @@ entities:
     EntityGenerator.ordered(project.spec().entities())*.name() == ['B', 'A', 'C']
   }
 
+  def "an entity gets the tests of the kinds of the spec: #tests"() {
+    given:
+    Tree tree = Tree.at(dir)
+    Project project = new Project(SpecReader.parse("tib: 1\nservice: s\ntests: $tests\nentities:\n  - name: A\n  - name: B\n    options: { dto: false }\n"))
+
+    when:
+    new EntityGenerator().generate(project, tree)
+    List<String> written = tree.changes()*.path().findAll {
+      it.startsWith('src/test/')
+    }.collect {
+      it.substring(it.lastIndexOf('/') + 1) - '.java'
+    }
+
+    then:
+    written.toSorted() == expected.toSorted()
+
+    where:
+    tests                      | expected
+    '[unit, integration, api]' | ['AApiTests', 'ARepositoryTests', 'ASamples', 'AServiceTests', 'BRepositoryTests', 'BSamples']
+    '[integration]'            | ['ARepositoryTests', 'ASamples', 'BRepositoryTests', 'BSamples']
+    '[unit, api]'              | ['AApiTests', 'ASamples', 'AServiceTests']
+    '[unit]'                   | ['ASamples', 'AServiceTests']
+    '[api]'                    | ['AApiTests', 'ASamples']
+    '[]'                       | []
+  }
+
   def "the migration of a new table comes after the migrations there: #existing"() {
     given:
     existing.each { writeMigration(it) }
