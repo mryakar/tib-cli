@@ -4,7 +4,7 @@
 @param DefaultPack pack
 # ${project.name()}
 
-A Spring Boot ${pack.bootVersion()} service on Java ${pack.javaVersion()}, with JPA, PostgreSQL, Flyway and Testcontainers,
+A Spring Boot ${pack.bootVersion()} service on Java ${project.java()}, with JPA, PostgreSQL, Flyway and Testcontainers,
 scaffolded by tib. The base package is `${project.basePackage()}`.
 
 ## Build and run

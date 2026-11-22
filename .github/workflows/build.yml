@@ -26,8 +26,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
         java: [21, 25]
-        # The acceptance test builds the generated services with the JDK of JAVA_HOME, 21, whatever
-        # the tests run on; the cells of 21 run it.
+        # The acceptance test builds the generated services with the JDKs of the build's toolchains,
+        # whatever the tests run on; the cells of 21 run it.
         include:
           - java: 25
             args: -x acceptanceTest

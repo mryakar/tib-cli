@@ -37,6 +37,9 @@ import spock.lang.TempDir
 class GeneratedServiceSpec extends Specification {
 
   static final Path EXAMPLES = Path.of(System.getProperty('tib.examples'))
+
+  /** The JDKs of the build of tib, among which the build of a service finds the one of its Java. */
+  static final String JDKS = System.getProperty('tib.jdks')
   static final boolean LINUX = System.getProperty('os.name') == 'Linux'
   static final boolean WINDOWS = System.getProperty('os.name').startsWith('Windows')
 
@@ -61,7 +64,15 @@ class GeneratedServiceSpec extends Specification {
 
     when:
     String gradlew = dir.resolve(WINDOWS ? 'gradlew.bat' : 'gradlew').toString()
-    List<String> command = [gradlew, '-p', dir.toString(), 'build', '--console=plain', '--no-daemon']
+    List<String> command = [
+      gradlew,
+      '-p',
+      dir.toString(),
+      'build',
+      '--console=plain',
+      '--no-daemon',
+      "-Porg.gradle.java.installations.paths=$JDKS".toString()
+    ]
     if (!docker) {
       // With the task test left out, nothing in the build compiles the tests of the service.
       command.addAll(['testClasses', '-x', 'test'])
@@ -72,6 +83,7 @@ class GeneratedServiceSpec extends Specification {
 
     then:
     gradle.exitValue() == 0
+    Files.readString(dir.resolve('build.gradle.kts')).contains("JavaLanguageVersion.of(${spec.java()})")
     String classes = project.packagePath() + '/' + project.applicationClass()
     Files.exists(dir.resolve("build/classes/java/main/${classes}.class"))
     Files.exists(dir.resolve("build/classes/java/test/${project.packagePath()}/Test${project.applicationClass()}.class"))
@@ -97,7 +109,7 @@ class GeneratedServiceSpec extends Specification {
     'example DDL'     | DdlReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
     // What pg_dump 18 wrote of a database: an identifier in an integer column, a text, a one-to-one.
     'example pg_dump' | DdlReader.parse(Files.readString(EXAMPLES.resolve('pg-dump-18.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
-    // The corner spec is a resource of the unit tests, next to their snapshots.
+    // The corner spec, on Java 25, is a resource of the unit tests, next to their snapshots.
     'corner spec'     | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text)
   }
 
