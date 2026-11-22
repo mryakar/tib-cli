@@ -58,11 +58,6 @@ public final class DefaultPack implements Pack {
     return properties.getProperty("boot");
   }
 
-  /** The Java version of the generated service. */
-  public String javaVersion() {
-    return properties.getProperty("java");
-  }
-
   /** The version of google-java-format, whose layout the generated Java has. */
   public String formatterVersion() {
     return properties.getProperty("google-java-format");

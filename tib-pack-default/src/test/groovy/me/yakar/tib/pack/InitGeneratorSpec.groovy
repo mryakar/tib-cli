@@ -47,4 +47,24 @@ class InitGeneratorSpec extends Specification {
     wrapper.findAll { it.executable() }*.path() == ['gradlew']
     wrapper.each { assert it.after() == Files.readAllBytes(BUILD.resolve(it.path())) : it.path() }
   }
+
+  def "the build compiles for the Java of the spec, and the notes for agents name it: #yaml"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new InitGenerator(new DefaultPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\n$yaml")), tree)
+    Map<String, String> files = tree.changes().collectEntries {
+      [it.path(), new String(it.after(), 'UTF-8')]
+    }
+
+    then:
+    files['build.gradle.kts'].contains("java { toolchain { languageVersion = JavaLanguageVersion.of($java) } }\n")
+    files['AGENTS.md'].contains(" service on Java $java, ")
+
+    where:
+    yaml         | java
+    ''           | 21
+    'java: 25\n' | 25
+  }
 }

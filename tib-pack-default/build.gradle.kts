@@ -45,7 +45,6 @@ tasks.processResources {
     mapOf(
       "version" to tibVersion,
       "boot" to libs.versions.generated.spring.boot.get(),
-      "java" to libs.versions.generated.java.get(),
       "postgres" to libs.versions.generated.postgres.get(),
       "googleJavaFormat" to libs.versions.google.java.format.get(),
     )
@@ -84,6 +83,20 @@ testing {
       targets.all {
         testTask.configure {
           shouldRunAfter(tasks.test)
+          // A generated service compiles with the JDK of its Java, which its build finds among the
+          // JDKs of this one: one for every Java that a spec may give.
+          val jdks =
+            listOf(21, 25).map { java ->
+              javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java) }
+            }
+          jvmArgumentProviders.add(
+            CommandLineArgumentProvider {
+              listOf(
+                "-Dtib.jdks=" +
+                  jdks.joinToString(",") { it.get().metadata.installationPath.asFile.absolutePath },
+              )
+            },
+          )
           // Shows the output of the service's build in the log.
           testLogging.showStandardStreams = true
         }
