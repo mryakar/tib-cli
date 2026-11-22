@@ -580,6 +580,19 @@ class GenerateEntityCommandSpec extends Specification {
     'service' | 'tib: 1\nservice: fleet-service\n'                         | 'is the spec of fleet-service; this project is vehicle-service'
     'group'   | 'tib: 1\nservice: vehicle-service\ngroup: com.acme\n'      | 'is the spec of a service in com.acme; this project is in com.example'
     'Java'    | 'tib: 1\nservice: vehicle-service\njava: 25\n'              | 'is the spec of a service on Java 25; this project is on Java 21\nThe Java of a service is chosen when it is created.'
+    'tests'   | 'tib: 1\nservice: vehicle-service\ntests: [api]\n'          | 'is the spec of a service with api tests; this project has unit, integration and api tests\nThe kinds of tests of a service are chosen when it is created.'
+    'no tests' | 'tib: 1\nservice: vehicle-service\ntests: []\n'            | 'is the spec of a service with no tests; this project has unit, integration and api tests\nThe kinds of tests of a service are chosen when it is created.'
+  }
+
+  def "a spec with the kinds of tests of the service in another order is the same"() {
+    given:
+    tib.init('vehicle-service', '--tests', 'unit,api')
+
+    when:
+    Result result = tib.generate('--spec', tib.write('spec.yaml', 'tib: 1\nservice: vehicle-service\ntests: [api, unit]\n'))
+
+    then:
+    result.exitCode() == 0
   }
 
   /** The files of the service by path, each with its permissions and when it was last written. */

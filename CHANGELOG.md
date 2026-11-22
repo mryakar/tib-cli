@@ -13,6 +13,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   default is 21, as before; the build of the service compiles for its Java, and `AGENTS.md` names
   it. The Java is chosen when the service is created: `tib generate entity --spec` refuses a spec
   on another Java than the one of the service.
+- A service has the kinds of tests it chooses: `unit`, `integration` and `api`, as
+  `tib init service NAME --tests unit,api` or `tests: [unit, api]` in its spec. All three are the
+  default, as before. `unit` writes the tests of the services of the entities, `integration` the
+  tests of their repositories and the test of the application, and `api` the tests of their API;
+  a service with only unit tests builds without Docker. The kinds are chosen when the service is
+  created, as its Java is.
 
 ## [0.4.0] - 2026-11-19
 

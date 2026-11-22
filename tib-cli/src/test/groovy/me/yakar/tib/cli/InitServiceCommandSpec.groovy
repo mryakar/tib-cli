@@ -87,6 +87,40 @@ class InitServiceCommandSpec extends Specification {
     '--java'    | ['--java', '25']   | 25
   }
 
+  def "the service has the kinds of tests that #how says"() {
+    when:
+    Result result = tib.init(['vehicle-service'] + args as String[])
+
+    then:
+    result.exitCode() == 0
+    tib.state().spec().tests()*.toString() == tests
+
+    where:
+    how         | args                            | tests
+    'no option' | []                              | ['unit', 'integration', 'api']
+    '--tests'   | ['--tests', 'api,unit']         | ['api', 'unit']
+    '--tests'   | ['--tests', 'unit', '--tests', 'api'] | ['unit', 'api']
+  }
+
+  def "a kind of test that tib does not know is a mistake of the command line"() {
+    when:
+    Result result = tib.init('vehicle-service', '--tests', 'unit,e2e')
+
+    then:
+    result.exitCode() == 2
+    result.err().startsWith("Invalid value for option '--tests' (KIND): 'e2e' is not one of unit, integration, api\n")
+    dir.toFile().list().length == 0
+  }
+
+  def "a kind of test given twice is reported"() {
+    when:
+    Result result = tib.init('vehicle-service', '--tests', 'unit,unit')
+
+    then:
+    result.exitCode() == 1
+    result.err() == "the spec has a problem: tests[1]: 'unit' is already there\n"
+  }
+
   def "a Java that tib does not generate for is reported"() {
     when:
     Result result = tib.init('vehicle-service', '--java', '17')

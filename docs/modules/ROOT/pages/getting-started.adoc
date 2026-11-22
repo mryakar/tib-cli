@@ -65,8 +65,19 @@ with a JDK of its Java, which Gradle looks for on the machine:
 $ tib init service vehicle-service --java 25
 ----
 
+Every entity gets tests of three kinds: `unit`, the tests of its service with the repository and
+the mapper mocked; `integration`, the tests of its repository against PostgreSQL in a container,
+which come with the test of the application; and `api`, the tests of its API against the running
+service. `--tests` keeps the kinds you name, separated by commas; with `--tests unit`, the build of
+the service needs no Docker:
+
+[source,bash]
+----
+$ tib init service vehicle-service --tests unit,api
+----
+
 To scaffold the service from a xref:spec.adoc[spec file] instead of its name, which names its
-group, its pack, its Java and its entities, give the file instead of the name:
+group, its pack, its Java, its kinds of tests and its entities, give the file instead of the name:
 
 [source,bash]
 ----

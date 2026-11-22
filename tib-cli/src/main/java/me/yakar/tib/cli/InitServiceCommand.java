@@ -16,16 +16,21 @@
 package me.yakar.tib.cli;
 
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import me.yakar.tib.spec.Spec;
+import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.TypeConversionException;
 
 /** {@code tib init service}. */
 @Command(
@@ -64,6 +69,36 @@ class InitServiceCommand implements Callable<Integer> {
         paramLabel = "VERSION",
         description = "The Java version of the service: 21 (the default) or 25.")
     Integer java;
+
+    @Option(
+        names = "--tests",
+        split = ",",
+        paramLabel = "KIND",
+        converter = TestKindConverter.class,
+        description =
+            "The kinds of tests that tib writes for the entities, separated by commas: unit,"
+                + " integration and api; all of them by default.")
+    List<TestKind> tests;
+  }
+
+  /** Reads a kind of test by its name in the spec, as in {@code unit}. */
+  static class TestKindConverter implements ITypeConverter<TestKind> {
+
+    @Override
+    public TestKind convert(String value) {
+      for (TestKind kind : TestKind.values()) {
+        if (kind.toString().equals(value)) {
+          return kind;
+        }
+      }
+      throw new TypeConversionException(
+          "'"
+              + value
+              + "' is not one of "
+              + Arrays.stream(TestKind.values())
+                  .map(TestKind::toString)
+                  .collect(Collectors.joining(", ")));
+    }
   }
 
   @Mixin private ServiceDirectory directory;
@@ -81,6 +116,7 @@ class InitServiceCommand implements Callable<Integer> {
       SpecFile file = SpecFile.read(source.spec, tree);
       return run.init(file.spec(), List.of(file.input()), tree);
     }
-    return run.init(Spec.of(source.named.name, source.named.java, null), List.of(), tree);
+    return run.init(
+        Spec.of(source.named.name, source.named.java, source.named.tests), List.of(), tree);
   }
 }

@@ -16,9 +16,12 @@
 package me.yakar.tib.cli;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
 import me.yakar.tib.ddl.DdlReader;
 import me.yakar.tib.spec.Spec;
+import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
 import picocli.CommandLine.ArgGroup;
@@ -79,8 +82,8 @@ class GenerateEntityCommand implements Callable<Integer> {
   }
 
   /**
-   * Refuses the spec file of another service than the one of the project, of another group, or on
-   * another Java.
+   * Refuses the spec file of another service than the one of the project, of another group, on
+   * another Java, or with other kinds of tests.
    */
   private void sameService(Spec read, Spec project) {
     if (!read.service().equals(project.service())) {
@@ -108,5 +111,27 @@ class GenerateEntityCommand implements Callable<Integer> {
               + project.java(),
           "The Java of a service is chosen when it is created.");
     }
+    if (!Set.copyOf(read.tests()).equals(Set.copyOf(project.tests()))) {
+      throw new RefusalException(
+          source.spec
+              + " is the spec of a service with "
+              + kinds(read.tests())
+              + "; this project has "
+              + kinds(project.tests()),
+          "The kinds of tests of a service are chosen when it is created.");
+    }
+  }
+
+  /** The kinds of tests in words, as in {@code unit and api tests}, or {@code no tests}. */
+  private static String kinds(List<TestKind> tests) {
+    if (tests.isEmpty()) {
+      return "no tests";
+    }
+    List<String> names = tests.stream().map(TestKind::toString).toList();
+    int last = names.size() - 1;
+    return (last == 0
+            ? names.get(0)
+            : String.join(", ", names.subList(0, last)) + " and " + names.get(last))
+        + " tests";
   }
 }
