@@ -34,6 +34,7 @@ spec: # <2>
   - unit
   - integration
   - api
+  docker: false
   entities:
   - name: Vehicle
     table: VEHICLE

@@ -58,6 +58,11 @@ public record Project(Spec spec) {
     return spec.tests().contains(kind);
   }
 
+  /** Whether the service has a Dockerfile. */
+  public boolean docker() {
+    return spec.docker();
+  }
+
   /** The directory of the base package, relative to a source root. */
   public String packagePath() {
     return basePackage().replace('.', '/');

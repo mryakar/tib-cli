@@ -21,6 +21,7 @@ spec:
   - unit
   - integration
   - api
+  docker: false
   entities:
   - name: Depot
     table: DEPOTS

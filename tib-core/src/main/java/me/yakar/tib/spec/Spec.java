@@ -31,8 +31,8 @@ import java.util.Set;
  * spec means the same thing everywhere.
  */
 @Doc(
-    "The spec of a service: the service, its group, its pack, its Java, its tests and its"
-        + " entities.")
+    "The spec of a service: the service, its group, its pack, its Java, its tests, whether it"
+        + " has a Dockerfile, and its entities.")
 public record Spec(
     @Doc(
             value = "The version of the spec format; " + Spec.VERSION + ".",
@@ -66,6 +66,10 @@ public record Spec(
             "The kinds of tests that tib writes for the entities: unit, integration and api; all"
                 + " of them when the spec gives none, and none when it gives an empty list.")
         List<TestKind> tests,
+    @Doc(
+            value = "Whether the service has a Dockerfile that builds it into an image.",
+            defaultValue = "false")
+        Boolean docker,
     @Doc("The entities of the service.") List<Entity> entities) {
 
   /** The version of the spec format that this build reads. */
@@ -90,19 +94,22 @@ public record Spec(
     pack = pack == null ? PACK : pack;
     java = java == null ? JAVA : java;
     tests = tests == null ? List.of(TestKind.values()) : list(tests);
+    docker = docker != null && docker;
     entities = list(entities);
   }
 
   /**
-   * The spec of a service that has only its name, its Java version and its kinds of tests, checked.
+   * The spec of a service that has only its name, its Java version, its kinds of tests and whether
+   * it has a Dockerfile, checked.
    *
    * @param java the Java version, or null for the default
    * @param tests the kinds of tests, or null for the default
+   * @param docker whether the service has a Dockerfile, or null for the default
    * @throws SpecException when the name is not one of a service, the version not one of Java that
    *     tib generates for, or a kind of test is there twice
    */
-  public static Spec of(String service, Integer java, List<TestKind> tests) {
-    return new Spec(VERSION, service, null, null, java, tests, null).check();
+  public static Spec of(String service, Integer java, List<TestKind> tests, Boolean docker) {
+    return new Spec(VERSION, service, null, null, java, tests, docker, null).check();
   }
 
   /**

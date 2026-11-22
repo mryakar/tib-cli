@@ -35,9 +35,9 @@ class GenerationSpec extends Specification {
   Path dir
 
   Pack pack = new TestPack('p', '1')
-  Project project = new Project(new Spec(1, 's', null, 'p', null, null, null))
-  Project one = new Project(new Spec(1, 'one', null, 'p', null, null, null))
-  Project two = new Project(new Spec(1, 'two', null, 'p', null, null, null))
+  Project project = new Project(new Spec(1, 's', null, 'p', null, null, null, null))
+  Project one = new Project(new Spec(1, 'one', null, 'p', null, null, null, null))
+  Project two = new Project(new Spec(1, 'two', null, 'p', null, null, null, null))
 
   Generator generator = { Project p, ProjectFiles files ->
     files.own('Generated.java', 'class Generated {}\n')

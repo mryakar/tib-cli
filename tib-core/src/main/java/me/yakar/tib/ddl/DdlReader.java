@@ -109,6 +109,7 @@ public final class DdlReader {
             service.pack(),
             service.java(),
             service.tests(),
+            service.docker(),
             merged)
         .check();
   }

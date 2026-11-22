@@ -117,6 +117,6 @@ class InitServiceCommand implements Callable<Integer> {
       return run.init(file.spec(), List.of(file.input()), tree);
     }
     return run.init(
-        Spec.of(source.named.name, source.named.java, source.named.tests), List.of(), tree);
+        Spec.of(source.named.name, source.named.java, source.named.tests, null), List.of(), tree);
   }
 }

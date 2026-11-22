@@ -117,21 +117,22 @@ class SpecSpec extends Specification {
 
   def "the spec of a service that has only its name and its Java has the defaults, and is checked"() {
     expect:
-    Spec.of('vehicle-service', null, null) == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
-    Spec.of('vehicle-service', null, null).java() == 21
-    Spec.of('vehicle-service', null, null).tests() == [TestKind.UNIT, TestKind.INTEGRATION, TestKind.API]
-    Spec.of('vehicle-service', 25, [TestKind.API]) == SpecReader.parse('tib: 1\nservice: vehicle-service\njava: 25\ntests: [api]\n')
-    Spec.of('vehicle-service', null, []).tests() == []
+    Spec.of('vehicle-service', null, null, null) == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
+    Spec.of('vehicle-service', null, null, null).java() == 21
+    !Spec.of('vehicle-service', null, null, null).docker()
+    Spec.of('vehicle-service', null, null, null).tests() == [TestKind.UNIT, TestKind.INTEGRATION, TestKind.API]
+    Spec.of('vehicle-service', 25, [TestKind.API], true) == SpecReader.parse('tib: 1\nservice: vehicle-service\njava: 25\ntests: [api]\ndocker: true\n')
+    Spec.of('vehicle-service', null, [], null).tests() == []
 
     when:
-    Spec.of('Vehicle Service', 23, null)
+    Spec.of('Vehicle Service', 23, null, null)
 
     then:
     SpecException e = thrown()
     e.problems() == ["service: 'Vehicle Service' does not match ${Names.SERVICE}", 'java: 23 is not one of 21, 25']
 
     when:
-    Spec.of('vehicle-service', null, [TestKind.UNIT, TestKind.UNIT])
+    Spec.of('vehicle-service', null, [TestKind.UNIT, TestKind.UNIT], null)
 
     then:
     SpecException twice = thrown()
