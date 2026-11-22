@@ -32,8 +32,9 @@ import spock.lang.TempDir
  * The services of the example spec, of its DDL, of the example of what pg_dump writes and of the
  * corner spec of the snapshots, generated and then built with their own Gradle wrapper, as a user
  * would build them. Where Docker runs Linux containers, the build includes the tests of the
- * service, which start PostgreSQL in a container; elsewhere the build compiles the service and its
- * tests. On Linux under CI, Docker has to be there.
+ * service, which start PostgreSQL in a container, and the image of a service with a Dockerfile is
+ * built; elsewhere the build compiles the service and its tests. On Linux under CI, Docker has to
+ * be there.
  */
 class GeneratedServiceSpec extends Specification {
 
@@ -103,6 +104,9 @@ class GeneratedServiceSpec extends Specification {
       }
     }
 
+    and: 'with Docker, the Dockerfile of a service that has one builds its image'
+    !(docker && spec.docker()) || image(dir, project.name(), logs.resolve('docker.log'))
+
     cleanup:
     gradle?.destroyForcibly()
 
@@ -114,8 +118,24 @@ class GeneratedServiceSpec extends Specification {
     // What pg_dump 18 wrote of a database: an identifier in an integer column, a text, a one-to-one;
     // with the tests of the API only.
     'example pg_dump' | DdlReader.parse(Files.readString(EXAMPLES.resolve('pg-dump-18.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\ntests: [api]\n'))
-    // The corner spec, on Java 25, is a resource of the unit tests, next to their snapshots.
+    // The corner spec, on Java 25 and with a Dockerfile, is a resource of the unit tests, next to
+    // their snapshots.
     'corner spec'     | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text)
+  }
+
+  /** Builds the image of the service from its Dockerfile, prints the log, and removes the image. */
+  private static boolean image(Path service, String name, Path log) {
+    String tag = "tib-acceptance-$name"
+    Process build = new ProcessBuilder('docker', 'build', '--tag', tag, service.toString())
+        .redirectErrorStream(true).redirectOutput(log.toFile()).start()
+    try {
+      assert build.waitFor(20, TimeUnit.MINUTES) : 'the build of the image took too long'
+      println Files.readString(log)
+      return build.exitValue() == 0
+    } finally {
+      build.destroyForcibly()
+      new ProcessBuilder('docker', 'image', 'rm', '--force', tag).redirectErrorStream(true).start().waitFor(1, TimeUnit.MINUTES)
+    }
   }
 
   /** The test classes of the service, as paths without their extension: the files that end in Tests. */
@@ -129,8 +149,9 @@ class GeneratedServiceSpec extends Specification {
   }
 
   /**
-   * Whether Docker runs Linux containers here: the tests of the service need one for PostgreSQL.
-   * Docker on a Windows runner may run Windows containers only.
+   * Whether Docker runs Linux containers here: the tests of the service need one for PostgreSQL,
+   * and its Dockerfile builds a Linux image. Docker on a Windows runner may run Windows containers
+   * only.
    */
   private static boolean docker() {
     try {

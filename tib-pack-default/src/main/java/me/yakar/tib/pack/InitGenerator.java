@@ -84,6 +84,10 @@ final class InitGenerator implements Generator {
         tests + "/Test" + project.applicationClass() + ".java",
         "init/test_application_java.jte",
         project);
+    if (project.docker()) {
+      once(files, "Dockerfile", "init/dockerfile.jte", project);
+      once(files, ".dockerignore", "init/dockerignore.jte", project);
+    }
     once(files, "AGENTS.md", "init/agents_md.jte", project);
   }
 

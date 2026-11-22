@@ -17,6 +17,11 @@ are Gradle's and carry no header of tib's; they are yours.
 ${"  "}Docker has to run.@endif
 - `./gradlew bootTestRun` starts the service against PostgreSQL in a container, through
   `Test${project.applicationClass()}`.
+@if(project.docker())
+- `docker build -t ${project.name()} .` builds an image of the service from its `Dockerfile`, which
+${"  "}is yours. In a container, the service reaches its database through the environment, as
+${"  "}`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME` and `SPRING_DATASOURCE_PASSWORD`.
+@endif
 - `./gradlew bootRun` starts the service against the database of
   `src/main/resources/application.yaml`.
 

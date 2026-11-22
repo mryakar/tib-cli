@@ -68,6 +68,33 @@ class InitGeneratorSpec extends Specification {
     'java: 25\n' | 25
   }
 
+  def "a service with a Dockerfile gets one for the Java of its spec, and the notes tell how to build the image: #yaml"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new InitGenerator(new DefaultPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\n$yaml")), tree)
+    Map<String, Change> files = tree.changes().collectEntries { [it.path(), it] }
+    String dockerfile = files['Dockerfile'] ? new String(files['Dockerfile'].after(), 'UTF-8') : null
+    String agents = new String(files['AGENTS.md'].after(), 'UTF-8')
+
+    then:
+    files.containsKey('Dockerfile') == docker
+    files.containsKey('.dockerignore') == docker
+    !docker || [files['Dockerfile'], files['.dockerignore']].every { it.owner() == Owner.DEVELOPER }
+    !docker || dockerfile.startsWith('# Written by tib when the service was created; it is yours from then on.\n')
+    !docker || dockerfile.contains("FROM eclipse-temurin:$java-jdk AS build\n")
+    !docker || dockerfile.contains("FROM eclipse-temurin:$java-jre\n")
+    !docker || new String(files['.dockerignore'].after(), 'UTF-8').contains('\nbuild/\n')
+    agents.contains('- `docker build -t s .` builds an image of the service from its `Dockerfile`, which\n  is yours.') == docker
+
+    where:
+    yaml                       | docker | java
+    ''                         | false  | 21
+    'docker: true\n'           | true   | 21
+    'docker: true\njava: 25\n' | true   | 25
+  }
+
   def "the test of the application comes with the integration tests, and the notes tell of the tests: #tests"() {
     given:
     Tree tree = Tree.at(dir)
