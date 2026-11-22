@@ -17,6 +17,7 @@ package me.yakar.tib.generate;
 
 import me.yakar.tib.spec.Names;
 import me.yakar.tib.spec.Spec;
+import me.yakar.tib.spec.TestKind;
 
 /**
  * What the generators know about the project of a spec: its names, derived from the spec the same
@@ -50,6 +51,11 @@ public record Project(Spec spec) {
   /** The Java version of the service, as in {@code 21}. */
   public int java() {
     return spec.java();
+  }
+
+  /** Whether tib writes the tests of the kind for the entities of the service. */
+  public boolean tests(TestKind kind) {
+    return spec.tests().contains(kind);
   }
 
   /** The directory of the base package, relative to a source root. */

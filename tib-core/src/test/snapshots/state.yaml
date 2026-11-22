@@ -17,6 +17,10 @@ spec:
   group: me.yakar
   pack: default@0.1.0
   java: 21
+  tests:
+  - unit
+  - integration
+  - api
   entities:
   - name: Depot
     table: DEPOTS

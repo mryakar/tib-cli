@@ -38,6 +38,8 @@ class SpecSpec extends Specification {
     'tib: 1\nservice: s\ngroup: Com.Example'                                     | "group: 'Com.Example' does not match ${Names.GROUP}"
     'tib: 1\nservice: s\njava: 17'                                               | 'java: 17 is not one of 21, 25'
     'tib: 1\nservice: s\njava: 22'                                               | 'java: 22 is not one of 21, 25'
+    'tib: 1\nservice: s\ntests: [unit, e2e]'                                     | "tests[1]: 'e2e' is not one of unit, integration, api"
+    'tib: 1\nservice: s\ntests: [unit, api, unit]'                               | "tests[2]: 'unit' is already there"
     'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n  - name: Vehicle'       | "entities[1].name: 'Vehicle' is already an entity"
     'tib: 1\nservice: s\nentities:\n  -\n'                                      | 'entities[0]: missing'
     entity('relations:\n      - { kind: manyToOne, target: Depot }')            | "entities[0].relations[0].target: there is no entity 'Depot'"
@@ -115,16 +117,25 @@ class SpecSpec extends Specification {
 
   def "the spec of a service that has only its name and its Java has the defaults, and is checked"() {
     expect:
-    Spec.of('vehicle-service', null) == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
-    Spec.of('vehicle-service', null).java() == 21
-    Spec.of('vehicle-service', 25) == SpecReader.parse('tib: 1\nservice: vehicle-service\njava: 25\n')
+    Spec.of('vehicle-service', null, null) == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
+    Spec.of('vehicle-service', null, null).java() == 21
+    Spec.of('vehicle-service', null, null).tests() == [TestKind.UNIT, TestKind.INTEGRATION, TestKind.API]
+    Spec.of('vehicle-service', 25, [TestKind.API]) == SpecReader.parse('tib: 1\nservice: vehicle-service\njava: 25\ntests: [api]\n')
+    Spec.of('vehicle-service', null, []).tests() == []
 
     when:
-    Spec.of('Vehicle Service', 23)
+    Spec.of('Vehicle Service', 23, null)
 
     then:
     SpecException e = thrown()
     e.problems() == ["service: 'Vehicle Service' does not match ${Names.SERVICE}", 'java: 23 is not one of 21, 25']
+
+    when:
+    Spec.of('vehicle-service', null, [TestKind.UNIT, TestKind.UNIT])
+
+    then:
+    SpecException twice = thrown()
+    twice.problems() == ["tests[1]: 'unit' is already there"]
   }
 
   def "the list of the model is never null and never changes"() {
