@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
+import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
 
 /**
@@ -70,11 +71,14 @@ final class InitGenerator implements Generator {
         tests + "/TestcontainersConfiguration.java",
         "init/testcontainers_configuration_java.jte",
         project);
-    once(
-        files,
-        tests + "/" + project.applicationClass() + "Tests.java",
-        "init/application_tests_java.jte",
-        project);
+    // The test of the application starts it against the database, as the integration tests do.
+    if (project.tests(TestKind.INTEGRATION)) {
+      once(
+          files,
+          tests + "/" + project.applicationClass() + "Tests.java",
+          "init/application_tests_java.jte",
+          project);
+    }
     once(
         files,
         tests + "/Test" + project.applicationClass() + ".java",
@@ -85,6 +89,11 @@ final class InitGenerator implements Generator {
 
   private void once(ProjectFiles files, String path, String template, Project project) {
     files.once(
-        path, Templates.render(path, HEADER, template, Map.of("project", project, "pack", pack)));
+        path,
+        Templates.render(
+            path,
+            HEADER,
+            template,
+            Map.of("project", project, "pack", pack, "tests", new TestsModel(project))));
   }
 }

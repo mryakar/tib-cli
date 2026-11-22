@@ -27,6 +27,7 @@ import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Entity;
 import me.yakar.tib.spec.Relation;
+import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
 
 /**
@@ -61,7 +62,7 @@ final class EntityGenerator implements Generator {
   @Override
   public void generate(Project project, ProjectFiles files) {
     Map<String, EntityModel> models = models(project);
-    models.values().forEach(model -> generateEntity(model, files));
+    models.values().forEach(model -> generateEntity(project, model, files));
     // Written here and not by init: only a service with an API needs it.
     if (models.values().stream().anyMatch(EntityModel::layer)) {
       String handler = DefaultPack.MAIN + project.packagePath() + "/ConflictHandler.java";
@@ -84,7 +85,7 @@ final class EntityGenerator implements Generator {
     return models;
   }
 
-  private static void generateEntity(EntityModel entity, ProjectFiles files) {
+  private static void generateEntity(Project project, EntityModel entity, ProjectFiles files) {
     String main = entity.directory() + "/" + entity.name();
     String test = entity.testDirectory() + "/" + entity.name();
     Map<String, Object> model = Map.of("entity", entity);
@@ -99,13 +100,25 @@ final class EntityGenerator implements Generator {
     String migration = migration(files, entity);
     files.lasting(
         migration, Templates.render(migration, MIGRATION, "entity/migration_sql.jte", model));
-    own(files, test + "Samples.java", "entity/samples_java.jte", tests);
-    once(files, test + "RepositoryTests.java", "entity/repository_tests_java.jte", tests);
+    // The tests of the kinds of the spec; the service and the API only of an entity with a layer.
+    boolean repositoryTests = project.tests(TestKind.INTEGRATION);
+    boolean serviceTests = entity.layer() && project.tests(TestKind.UNIT);
+    boolean apiTests = entity.layer() && project.tests(TestKind.API);
+    if (repositoryTests || serviceTests || apiTests) {
+      own(files, test + "Samples.java", "entity/samples_java.jte", tests);
+    }
+    if (repositoryTests) {
+      once(files, test + "RepositoryTests.java", "entity/repository_tests_java.jte", tests);
+    }
     if (entity.layer()) {
       own(files, main + "Mapper.java", "entity/mapper_java.jte", model);
       once(files, main + "Service.java", "entity/service_java.jte", model);
       once(files, main + "Controller.java", "entity/controller_java.jte", model);
+    }
+    if (serviceTests) {
       once(files, test + "ServiceTests.java", "entity/service_tests_java.jte", tests);
+    }
+    if (apiTests) {
       once(files, test + "ApiTests.java", "entity/api_tests_java.jte", tests);
     }
   }

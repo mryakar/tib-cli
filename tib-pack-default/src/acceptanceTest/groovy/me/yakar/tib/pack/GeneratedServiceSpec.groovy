@@ -22,6 +22,7 @@ import me.yakar.tib.ddl.DdlReader
 import me.yakar.tib.generate.Pack
 import me.yakar.tib.generate.Project
 import me.yakar.tib.spec.SpecReader
+import me.yakar.tib.spec.TestKind
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Tree
 import spock.lang.Specification
@@ -88,10 +89,12 @@ class GeneratedServiceSpec extends Specification {
     Files.exists(dir.resolve("build/classes/java/main/${classes}.class"))
     Files.exists(dir.resolve("build/classes/java/test/${project.packagePath()}/Test${project.applicationClass()}.class"))
 
-    and: 'every test of the service compiles, and with Docker, passes'
+    and: 'the tests are of the kinds of the spec; every one compiles, and with Docker, passes'
     List<String> tests = tests(dir)
-    tests.contains("${classes}Tests".toString())
-    tests.size() > 1
+    tests.contains("${classes}Tests".toString()) == spec.tests().contains(TestKind.INTEGRATION)
+    tests.any { it.endsWith('ServiceTests') } == spec.tests().contains(TestKind.UNIT)
+    tests.any { it.endsWith('ApiTests') } == spec.tests().contains(TestKind.API)
+    tests.any { it.endsWith('RepositoryTests') } == spec.tests().contains(TestKind.INTEGRATION)
     tests.each { test ->
       assert Files.exists(dir.resolve("build/classes/java/test/${test}.class")) : test
       if (docker) {
@@ -106,9 +109,11 @@ class GeneratedServiceSpec extends Specification {
     where:
     input             | spec
     'example spec'    | SpecReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
-    'example DDL'     | DdlReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
-    // What pg_dump 18 wrote of a database: an identifier in an integer column, a text, a one-to-one.
-    'example pg_dump' | DdlReader.parse(Files.readString(EXAMPLES.resolve('pg-dump-18.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\n'))
+    // Only the unit tests, which need no database.
+    'example DDL'     | DdlReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\ntests: [unit]\n'))
+    // What pg_dump 18 wrote of a database: an identifier in an integer column, a text, a one-to-one;
+    // with the tests of the API only.
+    'example pg_dump' | DdlReader.parse(Files.readString(EXAMPLES.resolve('pg-dump-18.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\ntests: [api]\n'))
     // The corner spec, on Java 25, is a resource of the unit tests, next to their snapshots.
     'corner spec'     | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text)
   }

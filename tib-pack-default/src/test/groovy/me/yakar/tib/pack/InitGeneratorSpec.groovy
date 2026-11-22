@@ -67,4 +67,30 @@ class InitGeneratorSpec extends Specification {
     ''           | 21
     'java: 25\n' | 25
   }
+
+  def "the test of the application comes with the integration tests, and the notes tell of the tests: #tests"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new InitGenerator(new DefaultPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\ntests: $tests\n")), tree)
+    Map<String, String> files = tree.changes().collectEntries {
+      [it.path(), new String(it.after(), 'UTF-8')]
+    }
+    String agents = files['AGENTS.md']
+
+    then:
+    files.containsKey('src/test/java/com/example/s/SApplicationTests.java') == application
+    files.containsKey('src/test/java/com/example/s/TestSApplication.java')
+    agents.contains('- `./gradlew build` compiles, tests and checks. The tests start PostgreSQL in a container, so\n  Docker has to run.\n') == container
+    agents.contains('- `./gradlew build` compiles, tests and checks.\n') == !container
+    agents.contains(notes)
+
+    where:
+    tests                 | application | container | notes
+    '[integration, unit]' | true        | true      | 'are yours, and so are\ntheir tests: `XRepositoryTests` against PostgreSQL in a container, and\n`XServiceTests` with the repository and the mapper mocked. Their sample entities and DTOs come\n'
+    '[api]'               | false       | true      | 'are yours, and so are\ntheir tests: `XApiTests` against PostgreSQL in a container. Their sample'
+    '[unit]'              | false       | false     | 'their tests: `XServiceTests` with the repository and the mapper mocked. Their sample'
+    '[]'                  | false       | false     | 'and the migration are yours. `ConflictHandler`, in the base package, answers a\n'
+  }
 }

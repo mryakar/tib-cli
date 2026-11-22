@@ -2,6 +2,7 @@
 @import me.yakar.tib.pack.DefaultPack
 @param Project project
 @param DefaultPack pack
+@param me.yakar.tib.pack.TestsModel tests
 # ${project.name()}
 
 A Spring Boot ${pack.bootVersion()} service on Java ${project.java()}, with JPA, PostgreSQL, Flyway and Testcontainers,
@@ -12,8 +13,8 @@ scaffolded by tib. The base package is `${project.basePackage()}`.
 The Gradle wrapper builds the service; no Gradle of its own is needed. The files of the wrapper
 are Gradle's and carry no header of tib's; they are yours.
 
-- `./gradlew build` compiles, tests and checks. The tests start PostgreSQL in a container, so
-  Docker has to run.
+- `./gradlew build` compiles, tests and checks.@if(tests.container()) The tests start PostgreSQL in a container, so
+${"  "}Docker has to run.@endif
 - `./gradlew bootTestRun` starts the service against PostgreSQL in a container, through
   `Test${project.applicationClass()}`.
 - `./gradlew bootRun` starts the service against the database of
@@ -36,11 +37,10 @@ it out of the spec and run `tib generate entity --spec <file>`: tib deletes its 
 those you edited and the migration; dropping its table is a new migration.
 
 For an entity `X`, its code goes in `X`, never in `XGenerated`: `XGenerated`, `XDto` and `XMapper`
-are tib's; `X`, `XRepository`, `XService`, `XController` and the migration are yours, and so are
-their tests: `XRepositoryTests` and `XApiTests` against PostgreSQL in a container, and
-`XServiceTests` with the repository and the mapper mocked. Their sample entities and DTOs come
+are tib's; `X`, `XRepository`, `XService`, `XController` and the migration are yours@if(tests.any()), and so are
+their tests: ${tests.entityTests()}. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
-as in `XSamples.x().name("Other").build()`. `ConflictHandler`, in the base package, answers a
+as in `XSamples.x().name("Other").build()`.@else.@endif `ConflictHandler`, in the base package, answers a
 request that breaks a constraint of the database with 409 Conflict; it is yours.
 
 The Java that tib writes is in the layout of google-java-format ${pack.formatterVersion()}: formatted
