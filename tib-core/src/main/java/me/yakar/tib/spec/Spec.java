@@ -29,7 +29,7 @@ import java.util.Set;
  * Read from a YAML file, the spec carries the defaults for what the file left out, so that the same
  * spec means the same thing everywhere.
  */
-@Doc("The spec of a service: the service, its group, its pack and its entities.")
+@Doc("The spec of a service: the service, its group, its pack, its Java and its entities.")
 public record Spec(
     @Doc(
             value = "The version of the spec format; " + Spec.VERSION + ".",
@@ -52,6 +52,13 @@ public record Spec(
             pattern = Names.PACK,
             defaultValue = Spec.PACK)
         String pack,
+    @Doc(
+            value =
+                "The Java version of the service: the one its build compiles for, and the one it"
+                    + " runs on.",
+            values = {21, 25},
+            defaultValue = "" + Spec.JAVA)
+        Integer java,
     @Doc("The entities of the service.") List<Entity> entities) {
 
   /** The version of the spec format that this build reads. */
@@ -63,6 +70,9 @@ public record Spec(
   /** The pack of a service whose spec gives none. */
   static final String PACK = "default";
 
+  /** The Java version of a service whose spec gives none. */
+  static final int JAVA = 21;
+
   // The marks of an entity while the relations are followed for cycles.
   private static final int NEW = 0;
   private static final int VISITING = 1;
@@ -71,16 +81,19 @@ public record Spec(
   public Spec {
     group = group == null ? GROUP : group;
     pack = pack == null ? PACK : pack;
+    java = java == null ? JAVA : java;
     entities = list(entities);
   }
 
   /**
-   * The spec of a service that has only its name, checked.
+   * The spec of a service that has only its name and its Java version, checked.
    *
-   * @throws SpecException when the name is not one of a service
+   * @param java the Java version, or null for the default
+   * @throws SpecException when the name is not one of a service, or the version not one of Java
+   *     that tib generates for
    */
-  public static Spec of(String service) {
-    return new Spec(VERSION, service, null, null, null).check();
+  public static Spec of(String service, Integer java) {
+    return new Spec(VERSION, service, null, null, java, null).check();
   }
 
   /**

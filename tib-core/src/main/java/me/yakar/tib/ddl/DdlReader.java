@@ -102,7 +102,13 @@ public final class DdlReader {
             merged.add(entity);
           }
         });
-    return new Spec(service.tib(), service.service(), service.group(), service.pack(), merged)
+    return new Spec(
+            service.tib(),
+            service.service(),
+            service.group(),
+            service.pack(),
+            service.java(),
+            merged)
         .check();
   }
 

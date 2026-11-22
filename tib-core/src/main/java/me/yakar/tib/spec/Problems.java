@@ -18,6 +18,8 @@ package me.yakar.tib.spec;
 import java.lang.reflect.RecordComponent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 /**
  * The problems found in a spec, each with the path of the value it is about, as in {@code
@@ -89,6 +91,16 @@ final class Problems {
         }
         if (doc.maximum() != Doc.NO_MAXIMUM && integer > doc.maximum()) {
           add(path, integer + " is above " + doc.maximum());
+        }
+        if (doc.values().length > 0
+            && LongStream.of(doc.values()).noneMatch(allowed -> allowed == integer)) {
+          add(
+              path,
+              integer
+                  + " is not one of "
+                  + LongStream.of(doc.values())
+                      .mapToObj(Long::toString)
+                      .collect(Collectors.joining(", ")));
         }
       }
       case List<?> list -> {

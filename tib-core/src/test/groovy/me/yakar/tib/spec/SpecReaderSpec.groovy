@@ -62,7 +62,7 @@ class SpecReaderSpec extends Specification {
     Spec spec = SpecReader.parse('tib: 1\nservice: s\n')
 
     then:
-    spec == new Spec(1, 's', 'com.example', 'default', [])
+    spec == new Spec(1, 's', 'com.example', 'default', 21, [])
   }
 
   def "what the spec says explicitly is kept"() {
