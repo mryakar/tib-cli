@@ -579,6 +579,7 @@ class GenerateEntityCommandSpec extends Specification {
     what      | content                                                    | message
     'service' | 'tib: 1\nservice: fleet-service\n'                         | 'is the spec of fleet-service; this project is vehicle-service'
     'group'   | 'tib: 1\nservice: vehicle-service\ngroup: com.acme\n'      | 'is the spec of a service in com.acme; this project is in com.example'
+    'Java'    | 'tib: 1\nservice: vehicle-service\njava: 25\n'              | 'is the spec of a service on Java 25; this project is on Java 21\nThe Java of a service is chosen when it is created.'
   }
 
   /** The files of the service by path, each with its permissions and when it was last written. */

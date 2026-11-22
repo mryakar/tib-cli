@@ -1,8 +1,8 @@
 = The spec file
 :description: The YAML file that tells tib what to generate, and its JSON Schema.
 
-A spec is a YAML file that says what tib generates: the service, its group and template pack,
-and its entities with their fields and relations. `tib init service --spec` scaffolds the service
+A spec is a YAML file that says what tib generates: the service, its group, template pack and
+Java version, and its entities with their fields and relations. `tib init service --spec` scaffolds the service
 from it, and `tib generate entity --spec` adds the entity layer of its entities.
 
 == An example
@@ -67,6 +67,9 @@ schema does not hold. A problem names the value it is about, as in
 
 * `tib` is `1`, the version of the spec format that this tib reads; a later one is refused, as in
   `tib: 2 is above 1`.
+* `java` is `21` or `25`, and is chosen when the service is created: `tib generate entity --spec`
+  refuses a spec whose `java` is not the one of the service, as in `vehicle-service.yaml is the spec
+  of a service on Java 25; this project is on Java 21`.
 * Every entity has a name of its own and a table of its own, and every member of an entity, its
   identifier, fields and relations, a name of its own and a column of its own. Tables and columns
   are compared in any case; the columns of an audited entity include `CREATED_AT` and
