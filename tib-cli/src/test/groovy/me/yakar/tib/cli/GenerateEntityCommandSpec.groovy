@@ -582,6 +582,20 @@ class GenerateEntityCommandSpec extends Specification {
     'Java'    | 'tib: 1\nservice: vehicle-service\njava: 25\n'              | 'is the spec of a service on Java 25; this project is on Java 21\nThe Java of a service is chosen when it is created.'
     'tests'   | 'tib: 1\nservice: vehicle-service\ntests: [api]\n'          | 'is the spec of a service with api tests; this project has unit, integration and api tests\nThe kinds of tests of a service are chosen when it is created.'
     'no tests' | 'tib: 1\nservice: vehicle-service\ntests: []\n'            | 'is the spec of a service with no tests; this project has unit, integration and api tests\nThe kinds of tests of a service are chosen when it is created.'
+    'Dockerfile' | 'tib: 1\nservice: vehicle-service\ndocker: true\n'       | 'is the spec of a service with a Dockerfile; this project has none\nWhether a service has a Dockerfile is chosen when it is created.'
+  }
+
+  def "the spec of a service without a Dockerfile is refused in a project that has one"() {
+    given:
+    tib.init('vehicle-service', '--docker')
+    String file = tib.write('spec.yaml', 'tib: 1\nservice: vehicle-service\n')
+
+    when:
+    Result result = tib.generate('--spec', file)
+
+    then:
+    result.exitCode() == 1
+    result.err() == "$file is the spec of a service without a Dockerfile; this project has one\nWhether a service has a Dockerfile is chosen when it is created.\n"
   }
 
   def "a spec with the kinds of tests of the service in another order is the same"() {

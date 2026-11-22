@@ -83,7 +83,7 @@ class GenerateEntityCommand implements Callable<Integer> {
 
   /**
    * Refuses the spec file of another service than the one of the project, of another group, on
-   * another Java, or with other kinds of tests.
+   * another Java, with other kinds of tests, or with a Dockerfile where it has none or the reverse.
    */
   private void sameService(Spec read, Spec project) {
     if (!read.service().equals(project.service())) {
@@ -119,6 +119,15 @@ class GenerateEntityCommand implements Callable<Integer> {
               + "; this project has "
               + kinds(project.tests()),
           "The kinds of tests of a service are chosen when it is created.");
+    }
+    if (!read.docker().equals(project.docker())) {
+      throw new RefusalException(
+          source.spec
+              + " is the spec of a service "
+              + (read.docker() ? "with" : "without")
+              + " a Dockerfile; this project has "
+              + (project.docker() ? "one" : "none"),
+          "Whether a service has a Dockerfile is chosen when it is created.");
     }
   }
 
