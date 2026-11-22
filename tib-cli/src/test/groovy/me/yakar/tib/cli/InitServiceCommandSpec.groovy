@@ -58,6 +58,45 @@ class InitServiceCommandSpec extends Specification {
     dir.toFile().list().length == 0
   }
 
+  def "--java goes with the name, not with the spec file, which says the Java itself: #args"() {
+    when:
+    Result result = tib.init(args as String[])
+
+    then:
+    result.exitCode() == 2
+    result.out() == ''
+    result.err().contains('Usage: tib init service ')
+    dir.toFile().list().length == 0
+
+    where:
+    args << [['--spec', Tib.SPEC, '--java', '25'], ['--java', '25']]
+  }
+
+  def "the service is on Java #java, as #how says"() {
+    when:
+    Result result = tib.init(['vehicle-service'] + args as String[])
+
+    then:
+    result.exitCode() == 0
+    tib.state().spec().java() == java
+    Files.readString(dir.resolve('build.gradle.kts')).contains("JavaLanguageVersion.of($java)")
+
+    where:
+    how         | args               | java
+    'no option' | []                 | 21
+    '--java'    | ['--java', '25']   | 25
+  }
+
+  def "a Java that tib does not generate for is reported"() {
+    when:
+    Result result = tib.init('vehicle-service', '--java', '17')
+
+    then:
+    result.exitCode() == 1
+    result.err() == 'the spec has a problem: java: 17 is not one of 21, 25\n'
+    dir.toFile().list().length == 0
+  }
+
   def "a dry run prints the diff and writes nothing"() {
     when:
     Result result = tib.init('vehicle-service', '--dry-run')

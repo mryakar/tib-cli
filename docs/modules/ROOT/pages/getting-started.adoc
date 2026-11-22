@@ -57,8 +57,16 @@ $ ./gradlew build
 $ ./gradlew bootTestRun
 ----
 
+The service is on Java 21. `--java 25` puts it on Java 25 instead; either way, its build compiles
+with a JDK of its Java, which Gradle looks for on the machine:
+
+[source,bash]
+----
+$ tib init service vehicle-service --java 25
+----
+
 To scaffold the service from a xref:spec.adoc[spec file] instead of its name, which names its
-group, its pack and its entities, give the file instead of the name:
+group, its pack, its Java and its entities, give the file instead of the name:
 
 [source,bash]
 ----

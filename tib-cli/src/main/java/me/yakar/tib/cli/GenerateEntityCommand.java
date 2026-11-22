@@ -78,7 +78,10 @@ class GenerateEntityCommand implements Callable<Integer> {
         tree);
   }
 
-  /** Refuses the spec file of another service than the one of the project, or of another group. */
+  /**
+   * Refuses the spec file of another service than the one of the project, of another group, or on
+   * another Java.
+   */
   private void sameService(Spec read, Spec project) {
     if (!read.service().equals(project.service())) {
       throw new RefusalException(
@@ -95,6 +98,15 @@ class GenerateEntityCommand implements Callable<Integer> {
               + read.group()
               + "; this project is in "
               + project.group());
+    }
+    if (!read.java().equals(project.java())) {
+      throw new RefusalException(
+          source.spec
+              + " is the spec of a service on Java "
+              + read.java()
+              + "; this project is on Java "
+              + project.java(),
+          "The Java of a service is chosen when it is created.");
     }
   }
 }

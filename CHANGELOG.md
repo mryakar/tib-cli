@@ -7,6 +7,13 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- A service is on Java 21 or 25: `tib init service NAME --java 25`, or `java: 25` in its spec. The
+  default is 21, as before; the build of the service compiles for its Java, and `AGENTS.md` names
+  it. The Java is chosen when the service is created: `tib generate entity --spec` refuses a spec
+  on another Java than the one of the service.
+
 ## [0.4.0] - 2026-11-19
 
 ### Added

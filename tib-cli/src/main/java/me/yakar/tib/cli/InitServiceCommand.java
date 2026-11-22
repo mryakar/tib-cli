@@ -36,8 +36,22 @@ class InitServiceCommand implements Callable<Integer> {
   @ArgGroup(multiplicity = "1")
   private Source source;
 
-  /** Where the service comes from: its name, or its spec file. */
+  /** Where the service comes from: its name and what it is made with, or its spec file. */
   static class Source {
+
+    @ArgGroup(exclusive = false, multiplicity = "1")
+    Named named;
+
+    @Option(
+        names = "--spec",
+        required = true,
+        paramLabel = "FILE",
+        description = SpecFile.DESCRIPTION)
+    Path spec;
+  }
+
+  /** A service by its name, with what the spec of the service would otherwise say. */
+  static class Named {
 
     @Parameters(
         arity = "1",
@@ -46,11 +60,10 @@ class InitServiceCommand implements Callable<Integer> {
     String name;
 
     @Option(
-        names = "--spec",
-        required = true,
-        paramLabel = "FILE",
-        description = SpecFile.DESCRIPTION)
-    Path spec;
+        names = "--java",
+        paramLabel = "VERSION",
+        description = "The Java version of the service: 21 (the default) or 25.")
+    Integer java;
   }
 
   @Mixin private ServiceDirectory directory;
@@ -68,6 +81,6 @@ class InitServiceCommand implements Callable<Integer> {
       SpecFile file = SpecFile.read(source.spec, tree);
       return run.init(file.spec(), List.of(file.input()), tree);
     }
-    return run.init(Spec.of(source.name, null), List.of(), tree);
+    return run.init(Spec.of(source.named.name, source.named.java), List.of(), tree);
   }
 }
