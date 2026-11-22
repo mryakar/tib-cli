@@ -36,6 +36,8 @@ class SpecSpec extends Specification {
     'tib: 1\nservice: Vehicle Service'                                          | "service: 'Vehicle Service' does not match ${Names.SERVICE}"
     'tib: 1\nservice: s\npack: Default'                                         | "pack: 'Default' does not match ${Names.PACK}"
     'tib: 1\nservice: s\ngroup: Com.Example'                                     | "group: 'Com.Example' does not match ${Names.GROUP}"
+    'tib: 1\nservice: s\njava: 17'                                               | 'java: 17 is not one of 21, 25'
+    'tib: 1\nservice: s\njava: 22'                                               | 'java: 22 is not one of 21, 25'
     'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n  - name: Vehicle'       | "entities[1].name: 'Vehicle' is already an entity"
     'tib: 1\nservice: s\nentities:\n  -\n'                                      | 'entities[0]: missing'
     entity('relations:\n      - { kind: manyToOne, target: Depot }')            | "entities[0].relations[0].target: there is no entity 'Depot'"
@@ -111,16 +113,18 @@ class SpecSpec extends Specification {
     ]
   }
 
-  def "the spec of a service that has only its name has the defaults, and is checked"() {
+  def "the spec of a service that has only its name and its Java has the defaults, and is checked"() {
     expect:
-    Spec.of('vehicle-service') == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
+    Spec.of('vehicle-service', null) == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
+    Spec.of('vehicle-service', null).java() == 21
+    Spec.of('vehicle-service', 25) == SpecReader.parse('tib: 1\nservice: vehicle-service\njava: 25\n')
 
     when:
-    Spec.of('Vehicle Service')
+    Spec.of('Vehicle Service', 23)
 
     then:
     SpecException e = thrown()
-    e.problems() == ["service: 'Vehicle Service' does not match ${Names.SERVICE}"]
+    e.problems() == ["service: 'Vehicle Service' does not match ${Names.SERVICE}", 'java: 23 is not one of 21, 25']
   }
 
   def "the list of the model is never null and never changes"() {

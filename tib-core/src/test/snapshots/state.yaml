@@ -16,6 +16,7 @@ spec:
   service: vehicle-service
   group: me.yakar
   pack: default@0.1.0
+  java: 21
   entities:
   - name: Depot
     table: DEPOTS

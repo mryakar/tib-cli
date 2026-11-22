@@ -52,6 +52,7 @@ class SpecSchemaSpec extends Specification {
     spec                                    | yaml
     'the example spec of the documentation' | Files.readString(EXAMPLES.resolve('vehicle-service.yaml'))
     'a Text and the column of an identifier' | 'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    id: { column: VEHICLE_KEY }\n    fields:\n      - { name: notes, type: Text }'
+    'Java 25'                               | 'tib: 1\nservice: s\njava: 25'
   }
 
   def "the schema refuses a spec of the wrong structure: #yaml"() {
@@ -64,6 +65,8 @@ class SpecSchemaSpec extends Specification {
       'tib: 2\nservice: s',
       'tib: 0\nservice: s',
       'tib: 1\nservice: Vehicle Service',
+      'tib: 1\nservice: s\njava: 22',
+      'tib: 1\nservice: s\njava: "21"',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x, type: Strng }',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x, type: String, lenght: 3 }',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x, type: String, length: 0 }',

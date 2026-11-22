@@ -96,11 +96,17 @@ public final class SpecSchema {
     schema.put("description", doc.value());
     schema.putAll(type(type, doc, definitions));
     if (!doc.defaultValue().isEmpty()) {
-      schema.put(
-          "default",
-          type == Boolean.class ? Boolean.valueOf(doc.defaultValue()) : doc.defaultValue());
+      schema.put("default", value(type, doc.defaultValue()));
     }
     return schema;
+  }
+
+  /** A default as the JSON of its type: a boolean or an integer is no string. */
+  private static Object value(Type type, String value) {
+    if (type == Boolean.class) {
+      return Boolean.valueOf(value);
+    }
+    return type == Integer.class ? Integer.valueOf(value) : value;
   }
 
   private static Map<String, Object> type(Type type, Doc doc, Map<String, Object> definitions) {
@@ -117,6 +123,9 @@ public final class SpecSchema {
       }
       if (doc.maximum() != Doc.NO_MAXIMUM) {
         schema.put("maximum", doc.maximum());
+      }
+      if (doc.values().length > 0) {
+        schema.put("enum", doc.values());
       }
     } else if (type == Boolean.class) {
       schema.put("type", "boolean");

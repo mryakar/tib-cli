@@ -47,6 +47,11 @@ public record Project(Spec spec) {
     return Names.type(spec.service().replace('-', '_')) + "Application";
   }
 
+  /** The Java version of the service, as in {@code 21}. */
+  public int java() {
+    return spec.java();
+  }
+
   /** The directory of the base package, relative to a source root. */
   public String packagePath() {
     return basePackage().replace('.', '/');

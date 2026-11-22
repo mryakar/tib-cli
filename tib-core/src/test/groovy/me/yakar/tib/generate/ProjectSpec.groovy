@@ -22,7 +22,7 @@ class ProjectSpec extends Specification {
 
   def "the names of the project come from the spec: #service"() {
     given:
-    Project project = new Project(new Spec(1, service, group, null, null))
+    Project project = new Project(new Spec(1, service, group, null, null, null))
 
     expect:
     project.name() == service
@@ -31,11 +31,17 @@ class ProjectSpec extends Specification {
     project.packagePath() == basePackage.replace('.', '/')
     project.applicationClass() == applicationClass
     project.spec().service() == service
+    project.java() == 21
 
     where:
     service           | group      | basePackage                      | applicationClass
     'vehicle-service' | null       | 'com.example.vehicleservice'     | 'VehicleServiceApplication'
     'ops'             | 'me.yakar' | 'me.yakar.ops'                   | 'OpsApplication'
     'a-b-c'           | 'x'        | 'x.abc'                          | 'ABCApplication'
+  }
+
+  def "the Java of the project is the one of the spec"() {
+    expect:
+    new Project(Spec.of('s', 25)).java() == 25
   }
 }

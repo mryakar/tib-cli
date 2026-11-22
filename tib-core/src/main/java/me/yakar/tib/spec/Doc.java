@@ -46,6 +46,9 @@ import java.lang.annotation.Target;
   /** The highest value an integer property may have, if any. */
   long maximum() default NO_MAXIMUM;
 
+  /** The only values an integer property may have, if it may not have any other. */
+  long[] values() default {};
+
   /** The value the property gets when the spec gives none, if it is a literal. */
   String defaultValue() default "";
 

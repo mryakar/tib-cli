@@ -29,6 +29,7 @@ spec: # <2>
   service: vehicle-service
   group: com.example
   pack: default
+  java: 21
   entities:
   - name: Vehicle
     table: VEHICLE
