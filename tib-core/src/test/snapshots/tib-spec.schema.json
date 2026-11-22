@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "tib spec",
   "type": "object",
-  "description": "The spec of a service: the service, its group, its pack, its Java, its tests and its entities.",
+  "description": "The spec of a service: the service, its group, its pack, its Java, its tests, whether it has a Dockerfile, and its entities.",
   "properties": {
     "tib": {
       "description": "The version of the spec format; 1.",
@@ -47,6 +47,11 @@
           "api"
         ]
       }
+    },
+    "docker": {
+      "description": "Whether the service has a Dockerfile that builds it into an image.",
+      "type": "boolean",
+      "default": false
     },
     "entities": {
       "description": "The entities of the service.",

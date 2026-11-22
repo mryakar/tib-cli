@@ -60,13 +60,14 @@ class DdlReaderSpec extends Specification {
     spec.entities() == [DEPOT, VEHICLE,]
   }
 
-  def "the DDL keeps the Java and the tests of the service"() {
+  def "the DDL keeps the Java, the tests and the Dockerfile of the service"() {
     when:
-    Spec spec = DdlReader.parse('CREATE TABLE T (ID BIGINT PRIMARY KEY);', SpecReader.parse('tib: 1\nservice: s\njava: 25\ntests: [unit]\n'))
+    Spec spec = DdlReader.parse('CREATE TABLE T (ID BIGINT PRIMARY KEY);', SpecReader.parse('tib: 1\nservice: s\njava: 25\ntests: [unit]\ndocker: true\n'))
 
     then:
     spec.java() == 25
     spec.tests()*.toString() == ['unit']
+    spec.docker()
   }
 
   def "a column of a supported SQL type is a field of its type, with its sizes"() {

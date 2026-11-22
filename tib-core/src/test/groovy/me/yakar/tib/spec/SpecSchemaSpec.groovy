@@ -55,6 +55,7 @@ class SpecSchemaSpec extends Specification {
     'Java 25'                               | 'tib: 1\nservice: s\njava: 25'
     'two kinds of tests'                    | 'tib: 1\nservice: s\ntests: [unit, api]'
     'no tests'                              | 'tib: 1\nservice: s\ntests: []'
+    'a Dockerfile'                          | 'tib: 1\nservice: s\ndocker: true'
   }
 
   def "the schema refuses a spec of the wrong structure: #yaml"() {
@@ -71,6 +72,7 @@ class SpecSchemaSpec extends Specification {
       'tib: 1\nservice: s\njava: "21"',
       'tib: 1\nservice: s\ntests: [e2e]',
       'tib: 1\nservice: s\ntests: unit',
+      'tib: 1\nservice: s\ndocker: yes please',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x, type: Strng }',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x, type: String, lenght: 3 }',
       'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n    fields:\n      - { name: x, type: String, length: 0 }',
