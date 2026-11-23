@@ -1,13 +1,13 @@
 [versions]
 # The stack that the default pack generates. Dependabot does not update generated-postgres, the tag
 # of the postgres Docker image. The Java of the generated service is the one of its spec.
-generated-archunit = "1.4.1"
+generated-archunit = "1.5.1"
 generated-postgres = "18"
 generated-spring-boot = "4.1.2"
 google-java-format = "1.36.1"
 groovy = "5.1.3"
 # The engine's Jackson: it reads the spec and the state file and writes the JSON Schema.
-jackson = "3.2.4"
+jackson = "3.3.0"
 jacoco = "0.8.16"
 jreleaser = "1.27.0"
 json-schema-validator = "3.0.9"
