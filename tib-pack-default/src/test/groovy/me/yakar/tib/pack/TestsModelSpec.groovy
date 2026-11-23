@@ -28,6 +28,7 @@ class TestsModelSpec extends Specification {
     expect:
     model.any() == any
     model.container() == container
+    model.archunit() == tests.contains('archunit')
     !any || model.entityTests() == words
 
     where:
@@ -38,5 +39,7 @@ class TestsModelSpec extends Specification {
     '[api, unit]'               | true  | true      | '`XApiTests` against PostgreSQL in a container, and\n`XServiceTests` with the repository and the mapper mocked'
     '[unit]'                    | true  | false     | '`XServiceTests` with the repository and the mapper mocked'
     '[]'                        | false | false     | null
+    '[archunit]'                | false | false     | null
+    '[unit, archunit]'          | true  | false     | '`XServiceTests` with the repository and the mapper mocked'
   }
 }

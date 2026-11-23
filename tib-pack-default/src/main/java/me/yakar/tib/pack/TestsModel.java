@@ -29,9 +29,16 @@ public final class TestsModel {
     this.project = project;
   }
 
-  /** Whether the service has tests of any kind. */
+  /** Whether the entities of the service have tests of any kind. */
   public boolean any() {
-    return !project.spec().tests().isEmpty();
+    return project.tests(TestKind.UNIT)
+        || project.tests(TestKind.INTEGRATION)
+        || project.tests(TestKind.API);
+  }
+
+  /** Whether the service has the test of its architecture. */
+  public boolean archunit() {
+    return project.tests(TestKind.ARCHUNIT);
   }
 
   /** Whether the service has tests that start PostgreSQL in a container. */

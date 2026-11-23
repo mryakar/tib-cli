@@ -68,6 +68,32 @@ class InitGeneratorSpec extends Specification {
     'java: 25\n' | 25
   }
 
+  def "a service with the test of its architecture gets ArchitectureTests and ArchUnit, and the notes tell of it: #tests"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new InitGenerator(new DefaultPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\ntests: $tests\n")), tree)
+    Map<String, Change> files = tree.changes().collectEntries { [it.path(), it] }
+    String build = new String(files['build.gradle.kts'].after(), 'UTF-8')
+    String agents = new String(files['AGENTS.md'].after(), 'UTF-8')
+    Change architecture = files['src/test/java/com/example/s/ArchitectureTests.java']
+
+    then:
+    (architecture != null) == archunit
+    !archunit || architecture.owner() == Owner.DEVELOPER
+    !archunit || new String(architecture.after(), 'UTF-8').contains('.importPackages("com.example.s");')
+    build.contains("  testImplementation(\"com.tngtech.archunit:archunit:${new DefaultPack().archunitVersion()}\")\n  testRuntimeOnly(") == archunit
+    agents.contains('it is yours.\n`ArchitectureTests`, in the tests of the base package,') == archunit
+    agents.contains('their tests: ') == entities
+
+    where:
+    tests              | archunit | entities
+    '[unit, archunit]' | true     | true
+    '[archunit]'       | true     | false
+    '[unit]'           | false    | true
+  }
+
   def "a service with a Dockerfile gets one for the Java of its spec, and the notes tell how to build the image: #yaml"() {
     given:
     Tree tree = Tree.at(dir)
