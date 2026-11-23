@@ -27,12 +27,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   architecture, the kinds of tests and the Dockerfile, on standard error, and reads the answers from standard input;
   an empty answer takes the default, and one that tib cannot use is asked again. When the answers
   end first, it exits with 2, as it did for a command line without the name.
-- A service has an architecture: `--architecture anemic` or `architecture: anemic` in its spec, the
-  only one so far and the default, which arranges the code as before.
+- A service has an architecture: `--architecture` or `architecture:` in its spec, chosen when the
+  service is created. `anemic`, the default, arranges the code as before. `ddd` makes every entity
+  an aggregate in three packages: its `domain`, with the entity and its repository; its
+  `application`, with the service of its use cases on the aggregate; and its `web`, with its
+  controller, DTO and mapper. An entity refers to another by its identifier, not by the entity,
+  and a service throws `NotFoundException`, which `ConflictHandler` answers with 404.
 - A fourth kind of tests, `archunit`: `ArchitectureTests`, written once, checks the rules of the
-  architecture on the classes of the service with ArchUnit; for the anemic architecture, the
-  controller of an entity over its service over its repository, and no cycle between the packages
-  of the entities. It is not among the kinds that a service has by default.
+  architecture on the classes of the service with ArchUnit. For the anemic architecture: the
+  controller of an entity over its service over its repository. For DDD: the domain uses neither
+  the application nor the web, the application does not use the web, and the domain of an
+  aggregate does not use the domain of another. For both, no cycle between the packages of the
+  entities. It is not among the kinds that a service has by default.
 
 ## [0.4.0] - 2026-11-19
 

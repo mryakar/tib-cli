@@ -582,6 +582,7 @@ class GenerateEntityCommandSpec extends Specification {
     'Java'    | 'tib: 1\nservice: vehicle-service\njava: 25\n'              | 'is the spec of a service on Java 25; this project is on Java 21\nThe Java of a service is chosen when it is created.'
     'tests'   | 'tib: 1\nservice: vehicle-service\ntests: [api]\n'          | 'is the spec of a service with api tests; this project has unit, integration and api tests\nThe kinds of tests of a service are chosen when it is created.'
     'no tests' | 'tib: 1\nservice: vehicle-service\ntests: []\n'            | 'is the spec of a service with no tests; this project has unit, integration and api tests\nThe kinds of tests of a service are chosen when it is created.'
+    'architecture' | 'tib: 1\nservice: vehicle-service\narchitecture: ddd\n' | 'is the spec of a service of the architecture ddd; this project is anemic\nThe architecture of a service is chosen when it is created.'
     'Dockerfile' | 'tib: 1\nservice: vehicle-service\ndocker: true\n'       | 'is the spec of a service with a Dockerfile; this project has none\nWhether a service has a Dockerfile is chosen when it is created.'
   }
 
