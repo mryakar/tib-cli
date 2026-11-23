@@ -28,7 +28,16 @@ public enum Architecture {
    * its application, with the service of its use cases; and its web, with its controller, DTO and
    * mapper. An entity refers to another by its identifier.
    */
-  DDD("ddd");
+  DDD("ddd"),
+
+  /**
+   * Every entity a domain without a framework, in the middle of ports and adapters: its domain, in
+   * plain Java; its application, with the service of its use cases and the ports, the use cases
+   * that the inbound adapters call and the store that the outbound ones implement; and its
+   * adapters, the web with its controller, DTO and mapper, and the persistence with its JPA entity,
+   * repository, mapper and the adapter of the store. An entity refers to another by its identifier.
+   */
+  HEXAGONAL("hexagonal");
 
   private final String name;
 

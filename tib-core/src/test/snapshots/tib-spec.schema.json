@@ -41,7 +41,8 @@
       "type": "string",
       "enum": [
         "anemic",
-        "ddd"
+        "ddd",
+        "hexagonal"
       ],
       "default": "anemic"
     },

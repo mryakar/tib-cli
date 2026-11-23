@@ -38,7 +38,7 @@ class SpecSpec extends Specification {
     'tib: 1\nservice: s\ngroup: Com.Example'                                     | "group: 'Com.Example' does not match ${Names.GROUP}"
     'tib: 1\nservice: s\njava: 17'                                               | 'java: 17 is not one of 21, 25'
     'tib: 1\nservice: s\njava: 22'                                               | 'java: 22 is not one of 21, 25'
-    'tib: 1\nservice: s\narchitecture: layered'                                  | "architecture: 'layered' is not one of anemic, ddd"
+    'tib: 1\nservice: s\narchitecture: layered'                                  | "architecture: 'layered' is not one of anemic, ddd, hexagonal"
     'tib: 1\nservice: s\ntests: [unit, e2e]'                                     | "tests[1]: 'e2e' is not one of unit, integration, api, archunit"
     'tib: 1\nservice: s\ntests: [unit, api, unit]'                               | "tests[2]: 'unit' is already there"
     'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n  - name: Vehicle'       | "entities[1].name: 'Vehicle' is already an entity"
