@@ -31,13 +31,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   service is created. `anemic`, the default, arranges the code as before. `ddd` makes every entity
   an aggregate in three packages: its `domain`, with the entity and its repository; its
   `application`, with the service of its use cases on the aggregate; and its `web`, with its
-  controller, DTO and mapper. An entity refers to another by its identifier, not by the entity,
-  and a service throws `NotFoundException`, which `ConflictHandler` answers with 404.
+  controller, DTO and mapper. `hexagonal` puts the domain of every entity, in plain Java without
+  JPA or Spring, among ports and adapters: its `domain`; its `application`, with the service of its
+  use cases, `XUseCase`, the port that the inbound adapters call, and `XStore`, the port that keeps
+  the domain; its `adapter.in.web`, with its controller, DTO and mapper; and its
+  `adapter.out.persistence`, with the JPA entity of its table, its repository, the mapper between
+  the two and the adapter of the store. In both, an entity refers to another by its identifier,
+  not by the entity, and a service throws `NotFoundException`, which `ConflictHandler` answers
+  with 404.
 - A fourth kind of tests, `archunit`: `ArchitectureTests`, written once, checks the rules of the
   architecture on the classes of the service with ArchUnit. For the anemic architecture: the
   controller of an entity over its service over its repository. For DDD: the domain uses neither
   the application nor the web, the application does not use the web, and the domain of an
-  aggregate does not use the domain of another. For both, no cycle between the packages of the
+  aggregate does not use the domain of another. For the hexagonal architecture: the domain knows
+  neither JPA nor Spring, the application does not use the adapters, and an inbound adapter does
+  not use an outbound one, nor the reverse. For all three, no cycle between the packages of the
   entities. It is not among the kinds that a service has by default.
 
 ## [0.4.0] - 2026-11-19
