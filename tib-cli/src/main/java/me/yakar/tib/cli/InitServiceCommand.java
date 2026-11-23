@@ -82,7 +82,8 @@ class InitServiceCommand implements Callable<Integer> {
         names = "--architecture",
         paramLabel = "ARCHITECTURE",
         converter = ArchitectureConverter.class,
-        description = "How the code of the service is arranged: anemic (the default) or ddd.")
+        description =
+            "How the code of the service is arranged: anemic (the default), ddd or hexagonal.")
     Architecture architecture;
 
     @Option(
