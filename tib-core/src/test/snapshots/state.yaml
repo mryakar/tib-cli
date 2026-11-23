@@ -17,6 +17,7 @@ spec:
   group: me.yakar
   pack: default@0.1.0
   java: 21
+  architecture: anemic
   tests:
   - unit
   - integration

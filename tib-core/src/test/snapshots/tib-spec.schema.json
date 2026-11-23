@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "tib spec",
   "type": "object",
-  "description": "The spec of a service: the service, its group, its pack, its Java, its tests, whether it has a Dockerfile, and its entities.",
+  "description": "The spec of a service: the service, its group, its pack, its Java, its architecture, its tests, whether it has a Dockerfile, and its entities.",
   "properties": {
     "tib": {
       "description": "The version of the spec format; 1.",
@@ -36,15 +36,24 @@
       ],
       "default": 21
     },
+    "architecture": {
+      "description": "How the code of the service is arranged.",
+      "type": "string",
+      "enum": [
+        "anemic"
+      ],
+      "default": "anemic"
+    },
     "tests": {
-      "description": "The kinds of tests that tib writes for the entities: unit, integration and api; all of them when the spec gives none, and none when it gives an empty list.",
+      "description": "The kinds of tests that tib writes: unit, integration, api and archunit; unit, integration and api when the spec gives none, and none when it gives an empty list.",
       "type": "array",
       "items": {
         "type": "string",
         "enum": [
           "unit",
           "integration",
-          "api"
+          "api",
+          "archunit"
         ]
       }
     },

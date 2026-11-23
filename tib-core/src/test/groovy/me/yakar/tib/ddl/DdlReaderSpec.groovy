@@ -17,6 +17,7 @@ package me.yakar.tib.ddl
 
 import java.nio.file.Files
 import java.nio.file.Path
+import me.yakar.tib.spec.Architecture
 import me.yakar.tib.spec.Entity
 import me.yakar.tib.spec.Field
 import me.yakar.tib.spec.FieldType
@@ -60,12 +61,13 @@ class DdlReaderSpec extends Specification {
     spec.entities() == [DEPOT, VEHICLE,]
   }
 
-  def "the DDL keeps the Java, the tests and the Dockerfile of the service"() {
+  def "the DDL keeps the Java, the architecture, the tests and the Dockerfile of the service"() {
     when:
     Spec spec = DdlReader.parse('CREATE TABLE T (ID BIGINT PRIMARY KEY);', SpecReader.parse('tib: 1\nservice: s\njava: 25\ntests: [unit]\ndocker: true\n'))
 
     then:
     spec.java() == 25
+    spec.architecture() == Architecture.ANEMIC
     spec.tests()*.toString() == ['unit']
     spec.docker()
   }

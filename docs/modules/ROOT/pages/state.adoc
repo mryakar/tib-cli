@@ -30,6 +30,7 @@ spec: # <2>
   group: com.example
   pack: default
   java: 21
+  architecture: anemic
   tests:
   - unit
   - integration

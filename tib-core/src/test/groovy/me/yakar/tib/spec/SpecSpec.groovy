@@ -38,7 +38,8 @@ class SpecSpec extends Specification {
     'tib: 1\nservice: s\ngroup: Com.Example'                                     | "group: 'Com.Example' does not match ${Names.GROUP}"
     'tib: 1\nservice: s\njava: 17'                                               | 'java: 17 is not one of 21, 25'
     'tib: 1\nservice: s\njava: 22'                                               | 'java: 22 is not one of 21, 25'
-    'tib: 1\nservice: s\ntests: [unit, e2e]'                                     | "tests[1]: 'e2e' is not one of unit, integration, api"
+    'tib: 1\nservice: s\narchitecture: layered'                                  | "architecture: 'layered' is not one of anemic"
+    'tib: 1\nservice: s\ntests: [unit, e2e]'                                     | "tests[1]: 'e2e' is not one of unit, integration, api, archunit"
     'tib: 1\nservice: s\ntests: [unit, api, unit]'                               | "tests[2]: 'unit' is already there"
     'tib: 1\nservice: s\nentities:\n  - name: Vehicle\n  - name: Vehicle'       | "entities[1].name: 'Vehicle' is already an entity"
     'tib: 1\nservice: s\nentities:\n  -\n'                                      | 'entities[0]: missing'
@@ -117,22 +118,24 @@ class SpecSpec extends Specification {
 
   def "the spec of a service that has only its name and its Java has the defaults, and is checked"() {
     expect:
-    Spec.of('vehicle-service', null, null, null) == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
-    Spec.of('vehicle-service', null, null, null).java() == 21
-    !Spec.of('vehicle-service', null, null, null).docker()
-    Spec.of('vehicle-service', null, null, null).tests() == [TestKind.UNIT, TestKind.INTEGRATION, TestKind.API]
-    Spec.of('vehicle-service', 25, [TestKind.API], true) == SpecReader.parse('tib: 1\nservice: vehicle-service\njava: 25\ntests: [api]\ndocker: true\n')
-    Spec.of('vehicle-service', null, [], null).tests() == []
+    Spec.of('vehicle-service', null, null, null, null) == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
+    Spec.of('vehicle-service', null, null, null, null).java() == 21
+    Spec.of('vehicle-service', null, null, null, null).architecture() == Architecture.ANEMIC
+    Spec.of('vehicle-service', null, Architecture.ANEMIC, [TestKind.ARCHUNIT], null) == SpecReader.parse('tib: 1\nservice: vehicle-service\narchitecture: anemic\ntests: [archunit]\n')
+    !Spec.of('vehicle-service', null, null, null, null).docker()
+    Spec.of('vehicle-service', null, null, null, null).tests() == [TestKind.UNIT, TestKind.INTEGRATION, TestKind.API]
+    Spec.of('vehicle-service', 25, null, [TestKind.API], true) == SpecReader.parse('tib: 1\nservice: vehicle-service\njava: 25\ntests: [api]\ndocker: true\n')
+    Spec.of('vehicle-service', null, null, [], null).tests() == []
 
     when:
-    Spec.of('Vehicle Service', 23, null, null)
+    Spec.of('Vehicle Service', 23, null, null, null)
 
     then:
     SpecException e = thrown()
     e.problems() == ["service: 'Vehicle Service' does not match ${Names.SERVICE}", 'java: 23 is not one of 21, 25']
 
     when:
-    Spec.of('vehicle-service', null, [TestKind.UNIT, TestKind.UNIT], null)
+    Spec.of('vehicle-service', null, null, [TestKind.UNIT, TestKind.UNIT], null)
 
     then:
     SpecException twice = thrown()

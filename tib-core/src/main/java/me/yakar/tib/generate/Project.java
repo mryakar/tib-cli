@@ -15,6 +15,7 @@
  */
 package me.yakar.tib.generate;
 
+import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.Names;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.TestKind;
@@ -51,6 +52,11 @@ public record Project(Spec spec) {
   /** The Java version of the service, as in {@code 21}. */
   public int java() {
     return spec.java();
+  }
+
+  /** How the code of the service is arranged. */
+  public Architecture architecture() {
+    return spec.architecture();
   }
 
   /** Whether tib writes the tests of the kind for the entities of the service. */

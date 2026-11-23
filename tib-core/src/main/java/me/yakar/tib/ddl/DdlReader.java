@@ -108,6 +108,7 @@ public final class DdlReader {
             service.group(),
             service.pack(),
             service.java(),
+            service.architecture(),
             service.tests(),
             service.docker(),
             merged)

@@ -134,7 +134,8 @@ class InitServiceCommand implements Callable<Integer> {
       return run.init(file.spec(), List.of(file.input()), tree);
     }
     return run.init(
-        Spec.of(source.named.name, source.named.java, source.named.tests, source.named.docker),
+        Spec.of(
+            source.named.name, source.named.java, null, source.named.tests, source.named.docker),
         List.of(),
         tree);
   }
@@ -145,20 +146,20 @@ class InitServiceCommand implements Callable<Integer> {
         questions.ask(
             "The name of the service, in lower case words joined with hyphens",
             "",
-            answer -> checked(() -> Spec.of(answer, null, null, null)).service());
-    Spec defaults = Spec.of(name, null, null, null);
+            answer -> checked(() -> Spec.of(answer, null, null, null, null)).service());
+    Spec defaults = Spec.of(name, null, null, null, null);
     Integer java =
         questions.ask(
             "Its Java version, 21 or 25",
             String.valueOf(defaults.java()),
-            answer -> checked(() -> Spec.of(name, number(answer), null, null)).java());
+            answer -> checked(() -> Spec.of(name, number(answer), null, null, null)).java());
     List<TestKind> tests =
         questions.ask(
             "The kinds of its tests, separated by commas, or none",
             defaults.tests().stream().map(TestKind::toString).collect(Collectors.joining(",")),
-            answer -> checked(() -> Spec.of(name, java, kinds(answer), null)).tests());
+            answer -> checked(() -> Spec.of(name, java, null, kinds(answer), null)).tests());
     Boolean docker = questions.ask("A Dockerfile, yes or no", "no", InitServiceCommand::yes);
-    return Spec.of(name, java, tests, docker);
+    return Spec.of(name, java, null, tests, docker);
   }
 
   /** The spec, or the problems that it has as the reason why the answer does not read. */

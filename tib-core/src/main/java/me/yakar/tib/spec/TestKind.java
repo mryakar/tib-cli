@@ -27,7 +27,10 @@ public enum TestKind {
   INTEGRATION("integration"),
 
   /** The tests of the API of an entity, against the running service and its database. */
-  API("api");
+  API("api"),
+
+  /** The test of the rules of the architecture of the service, on its classes. */
+  ARCHUNIT("archunit");
 
   private final String name;
 
