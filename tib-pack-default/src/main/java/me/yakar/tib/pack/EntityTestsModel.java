@@ -73,7 +73,9 @@ public final class EntityTestsModel {
    * {@code Depot depot}.
    */
   public String requiredParameters() {
-    return required(entity, relation -> relation.target().name() + " " + relation.field());
+    return entity.ddd()
+        ? requiredIdParameters()
+        : required(entity, relation -> relation.target().name() + " " + relation.field());
   }
 
   /**
@@ -93,7 +95,8 @@ public final class EntityTestsModel {
         + "Samples."
         + model.variable()
         + "("
-        + required(model, relation -> relation.target().variable())
+        + required(
+            model, relation -> relation.target().variable() + (model.ddd() ? ".getId()" : ""))
         + ").build()";
   }
 
@@ -122,7 +125,8 @@ public final class EntityTestsModel {
   public String sampleValues(int variant) {
     return fieldValues(variant)
         + entity.requiredRelations().stream()
-            .map(relation -> "." + relation.field() + "(" + relation.field() + ")")
+            .map(relation -> entity.ddd() ? relation.idField() : relation.field())
+            .map(name -> "." + name + "(" + name + ")")
             .collect(Collectors.joining());
   }
 
@@ -148,7 +152,11 @@ public final class EntityTestsModel {
     return Stream.concat(
             fieldProperties(),
             entity.relations().stream()
-                .map(relation -> new Property(relation.target().name(), relation.field())))
+                .map(
+                    relation ->
+                        entity.ddd()
+                            ? new Property(relation.target().idType(), relation.idField())
+                            : new Property(relation.target().name(), relation.field())))
         .toList();
   }
 

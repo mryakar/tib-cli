@@ -4,16 +4,18 @@
 !{EntityModel entity = tests.entity();}
 !{String path = entity.path();}
 !{String dto = entity.name() + "Dto";}
-package ${entity.packageName()};
+package ${entity.webPackage()};
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ${entity.basePackage()}.TestcontainersConfiguration;
+${EntityModel.importOf(entity.webPackage(), entity.packageName(), entity.name() + "Samples")}
 @for(var target : tests.requiredTargets())
-import ${target.packageName()}.${target.name()};
-import ${target.packageName()}.${target.name()}Repository;
-import ${target.packageName()}.${target.name()}Samples;
+${EntityModel.importOf(entity.webPackage(), target.domainPackage(), target.name())}
+${EntityModel.importOf(entity.webPackage(), target.domainPackage(), target.name() + "Repository")}
+${EntityModel.importOf(entity.webPackage(), target.packageName(), target.name() + "Samples")}
 @endfor
+${EntityModel.importOf(entity.webPackage(), entity.domainPackage(), entity.name() + "Repository")}
 @if(entity.uuidId())
 import java.util.UUID;
 @endif

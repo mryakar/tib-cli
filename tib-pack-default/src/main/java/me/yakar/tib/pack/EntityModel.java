@@ -21,6 +21,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 import me.yakar.tib.generate.Project;
+import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.Entity;
 import me.yakar.tib.spec.IdStrategy;
 import me.yakar.tib.spec.IdType;
@@ -104,14 +105,48 @@ public final class EntityModel {
     return project.basePackage() + "." + entity.packageSegment();
   }
 
-  /** The directory of the package, relative to the project. */
-  String directory() {
-    return DefaultPack.MAIN + packageName().replace('.', '/');
+  /** Whether the service is of the DDD architecture: the entity an aggregate in three packages. */
+  public boolean ddd() {
+    return project.architecture() == Architecture.DDD;
   }
 
-  /** The directory of the package's tests, relative to the project. */
-  String testDirectory() {
-    return DefaultPack.TEST + packageName().replace('.', '/');
+  /** The package of the entity and its repository: its domain, or the package of the entity. */
+  public String domainPackage() {
+    return layer("domain");
+  }
+
+  /** The package of the service: its application, or the package of the entity. */
+  public String applicationPackage() {
+    return layer("application");
+  }
+
+  /**
+   * The package of the controller, the DTO and the mapper: its web, or the package of the entity.
+   */
+  public String webPackage() {
+    return layer("web");
+  }
+
+  private String layer(String name) {
+    return ddd() ? packageName() + "." + name : packageName();
+  }
+
+  /**
+   * The import of a type into a file of the package, as a line of Java; none when the type is in
+   * the package already.
+   */
+  public static String importOf(String filePackage, String typePackage, String type) {
+    return filePackage.equals(typePackage) ? "" : "import " + typePackage + "." + type + ";";
+  }
+
+  /** The directory of the sources of a package, relative to the project. */
+  static String directory(String packageName) {
+    return DefaultPack.MAIN + packageName.replace('.', '/');
+  }
+
+  /** The directory of the tests of a package, relative to the project. */
+  static String testDirectory(String packageName) {
+    return DefaultPack.TEST + packageName.replace('.', '/');
   }
 
   public String idField() {
@@ -274,7 +309,7 @@ public final class EntityModel {
 
   /**
    * The arguments of the DTO of an entity, in the order of its components; a relation is the
-   * identifier of its target, or null.
+   * identifier of its target, or null: of the entity it refers to, or the one it keeps for DDD.
    */
   public String dtoArguments() {
     String variable = variable();
@@ -285,7 +320,10 @@ public final class EntityModel {
     }
     for (RelationModel relation : relations) {
       String target = variable + ".get" + relation.property() + "()";
-      arguments.add(target + " == null ? null : " + target + ".getId()");
+      arguments.add(
+          ddd()
+              ? variable + ".get" + relation.idProperty() + "()"
+              : target + " == null ? null : " + target + ".getId()");
     }
     if (entity.audit()) {
       arguments.add(variable + ".getCreatedAt()");

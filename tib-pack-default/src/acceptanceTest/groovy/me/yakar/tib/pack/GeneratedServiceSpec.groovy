@@ -122,6 +122,8 @@ class GeneratedServiceSpec extends Specification {
     // The corner spec, on Java 25, with a Dockerfile and the test of the architecture, is a resource
     // of the unit tests, next to their snapshots.
     'corner spec'     | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text)
+    // The same corners in the DDD architecture, each entity an aggregate in three packages.
+    'corner spec, DDD' | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text.replace('java: 25\n', 'java: 25\narchitecture: ddd\n'))
   }
 
   /** Builds the image of the service from its Dockerfile, prints the log, and removes the image. */

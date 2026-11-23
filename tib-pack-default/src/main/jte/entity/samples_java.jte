@@ -18,9 +18,15 @@ ${field.typeImport()}
 import java.util.UUID;
 @endif
 @endfor
+${EntityModel.importOf(entity.packageName(), entity.domainPackage(), name)}
+@if(entity.dto())
+${EntityModel.importOf(entity.packageName(), entity.webPackage(), name + "Dto")}
+@endif
+@if(!entity.ddd())
 @for(var target : entity.otherTargets())
 import ${target.packageName()}.${target.name()};
 @endfor
+@endif
 
 /**
  * Sample ${entity.plural()} for the tests, with the first or the second sample values: a test
@@ -30,12 +36,12 @@ public final class ${name}Samples {
 
   private ${name}Samples() {}
 
-  /** ${entity.article()} ${entity.variable()} with the first sample values@if(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
+  /** ${entity.article()} ${entity.variable()} with the first sample values@if(!entity.requiredRelations().isEmpty() && entity.ddd()), and the identifiers of the saved entities it needs@elseif(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
   public static ${builder} ${entity.variable()}(${tests.requiredParameters()}) {
     return new ${builder}()${tests.sampleValues(1)};
   }
 
-  /** ${entity.article()} ${entity.variable()} with the second sample values@if(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
+  /** ${entity.article()} ${entity.variable()} with the second sample values@if(!entity.requiredRelations().isEmpty() && entity.ddd()), and the identifiers of the saved entities it needs@elseif(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
   public static ${builder} other${name}(${tests.requiredParameters()}) {
     return new ${builder}()${tests.sampleValues(2)};
   }
@@ -67,7 +73,11 @@ public final class ${name}Samples {
       ${entity.variable()}.set${field.property()}(this.${field.name()});
       @endfor
       @for(var relation : entity.relations())
+      @if(entity.ddd())
+      ${entity.variable()}.set${relation.idProperty()}(this.${relation.idField()});
+      @else
       ${entity.variable()}.set${relation.property()}(this.${relation.field()});
+      @endif
       @endfor
       return ${entity.variable()};
     }

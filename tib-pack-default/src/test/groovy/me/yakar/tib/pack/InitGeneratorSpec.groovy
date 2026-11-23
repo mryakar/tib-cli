@@ -68,6 +68,31 @@ class InitGeneratorSpec extends Specification {
     'java: 25\n' | 25
   }
 
+  def "a DDD service gets the rules of DDD to check, and the notes tell of its packages: #architecture"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new InitGenerator(new DefaultPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\narchitecture: $architecture\ntests: [archunit]\n")), tree)
+    Map<String, String> files = tree.changes().collectEntries {
+      [it.path(), new String(it.after(), 'UTF-8')]
+    }
+    String agents = files['AGENTS.md']
+    String rules = files['src/test/java/com/example/s/ArchitectureTests.java']
+
+    then:
+    rules.contains('void theDomainOfAnAggregateDoesNotUseTheDomainOfAnother()') == ddd
+    rules.contains('void controllersUseServicesAndNotRepositories()') == !ddd
+    agents.contains('The service is arranged for DDD: every entity `X` is an aggregate, in three packages.') == ddd
+    agents.contains('with ArchUnit: the domain of an entity uses neither its application nor its web, the application does\nnot use the web,') == ddd
+    agents.contains('with ArchUnit: the controller of an entity over its service over its\nrepository, and no cycle') == !ddd
+
+    where:
+    architecture | ddd
+    'anemic'     | false
+    'ddd'        | true
+  }
+
   def "a service with the test of its architecture gets ArchitectureTests and ArchUnit, and the notes tell of it: #tests"() {
     given:
     Tree tree = Tree.at(dir)

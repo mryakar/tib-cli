@@ -25,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
+import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.Entity;
 import me.yakar.tib.spec.Relation;
 import me.yakar.tib.spec.TestKind;
@@ -65,15 +66,19 @@ final class EntityGenerator implements Generator {
     models.values().forEach(model -> generateEntity(project, model, files));
     // Written here and not by init: only a service with an API needs it.
     if (models.values().stream().anyMatch(EntityModel::layer)) {
-      String handler = DefaultPack.MAIN + project.packagePath() + "/ConflictHandler.java";
-      files.once(
-          handler,
-          Templates.render(
-              handler,
-              FIRST_ENTITY,
-              "entity/conflict_handler_java.jte",
-              Map.of("project", project)));
+      firstEntity(files, project, "ConflictHandler", "entity/conflict_handler_java.jte");
+      // With DDD, the services throw it, and the handler answers it: they know no HTTP.
+      if (project.architecture() == Architecture.DDD) {
+        firstEntity(files, project, "NotFoundException", "entity/not_found_exception_java.jte");
+      }
     }
+  }
+
+  /** Writes a class of the base package once, with the first entity that needs it. */
+  private static void firstEntity(
+      ProjectFiles files, Project project, String type, String template) {
+    String path = DefaultPack.MAIN + project.packagePath() + "/" + type + ".java";
+    files.once(path, Templates.render(path, FIRST_ENTITY, template, Map.of("project", project)));
   }
 
   /** The models of the entities of the project, by name, each after the entities it refers to. */
@@ -86,15 +91,19 @@ final class EntityGenerator implements Generator {
   }
 
   private static void generateEntity(Project project, EntityModel entity, ProjectFiles files) {
-    String main = entity.directory() + "/" + entity.name();
-    String test = entity.testDirectory() + "/" + entity.name();
+    String name = "/" + entity.name();
+    String domain = EntityModel.directory(entity.domainPackage()) + name;
+    String application = EntityModel.directory(entity.applicationPackage()) + name;
+    String web = EntityModel.directory(entity.webPackage()) + name;
+    // DDD has a service of its own: the use cases of the domain, which know no DTO.
+    String ddd = entity.ddd() ? "ddd_" : "";
     Map<String, Object> model = Map.of("entity", entity);
     Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity));
-    own(files, main + "Generated.java", "entity/generated_java.jte", model);
-    once(files, main + ".java", "entity/entity_java.jte", model);
-    once(files, main + "Repository.java", "entity/repository_java.jte", model);
+    own(files, domain + "Generated.java", "entity/generated_java.jte", model);
+    once(files, domain + ".java", "entity/entity_java.jte", model);
+    once(files, domain + "Repository.java", "entity/repository_java.jte", model);
     if (entity.dto()) {
-      own(files, main + "Dto.java", "entity/dto_java.jte", model);
+      own(files, web + "Dto.java", "entity/dto_java.jte", model);
     }
     // A migration lasts: a database may have run it, so it stays when the entity leaves the spec.
     String migration = migration(files, entity);
@@ -105,21 +114,37 @@ final class EntityGenerator implements Generator {
     boolean serviceTests = entity.layer() && project.tests(TestKind.UNIT);
     boolean apiTests = entity.layer() && project.tests(TestKind.API);
     if (repositoryTests || serviceTests || apiTests) {
-      own(files, test + "Samples.java", "entity/samples_java.jte", tests);
+      own(
+          files,
+          EntityModel.testDirectory(entity.packageName()) + name + "Samples.java",
+          "entity/samples_java.jte",
+          tests);
     }
     if (repositoryTests) {
-      once(files, test + "RepositoryTests.java", "entity/repository_tests_java.jte", tests);
+      once(
+          files,
+          EntityModel.testDirectory(entity.domainPackage()) + name + "RepositoryTests.java",
+          "entity/repository_tests_java.jte",
+          tests);
     }
     if (entity.layer()) {
-      own(files, main + "Mapper.java", "entity/mapper_java.jte", model);
-      once(files, main + "Service.java", "entity/service_java.jte", model);
-      once(files, main + "Controller.java", "entity/controller_java.jte", model);
+      own(files, web + "Mapper.java", "entity/mapper_java.jte", model);
+      once(files, application + "Service.java", "entity/" + ddd + "service_java.jte", model);
+      once(files, web + "Controller.java", "entity/" + ddd + "controller_java.jte", model);
     }
     if (serviceTests) {
-      once(files, test + "ServiceTests.java", "entity/service_tests_java.jte", tests);
+      once(
+          files,
+          EntityModel.testDirectory(entity.applicationPackage()) + name + "ServiceTests.java",
+          "entity/" + ddd + "service_tests_java.jte",
+          tests);
     }
     if (apiTests) {
-      once(files, test + "ApiTests.java", "entity/api_tests_java.jte", tests);
+      once(
+          files,
+          EntityModel.testDirectory(entity.webPackage()) + name + "ApiTests.java",
+          "entity/api_tests_java.jte",
+          tests);
     }
   }
 

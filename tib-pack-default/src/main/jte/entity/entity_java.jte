@@ -1,6 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
-package ${entity.packageName()};
+package ${entity.domainPackage()};
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
