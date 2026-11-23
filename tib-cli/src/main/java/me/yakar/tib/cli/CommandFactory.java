@@ -15,21 +15,33 @@
  */
 package me.yakar.tib.cli;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import picocli.CommandLine;
 import picocli.CommandLine.IFactory;
 
-/** Builds the commands of tib with the version that they print and write into the state file. */
+/**
+ * Builds the commands of tib with the version that they print and write into the state file, and
+ * the answers to the questions that they ask.
+ */
 public final class CommandFactory implements IFactory {
 
   private final TibVersion version;
 
-  /** With the version that the build wrote into the application. */
+  private final InputStream answers;
+
+  /**
+   * With the version that the build wrote into the application, and the answers to its questions
+   * from standard input.
+   */
   public CommandFactory() {
-    this(TibVersion.ofBuild());
+    this(TibVersion.ofBuild(), System.in);
   }
 
-  CommandFactory(TibVersion version) {
+  CommandFactory(TibVersion version, InputStream answers) {
     this.version = version;
+    this.answers = answers;
   }
 
   @Override
@@ -39,6 +51,9 @@ public final class CommandFactory implements IFactory {
     }
     if (cls == GenerationRun.class) {
       return cls.cast(new GenerationRun(version));
+    }
+    if (cls == Questions.class) {
+      return cls.cast(new Questions(new InputStreamReader(answers, Charset.defaultCharset())));
     }
     if (cls == ServiceDirectory.class) {
       return cls.cast(new ServiceDirectory(version));

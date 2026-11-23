@@ -23,6 +23,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   spec. tib writes it once, with a `.dockerignore`; it builds the service with its Gradle wrapper,
   extracts the layers of its jar as Spring Boot does, and runs it on the Java runtime of the
   service, as a user without root rights. Without the option, there is none, as before.
+- `tib init service` without a name and without `--spec` asks for the name, the Java version, the
+  kinds of tests and the Dockerfile, on standard error, and reads the answers from standard input;
+  an empty answer takes the default, and one that tib cannot use is asked again. When the answers
+  end first, it exits with 2, as it did for a command line without the name.
 
 ## [0.4.0] - 2026-11-19
 

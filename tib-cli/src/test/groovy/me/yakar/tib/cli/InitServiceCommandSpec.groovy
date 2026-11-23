@@ -19,6 +19,8 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.cli.Tib.Result
+import me.yakar.tib.spec.Names
+import me.yakar.tib.spec.Spec
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Owner
 import spock.lang.Specification
@@ -31,20 +33,111 @@ class InitServiceCommandSpec extends Specification {
 
   Tib tib
 
+  static final String NAME = 'The name of the service, in lower case words joined with hyphens: '
+  static final String JAVA = 'Its Java version, 21 or 25 [21]: '
+  static final String TESTS = 'The kinds of its tests, separated by commas, or none [unit,integration,api]: '
+  static final String DOCKER = 'A Dockerfile, yes or no [no]: '
+  static final String QUESTIONS = NAME + JAVA + TESTS + DOCKER
+
   def setup() {
     tib = new Tib(dir)
   }
 
-  def "the name or the spec is required"() {
+  def "without the name and the spec, tib asks for them on standard error and reads the answers: #what"() {
+    given:
+    tib.answers = new ByteArrayInputStream(answers.getBytes('UTF-8'))
+
+    when:
+    Result result = tib.init()
+
+    then:
+    result.exitCode() == 0
+    result.out() == "Wrote ${tib.state().files().size() + 1} files to ${tib.root}.\n"
+    result.err() == err
+    Spec spec = tib.state().spec()
+    spec.service() == 'vehicle-service'
+    spec.java() == java
+    spec.tests()*.toString() == tests
+    spec.docker() == docker
+    tib.state().inputs() == []
+
+    where:
+    what                                    | answers                                             | java | tests                          | docker | err
+    'the defaults'                          | 'vehicle-service\n\n\n\n'                           | 21   | ['unit', 'integration', 'api'] | false  | QUESTIONS
+    'answers of their own, with spaces'     | ' vehicle-service \n25\napi, unit\nY\n'             | 25   | ['api', 'unit']                | true   | QUESTIONS
+    'none for the tests'                    | 'vehicle-service\n21\nnone\nno\n'                   | 21   | []                             | false  | QUESTIONS
+    'answers that do not read, asked again' | '\nVehicle Service\nvehicle-service\n17\nx\n25\nunit,e2e\nunit,unit\nunit\nmaybe\nyes\n' | 25 | ['unit'] | true | NAME + "service: '' does not match ${Names.SERVICE}\n" + NAME + "service: 'Vehicle Service' does not match ${Names.SERVICE}\n" + NAME + JAVA + 'java: 17 is not one of 21, 25\n' + JAVA + "'x' is not a number\n" + JAVA + TESTS + "'e2e' is not one of unit, integration, api\n" + TESTS + "tests[1]: 'unit' is already there\n" + TESTS + DOCKER + 'Answer yes or no.\n' + DOCKER
+  }
+
+  def "a dry run that asks prints the diff on standard output, and the questions on standard error"() {
+    given:
+    tib.answers = new ByteArrayInputStream('vehicle-service\n\n\n\n'.getBytes('UTF-8'))
+
+    when:
+    Result result = tib.init('--dry-run')
+
+    then:
+    result.exitCode() == 0
+    result.out().startsWith('--- /dev/null\n+++ b/.gitattributes\n')
+    result.err().startsWith(QUESTIONS)
+    dir.toFile().list().length == 0
+  }
+
+  def "without the name, the spec and any answer, the command line is a mistake"() {
     when:
     Result result = tib.run('init', 'service')
 
     then:
     result.exitCode() == 2
     result.out() == ''
-    result.err().contains('Usage: tib init service ')
+    result.err().startsWith(NAME + '\nThe command line leaves out what tib asks for, and there are no more answers.\nUsage: tib init service ')
     result.err().contains('NAME')
     result.err().contains('--spec=FILE')
+  }
+
+  def "answers that end before the questions do are a mistake of the command line, and nothing is written"() {
+    given:
+    tib.answers = new ByteArrayInputStream('vehicle-service\n25\n'.getBytes('UTF-8'))
+
+    when:
+    Result result = tib.init()
+
+    then:
+    result.exitCode() == 2
+    result.out() == ''
+    result.err().startsWith(NAME + JAVA + TESTS + '\nThe command line leaves out what tib asks for, and there are no more answers.\nUsage: tib init service ')
+    dir.toFile().list().length == 0
+  }
+
+  def "answers that cannot be read are reported"() {
+    given:
+    tib.answers = new InputStream() {
+          @Override
+          int read() {
+            throw new IOException('the terminal is gone')
+          }
+        }
+
+    when:
+    Result result = tib.init()
+
+    then:
+    result.exitCode() == 1
+    result.err() == NAME + 'cannot read the answers: the terminal is gone\n'
+    dir.toFile().list().length == 0
+  }
+
+  def "a directory that is a tib project already is refused before tib asks anything"() {
+    given:
+    tib.init('vehicle-service')
+    tib.answers = new ByteArrayInputStream('other-service\n\n\n\n'.getBytes('UTF-8'))
+
+    when:
+    Result result = tib.init()
+
+    then:
+    result.exitCode() == 1
+    result.err() == "${tib.root} is already a tib project: .tib/state.yaml is there\n"
   }
 
   def "the name and the spec exclude each other"() {

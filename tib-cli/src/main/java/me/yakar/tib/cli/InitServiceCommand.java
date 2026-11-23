@@ -16,11 +16,15 @@
 package me.yakar.tib.cli;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import me.yakar.tib.spec.Spec;
+import me.yakar.tib.spec.SpecException;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
@@ -35,11 +39,14 @@ import picocli.CommandLine.TypeConversionException;
 /** {@code tib init service}. */
 @Command(
     name = "service",
-    description = "Scaffolds a new Spring Boot service, from its name or its spec file.")
+    description = {
+      "Scaffolds a new Spring Boot service, from its name or its spec file.",
+      "Without either, tib asks for what the command line would say, on standard error, and reads"
+          + " the answers from standard input."
+    })
 class InitServiceCommand implements Callable<Integer> {
 
-  @ArgGroup(multiplicity = "1")
-  private Source source;
+  @ArgGroup private Source source;
 
   /** Where the service comes from: its name and what it is made with, or its spec file. */
   static class Source {
@@ -110,12 +117,17 @@ class InitServiceCommand implements Callable<Integer> {
 
   @Mixin private GenerationRun run;
 
+  @Mixin private Questions questions;
+
   @Override
   public Integer call() {
     Tree tree = directory.tree();
     if (tree.exists(State.PATH)) {
       throw new RefusalException(
           tree.root() + " is already a tib project: " + State.PATH + " is there");
+    }
+    if (source == null) {
+      return run.init(asked(), List.of(), tree);
     }
     if (source.spec != null) {
       SpecFile file = SpecFile.read(source.spec, tree);
@@ -125,5 +137,68 @@ class InitServiceCommand implements Callable<Integer> {
         Spec.of(source.named.name, source.named.java, source.named.tests, source.named.docker),
         List.of(),
         tree);
+  }
+
+  /** The spec of the service, from the answers to the questions of tib. */
+  private Spec asked() {
+    String name =
+        questions.ask(
+            "The name of the service, in lower case words joined with hyphens",
+            "",
+            answer -> checked(() -> Spec.of(answer, null, null, null)).service());
+    Spec defaults = Spec.of(name, null, null, null);
+    Integer java =
+        questions.ask(
+            "Its Java version, 21 or 25",
+            String.valueOf(defaults.java()),
+            answer -> checked(() -> Spec.of(name, number(answer), null, null)).java());
+    List<TestKind> tests =
+        questions.ask(
+            "The kinds of its tests, separated by commas, or none",
+            defaults.tests().stream().map(TestKind::toString).collect(Collectors.joining(",")),
+            answer -> checked(() -> Spec.of(name, java, kinds(answer), null)).tests());
+    Boolean docker = questions.ask("A Dockerfile, yes or no", "no", InitServiceCommand::yes);
+    return Spec.of(name, java, tests, docker);
+  }
+
+  /** The spec, or the problems that it has as the reason why the answer does not read. */
+  private static Spec checked(Supplier<Spec> spec) {
+    try {
+      return spec.get();
+    } catch (SpecException e) {
+      throw new IllegalArgumentException(String.join("\n", e.problems()), e);
+    }
+  }
+
+  private static Integer number(String answer) {
+    try {
+      return Integer.valueOf(answer);
+    } catch (NumberFormatException e) {
+      throw new IllegalArgumentException("'" + answer + "' is not a number", e);
+    }
+  }
+
+  /** The kinds of tests that the answer names, separated by commas; none for {@code none}. */
+  private static List<TestKind> kinds(String answer) {
+    if (answer.equals("none")) {
+      return List.of();
+    }
+    List<TestKind> kinds = new ArrayList<>();
+    for (String kind : answer.split(",")) {
+      try {
+        kinds.add(new TestKindConverter().convert(kind.strip()));
+      } catch (TypeConversionException e) {
+        throw new IllegalArgumentException(e.getMessage(), e);
+      }
+    }
+    return kinds;
+  }
+
+  private static Boolean yes(String answer) {
+    return switch (answer.toLowerCase(Locale.ROOT)) {
+      case "y", "yes" -> true;
+      case "n", "no" -> false;
+      default -> throw new IllegalArgumentException("Answer yes or no.");
+    };
   }
 }

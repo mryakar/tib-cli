@@ -61,6 +61,9 @@ class Tib {
 
   private final String version
 
+  /** The answers to the questions of tib: what it reads from standard input. */
+  InputStream answers = new ByteArrayInputStream(new byte[0])
+
   Tib(Path service = null, String version = '1.2.3') {
     this.service = service
     this.root = service?.toAbsolutePath()?.normalize()?.toString()
@@ -111,7 +114,7 @@ class Tib {
 
   /** The commands of tib, with the version of the test. */
   IFactory commands() {
-    new CommandFactory(new TibVersion(version))
+    new CommandFactory(new TibVersion(version), answers)
   }
 
   /** The command line of tib as the application builds it, with the commands of the factory. */

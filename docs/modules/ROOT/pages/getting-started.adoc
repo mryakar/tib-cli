@@ -87,6 +87,22 @@ $ tib init service vehicle-service --docker
 $ docker build -t vehicle-service .
 ----
 
+Without the name and without a spec file, tib asks for what the command line would say: the name,
+the Java version, the kinds of tests and the Dockerfile. An empty answer takes the default in
+brackets, and an answer that tib cannot use is asked again. The questions go to standard error and
+the answers come from standard input, so that a dry run still prints only its diff; when standard
+input ends before the last answer, as in a script, tib writes nothing and exits with 2.
+
+[source,text]
+----
+$ tib init service
+The name of the service, in lower case words joined with hyphens: vehicle-service
+Its Java version, 21 or 25 [21]: 25
+The kinds of its tests, separated by commas, or none [unit,integration,api]: unit,api
+A Dockerfile, yes or no [no]: yes
+Wrote 16 files to /home/you/vehicle-service.
+----
+
 To scaffold the service from a xref:spec.adoc[spec file] instead of its name, which names its
 group, its pack, its Java, its kinds of tests, whether it has a Dockerfile, and its entities, give the file instead of the name:
 
