@@ -95,7 +95,9 @@ class GeneratedServiceSpec extends Specification {
     tests.contains("${classes}Tests".toString()) == spec.tests().contains(TestKind.INTEGRATION)
     tests.any { it.endsWith('ServiceTests') } == spec.tests().contains(TestKind.UNIT)
     tests.any { it.endsWith('ApiTests') } == spec.tests().contains(TestKind.API)
-    tests.any { it.endsWith('RepositoryTests') } == spec.tests().contains(TestKind.INTEGRATION)
+    tests.any {
+      it.endsWith('RepositoryTests') || it.endsWith('PersistenceAdapterTests')
+    } == spec.tests().contains(TestKind.INTEGRATION)
     tests.contains("${project.packagePath()}/ArchitectureTests".toString()) == spec.tests().contains(TestKind.ARCHUNIT)
     tests.each { test ->
       assert Files.exists(dir.resolve("build/classes/java/test/${test}.class")) : test
@@ -124,6 +126,9 @@ class GeneratedServiceSpec extends Specification {
     'corner spec'     | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text)
     // The same corners in the DDD architecture, each entity an aggregate in three packages.
     'corner spec, DDD' | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text.replace('java: 25\n', 'java: 25\narchitecture: ddd\n'))
+    // The same corners in the hexagonal architecture, each domain in plain Java among its ports and
+    // adapters.
+    'corner spec, hexagonal' | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text.replace('java: 25\n', 'java: 25\narchitecture: hexagonal\n'))
   }
 
   /** Builds the image of the service from its Dockerfile, prints the log, and removes the image. */

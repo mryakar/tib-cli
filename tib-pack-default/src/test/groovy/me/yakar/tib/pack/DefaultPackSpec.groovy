@@ -55,6 +55,9 @@ class DefaultPackSpec extends Specification {
   /** The corners of the entity layer in the DDD architecture. */
   static final Spec CORNERS_DDD = SpecReader.parse(CORNER_SPEC.replace('java: 25\n', 'java: 25\narchitecture: ddd\n'))
 
+  /** The corners of the entity layer in the hexagonal architecture. */
+  static final Spec CORNERS_HEXAGONAL = SpecReader.parse(CORNER_SPEC.replace('java: 25\n', 'java: 25\narchitecture: hexagonal\n'))
+
   /**
    * The corner spec as its migrations read back. Two types do not come back as the spec gives them:
    * a BigDecimal with a precision and no scale is NUMERIC(10, 0), which reads back as a Long, and a
@@ -140,6 +143,16 @@ class DefaultPackSpec extends Specification {
     matches('corner-service-ddd', changes)
   }
 
+  def "generates the corners of the entity layer in the hexagonal architecture as the snapshot says"() {
+    when:
+    List<Change> changes = corners(dir, CORNERS_HEXAGONAL).changes()
+
+    then:
+    CORNERS_HEXAGONAL.architecture() == Architecture.HEXAGONAL
+    write('corner-service-hexagonal', changes)
+    matches('corner-service-hexagonal', changes)
+  }
+
   def "a machine in Turkish, where the upper case of i is not I, generates the same services"() {
     given:
     Locale locale = Locale.default
@@ -182,6 +195,7 @@ class DefaultPackSpec extends Specification {
     'vehicle-service' | VEHICLES
     'corner-service'  | CORNERS
     'corner-service-ddd' | CORNERS_DDD
+    'corner-service-hexagonal' | CORNERS_HEXAGONAL
   }
 
   def "the first line of every generated file states its owner: #name"() {
@@ -199,6 +213,7 @@ class DefaultPackSpec extends Specification {
     'vehicle-service' | VEHICLES
     'corner-service'  | CORNERS
     'corner-service-ddd' | CORNERS_DDD
+    'corner-service-hexagonal' | CORNERS_HEXAGONAL
   }
 
   def "the notes for agents name every header: #header"() {
@@ -232,6 +247,7 @@ class DefaultPackSpec extends Specification {
     'vehicle-service' | VEHICLES
     'corner-service'  | CORNERS
     'corner-service-ddd' | CORNERS_DDD
+    'corner-service-hexagonal' | CORNERS_HEXAGONAL
   }
 
   def "a second run on the generated service changes nothing: #name"() {
@@ -255,6 +271,7 @@ class DefaultPackSpec extends Specification {
     'vehicle-service' | VEHICLES | false
     'corner-service'  | CORNERS  | true
     'corner-service-ddd' | CORNERS_DDD | true
+    'corner-service-hexagonal' | CORNERS_HEXAGONAL | true
   }
 
   def "the migrations of the service read back into its spec: #name"() {

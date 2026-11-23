@@ -1,17 +1,22 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
-package ${entity.domainPackage()};
+package ${entity.persistencePackage()};
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+@if(entity.hexagonal())
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+@else
 import jakarta.persistence.MappedSuperclass;
+@endif
 @if(entity.idSequence())
 import jakarta.persistence.SequenceGenerator;
 @endif
 @for(var relation : entity.relations())
-@if(entity.ddd())
+@if(entity.refersById())
 @if(relation.target().uuidId())
 import java.util.UUID;
 @endif
@@ -36,15 +41,25 @@ import java.time.Instant;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 @endif
-@if(!entity.ddd())
+@if(!entity.refersById())
 @for(var target : entity.otherTargets())
 import ${target.packageName()}.${target.name()};
 @endfor
-@endif
+@endif<%-- keeps the blank line below --%>
 
+@if(entity.hexagonal())
+/**
+ * The table ${entity.table()}, its columns as the spec names them; {@link ${entity.name()}PersistenceMapper} maps it to and
+ * from the domain.
+ */
+@Entity
+@Table(name = "${entity.table()}")
+public class ${entity.jpaEntity()} {
+@else
 /** The columns of ${entity.table()}, as the spec names them; {@link ${entity.name()}} is the entity. */
 @MappedSuperclass
 public abstract class ${entity.name()}Generated {
+@endif<%-- keeps the blank line below --%>
 
   @for(var annotation : entity.idAnnotations())
   ${annotation}
@@ -61,7 +76,7 @@ public abstract class ${entity.name()}Generated {
 
   @endfor
   @for(var relation : entity.relations())
-  @if(entity.ddd())
+  @if(entity.refersById())
   ${relation.idColumn()}
   private ${relation.target().idType()} ${relation.idField()};
   @else
@@ -100,7 +115,7 @@ public abstract class ${entity.name()}Generated {
   @endfor
   @for(var relation : entity.relations())<%-- keeps the blank line below --%>
 
-  @if(entity.ddd())
+  @if(entity.refersById())
   public ${relation.target().idType()} get${relation.idProperty()}() {
     return ${relation.idField()};
   }
@@ -123,9 +138,21 @@ public abstract class ${entity.name()}Generated {
   public Instant getCreatedAt() {
     return createdAt;
   }
+  @if(entity.hexagonal())<%-- keeps the blank line below --%>
+
+  public void setCreatedAt(Instant createdAt) {
+    this.createdAt = createdAt;
+  }
+  @endif<%-- keeps the blank line below --%>
 
   public Instant getUpdatedAt() {
     return updatedAt;
   }
+  @if(entity.hexagonal())<%-- keeps the blank line below --%>
+
+  public void setUpdatedAt(Instant updatedAt) {
+    this.updatedAt = updatedAt;
+  }
+  @endif
   @endif
 }

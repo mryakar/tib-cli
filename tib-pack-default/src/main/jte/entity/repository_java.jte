@@ -1,10 +1,10 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
-package ${entity.domainPackage()};
+package ${entity.persistencePackage()};
 
 @if(entity.uuidId())
 import java.util.UUID;
 @endif
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ${entity.name()}Repository extends JpaRepository<${entity.name()}, ${entity.idType()}> {}
+public interface ${entity.repository()} extends JpaRepository<${entity.jpaEntity()}, ${entity.idType()}> {}

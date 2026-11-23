@@ -9,7 +9,7 @@
   @BeforeEach
   void saveWhat${tests.entity().article()}${tests.entity().name()}Needs() {
     @for(var target : tests.requiredTargets())
-    ${target.variable()} = ${target.plural()}.saveAndFlush(${tests.sample(target)});
+    ${target.variable()} = ${target.plural()}.${tests.save()}(${tests.sample(target)});
     @endfor
   }
 @endif

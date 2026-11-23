@@ -68,7 +68,7 @@ class InitGeneratorSpec extends Specification {
     'java: 25\n' | 25
   }
 
-  def "a DDD service gets the rules of DDD to check, and the notes tell of its packages: #architecture"() {
+  def "a service gets the rules of its architecture to check, git ignores no package of it, and the notes tell of its packages: #architecture"() {
     given:
     Tree tree = Tree.at(dir)
 
@@ -82,15 +82,23 @@ class InitGeneratorSpec extends Specification {
 
     then:
     rules.contains('void theDomainOfAnAggregateDoesNotUseTheDomainOfAnother()') == ddd
-    rules.contains('void controllersUseServicesAndNotRepositories()') == !ddd
+    rules.contains('void theInboundAdaptersDoNotUseTheOutboundOnes()') == hexagonal
+    rules.contains('void controllersUseServicesAndNotRepositories()') == (!ddd && !hexagonal)
     agents.contains('The service is arranged for DDD: every entity `X` is an aggregate, in three packages.') == ddd
+    agents.contains('The service is arranged in the hexagonal architecture, of ports and adapters:') == hexagonal
     agents.contains('with ArchUnit: the domain of an entity uses neither its application nor its web, the application does\nnot use the web,') == ddd
-    agents.contains('with ArchUnit: the controller of an entity over its service over its\nrepository, and no cycle') == !ddd
+    agents.contains('with ArchUnit: the domain knows neither JPA nor Spring, the application does\nnot use the adapters,') == hexagonal
+    agents.contains('with ArchUnit: the controller of an entity over its service over its\nrepository, and no cycle') == (!ddd && !hexagonal)
+    agents.contains('`XGenerated`, `XDto` and `XMapper`\nare tib\'s; `X`, `XRepository`, `XService`, `XController` and the migration are yours.') == !hexagonal
+    files['.gitignore'].contains('\nout/\n') == !hexagonal
+    files['.gitignore'].contains('\nbuild/\n/out/\n.idea/\n') == hexagonal
+    agents.contains('`XGenerated`, `XEntity`, `XDto`,\n`XWebMapper` and `XPersistenceMapper` are tib\'s; `X`, `XUseCase`, `XStore`, `XService`,\n`XController`, `XJpaRepository`, `XPersistenceAdapter` and the migration are yours.') == hexagonal
 
     where:
-    architecture | ddd
-    'anemic'     | false
-    'ddd'        | true
+    architecture | ddd   | hexagonal
+    'anemic'     | false | false
+    'ddd'        | true  | false
+    'hexagonal'  | false | true
   }
 
   def "a service with the test of its architecture gets ArchitectureTests and ArchUnit, and the notes tell of it: #tests"() {

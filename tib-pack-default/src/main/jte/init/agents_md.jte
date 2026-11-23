@@ -3,6 +3,7 @@
 @param Project project
 @param DefaultPack pack
 @param me.yakar.tib.pack.TestsModel tests
+!{boolean hexagonal = project.architecture() == me.yakar.tib.spec.Architecture.HEXAGONAL;}
 # ${project.name()}
 
 A Spring Boot ${pack.bootVersion()} service on Java ${project.java()}, with JPA, PostgreSQL, Flyway and Testcontainers,
@@ -50,8 +51,24 @@ its identifier, as `depotId`, never by the entity itself. The domain uses neithe
 nor the web, and the application does not use the web.
 
 @endif
-For an entity `X`, its code goes in `X`, never in `XGenerated`: `XGenerated`, `XDto` and `XMapper`
-are tib's; `X`, `XRepository`, `XService`, `XController` and the migration are yours@if(tests.any()), and so are
+@if(hexagonal)
+The service is arranged in the hexagonal architecture, of ports and adapters: every entity `X` has
+a domain in plain Java, which knows neither JPA nor Spring, in the middle of its adapters.
+`x.domain` has `X` and `XGenerated`; `x.application` has `XService`, the use cases on the domain,
+which throw `NotFoundException` for one that is not there, and the ports: `x.application.port.in`
+has `XUseCase`, which the inbound adapters call, and `x.application.port.out` has `XStore`, which
+an outbound adapter implements. `x.adapter.in.web` has `XController`, `XDto` and `XWebMapper`,
+which maps the domain to and from its DTO; `x.adapter.out.persistence` has `XEntity`, the table as
+JPA maps it, `XJpaRepository`, `XPersistenceMapper`, which maps the domain to and from `XEntity`,
+and `XPersistenceAdapter`, the `XStore` on the table. An entity refers to another by its
+identifier, as `depotId`, never by the entity itself. The application does not use the adapters,
+and an inbound adapter does not use an outbound one, nor the reverse.
+
+@endif
+For an entity `X`, its code goes in `X`, never in `XGenerated`: @if(hexagonal)`XGenerated`, `XEntity`, `XDto`,
+`XWebMapper` and `XPersistenceMapper` are tib's; `X`, `XUseCase`, `XStore`, `XService`,
+`XController`, `XJpaRepository`, `XPersistenceAdapter`@else`XGenerated`, `XDto` and `XMapper`
+are tib's; `X`, `XRepository`, `XService`, `XController`@endif and the migration are yours@if(tests.any()), and so are
 their tests: ${tests.entityTests()}. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
 as in `XSamples.x().name("Other").build()`.@else.@endif `ConflictHandler`, in the base package, answers a

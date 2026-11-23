@@ -5,22 +5,22 @@ package ${entity.webPackage()};
 ${EntityModel.importOf(entity.webPackage(), entity.domainPackage(), entity.name())}
 
 import org.springframework.stereotype.Component;
-@if(!entity.ddd())
+@if(!entity.refersById())
 @for(var target : entity.otherTargets())
 import ${target.packageName()}.${target.name()}Repository;
 @endfor
 @endif
 
-/** Between the entity and its DTO@if(!entity.relations().isEmpty() && !entity.ddd()); a relation is resolved by the identifier of its target@elseif(!entity.relations().isEmpty()); a relation is the identifier of its target in both@endif. */
+/** Between the entity and its DTO@if(!entity.relations().isEmpty() && !entity.refersById()); a relation is resolved by the identifier of its target@elseif(!entity.relations().isEmpty()); a relation is the identifier of its target in both@endif. */
 @Component
-public class ${entity.name()}Mapper {
+public class ${entity.webMapper()} {
 
-  @if(!entity.targets().isEmpty() && !entity.ddd())
+  @if(!entity.targets().isEmpty() && !entity.refersById())
   @for(var target : entity.targets())
   private final ${target.name()}Repository ${target.plural()};
   @endfor<%-- keeps the blank line below --%>
 
-  public ${entity.name()}Mapper(${entity.repositoryParameters()}) {
+  public ${entity.webMapper()}(${entity.repositoryParameters()}) {
     @for(var target : entity.targets())
     this.${target.plural()} = ${target.plural()};
     @endfor
@@ -37,7 +37,7 @@ public class ${entity.name()}Mapper {
     ${entity.variable()}.set${field.property()}(dto.${field.name()}());
     @endfor
     @for(var relation : entity.relations())
-    @if(entity.ddd())
+    @if(entity.refersById())
     ${entity.variable()}.set${relation.idProperty()}(dto.${relation.idField()}());
     @else
     ${entity.variable()}.set${relation.property()}(dto.${relation.idField()}() == null ? null : ${relation.target().plural()}.getReferenceById(dto.${relation.idField()}()));

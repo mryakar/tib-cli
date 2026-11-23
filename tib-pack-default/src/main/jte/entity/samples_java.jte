@@ -22,7 +22,7 @@ ${EntityModel.importOf(entity.packageName(), entity.domainPackage(), name)}
 @if(entity.dto())
 ${EntityModel.importOf(entity.packageName(), entity.webPackage(), name + "Dto")}
 @endif
-@if(!entity.ddd())
+@if(!entity.refersById())
 @for(var target : entity.otherTargets())
 import ${target.packageName()}.${target.name()};
 @endfor
@@ -36,12 +36,12 @@ public final class ${name}Samples {
 
   private ${name}Samples() {}
 
-  /** ${entity.article()} ${entity.variable()} with the first sample values@if(!entity.requiredRelations().isEmpty() && entity.ddd()), and the identifiers of the saved entities it needs@elseif(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
+  /** ${entity.article()} ${entity.variable()} with the first sample values@if(!entity.requiredRelations().isEmpty() && entity.refersById()), and the identifiers of the saved entities it needs@elseif(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
   public static ${builder} ${entity.variable()}(${tests.requiredParameters()}) {
     return new ${builder}()${tests.sampleValues(1)};
   }
 
-  /** ${entity.article()} ${entity.variable()} with the second sample values@if(!entity.requiredRelations().isEmpty() && entity.ddd()), and the identifiers of the saved entities it needs@elseif(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
+  /** ${entity.article()} ${entity.variable()} with the second sample values@if(!entity.requiredRelations().isEmpty() && entity.refersById()), and the identifiers of the saved entities it needs@elseif(!entity.requiredRelations().isEmpty()), and the saved entities it needs@endif. */
   public static ${builder} other${name}(${tests.requiredParameters()}) {
     return new ${builder}()${tests.sampleValues(2)};
   }
@@ -73,7 +73,7 @@ public final class ${name}Samples {
       ${entity.variable()}.set${field.property()}(this.${field.name()});
       @endfor
       @for(var relation : entity.relations())
-      @if(entity.ddd())
+      @if(entity.refersById())
       ${entity.variable()}.set${relation.idProperty()}(this.${relation.idField()});
       @else
       ${entity.variable()}.set${relation.property()}(this.${relation.field()});

@@ -50,7 +50,7 @@ class ${entity.name()}RepositoryTests {
     assertThat(found.get${field.property()}()).isEqualTo(${entity.variable()}.get${field.property()}());
     @endfor
     @for(var relation : entity.requiredRelations())
-    @if(entity.ddd())
+    @if(entity.refersById())
     assertThat(found.get${relation.idProperty()}()).isEqualTo(${relation.target().variable()}.getId());
     @else
     assertThat(found.get${relation.property()}().getId()).isEqualTo(${relation.target().variable()}.getId());

@@ -83,6 +83,35 @@ entities:
     '[]'                       | []
   }
 
+  def "in the hexagonal architecture, an entity gets the tests of the kinds of the spec where they test: #tests"() {
+    given:
+    Tree tree = Tree.at(dir)
+    Project project = new Project(SpecReader.parse("tib: 1\nservice: s\narchitecture: hexagonal\ntests: $tests\nentities:\n  - name: A\n  - name: B\n    options: { dto: false }\n"))
+
+    when:
+    new EntityGenerator().generate(project, tree)
+    List<String> written = tree.changes()*.path().findAll {
+      it.startsWith('src/test/')
+    }.collect {
+      it - 'src/test/java/com/example/s/' - '.java'
+    }
+
+    then:
+    written.toSorted() == expected.toSorted()
+
+    where:
+    tests                      | expected
+    '[unit, integration, api]' | [
+      'a/adapter/in/web/AApiTests',
+      'a/adapter/out/persistence/APersistenceAdapterTests',
+      'a/ASamples',
+      'a/application/AServiceTests',
+      'b/adapter/out/persistence/BPersistenceAdapterTests',
+      'b/BSamples'
+    ]
+    '[unit]'                   | ['a/ASamples', 'a/application/AServiceTests']
+  }
+
   def "the migration of a new table comes after the migrations there: #existing"() {
     given:
     existing.each { writeMigration(it) }
