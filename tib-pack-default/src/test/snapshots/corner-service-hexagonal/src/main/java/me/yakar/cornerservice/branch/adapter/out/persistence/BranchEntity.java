@@ -1,0 +1,176 @@
+// Written by tib on every run. Do not edit: your changes would be lost.
+package me.yakar.cornerservice.branch.adapter.out.persistence;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.SequenceGenerator;
+import jakarta.persistence.Table;
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.UUID;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
+
+/**
+ * The table BRANCH, its columns as the spec names them; {@link BranchPersistenceMapper} maps it to
+ * and from the domain.
+ */
+@Entity
+@Table(name = "BRANCH")
+public class BranchEntity {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "branch")
+  @SequenceGenerator(name = "branch", sequenceName = "BRANCH_SEQ", allocationSize = 50)
+  @Column(name = "BRANCH_KEY")
+  private Long id;
+
+  @Column(name = "CODE", nullable = false, length = 255)
+  private String code;
+
+  @Column(name = "COUNT")
+  private Long count;
+
+  @Column(name = "OPEN")
+  private Boolean open;
+
+  @Column(name = "OPENED_AT")
+  private LocalDateTime openedAt;
+
+  @Column(name = "SEEN_AT")
+  private Instant seenAt;
+
+  @Column(name = "TOKEN")
+  private UUID token;
+
+  @Column(name = "RATIO")
+  private BigDecimal ratio;
+
+  @Column(name = "AMOUNT", precision = 10)
+  private BigDecimal amount;
+
+  @JdbcTypeCode(SqlTypes.LONGVARCHAR)
+  @Column(name = "MEMO")
+  private String memo;
+
+  @Column(name = "PARENT_ID", unique = true)
+  private Long parentId;
+
+  @CreationTimestamp
+  @Column(name = "CREATED_AT", nullable = false, updatable = false)
+  private Instant createdAt;
+
+  @UpdateTimestamp
+  @Column(name = "UPDATED_AT", nullable = false)
+  private Instant updatedAt;
+
+  public Long getId() {
+    return id;
+  }
+
+  public void setId(Long id) {
+    this.id = id;
+  }
+
+  public String getCode() {
+    return code;
+  }
+
+  public void setCode(String code) {
+    this.code = code;
+  }
+
+  public Long getCount() {
+    return count;
+  }
+
+  public void setCount(Long count) {
+    this.count = count;
+  }
+
+  public Boolean getOpen() {
+    return open;
+  }
+
+  public void setOpen(Boolean open) {
+    this.open = open;
+  }
+
+  public LocalDateTime getOpenedAt() {
+    return openedAt;
+  }
+
+  public void setOpenedAt(LocalDateTime openedAt) {
+    this.openedAt = openedAt;
+  }
+
+  public Instant getSeenAt() {
+    return seenAt;
+  }
+
+  public void setSeenAt(Instant seenAt) {
+    this.seenAt = seenAt;
+  }
+
+  public UUID getToken() {
+    return token;
+  }
+
+  public void setToken(UUID token) {
+    this.token = token;
+  }
+
+  public BigDecimal getRatio() {
+    return ratio;
+  }
+
+  public void setRatio(BigDecimal ratio) {
+    this.ratio = ratio;
+  }
+
+  public BigDecimal getAmount() {
+    return amount;
+  }
+
+  public void setAmount(BigDecimal amount) {
+    this.amount = amount;
+  }
+
+  public String getMemo() {
+    return memo;
+  }
+
+  public void setMemo(String memo) {
+    this.memo = memo;
+  }
+
+  public Long getParentId() {
+    return parentId;
+  }
+
+  public void setParentId(Long parentId) {
+    this.parentId = parentId;
+  }
+
+  public Instant getCreatedAt() {
+    return createdAt;
+  }
+
+  public void setCreatedAt(Instant createdAt) {
+    this.createdAt = createdAt;
+  }
+
+  public Instant getUpdatedAt() {
+    return updatedAt;
+  }
+
+  public void setUpdatedAt(Instant updatedAt) {
+    this.updatedAt = updatedAt;
+  }
+}

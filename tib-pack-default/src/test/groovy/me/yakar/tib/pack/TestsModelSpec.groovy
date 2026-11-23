@@ -42,4 +42,18 @@ class TestsModelSpec extends Specification {
     '[archunit]'                | false | false     | null
     '[unit, archunit]'          | true  | false     | '`XServiceTests` with the repository and the mapper mocked'
   }
+
+  def "in the hexagonal architecture, the tests #tests test the persistence adapter and the service with the store"() {
+    given:
+    TestsModel model = new TestsModel(new Project(SpecReader.parse("tib: 1\nservice: s\narchitecture: hexagonal\ntests: $tests\n")))
+
+    expect:
+    model.entityTests() == words
+
+    where:
+    tests                       | words
+    '[unit, integration, api]'  | '`XPersistenceAdapterTests` and `XApiTests` against PostgreSQL in a container, and\n`XServiceTests` with the store mocked'
+    '[integration]'             | '`XPersistenceAdapterTests` against PostgreSQL in a container'
+    '[unit]'                    | '`XServiceTests` with the store mocked'
+  }
 }

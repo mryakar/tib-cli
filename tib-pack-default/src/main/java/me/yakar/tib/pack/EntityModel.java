@@ -105,30 +105,90 @@ public final class EntityModel {
     return project.basePackage() + "." + entity.packageSegment();
   }
 
-  /** Whether the service is of the DDD architecture: the entity an aggregate in three packages. */
-  public boolean ddd() {
-    return project.architecture() == Architecture.DDD;
+  /**
+   * Whether the service is of the hexagonal architecture: the domain of the entity in plain Java,
+   * its application with its ports, and its adapters.
+   */
+  public boolean hexagonal() {
+    return project.architecture() == Architecture.HEXAGONAL;
   }
 
-  /** The package of the entity and its repository: its domain, or the package of the entity. */
+  /**
+   * Whether the entity refers to another by the identifier of its target, a column of its own, and
+   * not by a relation of JPA: in DDD and in the hexagonal architecture.
+   */
+  public boolean refersById() {
+    return project.architecture() != Architecture.ANEMIC;
+  }
+
+  /**
+   * The package of the entity, and of its repository but in the hexagonal architecture: its domain,
+   * or the package of the entity.
+   */
   public String domainPackage() {
-    return layer("domain");
+    return layer("domain", "domain");
   }
 
   /** The package of the service: its application, or the package of the entity. */
   public String applicationPackage() {
-    return layer("application");
+    return layer("application", "application");
   }
 
   /**
-   * The package of the controller, the DTO and the mapper: its web, or the package of the entity.
+   * The package of the controller, the DTO and the mapper: its web, its inbound adapter of the web,
+   * or the package of the entity.
    */
   public String webPackage() {
-    return layer("web");
+    return layer("web", "adapter.in.web");
   }
 
-  private String layer(String name) {
-    return ddd() ? packageName() + "." + name : packageName();
+  /**
+   * The package of the class that maps the table, and of its repository: the outbound adapter of
+   * the persistence in the hexagonal architecture, else the package of the entity.
+   */
+  public String persistencePackage() {
+    return hexagonal() ? packageName() + ".adapter.out.persistence" : domainPackage();
+  }
+
+  /** The package of the use cases, the inbound port of the hexagonal architecture. */
+  public String useCasePackage() {
+    return applicationPackage() + ".port.in";
+  }
+
+  /** The package of the store, the outbound port of the hexagonal architecture. */
+  public String storePackage() {
+    return applicationPackage() + ".port.out";
+  }
+
+  /** The package of a layer: the one of DDD, the one of the hexagonal architecture, or none. */
+  private String layer(String ddd, String hexagonal) {
+    return switch (project.architecture()) {
+      case ANEMIC -> packageName();
+      case DDD -> packageName() + "." + ddd;
+      case HEXAGONAL -> packageName() + "." + hexagonal;
+    };
+  }
+
+  /**
+   * The class that JPA maps to the table: the entity, or its {@code Entity} in the hexagonal
+   * architecture, whose domain knows no JPA.
+   */
+  public String jpaEntity() {
+    return hexagonal() ? name() + "Entity" : name();
+  }
+
+  /**
+   * The repository of the JPA entity: {@code VehicleRepository}, or {@code VehicleJpaRepository}.
+   */
+  public String repository() {
+    return name() + (hexagonal() ? "JpaRepository" : "Repository");
+  }
+
+  /**
+   * The mapper between the entity and its DTO: {@code VehicleMapper}, or {@code VehicleWebMapper}.
+   */
+  public String webMapper() {
+    return name() + (hexagonal() ? "WebMapper" : "Mapper");
   }
 
   /**
@@ -309,7 +369,8 @@ public final class EntityModel {
 
   /**
    * The arguments of the DTO of an entity, in the order of its components; a relation is the
-   * identifier of its target, or null: of the entity it refers to, or the one it keeps for DDD.
+   * identifier of its target, or null: of the entity it refers to, or the one it keeps for DDD and
+   * the hexagonal architecture.
    */
   public String dtoArguments() {
     String variable = variable();
@@ -321,7 +382,7 @@ public final class EntityModel {
     for (RelationModel relation : relations) {
       String target = variable + ".get" + relation.property() + "()";
       arguments.add(
-          ddd()
+          refersById()
               ? variable + ".get" + relation.idProperty() + "()"
               : target + " == null ? null : " + target + ".getId()");
     }

@@ -44,12 +44,19 @@ public final class TestsModel {
 
   /** The rules that the test of the architecture checks, in words, for the notes for agents. */
   public String rules() {
-    return project.architecture() == Architecture.DDD
-        ? "the domain of an entity uses neither its application nor its web, the application does"
-            + "\nnot use the web, the domain of an aggregate does not use the domain of another, and"
-            + "\nthere is no cycle between the packages of the entities"
-        : "the controller of an entity over its service over its\nrepository, and no cycle between"
-            + " the packages of the entities";
+    return switch (project.architecture()) {
+      case ANEMIC ->
+          "the controller of an entity over its service over its\nrepository, and no cycle between"
+              + " the packages of the entities";
+      case DDD ->
+          "the domain of an entity uses neither its application nor its web, the application does"
+              + "\nnot use the web, the domain of an aggregate does not use the domain of another, and"
+              + "\nthere is no cycle between the packages of the entities";
+      case HEXAGONAL ->
+          "the domain knows neither JPA nor Spring, the application does"
+              + "\nnot use the adapters, an inbound adapter does not use an outbound one, nor the reverse, and"
+              + "\nthere is no cycle between the packages of the entities";
+    };
   }
 
   /** Whether the service has tests that start PostgreSQL in a container. */
@@ -60,18 +67,23 @@ public final class TestsModel {
   /**
    * The tests of an entity {@code X} in words, as in {@code `XServiceTests` with the repository and
    * the mapper mocked}; the ones against the database come first, and a line feed comes before the
-   * unit tests when there are both.
+   * unit tests when there are both. In the hexagonal architecture, the store takes the place of the
+   * repository.
    */
   public String entityTests() {
+    boolean hexagonal = project.architecture() == Architecture.HEXAGONAL;
     List<String> container = new ArrayList<>();
     if (project.tests(TestKind.INTEGRATION)) {
-      container.add("`XRepositoryTests`");
+      container.add(hexagonal ? "`XPersistenceAdapterTests`" : "`XRepositoryTests`");
     }
     if (project.tests(TestKind.API)) {
       container.add("`XApiTests`");
     }
     String database = String.join(" and ", container) + " against PostgreSQL in a container";
-    String unit = "`XServiceTests` with the repository and the mapper mocked";
+    String unit =
+        hexagonal
+            ? "`XServiceTests` with the store mocked"
+            : "`XServiceTests` with the repository and the mapper mocked";
     if (!project.tests(TestKind.UNIT)) {
       return database;
     }

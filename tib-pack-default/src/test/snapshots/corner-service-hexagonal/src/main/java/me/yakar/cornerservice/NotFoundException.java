@@ -1,0 +1,13 @@
+// Written by tib with the first entity of the service; it is yours from then on.
+package me.yakar.cornerservice;
+
+/**
+ * What a use case throws for an entity that is not there; {@link ConflictHandler} answers it with
+ * 404 Not Found, so that the services know no HTTP.
+ */
+public class NotFoundException extends RuntimeException {
+
+  public NotFoundException(String message) {
+    super(message);
+  }
+}

@@ -12,10 +12,13 @@ import ${entity.basePackage()}.TestcontainersConfiguration;
 ${EntityModel.importOf(entity.webPackage(), entity.packageName(), entity.name() + "Samples")}
 @for(var target : tests.requiredTargets())
 ${EntityModel.importOf(entity.webPackage(), target.domainPackage(), target.name())}
-${EntityModel.importOf(entity.webPackage(), target.domainPackage(), target.name() + "Repository")}
+${EntityModel.importOf(entity.webPackage(), target.persistencePackage(), target.repository())}
+@if(entity.hexagonal())
+import ${target.storePackage()}.${target.name()}Store;
+@endif
 ${EntityModel.importOf(entity.webPackage(), target.packageName(), target.name() + "Samples")}
 @endfor
-${EntityModel.importOf(entity.webPackage(), entity.domainPackage(), entity.name() + "Repository")}
+${EntityModel.importOf(entity.webPackage(), entity.persistencePackage(), entity.repository())}
 @if(entity.uuidId())
 import java.util.UUID;
 @endif
@@ -42,17 +45,20 @@ import tools.jackson.databind.JsonNode;
 class ${entity.name()}ApiTests {
 
   @Autowired private TestRestTemplate http;
-  @Autowired private ${entity.name()}Repository ${entity.plural()};
+  @Autowired private ${entity.repository()} ${tests.repositoryVariable(entity)};
   @for(var target : tests.requiredTargets())
-  @Autowired private ${target.name()}Repository ${target.plural()};
+  @if(entity.hexagonal())
+  @Autowired private ${target.name()}Store ${target.plural()};
+  @endif
+  @Autowired private ${target.repository()} ${tests.repositoryVariable(target)};
   @endfor
   @template.entity.required_targets(tests = tests)
 
   @AfterEach
   void deleteAll() {
-    ${entity.plural()}.deleteAll();
+    ${tests.repositoryVariable(entity)}.deleteAll();
     @for(var target : tests.requiredTargets().reversed())
-    ${target.plural()}.deleteAll();
+    ${tests.repositoryVariable(target)}.deleteAll();
     @endfor
   }
 

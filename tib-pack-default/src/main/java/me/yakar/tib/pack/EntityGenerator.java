@@ -67,8 +67,8 @@ final class EntityGenerator implements Generator {
     // Written here and not by init: only a service with an API needs it.
     if (models.values().stream().anyMatch(EntityModel::layer)) {
       firstEntity(files, project, "ConflictHandler", "entity/conflict_handler_java.jte");
-      // With DDD, the services throw it, and the handler answers it: they know no HTTP.
-      if (project.architecture() == Architecture.DDD) {
+      // The services of DDD and hexagonal throw it, and the handler answers it: they know no HTTP.
+      if (project.architecture() != Architecture.ANEMIC) {
         firstEntity(files, project, "NotFoundException", "entity/not_found_exception_java.jte");
       }
     }
@@ -95,13 +95,41 @@ final class EntityGenerator implements Generator {
     String domain = EntityModel.directory(entity.domainPackage()) + name;
     String application = EntityModel.directory(entity.applicationPackage()) + name;
     String web = EntityModel.directory(entity.webPackage()) + name;
-    // DDD has a service of its own: the use cases of the domain, which know no DTO.
-    String ddd = entity.ddd() ? "ddd_" : "";
+    String persistence = EntityModel.directory(entity.persistencePackage()) + name;
+    // DDD and hexagonal have services of their own: the use cases of the domain, which know no DTO.
+    String architecture = architecture(project);
     Map<String, Object> model = Map.of("entity", entity);
     Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity));
-    own(files, domain + "Generated.java", "entity/generated_java.jte", model);
-    once(files, domain + ".java", "entity/entity_java.jte", model);
-    once(files, domain + "Repository.java", "entity/repository_java.jte", model);
+    if (entity.hexagonal()) {
+      // The domain knows no JPA: the table is mapped by a class of the persistence adapter, which
+      // keeps the domain through the store, the port of the application.
+      own(files, domain + "Generated.java", "entity/hexagonal_domain_generated_java.jte", model);
+      once(files, domain + ".java", "entity/hexagonal_domain_java.jte", model);
+      own(files, persistence + "Entity.java", "entity/generated_java.jte", model);
+      own(
+          files,
+          persistence + "PersistenceMapper.java",
+          "entity/hexagonal_persistence_mapper_java.jte",
+          model);
+      once(
+          files,
+          EntityModel.directory(entity.storePackage()) + name + "Store.java",
+          "entity/hexagonal_store_java.jte",
+          model);
+      once(
+          files,
+          persistence + "PersistenceAdapter.java",
+          "entity/hexagonal_persistence_adapter_java.jte",
+          model);
+    } else {
+      own(files, domain + "Generated.java", "entity/generated_java.jte", model);
+      once(files, domain + ".java", "entity/entity_java.jte", model);
+    }
+    once(
+        files,
+        EntityModel.directory(entity.persistencePackage()) + "/" + entity.repository() + ".java",
+        "entity/repository_java.jte",
+        model);
     if (entity.dto()) {
       own(files, web + "Dto.java", "entity/dto_java.jte", model);
     }
@@ -120,7 +148,15 @@ final class EntityGenerator implements Generator {
           "entity/samples_java.jte",
           tests);
     }
-    if (repositoryTests) {
+    if (repositoryTests && entity.hexagonal()) {
+      once(
+          files,
+          EntityModel.testDirectory(entity.persistencePackage())
+              + name
+              + "PersistenceAdapterTests.java",
+          "entity/hexagonal_persistence_adapter_tests_java.jte",
+          tests);
+    } else if (repositoryTests) {
       once(
           files,
           EntityModel.testDirectory(entity.domainPackage()) + name + "RepositoryTests.java",
@@ -128,15 +164,30 @@ final class EntityGenerator implements Generator {
           tests);
     }
     if (entity.layer()) {
-      own(files, web + "Mapper.java", "entity/mapper_java.jte", model);
-      once(files, application + "Service.java", "entity/" + ddd + "service_java.jte", model);
-      once(files, web + "Controller.java", "entity/" + ddd + "controller_java.jte", model);
+      own(
+          files,
+          EntityModel.directory(entity.webPackage()) + "/" + entity.webMapper() + ".java",
+          "entity/mapper_java.jte",
+          model);
+      if (entity.hexagonal()) {
+        once(
+            files,
+            EntityModel.directory(entity.useCasePackage()) + name + "UseCase.java",
+            "entity/hexagonal_use_case_java.jte",
+            model);
+      }
+      once(
+          files,
+          application + "Service.java",
+          "entity/" + architecture + "service_java.jte",
+          model);
+      once(files, web + "Controller.java", "entity/" + architecture + "controller_java.jte", model);
     }
     if (serviceTests) {
       once(
           files,
           EntityModel.testDirectory(entity.applicationPackage()) + name + "ServiceTests.java",
-          "entity/" + ddd + "service_tests_java.jte",
+          "entity/" + architecture + "service_tests_java.jte",
           tests);
     }
     if (apiTests) {
@@ -146,6 +197,18 @@ final class EntityGenerator implements Generator {
           "entity/api_tests_java.jte",
           tests);
     }
+  }
+
+  /**
+   * The prefix of the templates of the service, its tests and the controller in the architecture of
+   * the project: none for the anemic one, whose service maps the entity to and from its DTO.
+   */
+  private static String architecture(Project project) {
+    return switch (project.architecture()) {
+      case ANEMIC -> "";
+      case DDD -> "ddd_";
+      case HEXAGONAL -> "hexagonal_";
+    };
   }
 
   /** Writes a file of tib's: on every run. */
