@@ -2,7 +2,7 @@
 @import me.yakar.tib.pack.EntityTestsModel
 @param EntityTestsModel tests
 !{EntityModel entity = tests.entity();}
-package ${entity.packageName()};
+package ${entity.domainPackage()};
 
 import static org.assertj.core.api.Assertions.assertThat;
 @if(tests.unique())
@@ -10,10 +10,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @endif
 
 import ${entity.basePackage()}.TestcontainersConfiguration;
+${EntityModel.importOf(entity.domainPackage(), entity.packageName(), entity.name() + "Samples")}
 @for(var target : tests.requiredTargets())
-import ${target.packageName()}.${target.name()};
-import ${target.packageName()}.${target.name()}Repository;
-import ${target.packageName()}.${target.name()}Samples;
+${EntityModel.importOf(entity.domainPackage(), target.domainPackage(), target.name())}
+${EntityModel.importOf(entity.domainPackage(), target.domainPackage(), target.name() + "Repository")}
+${EntityModel.importOf(entity.domainPackage(), target.packageName(), target.name() + "Samples")}
 @endfor
 @if(!tests.requiredTargets().isEmpty())
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +50,11 @@ class ${entity.name()}RepositoryTests {
     assertThat(found.get${field.property()}()).isEqualTo(${entity.variable()}.get${field.property()}());
     @endfor
     @for(var relation : entity.requiredRelations())
+    @if(entity.ddd())
+    assertThat(found.get${relation.idProperty()}()).isEqualTo(${relation.target().variable()}.getId());
+    @else
     assertThat(found.get${relation.property()}().getId()).isEqualTo(${relation.target().variable()}.getId());
+    @endif
     @endfor
     @if(entity.audited())
     assertThat(found.getCreatedAt()).isNotNull();

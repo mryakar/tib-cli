@@ -1,6 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
-package ${entity.packageName()};
+package ${entity.domainPackage()};
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
@@ -11,9 +11,15 @@ import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.SequenceGenerator;
 @endif
 @for(var relation : entity.relations())
+@if(entity.ddd())
+@if(relation.target().uuidId())
+import java.util.UUID;
+@endif
+@else
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.${relation.annotation()};
+@endif
 @endfor
 @if(entity.uuidId())
 import java.util.UUID;
@@ -30,9 +36,11 @@ import java.time.Instant;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 @endif
+@if(!entity.ddd())
 @for(var target : entity.otherTargets())
 import ${target.packageName()}.${target.name()};
 @endfor
+@endif
 
 /** The columns of ${entity.table()}, as the spec names them; {@link ${entity.name()}} is the entity. */
 @MappedSuperclass
@@ -53,9 +61,14 @@ public abstract class ${entity.name()}Generated {
 
   @endfor
   @for(var relation : entity.relations())
+  @if(entity.ddd())
+  ${relation.idColumn()}
+  private ${relation.target().idType()} ${relation.idField()};
+  @else
   ${relation.mapping()}
   ${relation.joinColumn()}
   private ${relation.target().name()} ${relation.field()};
+  @endif
 
   @endfor
   @if(entity.audited())
@@ -87,6 +100,15 @@ public abstract class ${entity.name()}Generated {
   @endfor
   @for(var relation : entity.relations())<%-- keeps the blank line below --%>
 
+  @if(entity.ddd())
+  public ${relation.target().idType()} get${relation.idProperty()}() {
+    return ${relation.idField()};
+  }
+
+  public void set${relation.idProperty()}(${relation.target().idType()} ${relation.idField()}) {
+    this.${relation.idField()} = ${relation.idField()};
+  }
+  @else
   public ${relation.target().name()} get${relation.property()}() {
     return ${relation.field()};
   }
@@ -94,6 +116,7 @@ public abstract class ${entity.name()}Generated {
   public void set${relation.property()}(${relation.target().name()} ${relation.field()}) {
     this.${relation.field()} = ${relation.field()};
   }
+  @endif
   @endfor
   @if(entity.audited())<%-- keeps the blank line below --%>
 

@@ -24,6 +24,7 @@ import me.yakar.tib.generate.Pack
 import me.yakar.tib.generate.Packs
 import me.yakar.tib.generate.Project
 import me.yakar.tib.spec.Spec
+import me.yakar.tib.spec.Architecture
 import me.yakar.tib.spec.SpecReader
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Change
@@ -50,6 +51,9 @@ class DefaultPackSpec extends Specification {
   /** The corners of the entity layer that the example service does not reach. */
   static final String CORNER_SPEC = DefaultPackSpec.getResource('corner-service.yaml').text
   static final Spec CORNERS = SpecReader.parse(CORNER_SPEC)
+
+  /** The corners of the entity layer in the DDD architecture. */
+  static final Spec CORNERS_DDD = SpecReader.parse(CORNER_SPEC.replace('java: 25\n', 'java: 25\narchitecture: ddd\n'))
 
   /**
    * The corner spec as its migrations read back. Two types do not come back as the spec gives them:
@@ -126,6 +130,16 @@ class DefaultPackSpec extends Specification {
     matches('corner-service', changes)
   }
 
+  def "generates the corners of the entity layer in the DDD architecture as the snapshot says"() {
+    when:
+    List<Change> changes = corners(dir, CORNERS_DDD).changes()
+
+    then:
+    CORNERS_DDD.architecture() == Architecture.DDD
+    write('corner-service-ddd', changes)
+    matches('corner-service-ddd', changes)
+  }
+
   def "a machine in Turkish, where the upper case of i is not I, generates the same services"() {
     given:
     Locale locale = Locale.default
@@ -167,6 +181,7 @@ class DefaultPackSpec extends Specification {
     name              | spec
     'vehicle-service' | VEHICLES
     'corner-service'  | CORNERS
+    'corner-service-ddd' | CORNERS_DDD
   }
 
   def "the first line of every generated file states its owner: #name"() {
@@ -183,6 +198,7 @@ class DefaultPackSpec extends Specification {
     name              | spec
     'vehicle-service' | VEHICLES
     'corner-service'  | CORNERS
+    'corner-service-ddd' | CORNERS_DDD
   }
 
   def "the notes for agents name every header: #header"() {
@@ -215,6 +231,7 @@ class DefaultPackSpec extends Specification {
     name              | spec
     'vehicle-service' | VEHICLES
     'corner-service'  | CORNERS
+    'corner-service-ddd' | CORNERS_DDD
   }
 
   def "a second run on the generated service changes nothing: #name"() {
@@ -237,6 +254,7 @@ class DefaultPackSpec extends Specification {
     name              | spec     | migrations
     'vehicle-service' | VEHICLES | false
     'corner-service'  | CORNERS  | true
+    'corner-service-ddd' | CORNERS_DDD | true
   }
 
   def "the migrations of the service read back into its spec: #name"() {
@@ -292,10 +310,10 @@ class DefaultPackSpec extends Specification {
    * The entities of the corner spec, staged in a tree at the directory, which has a migration by
    * hand and a repeatable one.
    */
-  private static Tree corners(Path dir) {
+  private static Tree corners(Path dir, Spec spec = CORNERS) {
     byHand(dir)
     Tree tree = Tree.at(dir)
-    new DefaultPack().entity().generate(new Project(CORNERS), tree)
+    new DefaultPack().entity().generate(new Project(spec), tree)
     return tree
   }
 

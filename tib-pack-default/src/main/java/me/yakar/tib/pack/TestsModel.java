@@ -18,6 +18,7 @@ package me.yakar.tib.pack;
 import java.util.ArrayList;
 import java.util.List;
 import me.yakar.tib.generate.Project;
+import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.TestKind;
 
 /** The kinds of tests of a service, as the notes for agents tell of them. */
@@ -39,6 +40,16 @@ public final class TestsModel {
   /** Whether the service has the test of its architecture. */
   public boolean archunit() {
     return project.tests(TestKind.ARCHUNIT);
+  }
+
+  /** The rules that the test of the architecture checks, in words, for the notes for agents. */
+  public String rules() {
+    return project.architecture() == Architecture.DDD
+        ? "the domain of an entity uses neither its application nor its web, the application does"
+            + "\nnot use the web, the domain of an aggregate does not use the domain of another, and"
+            + "\nthere is no cycle between the packages of the entities"
+        : "the controller of an entity over its service over its\nrepository, and no cycle between"
+            + " the packages of the entities";
   }
 
   /** Whether the service has tests that start PostgreSQL in a container. */

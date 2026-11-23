@@ -1,6 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
-package ${entity.packageName()};
+package ${entity.webPackage()};
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

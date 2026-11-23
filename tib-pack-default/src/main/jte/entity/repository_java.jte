@@ -1,6 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
-package ${entity.packageName()};
+package ${entity.domainPackage()};
 
 @if(entity.uuidId())
 import java.util.UUID;

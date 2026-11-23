@@ -38,6 +38,24 @@ public record RelationModel(Relation relation, EntityModel target) {
   }
 
   /** The column that holds the identifier of the target: {@code DEPOT_ID}. */
+  /** The identifier of the target as a property, as in {@code DepotId}. */
+  public String idProperty() {
+    return Names.property(idField());
+  }
+
+  /**
+   * The column that keeps the identifier of the target, for an entity that refers to another by its
+   * identifier.
+   */
+  public String idColumn() {
+    return "@Column(name = \""
+        + relation.column()
+        + "\""
+        + (relation.nullable() ? "" : ", nullable = false")
+        + (oneToOne() ? ", unique = true" : "")
+        + ")";
+  }
+
   public String column() {
     return relation.column();
   }

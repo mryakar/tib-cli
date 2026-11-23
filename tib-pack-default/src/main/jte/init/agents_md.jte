@@ -41,6 +41,15 @@ with `--dry-run`, tib shows what it would change and changes nothing. To remove 
 it out of the spec and run `tib generate entity --spec <file>`: tib deletes its files, but for
 those you edited and the migration; dropping its table is a new migration.
 
+@if(project.architecture() == me.yakar.tib.spec.Architecture.DDD)
+The service is arranged for DDD: every entity `X` is an aggregate, in three packages. `x.domain`
+has `X`, `XGenerated` and `XRepository`; `x.application` has `XService`, the use cases on the
+aggregate, which throw `NotFoundException` for one that is not there; `x.web` has `XController`,
+`XDto` and `XMapper`, which maps the aggregate to and from its DTO. An entity refers to another by
+its identifier, as `depotId`, never by the entity itself. The domain uses neither the application
+nor the web, and the application does not use the web.
+
+@endif
 For an entity `X`, its code goes in `X`, never in `XGenerated`: `XGenerated`, `XDto` and `XMapper`
 are tib's; `X`, `XRepository`, `XService`, `XController` and the migration are yours@if(tests.any()), and so are
 their tests: ${tests.entityTests()}. Their sample entities and DTOs come
@@ -48,8 +57,7 @@ from `XSamples`, which is tib's and follows the spec: a test changes a value thr
 as in `XSamples.x().name("Other").build()`.@else.@endif `ConflictHandler`, in the base package, answers a
 request that breaks a constraint of the database with 409 Conflict; it is yours.@if(tests.archunit())
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
-classes of the service with ArchUnit: the controller of an entity over its service over its
-repository, and no cycle between the packages of the entities; it is yours.@endif
+classes of the service with ArchUnit: ${tests.rules()}; it is yours.@endif
 
 The Java that tib writes is in the layout of google-java-format ${pack.formatterVersion()}: formatted
 with it, the files of tib's stay as tib wrote them.
