@@ -36,7 +36,7 @@ class InitServiceCommandSpec extends Specification {
 
   static final String NAME = 'The name of the service, in lower case words joined with hyphens: '
   static final String JAVA = 'Its Java version, 21 or 25 [21]: '
-  static final String ARCHITECTURE = 'Its architecture: anemic [anemic]: '
+  static final String ARCHITECTURE = 'Its architecture: anemic, ddd [anemic]: '
   static final String TESTS = 'The kinds of its tests, separated by commas, or none: unit, integration, api, archunit [unit,integration,api]: '
   static final String DOCKER = 'A Dockerfile, yes or no [no]: '
   static final String QUESTIONS = NAME + JAVA + ARCHITECTURE + TESTS + DOCKER
@@ -68,7 +68,7 @@ class InitServiceCommandSpec extends Specification {
     'the defaults'                          | 'vehicle-service\n\n\n\n\n'                         | 21   | ['unit', 'integration', 'api'] | false  | QUESTIONS
     'answers of their own, with spaces'     | ' vehicle-service \n25\n anemic \napi, unit, archunit\nY\n' | 25 | ['api', 'unit', 'archunit'] | true | QUESTIONS
     'none for the tests'                    | 'vehicle-service\n21\n\nnone\nno\n'                 | 21   | []                             | false  | QUESTIONS
-    'answers that do not read, asked again' | '\nVehicle Service\nvehicle-service\n17\nx\n25\nlayered\n\nunit,e2e\nunit,unit\nunit\nmaybe\nyes\n' | 25 | ['unit'] | true | NAME + "service: '' does not match ${Names.SERVICE}\n" + NAME + "service: 'Vehicle Service' does not match ${Names.SERVICE}\n" + NAME + JAVA + 'java: 17 is not one of 21, 25\n' + JAVA + "'x' is not a number\n" + JAVA + ARCHITECTURE + "'layered' is not one of anemic\n" + ARCHITECTURE + TESTS + "'e2e' is not one of unit, integration, api, archunit\n" + TESTS + "tests[1]: 'unit' is already there\n" + TESTS + DOCKER + 'Answer yes or no.\n' + DOCKER
+    'answers that do not read, asked again' | '\nVehicle Service\nvehicle-service\n17\nx\n25\nlayered\n\nunit,e2e\nunit,unit\nunit\nmaybe\nyes\n' | 25 | ['unit'] | true | NAME + "service: '' does not match ${Names.SERVICE}\n" + NAME + "service: 'Vehicle Service' does not match ${Names.SERVICE}\n" + NAME + JAVA + 'java: 17 is not one of 21, 25\n' + JAVA + "'x' is not a number\n" + JAVA + ARCHITECTURE + "'layered' is not one of anemic, ddd\n" + ARCHITECTURE + TESTS + "'e2e' is not one of unit, integration, api, archunit\n" + TESTS + "tests[1]: 'unit' is already there\n" + TESTS + DOCKER + 'Answer yes or no.\n' + DOCKER
   }
 
   def "a dry run that asks prints the diff on standard output, and the questions on standard error"() {
@@ -213,20 +213,20 @@ class InitServiceCommandSpec extends Specification {
     ['--docker'] | true
   }
 
-  def "the architecture of the service is anemic, with --architecture or without; another is a mistake of the command line"() {
+  def "the architecture of the service is the one of --architecture; another is a mistake of the command line"() {
     when:
-    Result result = tib.init('vehicle-service', '--architecture', 'anemic')
+    Result result = tib.init('vehicle-service', '--architecture', 'ddd')
 
     then:
     result.exitCode() == 0
-    tib.state().spec().architecture() == Architecture.ANEMIC
+    tib.state().spec().architecture() == Architecture.DDD
 
     when:
     Result other = new Tib(dir.resolve('other')).init('other-service', '--architecture', 'layered')
 
     then:
     other.exitCode() == 2
-    other.err().startsWith("Invalid value for option '--architecture': 'layered' is not one of anemic\n")
+    other.err().startsWith("Invalid value for option '--architecture': 'layered' is not one of anemic, ddd\n")
   }
 
   def "a kind of test that tib does not know is a mistake of the command line"() {

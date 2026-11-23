@@ -78,8 +78,16 @@ $ tib init service vehicle-service --tests unit,api
 ----
 
 The code of the service is arranged in the anemic architecture: the classes of an entity in its
-package, the controller over the service over the repository, which is what `archunit` checks.
-`--architecture` names it, `anemic`, the only one so far.
+package, the controller over the service over the repository. `--architecture ddd` arranges it for
+domain-driven design instead: every entity is an aggregate in three packages, its `domain` with
+the entity and its repository, its `application` with the service of its use cases, and its `web`
+with its controller, DTO and mapper; an entity refers to another by its identifier, as `depotId`,
+not by the entity. `archunit` checks the rules of the architecture the service has.
+
+[source,bash]
+----
+$ tib init service vehicle-service --architecture ddd --tests unit,integration,api,archunit
+----
 
 `--docker` adds a `Dockerfile` and a `.dockerignore`, both yours. The `Dockerfile` builds the
 service with its Gradle wrapper and runs it on the Java runtime of its version, as a user without
@@ -103,7 +111,7 @@ input ends before the last answer, as in a script, tib writes nothing and exits 
 $ tib init service
 The name of the service, in lower case words joined with hyphens: vehicle-service
 Its Java version, 21 or 25 [21]: 25
-Its architecture: anemic [anemic]:
+Its architecture: anemic, ddd [anemic]:
 The kinds of its tests, separated by commas, or none: unit, integration, api, archunit [unit,integration,api]: unit,api
 A Dockerfile, yes or no [no]: yes
 Wrote 16 files to /home/you/vehicle-service.
