@@ -58,6 +58,11 @@ public final class DefaultPack implements Pack {
     return properties.getProperty("boot");
   }
 
+  /** The ArchUnit version of the tests of the architecture of the generated service. */
+  public String archunitVersion() {
+    return properties.getProperty("archunit");
+  }
+
   /** The version of google-java-format, whose layout the generated Java has. */
   public String formatterVersion() {
     return properties.getProperty("google-java-format");

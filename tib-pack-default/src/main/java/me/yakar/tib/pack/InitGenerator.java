@@ -79,6 +79,9 @@ final class InitGenerator implements Generator {
           "init/application_tests_java.jte",
           project);
     }
+    if (project.tests(TestKind.ARCHUNIT)) {
+      once(files, tests + "/ArchitectureTests.java", "init/architecture_tests_java.jte", project);
+    }
     once(
         files,
         tests + "/Test" + project.applicationClass() + ".java",

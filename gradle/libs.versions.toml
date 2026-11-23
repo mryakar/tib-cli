@@ -1,6 +1,7 @@
 [versions]
 # The stack that the default pack generates. Dependabot does not update generated-postgres, the tag
 # of the postgres Docker image. The Java of the generated service is the one of its spec.
+generated-archunit = "1.4.1"
 generated-postgres = "18"
 generated-spring-boot = "4.1.2"
 google-java-format = "1.36.1"
@@ -33,7 +34,9 @@ picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
 
 # Declared as libraries only so that Dependabot updates their versions; the build and the release
-# workflow read the versions: the tools that they run, and the Spring Boot of the generated projects.
+# workflow read the versions: the tools that they run, and the Spring Boot and the ArchUnit of the
+# generated projects.
+generated-archunit = { module = "com.tngtech.archunit:archunit", version.ref = "generated-archunit" }
 generated-spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "generated-spring-boot" }
 jacoco-agent = { module = "org.jacoco:org.jacoco.agent", version.ref = "jacoco" }
 jreleaser-tool-provider = { module = "org.jreleaser:jreleaser-tool-provider", version.ref = "jreleaser" }

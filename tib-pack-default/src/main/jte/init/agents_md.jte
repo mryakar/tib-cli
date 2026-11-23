@@ -46,7 +46,10 @@ are tib's; `X`, `XRepository`, `XService`, `XController` and the migration are y
 their tests: ${tests.entityTests()}. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
 as in `XSamples.x().name("Other").build()`.@else.@endif `ConflictHandler`, in the base package, answers a
-request that breaks a constraint of the database with 409 Conflict; it is yours.
+request that breaks a constraint of the database with 409 Conflict; it is yours.@if(tests.archunit())
+`ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
+classes of the service with ArchUnit: the controller of an entity over its service over its
+repository, and no cycle between the packages of the entities; it is yours.@endif
 
 The Java that tib writes is in the layout of google-java-format ${pack.formatterVersion()}: formatted
 with it, the files of tib's stay as tib wrote them.

@@ -1,5 +1,6 @@
 @import me.yakar.tib.generate.Project
 @import me.yakar.tib.pack.DefaultPack
+@import me.yakar.tib.spec.TestKind
 @param Project project
 @param DefaultPack pack
 import org.springframework.boot.gradle.plugin.SpringBootPlugin
@@ -30,6 +31,9 @@ dependencies {
   testImplementation("org.springframework.boot:spring-boot-resttestclient")
   testImplementation("org.springframework.boot:spring-boot-testcontainers")
   testImplementation("org.testcontainers:testcontainers-postgresql")
+@if(project.tests(TestKind.ARCHUNIT))
+${"  "}testImplementation("com.tngtech.archunit:archunit:${pack.archunitVersion()}")
+@endif
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

@@ -96,6 +96,7 @@ class GeneratedServiceSpec extends Specification {
     tests.any { it.endsWith('ServiceTests') } == spec.tests().contains(TestKind.UNIT)
     tests.any { it.endsWith('ApiTests') } == spec.tests().contains(TestKind.API)
     tests.any { it.endsWith('RepositoryTests') } == spec.tests().contains(TestKind.INTEGRATION)
+    tests.contains("${project.packagePath()}/ArchitectureTests".toString()) == spec.tests().contains(TestKind.ARCHUNIT)
     tests.each { test ->
       assert Files.exists(dir.resolve("build/classes/java/test/${test}.class")) : test
       if (docker) {
@@ -118,8 +119,8 @@ class GeneratedServiceSpec extends Specification {
     // What pg_dump 18 wrote of a database: an identifier in an integer column, a text, a one-to-one;
     // with the tests of the API only.
     'example pg_dump' | DdlReader.parse(Files.readString(EXAMPLES.resolve('pg-dump-18.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\ntests: [api]\n'))
-    // The corner spec, on Java 25 and with a Dockerfile, is a resource of the unit tests, next to
-    // their snapshots.
+    // The corner spec, on Java 25, with a Dockerfile and the test of the architecture, is a resource
+    // of the unit tests, next to their snapshots.
     'corner spec'     | SpecReader.parse(GeneratedServiceSpec.getResource('corner-service.yaml').text)
   }
 

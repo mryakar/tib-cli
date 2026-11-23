@@ -1,5 +1,5 @@
-# The corners of the service: Java 25, which is not the default, and a Dockerfile; and of the entity
-# layer: an audited entity with a sequence identifier in a column that
+# The corners of the service: Java 25, which is not the default, a Dockerfile and the test of the
+# architecture; and of the entity layer: an audited entity with a sequence identifier in a column that
 # the spec names, a one-to-one relation, a relation to itself and two relations to one target, an
 # entity without DTOs and with a Text that is required, one without a mapper, one without
 # pagination, one with nothing to import, one whose name takes "an" and has a required relation and
@@ -9,6 +9,7 @@ service: corner-service
 group: me.yakar
 java: 25
 docker: true
+tests: [unit, integration, api, archunit]
 entities:
   - name: Branch
     id: { strategy: sequence, column: BRANCH_KEY }
