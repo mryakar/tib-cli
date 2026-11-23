@@ -24,9 +24,15 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   extracts the layers of its jar as Spring Boot does, and runs it on the Java runtime of the
   service, as a user without root rights. Without the option, there is none, as before.
 - `tib init service` without a name and without `--spec` asks for the name, the Java version, the
-  kinds of tests and the Dockerfile, on standard error, and reads the answers from standard input;
+  architecture, the kinds of tests and the Dockerfile, on standard error, and reads the answers from standard input;
   an empty answer takes the default, and one that tib cannot use is asked again. When the answers
   end first, it exits with 2, as it did for a command line without the name.
+- A service has an architecture: `--architecture anemic` or `architecture: anemic` in its spec, the
+  only one so far and the default, which arranges the code as before.
+- A fourth kind of tests, `archunit`: `ArchitectureTests`, written once, checks the rules of the
+  architecture on the classes of the service with ArchUnit; for the anemic architecture, the
+  controller of an entity over its service over its repository, and no cycle between the packages
+  of the entities. It is not among the kinds that a service has by default.
 
 ## [0.4.0] - 2026-11-19
 

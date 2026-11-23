@@ -23,6 +23,7 @@ import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecException;
 import me.yakar.tib.spec.TestKind;
@@ -78,13 +79,20 @@ class InitServiceCommand implements Callable<Integer> {
     Integer java;
 
     @Option(
+        names = "--architecture",
+        paramLabel = "ARCHITECTURE",
+        converter = ArchitectureConverter.class,
+        description = "How the code of the service is arranged: anemic (the default).")
+    Architecture architecture;
+
+    @Option(
         names = "--tests",
         split = ",",
         paramLabel = "KIND",
         converter = TestKindConverter.class,
         description =
-            "The kinds of tests that tib writes for the entities, separated by commas: unit,"
-                + " integration and api; all of them by default.")
+            "The kinds of tests that tib writes, separated by commas: unit, integration, api and"
+                + " archunit; unit, integration and api by default.")
     List<TestKind> tests;
 
     @Option(
@@ -98,19 +106,27 @@ class InitServiceCommand implements Callable<Integer> {
 
     @Override
     public TestKind convert(String value) {
-      for (TestKind kind : TestKind.values()) {
-        if (kind.toString().equals(value)) {
-          return kind;
-        }
-      }
-      throw new TypeConversionException(
-          "'"
-              + value
-              + "' is not one of "
-              + Arrays.stream(TestKind.values())
-                  .map(TestKind::toString)
-                  .collect(Collectors.joining(", ")));
+      return named(TestKind.values(), value);
     }
+  }
+
+  /** Reads an architecture by its name in the spec, as in {@code anemic}. */
+  static class ArchitectureConverter implements ITypeConverter<Architecture> {
+
+    @Override
+    public Architecture convert(String value) {
+      return named(Architecture.values(), value);
+    }
+  }
+
+  /** The value whose name in the spec is the one given. */
+  private static <E extends Enum<E>> E named(E[] values, String name) {
+    for (E value : values) {
+      if (value.toString().equals(name)) {
+        return value;
+      }
+    }
+    throw new TypeConversionException("'" + name + "' is not one of " + names(values));
   }
 
   @Mixin private ServiceDirectory directory;
@@ -135,7 +151,11 @@ class InitServiceCommand implements Callable<Integer> {
     }
     return run.init(
         Spec.of(
-            source.named.name, source.named.java, null, source.named.tests, source.named.docker),
+            source.named.name,
+            source.named.java,
+            source.named.architecture,
+            source.named.tests,
+            source.named.docker),
         List.of(),
         tree);
   }
@@ -153,13 +173,29 @@ class InitServiceCommand implements Callable<Integer> {
             "Its Java version, 21 or 25",
             String.valueOf(defaults.java()),
             answer -> checked(() -> Spec.of(name, number(answer), null, null, null)).java());
+    Architecture architecture =
+        questions.ask(
+            "Its architecture: " + names(Architecture.values()),
+            defaults.architecture().toString(),
+            answer -> {
+              try {
+                return new ArchitectureConverter().convert(answer);
+              } catch (TypeConversionException e) {
+                throw new IllegalArgumentException(e.getMessage(), e);
+              }
+            });
     List<TestKind> tests =
         questions.ask(
-            "The kinds of its tests, separated by commas, or none",
+            "The kinds of its tests, separated by commas, or none: " + names(TestKind.values()),
             defaults.tests().stream().map(TestKind::toString).collect(Collectors.joining(",")),
             answer -> checked(() -> Spec.of(name, java, null, kinds(answer), null)).tests());
     Boolean docker = questions.ask("A Dockerfile, yes or no", "no", InitServiceCommand::yes);
-    return Spec.of(name, java, null, tests, docker);
+    return Spec.of(name, java, architecture, tests, docker);
+  }
+
+  /** The names of the values in the spec, as in {@code unit, integration}. */
+  private static String names(Object[] values) {
+    return Arrays.stream(values).map(Object::toString).collect(Collectors.joining(", "));
   }
 
   /** The spec, or the problems that it has as the reason why the answer does not read. */

@@ -68,13 +68,18 @@ $ tib init service vehicle-service --java 25
 Every entity gets tests of three kinds: `unit`, the tests of its service with the repository and
 the mapper mocked; `integration`, the tests of its repository against PostgreSQL in a container,
 which come with the test of the application; and `api`, the tests of its API against the running
-service. `--tests` keeps the kinds you name, separated by commas; with `--tests unit`, the build of
-the service needs no Docker:
+service. A fourth kind, `archunit`, is the test of the architecture of the service: rules that
+ArchUnit checks on its classes. `--tests` keeps the kinds you name, separated by commas; with
+`--tests unit`, the build of the service needs no Docker:
 
 [source,bash]
 ----
 $ tib init service vehicle-service --tests unit,api
 ----
+
+The code of the service is arranged in the anemic architecture: the classes of an entity in its
+package, the controller over the service over the repository, which is what `archunit` checks.
+`--architecture` names it, `anemic`, the only one so far.
 
 `--docker` adds a `Dockerfile` and a `.dockerignore`, both yours. The `Dockerfile` builds the
 service with its Gradle wrapper and runs it on the Java runtime of its version, as a user without
@@ -88,7 +93,7 @@ $ docker build -t vehicle-service .
 ----
 
 Without the name and without a spec file, tib asks for what the command line would say: the name,
-the Java version, the kinds of tests and the Dockerfile. An empty answer takes the default in
+the Java version, the architecture, the kinds of tests and the Dockerfile. An empty answer takes the default in
 brackets, and an answer that tib cannot use is asked again. The questions go to standard error and
 the answers come from standard input, so that a dry run still prints only its diff; when standard
 input ends before the last answer, as in a script, tib writes nothing and exits with 2.
@@ -98,13 +103,15 @@ input ends before the last answer, as in a script, tib writes nothing and exits 
 $ tib init service
 The name of the service, in lower case words joined with hyphens: vehicle-service
 Its Java version, 21 or 25 [21]: 25
-The kinds of its tests, separated by commas, or none [unit,integration,api]: unit,api
+Its architecture: anemic [anemic]:
+The kinds of its tests, separated by commas, or none: unit, integration, api, archunit [unit,integration,api]: unit,api
 A Dockerfile, yes or no [no]: yes
 Wrote 16 files to /home/you/vehicle-service.
 ----
 
 To scaffold the service from a xref:spec.adoc[spec file] instead of its name, which names its
-group, its pack, its Java, its kinds of tests, whether it has a Dockerfile, and its entities, give the file instead of the name:
+group, its pack, its Java, its architecture, its kinds of tests, whether it has a Dockerfile, and
+its entities, give the file instead of the name:
 
 [source,bash]
 ----
