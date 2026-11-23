@@ -65,6 +65,7 @@ class ProjectSpec extends Specification {
     expect:
     new Project(Spec.of('s', null, null, null, null)).architecture() == Architecture.ANEMIC
     new Project(Spec.of('s', null, Architecture.DDD, null, null)).architecture() == Architecture.DDD
+    new Project(Spec.of('s', null, Architecture.HEXAGONAL, null, null)).architecture() == Architecture.HEXAGONAL
   }
 
   def "the project has a Dockerfile when the spec says so"() {
