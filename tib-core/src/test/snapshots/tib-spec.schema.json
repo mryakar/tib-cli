@@ -40,7 +40,8 @@
       "description": "How the code of the service is arranged.",
       "type": "string",
       "enum": [
-        "anemic"
+        "anemic",
+        "ddd"
       ],
       "default": "anemic"
     },

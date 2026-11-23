@@ -21,7 +21,14 @@ public enum Architecture {
    * Every class of an entity in the package of the entity: its data, repository, service, mapper,
    * DTO and controller, the controller over the service over the repository.
    */
-  ANEMIC("anemic");
+  ANEMIC("anemic"),
+
+  /**
+   * Every entity an aggregate in three packages: its domain, with the entity and its repository;
+   * its application, with the service of its use cases; and its web, with its controller, DTO and
+   * mapper. An entity refers to another by its identifier.
+   */
+  DDD("ddd");
 
   private final String name;
 
