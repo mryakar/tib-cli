@@ -151,7 +151,7 @@ class StateSpec extends Specification {
     'tib: [1]\nspec:\n  tib: 1\n  service: s'       | 'tib: '
     'other: 1\n'                                    | 'other: unknown property; the properties are files, inputs, pack, spec, tib'
     'files:\n- { path: a, owner: me, sha256: x }\n' | "files[0].owner: 'me' is not one of generator, developer, shared"
-    'spec:\n  tib: 1\n  service: s\n  other: 1\n'   | 'spec.other: unknown property; the properties are docker, entities, group, java, pack, service, tests, tib'
+    'spec:\n  tib: 1\n  service: s\n  other: 1\n'   | 'spec.other: unknown property; the properties are architecture, docker, entities, group, java, pack, service, tests, tib'
   }
 
   def "a state without a value that it needs is refused: #problem"() {
@@ -182,7 +182,7 @@ class StateSpec extends Specification {
 
   def "the spec in the state is checked as a spec, and each of its problems is one of the state file"() {
     when:
-    State.parse(with(tib: null, spec: new Spec(1, 'Vehicle Service', 'Me', null, null, null, null, null)).yaml(), '0.1.0')
+    State.parse(with(tib: null, spec: new Spec(1, 'Vehicle Service', 'Me', null, null, null, null, null, null)).yaml(), '0.1.0')
 
     then:
     StateException e = thrown()

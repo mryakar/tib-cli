@@ -15,6 +15,7 @@
  */
 package me.yakar.tib.generate
 
+import me.yakar.tib.spec.Architecture
 import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.TestKind
 import spock.lang.Specification
@@ -23,7 +24,7 @@ class ProjectSpec extends Specification {
 
   def "the names of the project come from the spec: #service"() {
     given:
-    Project project = new Project(new Spec(1, service, group, null, null, null, null, null))
+    Project project = new Project(new Spec(1, service, group, null, null, null, null, null, null))
 
     expect:
     project.name() == service
@@ -43,12 +44,12 @@ class ProjectSpec extends Specification {
 
   def "the Java of the project is the one of the spec"() {
     expect:
-    new Project(Spec.of('s', 25, null, null)).java() == 25
+    new Project(Spec.of('s', 25, null, null, null)).java() == 25
   }
 
   def "the project has the tests of the kinds of the spec: #tests"() {
     given:
-    Project project = new Project(Spec.of('s', null, tests, null))
+    Project project = new Project(Spec.of('s', null, null, tests, null))
 
     expect:
     TestKind.values().findAll { project.tests(it) } == expected
@@ -60,9 +61,14 @@ class ProjectSpec extends Specification {
     []                                 | []
   }
 
+  def "the architecture of the project is the one of the spec"() {
+    expect:
+    new Project(Spec.of('s', null, null, null, null)).architecture() == Architecture.ANEMIC
+  }
+
   def "the project has a Dockerfile when the spec says so"() {
     expect:
-    !new Project(Spec.of('s', null, null, null)).docker()
-    new Project(Spec.of('s', null, null, true)).docker()
+    !new Project(Spec.of('s', null, null, null, null)).docker()
+    new Project(Spec.of('s', null, null, null, true)).docker()
   }
 }
