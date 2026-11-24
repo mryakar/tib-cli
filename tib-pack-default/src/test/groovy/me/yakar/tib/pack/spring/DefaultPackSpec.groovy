@@ -23,6 +23,7 @@ import me.yakar.tib.generate.Generation
 import me.yakar.tib.generate.Pack
 import me.yakar.tib.generate.Packs
 import me.yakar.tib.generate.Project
+import me.yakar.tib.pack.Migration
 import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.Architecture
 import me.yakar.tib.spec.SpecReader
@@ -280,7 +281,7 @@ class DefaultPackSpec extends Specification {
     new DefaultPack().entity().generate(new Project(spec), tree)
 
     when:
-    String migrations = tree.list(EntityGenerator.MIGRATIONS).collect {
+    String migrations = tree.list(Migration.DIRECTORY).collect {
       tree.read(it).orElseThrow()
     }.join('\n')
 
@@ -318,7 +319,7 @@ class DefaultPackSpec extends Specification {
 
   /** A migration by hand and a repeatable one, among the migrations of the service. */
   private static void byHand(Path dir) {
-    Path migrations = Files.createDirectories(dir.resolve(EntityGenerator.MIGRATIONS))
+    Path migrations = Files.createDirectories(dir.resolve(Migration.DIRECTORY))
     Files.writeString(migrations.resolve('V3__by_hand.sql'), '-- mine\n')
     Files.writeString(migrations.resolve('R__views.sql'), '-- repeatable\n')
   }

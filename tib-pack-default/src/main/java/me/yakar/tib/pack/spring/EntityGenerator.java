@@ -15,21 +15,13 @@
  */
 package me.yakar.tib.pack.spring;
 
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.pack.EntityModel;
 import me.yakar.tib.pack.EntityTestsModel;
+import me.yakar.tib.pack.Migration;
 import me.yakar.tib.spec.Architecture;
-import me.yakar.tib.spec.Entity;
-import me.yakar.tib.spec.Relation;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
 
@@ -38,8 +30,6 @@ import me.yakar.tib.tree.ProjectFiles;
  * entities it refers to, so that its migration can reference their tables.
  */
 final class EntityGenerator implements Generator {
-
-  static final String MIGRATIONS = "src/main/resources/db/migration";
 
   /** The header of a file of tib's. */
   private static final String EVERY_RUN =
@@ -53,18 +43,9 @@ final class EntityGenerator implements Generator {
   private static final String FIRST_ENTITY =
       "Written by tib with the first entity of the service; it is yours from then on.";
 
-  /** The header of a migration, which is the developer's. */
-  private static final String MIGRATION =
-      "Written by tib when the entity was created. A change of the schema is a new migration.";
-
-  /**
-   * A versioned migration, at any depth: the major part of its version, as in V2__, V2.1__, V2_1__.
-   */
-  private static final Pattern VERSION = Pattern.compile("/V(\\d+)(?:[._]\\d+)*__");
-
   @Override
   public void generate(Project project, ProjectFiles files) {
-    Map<String, EntityModel> models = models(project);
+    Map<String, EntityModel> models = EntityModel.models(project, false);
     models.values().forEach(model -> generateEntity(project, model, files));
     // Written here and not by init: only a service with an API needs it.
     if (models.values().stream().anyMatch(EntityModel::layer)) {
@@ -83,15 +64,6 @@ final class EntityGenerator implements Generator {
     files.once(
         path,
         DefaultPack.TEMPLATES.render(path, FIRST_ENTITY, template, Map.of("project", project)));
-  }
-
-  /** The models of the entities of the project, by name, each after the entities it refers to. */
-  static Map<String, EntityModel> models(Project project) {
-    Map<String, EntityModel> models = new LinkedHashMap<>();
-    for (Entity entity : ordered(project.spec().entities())) {
-      models.put(entity.name(), new EntityModel(project, entity, models));
-    }
-    return models;
   }
 
   private static void generateEntity(Project project, EntityModel entity, ProjectFiles files) {
@@ -138,10 +110,7 @@ final class EntityGenerator implements Generator {
       own(files, web + "Dto.java", "entity/dto_java.jte", model);
     }
     // A migration lasts: a database may have run it, so it stays when the entity leaves the spec.
-    String migration = migration(files, entity);
-    files.lasting(
-        migration,
-        DefaultPack.TEMPLATES.render(migration, MIGRATION, "entity/migration_sql.jte", model));
+    Migration.write(files, entity);
     // The tests of the kinds of the spec; the service and the API only of an entity with a layer.
     boolean repositoryTests = project.tests(TestKind.INTEGRATION);
     boolean serviceTests = entity.layer() && project.tests(TestKind.UNIT);
@@ -226,54 +195,5 @@ final class EntityGenerator implements Generator {
   private static void once(
       ProjectFiles files, String path, String template, Map<String, Object> parameters) {
     files.once(path, DefaultPack.TEMPLATES.render(path, ONCE, template, parameters));
-  }
-
-  /**
-   * The migration that creates the table: the one tib wrote before, there or not, so that a
-   * migration the developer removed or renamed stays so; else the one there; else the next major
-   * version after the versioned migrations there.
-   */
-  private static String migration(ProjectFiles files, EntityModel entity) {
-    String suffix = "__create_" + entity.table().toLowerCase(Locale.ROOT) + ".sql";
-    for (String migration : files.recorded(MIGRATIONS)) {
-      if (migration.endsWith(suffix)) {
-        return migration;
-      }
-    }
-    long latest = 0;
-    for (String migration : files.list(MIGRATIONS)) {
-      if (migration.endsWith(suffix)) {
-        return migration;
-      }
-      Matcher version = VERSION.matcher(migration);
-      if (version.find()) {
-        latest = Math.max(latest, Long.parseLong(version.group(1)));
-      }
-    }
-    return MIGRATIONS + "/V" + (latest + 1) + suffix;
-  }
-
-  /**
-   * The entities, each after the entities it refers to; otherwise in the order of the spec. A spec
-   * has no cycle of relations, but an entity may refer to itself.
-   */
-  static List<Entity> ordered(List<Entity> entities) {
-    Map<String, Entity> byName = new LinkedHashMap<>();
-    entities.forEach(entity -> byName.put(entity.name(), entity));
-    Set<String> done = new LinkedHashSet<>();
-    byName.keySet().forEach(name -> visit(name, byName, done));
-    return done.stream().map(byName::get).toList();
-  }
-
-  private static void visit(String name, Map<String, Entity> entities, Set<String> done) {
-    if (done.contains(name)) {
-      return;
-    }
-    for (Relation relation : entities.get(name).relations()) {
-      if (!relation.target().equals(name)) {
-        visit(relation.target(), entities, done);
-      }
-    }
-    done.add(name);
   }
 }
