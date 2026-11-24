@@ -15,6 +15,8 @@
  */
 package me.yakar.tib.generate;
 
+import java.util.Set;
+import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.tree.ProjectFiles;
 
 /** A pack that the tests of the engine find on the class path, or build with a name of theirs. */
@@ -22,14 +24,22 @@ public final class TestPack implements Pack {
 
   private final String name;
   private final String version;
+  private final Set<Architecture> architectures;
 
   public TestPack() {
     this("test", "0");
   }
 
+  /** A pack that arranges a service in every architecture, as a pack does by default. */
   public TestPack(String name, String version) {
+    this(name, version, null);
+  }
+
+  /** A pack that arranges a service only in the architectures, or in every one for null. */
+  public TestPack(String name, String version, Set<Architecture> architectures) {
     this.name = name;
     this.version = version;
+    this.architectures = architectures;
   }
 
   @Override
@@ -45,6 +55,11 @@ public final class TestPack implements Pack {
   @Override
   public String stack() {
     return "Test " + version;
+  }
+
+  @Override
+  public Set<Architecture> architectures() {
+    return architectures == null ? Pack.super.architectures() : architectures;
   }
 
   @Override

@@ -19,6 +19,7 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermissions
+import me.yakar.tib.spec.Architecture
 import me.yakar.tib.spec.Spec
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Owner
@@ -349,6 +350,42 @@ class GenerationSpec extends Specification {
     stack              | line
     'an earlier stack' | ''
     'Test 1'           | '  stack: Test 1\n'
+  }
+
+  def "a pack that does not arrange a service in the architecture of the spec is refused, before anything is staged: #which"() {
+    given:
+    Pack anemic = new TestPack('p', '1', EnumSet.of(Architecture.HEXAGONAL, Architecture.ANEMIC))
+    Project ddd = new Project(new Spec(1, 's', null, 'p', null, Architecture.DDD, null, null, null))
+    run(project, generator).tree.apply(State.PATH)
+    Tree tree = Tree.at(dir)
+
+    when:
+    if (which == 'first') {
+      Generation.first(ddd, [], anemic, generator, '1.2.3', tree)
+    } else {
+      Generation.next(State.of(tree, '1.2.3'), ddd, [], anemic, generator, '1.2.3', tree)
+    }
+
+    then:
+    PackException e = thrown()
+    e.message == 'pack p 1 does not arrange a service in the architecture ddd, only in anemic, hexagonal\n' +
+        'Choose another architecture for the service, or another pack.'
+    tree.changes() == []
+
+    where:
+    which << ['first', 'next']
+  }
+
+  def "a pack arranges a service in the architectures that it names"() {
+    given:
+    Pack anemic = new TestPack('p', '1', EnumSet.of(Architecture.ANEMIC))
+    Tree tree = Tree.at(dir)
+
+    when:
+    Generation.first(project, [], anemic, generator, '1.2.3', tree)
+
+    then:
+    tree.changes()*.path() == ['.tib/state.yaml', 'Generated.java', 'Service.java']
   }
 
   def "the inputs that the state forgot are named"() {

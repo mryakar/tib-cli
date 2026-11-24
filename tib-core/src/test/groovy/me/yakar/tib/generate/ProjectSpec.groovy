@@ -44,12 +44,12 @@ class ProjectSpec extends Specification {
 
   def "the Java of the project is the one of the spec"() {
     expect:
-    new Project(Spec.of('s', 25, null, null, null)).java() == 25
+    new Project(Spec.of('s', null, 25, null, null, null)).java() == 25
   }
 
   def "the project has the tests of the kinds of the spec: #tests"() {
     given:
-    Project project = new Project(Spec.of('s', null, null, tests, null))
+    Project project = new Project(Spec.of('s', null, null, null, tests, null))
 
     expect:
     TestKind.values().findAll { project.tests(it) } == expected
@@ -63,14 +63,14 @@ class ProjectSpec extends Specification {
 
   def "the architecture of the project is the one of the spec"() {
     expect:
-    new Project(Spec.of('s', null, null, null, null)).architecture() == Architecture.ANEMIC
-    new Project(Spec.of('s', null, Architecture.DDD, null, null)).architecture() == Architecture.DDD
-    new Project(Spec.of('s', null, Architecture.HEXAGONAL, null, null)).architecture() == Architecture.HEXAGONAL
+    new Project(Spec.of('s', null, null, null, null, null)).architecture() == Architecture.ANEMIC
+    new Project(Spec.of('s', null, null, Architecture.DDD, null, null)).architecture() == Architecture.DDD
+    new Project(Spec.of('s', null, null, Architecture.HEXAGONAL, null, null)).architecture() == Architecture.HEXAGONAL
   }
 
   def "the project has a Dockerfile when the spec says so"() {
     expect:
-    !new Project(Spec.of('s', null, null, null, null)).docker()
-    new Project(Spec.of('s', null, null, null, true)).docker()
+    !new Project(Spec.of('s', null, null, null, null, null)).docker()
+    new Project(Spec.of('s', null, null, null, null, true)).docker()
   }
 }

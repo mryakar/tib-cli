@@ -106,23 +106,25 @@ public record Spec(
   }
 
   /**
-   * The spec of a service that has only its name, its Java version, its architecture, its kinds of
-   * tests and whether it has a Dockerfile, checked.
+   * The spec of a service that has only its name, its pack, its Java version, its architecture, its
+   * kinds of tests and whether it has a Dockerfile, checked.
    *
+   * @param pack the pack, or null for the default
    * @param java the Java version, or null for the default
    * @param architecture the architecture, or null for the default
    * @param tests the kinds of tests, or null for the default
    * @param docker whether the service has a Dockerfile, or null for the default
-   * @throws SpecException when the name is not one of a service, the version not one of Java that
-   *     tib generates for, or a kind of test is there twice
+   * @throws SpecException when the name is not one of a service, the pack not one of a pack, the
+   *     version not one of Java that tib generates for, or a kind of test is there twice
    */
   public static Spec of(
       String service,
+      String pack,
       Integer java,
       Architecture architecture,
       List<TestKind> tests,
       Boolean docker) {
-    return new Spec(VERSION, service, null, null, java, architecture, tests, docker, null).check();
+    return new Spec(VERSION, service, null, pack, java, architecture, tests, docker, null).check();
   }
 
   /**
