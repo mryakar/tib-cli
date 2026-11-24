@@ -67,8 +67,8 @@ public final class TestsModel {
   /**
    * The tests of an entity {@code X} in words, as in {@code `XServiceTests` with the repository and
    * the mapper mocked}; the ones against the database come first, and a line feed comes before the
-   * unit tests when there are both. In the hexagonal architecture, the store takes the place of the
-   * repository.
+   * unit tests when there are both. In DDD, the service knows no mapper; in the hexagonal
+   * architecture, the store takes the place of the repository.
    */
   public String entityTests() {
     boolean hexagonal = project.architecture() == Architecture.HEXAGONAL;
@@ -81,9 +81,11 @@ public final class TestsModel {
     }
     String database = String.join(" and ", container) + " against PostgreSQL in a container";
     String unit =
-        hexagonal
-            ? "`XServiceTests` with the store mocked"
-            : "`XServiceTests` with the repository and the mapper mocked";
+        switch (project.architecture()) {
+          case ANEMIC -> "`XServiceTests` with the repository and the mapper mocked";
+          case DDD -> "`XServiceTests` with the repository mocked";
+          case HEXAGONAL -> "`XServiceTests` with the store mocked";
+        };
     if (!project.tests(TestKind.UNIT)) {
       return database;
     }
