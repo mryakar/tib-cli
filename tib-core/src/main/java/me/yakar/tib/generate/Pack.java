@@ -15,6 +15,10 @@
  */
 package me.yakar.tib.generate;
 
+import java.util.EnumSet;
+import java.util.Set;
+import me.yakar.tib.spec.Architecture;
+
 /**
  * A template pack: the generators and templates for one stack. Packs are found on the class path
  * through {@link java.util.ServiceLoader}.
@@ -33,8 +37,17 @@ public interface Pack {
   String stack();
 
   /**
-   * The generator of a new service. It writes its files once, for the developer, and owns none: the
-   * runs of {@link #entity()} that follow would delete them.
+   * The architectures that the pack arranges a service in; a spec of another one is refused before
+   * anything is generated. Every architecture, unless the pack says otherwise.
+   */
+  default Set<Architecture> architectures() {
+    return EnumSet.allOf(Architecture.class);
+  }
+
+  /**
+   * The generator of a new service. It writes its files once, for the developer, and owns only
+   * files that {@link #entity()} writes too: the runs of {@code entity()} that follow would delete
+   * the others.
    */
   Generator init();
 

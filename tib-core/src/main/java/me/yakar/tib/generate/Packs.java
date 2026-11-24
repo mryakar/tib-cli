@@ -15,7 +15,9 @@
  */
 package me.yakar.tib.generate;
 
+import java.util.List;
 import java.util.ServiceLoader;
+import java.util.stream.StreamSupport;
 
 /** The packs on the class path. */
 public final class Packs {
@@ -25,6 +27,19 @@ public final class Packs {
   /** The pack that a spec names: its name, with its version after an at sign to pin it. */
   public static Pack find(String reference) {
     return find(reference, ServiceLoader.load(Pack.class));
+  }
+
+  /** The names of the packs on the class path, once each, in alphabetical order. */
+  public static List<String> names() {
+    return names(ServiceLoader.load(Pack.class));
+  }
+
+  static List<String> names(Iterable<Pack> packs) {
+    return StreamSupport.stream(packs.spliterator(), false)
+        .map(Pack::name)
+        .distinct()
+        .sorted()
+        .toList();
   }
 
   static Pack find(String reference, Iterable<Pack> packs) {
