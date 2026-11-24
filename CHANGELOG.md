@@ -59,9 +59,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   and a handler with the API of the default pack, its JSON and pages included; errors are answered
   as problem details with 404, 409 and 400. Its tests are of the same four kinds, with JUnit,
   Mockito, Testcontainers, the HTTP client of the JDK and ArchUnit, and a `Dockerfile` runs what
-  `installDist` installs. The pack arranges a service in the anemic architecture only, for now:
-  another is refused, and nothing is written. A service stays with its pack, as before:
-  `tib generate entity` refuses a spec of the other one.
+  `installDist` installs. The pack arranges a service in the anemic architecture or in DDD: in DDD,
+  every entity is an aggregate in its `domain`, with the entity and its repository, its
+  `application`, with the service of its use cases on the aggregate, and its `web`, with its
+  handler, DTO and mapper; the rules of `ArchitectureTests` are the ones of DDD. The hexagonal
+  architecture is refused, for now, and nothing is written. A service stays with its pack, as
+  before: `tib generate entity` refuses a spec of the other one.
 
 ## [0.4.0] - 2026-11-19
 
