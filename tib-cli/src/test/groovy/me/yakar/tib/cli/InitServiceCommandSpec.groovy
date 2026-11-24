@@ -38,7 +38,7 @@ class InitServiceCommandSpec extends Specification {
   static final String JAVA = 'Its Java version, 21 or 25 [21]: '
   static final String PACK = 'Its template pack: default, plain [default]: '
   static final String ARCHITECTURE = 'Its architecture: anemic, ddd, hexagonal [anemic]: '
-  static final String PLAIN_ARCHITECTURE = 'Its architecture: anemic [anemic]: '
+  static final String PLAIN_ARCHITECTURE = 'Its architecture: anemic, ddd [anemic]: '
   static final String TESTS = 'The kinds of its tests, separated by commas, or none: unit, integration, api, archunit [unit,integration,api]: '
   static final String DOCKER = 'A Dockerfile, yes or no [no]: '
   static final String QUESTIONS = NAME + JAVA + PACK + ARCHITECTURE + TESTS + DOCKER
@@ -72,7 +72,7 @@ class InitServiceCommandSpec extends Specification {
     'answers of their own, with spaces'     | ' vehicle-service \n25\n default \n anemic \napi, unit, archunit\nY\n' | 'default' | 25 | ['api', 'unit', 'archunit'] | true | QUESTIONS
     'none for the tests'                    | 'vehicle-service\n21\n\n\nnone\nno\n'               | 'default' | 21   | []                             | false  | QUESTIONS
     'the plain pack, which offers its architectures' | 'vehicle-service\n\nplain\n\n\n\n'        | 'plain'   | 21   | ['unit', 'integration', 'api'] | false  | NAME + JAVA + PACK + PLAIN_ARCHITECTURE + TESTS + DOCKER
-    'answers that do not read, asked again' | '\nVehicle Service\nvehicle-service\n17\nx\n25\nspring\nplain\nddd\n\nunit,e2e\nunit,unit\nunit\nmaybe\nyes\n' | 'plain' | 25 | ['unit'] | true | NAME + "service: '' does not match ${Names.SERVICE}\n" + NAME + "service: 'Vehicle Service' does not match ${Names.SERVICE}\n" + NAME + JAVA + 'java: 17 is not one of 21, 25\n' + JAVA + "'x' is not a number\n" + JAVA + PACK + "'spring' is not one of default, plain\n" + PACK + PLAIN_ARCHITECTURE + "'ddd' is not one of anemic\n" + PLAIN_ARCHITECTURE + TESTS + "'e2e' is not one of unit, integration, api, archunit\n" + TESTS + "tests[1]: 'unit' is already there\n" + TESTS + DOCKER + 'Answer yes or no.\n' + DOCKER
+    'answers that do not read, asked again' | '\nVehicle Service\nvehicle-service\n17\nx\n25\nspring\nplain\nhexagonal\n\nunit,e2e\nunit,unit\nunit\nmaybe\nyes\n' | 'plain' | 25 | ['unit'] | true | NAME + "service: '' does not match ${Names.SERVICE}\n" + NAME + "service: 'Vehicle Service' does not match ${Names.SERVICE}\n" + NAME + JAVA + 'java: 17 is not one of 21, 25\n' + JAVA + "'x' is not a number\n" + JAVA + PACK + "'spring' is not one of default, plain\n" + PACK + PLAIN_ARCHITECTURE + "'hexagonal' is not one of anemic, ddd\n" + PLAIN_ARCHITECTURE + TESTS + "'e2e' is not one of unit, integration, api, archunit\n" + TESTS + "tests[1]: 'unit' is already there\n" + TESTS + DOCKER + 'Answer yes or no.\n' + DOCKER
     'an architecture that the pack has'     | 'vehicle-service\n\n\nlayered\nhexagonal\n\n\n'    | 'default' | 21   | ['unit', 'integration', 'api'] | false  | NAME + JAVA + PACK + ARCHITECTURE + "'layered' is not one of anemic, ddd, hexagonal\n" + ARCHITECTURE + TESTS + DOCKER
   }
 
@@ -280,14 +280,15 @@ class InitServiceCommandSpec extends Specification {
     then:
     result.exitCode() == 1
     result.out() == ''
-    result.err() == "pack plain ${System.getProperty('tib.version')} does not arrange a service in the architecture $architecture, only in anemic\n" +
+    result.err() == "pack plain ${System.getProperty('tib.version')} does not arrange a service in the architecture hexagonal, only in anemic, ddd\n" +
         'Choose another architecture for the service, or another pack.\n'
     service.service.toFile().list().length == 0
 
     where:
-    args                                                         | architecture
-    ['vehicle-service', '--pack', 'plain', '--architecture', 'ddd'] | 'ddd'
-    ['--spec', 'SPEC']                                           | 'hexagonal'
+    args << [
+      ['vehicle-service', '--pack', 'plain', '--architecture', 'hexagonal'],
+      ['--spec', 'SPEC'],
+    ]
   }
 
   def "a kind of test that tib does not know is a mistake of the command line"() {

@@ -29,7 +29,7 @@ import me.yakar.tib.spec.Architecture;
 /**
  * The plain pack: a service in plain Java, without a framework of dependency injection, its objects
  * wired by hand; the HTTP server of the JDK, JDBC on PostgreSQL, Flyway, Jackson and
- * Testcontainers, built with Gradle. It arranges a service in the anemic architecture.
+ * Testcontainers, built with Gradle. It arranges a service in the anemic architecture or in DDD.
  */
 public final class PlainPack implements Pack {
 
@@ -54,10 +54,10 @@ public final class PlainPack implements Pack {
     return "Plain Java";
   }
 
-  /** The anemic architecture only, for now. */
+  /** The anemic architecture and DDD, for now. */
   @Override
   public Set<Architecture> architectures() {
-    return EnumSet.of(Architecture.ANEMIC);
+    return EnumSet.of(Architecture.ANEMIC, Architecture.DDD);
   }
 
   /** The Jackson version of the JSON of the generated service. */

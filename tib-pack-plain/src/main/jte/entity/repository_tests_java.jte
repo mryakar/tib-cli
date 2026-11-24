@@ -4,7 +4,7 @@
 !{EntityModel entity = tests.entity();}
 !{String name = entity.name();}
 !{String repository = entity.variable() + "Repository";}
-package ${entity.packageName()};
+package ${entity.persistencePackage()};
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -16,10 +16,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import ${entity.basePackage()}.TestDatabase;
 import ${entity.basePackage()}.Transactions;
+${EntityModel.importOf(entity.persistencePackage(), entity.packageName(), name + "Samples")}
 @for(var target : tests.requiredTargets())
-import ${target.packageName()}.${target.name()};
-import ${target.packageName()}.${target.name()}Repository;
-import ${target.packageName()}.${target.name()}Samples;
+${EntityModel.importOf(entity.persistencePackage(), target.domainPackage(), target.name())}
+${EntityModel.importOf(entity.persistencePackage(), target.persistencePackage(), target.name() + "Repository")}
+${EntityModel.importOf(entity.persistencePackage(), target.packageName(), target.name() + "Samples")}
 @endfor
 import org.junit.jupiter.api.AfterEach;
 @if(!tests.requiredTargets().isEmpty())

@@ -1,0 +1,12 @@
+# Written by tib when the service was created; it is yours from then on.
+# The image is built from the sources, the build and the Gradle wrapper; nothing that a build or an
+# editor leaves behind.
+.git/
+.gradle/
+build/
+out/
+.tib/
+.idea/
+*.iml
+.vscode/
+.DS_Store

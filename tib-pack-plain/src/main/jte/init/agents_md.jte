@@ -4,6 +4,7 @@
 @param PlainPack pack
 @param me.yakar.tib.pack.TestsModel tests
 !{String database = project.name().replace('-', '_');}
+!{boolean ddd = project.architecture() == me.yakar.tib.spec.Architecture.DDD;}
 # ${project.name()}
 
 A service in plain Java ${project.java()}, scaffolded by tib, without a framework of dependency injection:
@@ -60,8 +61,17 @@ with `--dry-run`, tib shows what it would change and changes nothing. To remove 
 it out of the spec and run `tib generate entity --spec <file>`: tib deletes its files, but for
 those you edited and the migration; dropping its table is a new migration.
 
+@if(ddd)
+The service is arranged for DDD: every entity `X` is an aggregate, in three packages. `x.domain`
+has `X`, `XGenerated` and `XRepository`; `x.application` has `XService`, the use cases on the
+aggregate, which throw `NotFoundException` for one that is not there; `x.web` has `XHandler`,
+`XDto` and `XMapper`, which maps the aggregate to and from its DTO. An entity refers to another by
+its identifier, as `depotId`: there is no ORM. The domain uses neither the application nor the
+web, and the application does not use the web. Its code goes in `X`, never in `XGenerated`:
+@else
 Every class of an entity `X` is in the package of the entity, `x`, and refers to another entity by
 its identifier, as `depotId`: there is no ORM. Its code goes in `X`, never in `XGenerated`:
+@endif
 `XGenerated`, `XRepository`, the SQL of its table, `XDto`, which checks the rules of the spec, and
 `XMapper` are tib's; `X`, `XService`, `XHandler` and the migration are yours@if(tests.any()), and so are
 their tests: ${tests.entityTests()}. Their sample entities and DTOs come
@@ -72,8 +82,7 @@ database with 409 Conflict, and one whose DTO breaks a rule or does not read wit
 as problem details; it is yours, and so are `NotFoundException`, `BadRequestException`, `Http`
 and `Page`.@if(tests.archunit())
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
-classes of the service with ArchUnit, by their names and packages: the handler of an entity over
-its service over its repository, and no cycle between the packages of the entities; it is yours.@endif
+classes of the service with ArchUnit, by their ${ddd ? "packages:\n" + tests.rules() : "names and packages: the handler of an entity over\nits service over its repository, and no cycle between the packages of the entities"}; it is yours.@endif
 
 The Java that tib writes is in the layout of google-java-format ${pack.formatterVersion()}: formatted
 with it, the files of tib's stay as tib wrote them.

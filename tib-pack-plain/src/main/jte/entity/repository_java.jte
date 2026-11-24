@@ -5,7 +5,7 @@
 @param RepositoryModel repository
 !{String name = entity.name();}
 !{String variable = entity.variable();}
-package ${entity.packageName()};
+package ${entity.persistencePackage()};
 
 import ${entity.basePackage()}.Page;
 import ${entity.basePackage()}.Transactions;

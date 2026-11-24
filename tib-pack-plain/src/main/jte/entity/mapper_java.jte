@@ -1,6 +1,8 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
-package ${entity.packageName()};
+package ${entity.webPackage()};
+
+${EntityModel.importOf(entity.webPackage(), entity.domainPackage(), entity.name())}
 
 /** Between the entity and its DTO@if(!entity.relations().isEmpty()); a relation is the identifier of its target in both@endif. */
 public class ${entity.name()}Mapper {
