@@ -79,8 +79,8 @@ schema does not hold. A problem names the value it is about, as in
 * `pack` is `default`, a Spring Boot 4 service, or `plain`, a service in plain Java without a
   framework of dependency injection, on the HTTP server of the JDK, JDBC and Flyway. It is chosen
   when the service is created: `tib generate entity --spec` refuses a spec of the other pack, which
-  generates for another stack. The `plain` pack arranges a service in the anemic architecture only,
-  for now; a spec of another is refused, and tib writes nothing.
+  generates for another stack. The `plain` pack arranges a service in the anemic architecture or
+  in DDD, for now; a spec of the hexagonal one is refused, and tib writes nothing.
 * Every entity has a name of its own and a table of its own, and every member of an entity, its
   identifier, fields and relations, a name of its own and a column of its own. Tables and columns
   are compared in any case; the columns of an audited entity include `CREATED_AT` and

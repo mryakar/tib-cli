@@ -247,8 +247,8 @@ plain Java, without a framework of dependency injection, whose objects are wired
 application class. It answers HTTP with the server of the JDK, `com.sun.net.httpserver`, keeps its
 entities in PostgreSQL with JDBC, without a pool, migrates its schema with Flyway when it starts,
 and reads and writes JSON with Jackson; its tests use JUnit, Mockito and Testcontainers. The pack
-arranges a service in the anemic architecture only, for now: with another, tib writes nothing and
-exits with 1. The same is `pack: plain` in the spec.
+arranges a service in the anemic architecture or in DDD; with the hexagonal one, for now, tib
+writes nothing and exits with 1. The same is `pack: plain` in the spec.
 
 [source,bash]
 ----
@@ -296,6 +296,13 @@ DTO that breaks a rule or does not read with `400 Bad Request`, as problem detai
 of the same kinds: `XRepositoryTests` and the test of the application against PostgreSQL in a
 container, `XServiceTests` with the repository and the mapper mocked, `XApiTests` over HTTP with the
 JDK's client, and `ArchitectureTests`, whose rules go by the names and the packages of the classes.
+
+With `--architecture ddd`, the same classes are arranged in three packages of the entity, as with
+the default pack: `vehicle.domain` has `Vehicle`, `VehicleGenerated` and `VehicleRepository`;
+`vehicle.application` has `VehicleService`, whose use cases take and give the aggregate and throw
+`NotFoundException` for one that is not there; and `vehicle.web` has `VehicleHandler`, which maps
+the aggregate to and from `VehicleDto` with `VehicleMapper`. `XServiceTests` mock the repository
+only, and `ArchitectureTests` has the rules of DDD, which go by the packages of the classes.
 
 A service stays with its pack: `tib generate entity` refuses a spec of the other one, which
 generates for another stack.
