@@ -22,6 +22,7 @@ import me.yakar.tib.generate.Project;
 import me.yakar.tib.pack.EntityModel;
 import me.yakar.tib.pack.EntityTestsModel;
 import me.yakar.tib.pack.Migration;
+import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
 
@@ -91,8 +92,12 @@ final class EntityGenerator implements Generator {
   }
 
   private static void generateEntity(Project project, EntityModel entity, ProjectFiles files) {
-    String main = EntityModel.directory(entity.packageName()) + "/" + entity.name();
-    String test = EntityModel.testDirectory(entity.packageName()) + "/" + entity.name();
+    String name = "/" + entity.name();
+    String domain = EntityModel.directory(entity.domainPackage()) + name;
+    String application = EntityModel.directory(entity.applicationPackage()) + name;
+    String web = EntityModel.directory(entity.webPackage()) + name;
+    // DDD has a service of its own, on the aggregate, and a handler that maps it to its DTO.
+    String architecture = architecture(project);
     Map<String, Object> model =
         Map.of(
             "entity",
@@ -103,12 +108,16 @@ final class EntityGenerator implements Generator {
             new RepositoryModel(entity));
     Map<String, Object> tests =
         Map.of("tests", new EntityTestsModel(entity), "dto", new DtoModel(entity));
-    own(files, main + "Generated.java", "entity/generated_java.jte", model);
-    once(files, main + ".java", "entity/entity_java.jte", model);
+    own(files, domain + "Generated.java", "entity/generated_java.jte", model);
+    once(files, domain + ".java", "entity/entity_java.jte", model);
     // The repository is the SQL of the table that the spec makes, so it follows the spec.
-    own(files, main + "Repository.java", "entity/repository_java.jte", model);
+    own(
+        files,
+        EntityModel.directory(entity.persistencePackage()) + name + "Repository.java",
+        "entity/repository_java.jte",
+        model);
     if (entity.dto()) {
-      own(files, main + "Dto.java", "entity/dto_java.jte", model);
+      own(files, web + "Dto.java", "entity/dto_java.jte", model);
     }
     Migration.write(files, entity);
     // The tests of the kinds of the spec; the service and the API only of an entity with a layer.
@@ -116,22 +125,50 @@ final class EntityGenerator implements Generator {
     boolean serviceTests = entity.layer() && project.tests(TestKind.UNIT);
     boolean apiTests = entity.layer() && project.tests(TestKind.API);
     if (repositoryTests || serviceTests || apiTests) {
-      own(files, test + "Samples.java", "entity/samples_java.jte", tests);
+      own(
+          files,
+          EntityModel.testDirectory(entity.packageName()) + name + "Samples.java",
+          "entity/samples_java.jte",
+          tests);
     }
     if (repositoryTests) {
-      once(files, test + "RepositoryTests.java", "entity/repository_tests_java.jte", tests);
+      once(
+          files,
+          EntityModel.testDirectory(entity.persistencePackage()) + name + "RepositoryTests.java",
+          "entity/repository_tests_java.jte",
+          tests);
     }
     if (entity.layer()) {
-      own(files, main + "Mapper.java", "entity/mapper_java.jte", model);
-      once(files, main + "Service.java", "entity/service_java.jte", model);
-      once(files, main + "Handler.java", "entity/handler_java.jte", model);
+      own(files, web + "Mapper.java", "entity/mapper_java.jte", model);
+      once(
+          files,
+          application + "Service.java",
+          "entity/" + architecture + "service_java.jte",
+          model);
+      once(files, web + "Handler.java", "entity/" + architecture + "handler_java.jte", model);
     }
     if (serviceTests) {
-      once(files, test + "ServiceTests.java", "entity/service_tests_java.jte", tests);
+      once(
+          files,
+          EntityModel.testDirectory(entity.applicationPackage()) + name + "ServiceTests.java",
+          "entity/" + architecture + "service_tests_java.jte",
+          tests);
     }
     if (apiTests) {
-      once(files, test + "ApiTests.java", "entity/api_tests_java.jte", tests);
+      once(
+          files,
+          EntityModel.testDirectory(entity.webPackage()) + name + "ApiTests.java",
+          "entity/api_tests_java.jte",
+          tests);
     }
+  }
+
+  /**
+   * The prefix of the templates of the service, its tests and the handler in the architecture of
+   * the project: none for the anemic one, whose service maps the entity to and from its DTO.
+   */
+  private static String architecture(Project project) {
+    return project.architecture() == Architecture.DDD ? "ddd_" : "";
   }
 
   /** Writes a file of tib's: on every run. */

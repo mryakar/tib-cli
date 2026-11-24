@@ -8,7 +8,7 @@
 !{String path = entity.path();}
 !{String type = name + "Dto";}
 !{String repository = entity.variable() + "Repository";}
-package ${entity.packageName()};
+package ${entity.webPackage()};
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -18,10 +18,12 @@ import ${entity.basePackage()}.Json;
 import ${entity.basePackage()}.TestDatabase;
 import ${entity.basePackage()}.TestService;
 import ${entity.basePackage()}.Transactions;
+${EntityModel.importOf(entity.webPackage(), entity.packageName(), name + "Samples")}
+${EntityModel.importOf(entity.webPackage(), entity.persistencePackage(), name + "Repository")}
 @for(var target : tests.requiredTargets())
-import ${target.packageName()}.${target.name()};
-import ${target.packageName()}.${target.name()}Repository;
-import ${target.packageName()}.${target.name()}Samples;
+${EntityModel.importOf(entity.webPackage(), target.domainPackage(), target.name())}
+${EntityModel.importOf(entity.webPackage(), target.persistencePackage(), target.name() + "Repository")}
+${EntityModel.importOf(entity.webPackage(), target.packageName(), target.name() + "Samples")}
 @endfor
 import java.io.IOException;
 import java.net.http.HttpResponse;

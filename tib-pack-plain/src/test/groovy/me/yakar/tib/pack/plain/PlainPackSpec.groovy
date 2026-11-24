@@ -54,6 +54,9 @@ class PlainPackSpec extends Specification {
   static final String CORNER_SPEC = PlainPackSpec.getResource('corner-service.yaml').text
   static final Spec CORNERS = SpecReader.parse(CORNER_SPEC)
 
+  /** The corners of the entity layer in the DDD architecture. */
+  static final Spec CORNERS_DDD = SpecReader.parse(CORNER_SPEC.replace('java: 25\n', 'java: 25\narchitecture: ddd\n'))
+
   /**
    * The corner spec as its migrations read back. Two types do not come back as the spec gives them:
    * a BigDecimal with a precision and no scale is NUMERIC(10, 0), which reads back as a Long, and a
@@ -90,15 +93,15 @@ class PlainPackSpec extends Specification {
     pack.name() == 'plain'
     pack.version() == VERSION
     pack.stack() == 'Plain Java'
-    pack.architectures() == [Architecture.ANEMIC] as Set
+    pack.architectures() == [Architecture.ANEMIC, Architecture.DDD] as Set
     Packs.find('plain') instanceof PlainPack
     Packs.find("plain@$VERSION") instanceof PlainPack
     Packs.names() == ['plain']
   }
 
-  def "the pack refuses a service of another architecture than the anemic one, before anything is staged: #architecture"() {
+  def "the pack refuses a service of another architecture than the anemic one and DDD, before anything is staged"() {
     given:
-    Spec spec = SpecReader.parse("tib: 1\nservice: s\npack: plain\narchitecture: $architecture\n")
+    Spec spec = SpecReader.parse("tib: 1\nservice: s\npack: plain\narchitecture: hexagonal\n")
     Tree tree = Tree.at(dir)
     PlainPack pack = new PlainPack()
 
@@ -107,12 +110,9 @@ class PlainPackSpec extends Specification {
 
     then:
     PackException e = thrown()
-    e.message == "pack plain $VERSION does not arrange a service in the architecture $architecture, only in anemic\n" +
+    e.message == "pack plain $VERSION does not arrange a service in the architecture hexagonal, only in anemic, ddd\n" +
         'Choose another architecture for the service, or another pack.'
     tree.changes() == []
-
-    where:
-    architecture << ['ddd', 'hexagonal']
   }
 
   def "the generated service has the versions of the stack of the pack"() {
@@ -170,11 +170,21 @@ class PlainPackSpec extends Specification {
 
   def "generates the corners of the service and of its entity layer as the snapshot says"() {
     when:
-    List<Change> changes = corners(dir).changes()
+    List<Change> changes = corners(dir, CORNERS).changes()
 
     then:
     write('corner-service', changes)
     matches('corner-service', changes)
+  }
+
+  def "generates the corners of the entity layer in the DDD architecture as the snapshot says"() {
+    when:
+    List<Change> changes = corners(dir, CORNERS_DDD).changes()
+
+    then:
+    CORNERS_DDD.architecture() == Architecture.DDD
+    write('corner-service-ddd', changes)
+    matches('corner-service-ddd', changes)
   }
 
   def "a machine in Turkish, where the upper case of i is not I, generates the same services"() {
@@ -184,7 +194,7 @@ class PlainPackSpec extends Specification {
 
     when:
     List<Change> vehicles = generate(VEHICLES, dir).changes()
-    List<Change> corners = corners(other).changes()
+    List<Change> corners = corners(other, CORNERS).changes()
 
     then:
     matches('vehicle-service', vehicles)
@@ -206,9 +216,10 @@ class PlainPackSpec extends Specification {
     }
 
     where:
-    name              | spec
-    'vehicle-service' | VEHICLES
-    'corner-service'  | CORNERS
+    name                 | spec
+    'vehicle-service'    | VEHICLES
+    'corner-service'     | CORNERS
+    'corner-service-ddd' | CORNERS_DDD
   }
 
   def "the first line of every generated file states its owner: #name"() {
@@ -222,9 +233,10 @@ class PlainPackSpec extends Specification {
     }
 
     where:
-    name              | spec
-    'vehicle-service' | VEHICLES
-    'corner-service'  | CORNERS
+    name                 | spec
+    'vehicle-service'    | VEHICLES
+    'corner-service'     | CORNERS
+    'corner-service-ddd' | CORNERS_DDD
   }
 
   def "the notes for agents name every header: #header"() {
@@ -254,9 +266,10 @@ class PlainPackSpec extends Specification {
     }
 
     where:
-    name              | spec
-    'vehicle-service' | VEHICLES
-    'corner-service'  | CORNERS
+    name                 | spec
+    'vehicle-service'    | VEHICLES
+    'corner-service'     | CORNERS
+    'corner-service-ddd' | CORNERS_DDD
   }
 
   def "a second run on the generated service changes nothing: #name"() {
@@ -276,9 +289,10 @@ class PlainPackSpec extends Specification {
     result == new Generation.Result([], [], [], [], [])
 
     where:
-    name              | spec     | migrations
-    'vehicle-service' | VEHICLES | false
-    'corner-service'  | CORNERS  | true
+    name                 | spec        | migrations
+    'vehicle-service'    | VEHICLES    | false
+    'corner-service'     | CORNERS     | true
+    'corner-service-ddd' | CORNERS_DDD | true
   }
 
   def "the migrations of the service read back into its spec: #name"() {
@@ -331,12 +345,12 @@ class PlainPackSpec extends Specification {
   }
 
   /**
-   * The service of the corner spec with its entities, staged in a tree at the directory, which has
-   * a migration by hand and a repeatable one.
+   * The service of a corner spec with its entities, staged in a tree at the directory, which has a
+   * migration by hand and a repeatable one.
    */
-  private static Tree corners(Path dir) {
+  private static Tree corners(Path dir, Spec spec) {
     byHand(dir)
-    return generate(CORNERS, dir)
+    return generate(spec, dir)
   }
 
   /**

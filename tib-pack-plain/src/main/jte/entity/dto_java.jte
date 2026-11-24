@@ -2,7 +2,7 @@
 @import me.yakar.tib.pack.plain.DtoModel
 @param EntityModel entity
 @param DtoModel dto
-package ${entity.packageName()};
+package ${entity.webPackage()};
 
 import java.math.BigDecimal;
 import java.time.Instant;
