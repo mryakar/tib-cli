@@ -554,8 +554,8 @@ class GenerateEntityCommandSpec extends Specification {
 
     then:
     result.exitCode() == 0
-    tib.files().containsKey('src/main/java/com/example/vehicleservice/vehicle/VehicleHandler.java')
-    tib.files()['src/main/java/com/example/vehicleservice/Routes.java'].contains('new VehicleHandler(')
+    Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/vehicle/VehicleHandler.java'))
+    Files.readString(dir.resolve('src/main/java/com/example/vehicleservice/Routes.java')).contains('new VehicleHandler(')
   }
 
   def "#problem is reported with exit code 1"() {
