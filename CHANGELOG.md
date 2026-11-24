@@ -48,6 +48,21 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   not use an outbound one, nor the reverse. For all three, no cycle between the packages of the
   entities. It is not among the kinds that a service has by default.
 
+- A second template pack, `plain`: `tib init service NAME --pack plain`, `pack: plain` in the spec,
+  or the answer to a new question of `tib init service`, which comes before the architecture. It
+  generates a service in plain Java, without a framework of dependency injection: its application
+  class reads its configuration from the environment (`DATABASE_URL`, `DATABASE_USER`,
+  `DATABASE_PASSWORD` and `PORT`, each with a default), migrates the database with Flyway and
+  starts the HTTP server of the JDK with the routes of the entities, which `Routes`, written on
+  every run, wires by hand. An entity gets plain Java values, a repository in SQL on JDBC, a DTO
+  that checks the rules of the spec itself, a mapper, a service whose use cases run in transactions,
+  and a handler with the API of the default pack, its JSON and pages included; errors are answered
+  as problem details with 404, 409 and 400. Its tests are of the same four kinds, with JUnit,
+  Mockito, Testcontainers, the HTTP client of the JDK and ArchUnit, and a `Dockerfile` runs what
+  `installDist` installs. The pack arranges a service in the anemic architecture only, for now:
+  another is refused, and nothing is written. A service stays with its pack, as before:
+  `tib generate entity` refuses a spec of the other one.
+
 ## [0.4.0] - 2026-11-19
 
 ### Added

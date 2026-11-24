@@ -15,7 +15,8 @@ tib 0.4.0
 application class and its configuration, a test and a test application that run it against
 PostgreSQL in a container, a `.gitattributes` that keeps the line feeds of its text files on every
 platform and the carriage returns of its batch files, and `AGENTS.md`, the notes for whoever, or
-whatever, works on the service next. First see what it would write, as a diff, without writing
+whatever, works on the service next; with `--pack plain`, a service in plain Java instead, as
+<<_a_service_in_plain_java>> says. First see what it would write, as a diff, without writing
 anything:
 
 [source,bash]
@@ -109,7 +110,7 @@ $ docker build -t vehicle-service .
 ----
 
 Without the name and without a spec file, tib asks for what the command line would say: the name,
-the Java version, the architecture, the kinds of tests and the Dockerfile. An empty answer takes the default in
+the Java version, the template pack, the architecture, the kinds of tests and the Dockerfile. An empty answer takes the default in
 brackets, and an answer that tib cannot use is asked again. The questions go to standard error and
 the answers come from standard input, so that a dry run still prints only its diff; when standard
 input ends before the last answer, as in a script, tib writes nothing and exits with 2.
@@ -119,6 +120,7 @@ input ends before the last answer, as in a script, tib writes nothing and exits 
 $ tib init service
 The name of the service, in lower case words joined with hyphens: vehicle-service
 Its Java version, 21 or 25 [21]: 25
+Its template pack: default, plain [default]:
 Its architecture: anemic, ddd, hexagonal [anemic]:
 The kinds of its tests, separated by commas, or none: unit, integration, api, archunit [unit,integration,api]: unit,api
 A Dockerfile, yes or no [no]: yes
@@ -237,6 +239,66 @@ which tib adds to the spec of the service; xref:ddl.adoc[] says what it reads:
 ----
 $ tib generate entity --ddl vehicle-service.sql
 ----
+
+== A service in plain Java
+
+`--pack plain` scaffolds the service with the `plain` pack instead of the default one: a service in
+plain Java, without a framework of dependency injection, whose objects are wired by hand in its
+application class. It answers HTTP with the server of the JDK, `com.sun.net.httpserver`, keeps its
+entities in PostgreSQL with JDBC, without a pool, migrates its schema with Flyway when it starts,
+and reads and writes JSON with Jackson; its tests use JUnit, Mockito and Testcontainers. The pack
+arranges a service in the anemic architecture only, for now: with another, tib writes nothing and
+exits with 1. The same is `pack: plain` in the spec.
+
+[source,bash]
+----
+$ tib init service vehicle-service --pack plain
+$ ./gradlew build
+$ ./gradlew testRun
+----
+
+Its build is Gradle's `application`: `./gradlew run` starts the service against the database that
+the environment names, through `Config`, `./gradlew testRun` against PostgreSQL in a container, and
+`./gradlew installDist` installs it under `build/install`, which its `Dockerfile` runs:
+
+[cols="1,2,2"]
+|===
+|Variable |What |Default
+
+|`DATABASE_URL`
+|The JDBC URL of the database.
+|`jdbc:postgresql://localhost:5432/vehicle_service`, the name of the service with underscores
+
+|`DATABASE_USER`
+|The user of the database.
+|`vehicle_service`
+
+|`DATABASE_PASSWORD`
+|The password of the user.
+|`vehicle_service`
+
+|`PORT`
+|The port of the API.
+|`8080`
+|===
+
+`tib generate entity` adds, for every entity, in its package: `VehicleGenerated`, the plain Java
+values of its columns, a relation as the identifier of its target, as `depotId`;
+`VehicleRepository`, the SQL of its table on JDBC; `VehicleDto`, which checks what the spec
+requires and the length of a `String` itself; and `VehicleMapper`, all written on every run; and
+`Vehicle`, `VehicleService`, the use cases on the DTOs, each in a transaction, and `VehicleHandler`,
+the API under `/api/vehicles` as the default pack's, pages included, written once. The migrations
+are the default pack's. `Routes`, in the base package, is written on every run: it wires the
+classes of every entity by hand and puts its handler at its path, so that a new entity needs no
+change of the application class. `ErrorHandler`, written with the first entity, answers an entity
+that is not there with `404 Not Found`, a broken constraint of the database with `409 Conflict` and a
+DTO that breaks a rule or does not read with `400 Bad Request`, as problem details. The tests are
+of the same kinds: `XRepositoryTests` and the test of the application against PostgreSQL in a
+container, `XServiceTests` with the repository and the mapper mocked, `XApiTests` over HTTP with the
+JDK's client, and `ArchitectureTests`, whose rules go by the names and the packages of the classes.
+
+A service stays with its pack: `tib generate entity` refuses a spec of the other one, which
+generates for another stack.
 
 == What tib owns
 
