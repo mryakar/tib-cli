@@ -39,6 +39,12 @@ public final class EntityModel {
    */
   private static final int ALLOCATION_SIZE = 50;
 
+  /** The root of the sources of the generated service. */
+  private static final String MAIN = "src/main/java/";
+
+  /** The root of the tests of the generated service. */
+  private static final String TEST = "src/test/java/";
+
   private final Project project;
   private final Entity entity;
   private final List<FieldModel> fields;
@@ -49,7 +55,7 @@ public final class EntityModel {
    * The model of an entity, after the models of the entities it refers to: those are in the map, by
    * name.
    */
-  EntityModel(Project project, Entity entity, Map<String, EntityModel> models) {
+  public EntityModel(Project project, Entity entity, Map<String, EntityModel> models) {
     this.project = project;
     this.entity = entity;
     this.fields = entity.fields().stream().map(FieldModel::new).toList();
@@ -200,13 +206,13 @@ public final class EntityModel {
   }
 
   /** The directory of the sources of a package, relative to the project. */
-  static String directory(String packageName) {
-    return DefaultPack.MAIN + packageName.replace('.', '/');
+  public static String directory(String packageName) {
+    return MAIN + packageName.replace('.', '/');
   }
 
   /** The directory of the tests of a package, relative to the project. */
-  static String testDirectory(String packageName) {
-    return DefaultPack.TEST + packageName.replace('.', '/');
+  public static String testDirectory(String packageName) {
+    return TEST + packageName.replace('.', '/');
   }
 
   public String idField() {
@@ -281,7 +287,7 @@ public final class EntityModel {
   }
 
   /** Whether the service and the controller are generated: they need the DTO and the mapper. */
-  boolean layer() {
+  public boolean layer() {
     return entity.options().dto() && entity.options().mapper();
   }
 

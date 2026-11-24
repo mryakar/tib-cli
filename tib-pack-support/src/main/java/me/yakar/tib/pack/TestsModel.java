@@ -26,7 +26,7 @@ public final class TestsModel {
 
   private final Project project;
 
-  TestsModel(Project project) {
+  public TestsModel(Project project) {
     this.project = project;
   }
 

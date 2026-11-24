@@ -1,5 +1,5 @@
 @import me.yakar.tib.generate.Project
-@import me.yakar.tib.pack.DefaultPack
+@import me.yakar.tib.pack.spring.DefaultPack
 @import me.yakar.tib.spec.TestKind
 @param Project project
 @param DefaultPack pack

@@ -25,13 +25,16 @@ plugins {
 description = "tib default template pack: Spring Boot 4, JPA, PostgreSQL, Flyway, Testcontainers"
 
 dependencies {
-  implementation(project(":tib-core"))
-  implementation(libs.jte.runtime)
-  implementation(libs.google.java.format)
+  implementation(project(":tib-pack-support"))
+  // The tests check that the generated Java is in the layout of google-java-format.
+  testImplementation(libs.google.java.format)
 }
 
+// The package of the compiled templates is the pack's own: another pack has templates of the same
+// names.
 jte {
   generate()
+  packageName = "gg.jte.generated.spring"
   contentType = ContentType.Plain
   trimControlStructures = true
 }
@@ -53,11 +56,11 @@ tasks.processResources {
   filesMatching("**/pack.properties") { expand(properties) }
   // The Gradle wrapper of this build, which the pack writes into a new service.
   val root = layout.settingsDirectory
-  from(root.files("gradlew", "gradlew.bat")) { into("me/yakar/tib/pack/wrapper") }
+  from(root.files("gradlew", "gradlew.bat")) { into("me/yakar/tib/pack/spring/wrapper") }
   from(
     root.files("gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties"),
   ) {
-    into("me/yakar/tib/pack/wrapper/gradle/wrapper")
+    into("me/yakar/tib/pack/spring/wrapper/gradle/wrapper")
   }
 }
 

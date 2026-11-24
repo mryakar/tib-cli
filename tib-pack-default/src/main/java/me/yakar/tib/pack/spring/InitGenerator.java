@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.yakar.tib.pack;
+package me.yakar.tib.pack.spring;
 
 import java.util.List;
 import java.util.Map;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
+import me.yakar.tib.pack.EntityModel;
+import me.yakar.tib.pack.TestsModel;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
 
@@ -51,8 +53,8 @@ final class InitGenerator implements Generator {
 
   @Override
   public void generate(Project project, ProjectFiles files) {
-    String sources = DefaultPack.MAIN + project.packagePath();
-    String tests = DefaultPack.TEST + project.packagePath();
+    String sources = EntityModel.directory(project.basePackage());
+    String tests = EntityModel.testDirectory(project.basePackage());
     once(files, "settings.gradle.kts", "init/settings_gradle_kts.jte", project);
     once(files, "build.gradle.kts", "init/build_gradle_kts.jte", project);
     for (String file : WRAPPER) {
@@ -105,7 +107,7 @@ final class InitGenerator implements Generator {
   private void once(ProjectFiles files, String path, String template, Project project) {
     files.once(
         path,
-        Templates.render(
+        DefaultPack.TEMPLATES.render(
             path,
             HEADER,
             template,

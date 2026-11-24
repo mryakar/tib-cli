@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.yakar.tib.pack;
+package me.yakar.tib.pack.spring;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -25,6 +25,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
+import me.yakar.tib.pack.EntityModel;
+import me.yakar.tib.pack.EntityTestsModel;
 import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.Entity;
 import me.yakar.tib.spec.Relation;
@@ -77,8 +79,10 @@ final class EntityGenerator implements Generator {
   /** Writes a class of the base package once, with the first entity that needs it. */
   private static void firstEntity(
       ProjectFiles files, Project project, String type, String template) {
-    String path = DefaultPack.MAIN + project.packagePath() + "/" + type + ".java";
-    files.once(path, Templates.render(path, FIRST_ENTITY, template, Map.of("project", project)));
+    String path = EntityModel.directory(project.basePackage()) + "/" + type + ".java";
+    files.once(
+        path,
+        DefaultPack.TEMPLATES.render(path, FIRST_ENTITY, template, Map.of("project", project)));
   }
 
   /** The models of the entities of the project, by name, each after the entities it refers to. */
@@ -136,7 +140,8 @@ final class EntityGenerator implements Generator {
     // A migration lasts: a database may have run it, so it stays when the entity leaves the spec.
     String migration = migration(files, entity);
     files.lasting(
-        migration, Templates.render(migration, MIGRATION, "entity/migration_sql.jte", model));
+        migration,
+        DefaultPack.TEMPLATES.render(migration, MIGRATION, "entity/migration_sql.jte", model));
     // The tests of the kinds of the spec; the service and the API only of an entity with a layer.
     boolean repositoryTests = project.tests(TestKind.INTEGRATION);
     boolean serviceTests = entity.layer() && project.tests(TestKind.UNIT);
@@ -214,13 +219,13 @@ final class EntityGenerator implements Generator {
   /** Writes a file of tib's: on every run. */
   private static void own(
       ProjectFiles files, String path, String template, Map<String, Object> parameters) {
-    files.own(path, Templates.render(path, EVERY_RUN, template, parameters));
+    files.own(path, DefaultPack.TEMPLATES.render(path, EVERY_RUN, template, parameters));
   }
 
   /** Writes a file of the developer's: once. */
   private static void once(
       ProjectFiles files, String path, String template, Map<String, Object> parameters) {
-    files.once(path, Templates.render(path, ONCE, template, parameters));
+    files.once(path, DefaultPack.TEMPLATES.render(path, ONCE, template, parameters));
   }
 
   /**
