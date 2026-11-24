@@ -249,7 +249,7 @@ class InitServiceCommandSpec extends Specification {
     result.exitCode() == 0
     tib.state().spec().pack() == 'plain'
     tib.state().pack().stack() == 'Plain Java'
-    tib.files().containsKey('src/main/java/com/example/vehicleservice/Routes.java')
+    Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/Routes.java'))
 
     when:
     Tib spring = new Tib(dir.resolve('spring'))
