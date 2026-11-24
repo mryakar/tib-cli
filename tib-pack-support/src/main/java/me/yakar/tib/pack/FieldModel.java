@@ -59,7 +59,7 @@ public record FieldModel(Field field) {
     return Names.property(field.name());
   }
 
-  boolean nullable() {
+  public boolean nullable() {
     return field.nullable();
   }
 
@@ -68,7 +68,7 @@ public record FieldModel(Field field) {
   }
 
   /** The length of a String: the spec's, or else the default; a field of another type has none. */
-  Integer length() {
+  public Integer length() {
     if (field.type() == FieldType.STRING && field.length() == null) {
       return DEFAULT_LENGTH;
     }

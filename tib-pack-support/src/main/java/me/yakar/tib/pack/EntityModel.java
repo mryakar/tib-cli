@@ -16,9 +16,12 @@
 package me.yakar.tib.pack;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Architecture;
@@ -26,6 +29,7 @@ import me.yakar.tib.spec.Entity;
 import me.yakar.tib.spec.IdStrategy;
 import me.yakar.tib.spec.IdType;
 import me.yakar.tib.spec.Names;
+import me.yakar.tib.spec.Relation;
 
 /**
  * An entity as the templates see it: its names, its fields and relations, and what the generated
@@ -47,6 +51,7 @@ public final class EntityModel {
 
   private final Project project;
   private final Entity entity;
+  private final boolean byIdentifier;
   private final List<FieldModel> fields;
   private final List<RelationModel> relations;
   private final List<EntityModel> targets;
@@ -56,8 +61,20 @@ public final class EntityModel {
    * name.
    */
   public EntityModel(Project project, Entity entity, Map<String, EntityModel> models) {
+    this(project, entity, models, false);
+  }
+
+  /**
+   * The model of an entity, as {@link #EntityModel(Project, Entity, Map)} makes it.
+   *
+   * @param byIdentifier whether the entity refers to another by the identifier of its target
+   *     whatever the architecture, as in a stack without JPA
+   */
+  public EntityModel(
+      Project project, Entity entity, Map<String, EntityModel> models, boolean byIdentifier) {
     this.project = project;
     this.entity = entity;
+    this.byIdentifier = byIdentifier;
     this.fields = entity.fields().stream().map(FieldModel::new).toList();
     List<RelationModel> relations = new ArrayList<>();
     List<EntityModel> targets = new ArrayList<>();
@@ -71,6 +88,45 @@ public final class EntityModel {
     }
     this.relations = List.copyOf(relations);
     this.targets = List.copyOf(targets);
+  }
+
+  /**
+   * The models of the entities of the project, by name, each after the entities it refers to, so
+   * that its migration can reference their tables.
+   *
+   * @param byIdentifier whether every entity refers to another by the identifier of its target
+   *     whatever the architecture, as in a stack without JPA
+   */
+  public static Map<String, EntityModel> models(Project project, boolean byIdentifier) {
+    Map<String, EntityModel> models = new LinkedHashMap<>();
+    for (Entity entity : ordered(project.spec().entities())) {
+      models.put(entity.name(), new EntityModel(project, entity, models, byIdentifier));
+    }
+    return models;
+  }
+
+  /**
+   * The entities, each after the entities it refers to; otherwise in the order of the spec. A spec
+   * has no cycle of relations, but an entity may refer to itself.
+   */
+  static List<Entity> ordered(List<Entity> entities) {
+    Map<String, Entity> byName = new LinkedHashMap<>();
+    entities.forEach(entity -> byName.put(entity.name(), entity));
+    Set<String> done = new LinkedHashSet<>();
+    byName.keySet().forEach(name -> visit(name, byName, done));
+    return done.stream().map(byName::get).toList();
+  }
+
+  private static void visit(String name, Map<String, Entity> entities, Set<String> done) {
+    if (done.contains(name)) {
+      return;
+    }
+    for (Relation relation : entities.get(name).relations()) {
+      if (!relation.target().equals(name)) {
+        visit(relation.target(), entities, done);
+      }
+    }
+    done.add(name);
   }
 
   /** The base package of the service. */
@@ -121,10 +177,10 @@ public final class EntityModel {
 
   /**
    * Whether the entity refers to another by the identifier of its target, a column of its own, and
-   * not by a relation of JPA: in DDD and in the hexagonal architecture.
+   * not by a relation of JPA: in DDD and in the hexagonal architecture, and in a stack without JPA.
    */
   public boolean refersById() {
-    return project.architecture() != Architecture.ANEMIC;
+    return byIdentifier || project.architecture() != Architecture.ANEMIC;
   }
 
   /**

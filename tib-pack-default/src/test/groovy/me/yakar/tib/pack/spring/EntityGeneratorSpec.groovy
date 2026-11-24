@@ -19,6 +19,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.generate.Generation
 import me.yakar.tib.generate.Project
+import me.yakar.tib.pack.Migration
 import me.yakar.tib.spec.SpecReader
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Tree
@@ -34,28 +35,6 @@ class EntityGeneratorSpec extends Specification {
 
   @TempDir
   Path dir
-
-  def "an entity comes after the entities it refers to, otherwise in the order of the spec"() {
-    given:
-    Project project = new Project(SpecReader.parse('''\
-tib: 1
-service: s
-entities:
-  - name: A
-    relations:
-      - { kind: manyToOne, target: B }
-  - name: B
-    relations:
-      - { kind: manyToOne, target: B, field: parent }
-  - name: C
-    relations:
-      - { kind: manyToOne, target: B }
-      - { kind: manyToOne, target: B, field: other }
-'''))
-
-    expect:
-    EntityGenerator.ordered(project.spec().entities())*.name() == ['B', 'A', 'C']
-  }
 
   def "an entity gets the tests of the kinds of the spec: #tests"() {
     given:
@@ -112,62 +91,6 @@ entities:
     '[unit]'                   | ['a/ASamples', 'a/application/AServiceTests']
   }
 
-  def "the migration of a new table comes after the migrations there: #existing"() {
-    given:
-    existing.each { writeMigration(it) }
-    Tree tree = Tree.at(dir)
-
-    when:
-    new EntityGenerator().generate(A, tree)
-
-    then:
-    tree.changes()*.path().find {
-      it.endsWith('.sql')
-    } == "${EntityGenerator.MIGRATIONS}/${migration}"
-
-    where:
-    existing                                       | migration
-    []                                             | 'V1__create_a.sql'
-    ['V3__by_hand.sql', 'R__views.sql']            | 'V4__create_a.sql'
-    ['V202611011200__by_hand.sql']                 | 'V202611011201__create_a.sql'
-    ['V2.1__by_hand.sql']                          | 'V3__create_a.sql'
-    ['V2_1_3__by_hand.sql', 'V1__by_hand.sql']     | 'V3__create_a.sql'
-    ['V1__by_hand.sql', 'older/V5__by_hand.sql']   | 'V6__create_a.sql'
-    ['notes.txt']                                  | 'V1__create_a.sql'
-  }
-
-  def "the migration of a table that has one is not written again"() {
-    given:
-    writeMigration('V2__create_a.sql')
-    Tree tree = Tree.at(dir)
-
-    when:
-    new EntityGenerator().generate(A, tree)
-
-    then:
-    tree.changes()*.path().every { !it.endsWith('.sql') }
-  }
-
-  def "the migration of a table that tib wrote before is not written again, also when it is #how"() {
-    given:
-    onDisk.each { writeMigration(it) }
-    Tree tree = Tree.at(dir)
-    tree.writtenBefore(['V0__create_b.sql', 'V1__create_a.sql'].collect {
-      "${EntityGenerator.MIGRATIONS}/${it}".toString()
-    })
-
-    when:
-    new EntityGenerator().generate(A, tree)
-
-    then:
-    tree.changes()*.path().every { !it.endsWith('.sql') }
-
-    where:
-    how       | onDisk
-    'gone'    | ['V2__x.sql']
-    'renamed' | ['V1__a.sql']
-  }
-
   def "the migration of a table lasts: a run whose spec no longer has the table does not delete it"() {
     given:
     DefaultPack pack = new DefaultPack()
@@ -182,7 +105,7 @@ entities:
     then:
     List<String> deleted = later.changes().findAll { it.deletes() }*.path()
     deleted.contains('src/main/java/com/example/s/a/A.java')
-    !deleted.contains("${EntityGenerator.MIGRATIONS}/V1__create_a.sql" as String)
+    !deleted.contains("${Migration.DIRECTORY}/V1__create_a.sql" as String)
   }
 
   def "the first entity with an API brings the handler of conflicts, once: #entities"() {
@@ -224,12 +147,5 @@ entities:
     true  | false
     false | true
     true  | true
-  }
-
-  /** A migration of the developer's at the path, under the migrations of the service. */
-  private void writeMigration(String path) {
-    Path file = dir.resolve(EntityGenerator.MIGRATIONS).resolve(path)
-    Files.createDirectories(file.parent)
-    Files.writeString(file, '-- mine\n')
   }
 }

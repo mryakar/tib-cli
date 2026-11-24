@@ -60,7 +60,7 @@ public record RelationModel(Relation relation, EntityModel target) {
     return relation.column();
   }
 
-  boolean nullable() {
+  public boolean nullable() {
     return relation.nullable();
   }
 

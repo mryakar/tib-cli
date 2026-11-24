@@ -15,6 +15,8 @@
  */
 package me.yakar.tib.pack
 
+import me.yakar.tib.generate.Project
+import me.yakar.tib.spec.SpecReader
 import spock.lang.Specification
 
 class EntityModelSpec extends Specification {
@@ -210,6 +212,51 @@ class EntityModelSpec extends Specification {
     architecture | arguments
     'anemic'     | 'a.getId(), a.getLabel(), a.getB() == null ? null : a.getB().getId(), a.getC() == null ? null : a.getC().getId(), a.getParent() == null ? null : a.getParent().getId(), a.getCreatedAt(), a.getUpdatedAt()'
     'ddd'        | 'a.getId(), a.getLabel(), a.getBId(), a.getCId(), a.getParentId(), a.getCreatedAt(), a.getUpdatedAt()'
+  }
+
+  def "the models of a project come each after the entities it refers to, otherwise in the order of the spec"() {
+    given:
+    Project project = new Project(SpecReader.parse('''\
+tib: 1
+service: s
+entities:
+  - name: A
+    relations:
+      - { kind: manyToOne, target: B }
+  - name: B
+    relations:
+      - { kind: manyToOne, target: B, field: parent }
+  - name: C
+    relations:
+      - { kind: manyToOne, target: B }
+      - { kind: manyToOne, target: B, field: other }
+'''))
+
+    when:
+    Map<String, EntityModel> models = EntityModel.models(project, false)
+
+    then:
+    models.keySet() as List == ['B', 'A', 'C']
+    models.A.relations()[0].target().is(models.B)
+    models.B.relations()[0].target().is(models.B)
+  }
+
+  def "an entity refers to another by its identifier in a stack without JPA, whatever the architecture: #byIdentifier"() {
+    given:
+    Project project = new Project(SpecReader.parse("tib: 1\nservice: s\nentities:\n  - name: B\n  - name: A\n    relations:\n      - { kind: manyToOne, target: B }\n"))
+
+    when:
+    EntityModel model = EntityModel.models(project, byIdentifier).A
+
+    then:
+    model.refersById() == byIdentifier
+    model.dtoArguments() == arguments
+    model.packageName() == model.domainPackage()
+
+    where:
+    byIdentifier | arguments
+    false        | 'a.getId(), a.getB() == null ? null : a.getB().getId()'
+    true         | 'a.getId(), a.getBId()'
   }
 
   /** The models of the entities of the spec, by name. */
