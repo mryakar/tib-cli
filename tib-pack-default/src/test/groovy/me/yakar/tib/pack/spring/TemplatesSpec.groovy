@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.yakar.tib.pack
+package me.yakar.tib.pack.spring
 
 import java.nio.file.Path
 import me.yakar.tib.generate.Project
@@ -57,66 +57,6 @@ class TemplatesSpec extends Specification {
             - { kind: manyToOne, target: Instant, nullable: false }
             - { kind: manyToOne, target: UUID }
       '''.stripIndent())), clashes)
-  }
-
-  def "a header is a comment of the file's kind: #path"() {
-    expect:
-    Templates.comment(path, 'Mine.') == comment
-
-    where:
-    path                     | comment
-    'src/main/java/A.java'   | '// Mine.'
-    'build.gradle.kts'       | '// Mine.'
-    'application.yaml'       | '# Mine.'
-    '.gitignore'             | '# Mine.'
-    '.gitattributes'         | '# Mine.'
-    'Dockerfile'             | '# Mine.'
-    '.dockerignore'          | '# Mine.'
-    'db/migration/V1__a.sql' | '-- Mine.'
-    'AGENTS.md'              | '<!-- Mine. -->'
-  }
-
-  def "a file of a kind without comments gets no header"() {
-    when:
-    Templates.comment('logo.png', 'Mine.')
-
-    then:
-    IllegalArgumentException e = thrown()
-    e.message == 'there is no comment in logo.png'
-  }
-
-  def "Java is formatted as google-java-format lays it out, with its imports sorted and the unused ones left out"() {
-    expect:
-    Templates.format('A.java', '''\
-package a;
-import java.util.Set;
-import java.util.List;
-class A {   List<String> names() { return List.of(); } }
-''') == '''\
-package a;
-
-import java.util.List;
-
-class A {
-  List<String> names() {
-    return List.of();
-  }
-}
-'''
-  }
-
-  def "a file that is not Java is left as it is"() {
-    expect:
-    Templates.format('application.yaml', 'a:   b\n') == 'a:   b\n'
-  }
-
-  def "Java that the formatter cannot read is a mistake of the pack, named by its path"() {
-    when:
-    Templates.format('A.java', 'class {')
-
-    then:
-    IllegalStateException e = thrown()
-    e.message == 'A.java is not Java that google-java-format reads'
   }
 
   def "a file imports no class with the name of a class of the service that it names: #file"() {

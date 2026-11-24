@@ -33,7 +33,7 @@ public final class EntityTestsModel {
   private final EntityModel entity;
   private final List<EntityModel> requiredTargets;
 
-  EntityTestsModel(EntityModel entity) {
+  public EntityTestsModel(EntityModel entity) {
     this.entity = entity;
     List<EntityModel> targets = new ArrayList<>();
     addRequiredTargets(entity, targets);

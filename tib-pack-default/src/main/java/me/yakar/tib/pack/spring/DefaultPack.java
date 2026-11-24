@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.yakar.tib.pack;
+package me.yakar.tib.pack.spring;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,6 +21,7 @@ import java.io.UncheckedIOException;
 import java.util.Properties;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Pack;
+import me.yakar.tib.pack.Templates;
 
 /**
  * The default pack: a plain Spring Boot 4 service with JPA, PostgreSQL, Flyway and Testcontainers,
@@ -28,11 +29,8 @@ import me.yakar.tib.generate.Pack;
  */
 public final class DefaultPack implements Pack {
 
-  /** The root of the sources of the generated service. */
-  static final String MAIN = "src/main/java/";
-
-  /** The root of the tests of the generated service. */
-  static final String TEST = "src/test/java/";
+  /** The templates of the pack, which its build compiles into a package of their own. */
+  static final Templates TEMPLATES = new Templates("gg.jte.generated.spring");
 
   private final Properties properties = load(stream("pack.properties"));
 

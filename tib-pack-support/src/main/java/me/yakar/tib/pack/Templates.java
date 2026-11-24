@@ -22,24 +22,33 @@ import gg.jte.TemplateEngine;
 import gg.jte.output.StringOutput;
 import java.util.Map;
 
-/** The templates of the pack, compiled by the build. */
-final class Templates {
-
-  private static final TemplateEngine ENGINE = TemplateEngine.createPrecompiled(ContentType.Plain);
+/**
+ * The templates of a pack, compiled by its build into a package of its own: two packs on one class
+ * path have templates of the same names.
+ */
+public final class Templates {
 
   private static final Formatter FORMATTER = new Formatter();
 
-  private Templates() {}
+  private final TemplateEngine engine;
+
+  /**
+   * The templates that jte compiled into the package. jte looks for them with the class loader of
+   * the thread that creates the templates, as they are in no directory of their own.
+   */
+  public Templates(String packageName) {
+    this.engine = TemplateEngine.createPrecompiled(null, ContentType.Plain, null, packageName);
+  }
 
   /**
    * The text of the file at the path: the header that says who owns it, as a comment of the file's
    * kind, then the template with the parameters, by name. Java is in the layout of
    * google-java-format, its imports sorted and the unused ones left out.
    */
-  static String render(
+  public String render(
       String path, String header, String template, Map<String, Object> parameters) {
     StringOutput output = new StringOutput();
-    ENGINE.render(template, parameters, output);
+    engine.render(template, parameters, output);
     return format(path, comment(path, header) + "\n" + output);
   }
 

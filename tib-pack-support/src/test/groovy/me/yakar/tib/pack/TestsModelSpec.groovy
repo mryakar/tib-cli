@@ -36,6 +36,7 @@ class TestsModelSpec extends Specification {
     '[unit, integration, api]'  | true  | true      | '`XRepositoryTests` and `XApiTests` against PostgreSQL in a container, and\n`XServiceTests` with the repository and the mapper mocked'
     '[api, integration]'        | true  | true      | '`XRepositoryTests` and `XApiTests` against PostgreSQL in a container'
     '[integration]'             | true  | true      | '`XRepositoryTests` against PostgreSQL in a container'
+    '[api]'                     | true  | true      | '`XApiTests` against PostgreSQL in a container'
     '[api, unit]'               | true  | true      | '`XApiTests` against PostgreSQL in a container, and\n`XServiceTests` with the repository and the mapper mocked'
     '[unit]'                    | true  | false     | '`XServiceTests` with the repository and the mapper mocked'
     '[]'                        | false | false     | null
@@ -55,5 +56,20 @@ class TestsModelSpec extends Specification {
     '[unit, integration, api]'  | '`XPersistenceAdapterTests` and `XApiTests` against PostgreSQL in a container, and\n`XServiceTests` with the store mocked'
     '[integration]'             | '`XPersistenceAdapterTests` against PostgreSQL in a container'
     '[unit]'                    | '`XServiceTests` with the store mocked'
+  }
+
+  def "the test of the architecture checks the rules of #architecture, and that there is no cycle"() {
+    given:
+    TestsModel model = new TestsModel(new Project(SpecReader.parse("tib: 1\nservice: s\narchitecture: $architecture\n")))
+
+    expect:
+    model.rules().startsWith(rules)
+    model.rules().endsWith('no cycle between the packages of the entities')
+
+    where:
+    architecture | rules
+    'anemic'     | 'the controller of an entity over its service over its\nrepository'
+    'ddd'        | 'the domain of an entity uses neither its application nor its web'
+    'hexagonal'  | 'the domain knows neither JPA nor Spring'
   }
 }
