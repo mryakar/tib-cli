@@ -29,6 +29,7 @@ dependencies {
   implementation(project(":tib-core"))
   implementation(libs.picocli)
   runtimeOnly(project(":tib-pack-default"))
+  runtimeOnly(project(":tib-pack-plain"))
 }
 
 // The version that tib --version prints comes from the build.

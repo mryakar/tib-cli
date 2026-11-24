@@ -24,4 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "tib-cli"
 
-include("tib-core", "tib-cli", "tib-pack-support", "tib-pack-default")
+include("tib-core", "tib-cli", "tib-pack-support", "tib-pack-default", "tib-pack-plain")

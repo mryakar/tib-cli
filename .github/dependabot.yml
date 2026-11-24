@@ -25,6 +25,14 @@ updates:
       # The Spring Boot of the generated services changes the snapshots; its update comes alone.
       generated-stack:
         patterns: ["org.springframework.boot:spring-boot-gradle-plugin"]
+      # The libraries of the services of the plain pack change its snapshots; their updates come
+      # together.
+      generated-plain-stack:
+        patterns:
+          - "org.flywaydb:*"
+          - "org.mockito:*"
+          - "org.postgresql:*"
+          - "org.testcontainers:*"
       # The formatter and the plugin that runs it move together. google-java-format also formats
       # what the default pack generates: its update changes the snapshots and comes with them.
       format:
