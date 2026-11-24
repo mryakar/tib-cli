@@ -28,7 +28,7 @@ Some values follow from others, always the same way:
   entity's name in lower case, `com.example.vehicleservice.vehicle`.
 * An identifier without a strategy gets `identity` when it is a `Long` and `uuid` when it is a
   `UUID`.
-* A `String` without a length gets 255 from the default pack: in its column, in the validation of
+* A `String` without a length gets 255 from the packs: in its column, in the validation of
   its DTO and in its migration. A `Text` is a `String` in Java that has no limit: a `TEXT` column
   in its migration, and no `@Size` in its DTO.
 * Without the DTO, or without the mapper, an entity has no service and no controller either. A
@@ -76,6 +76,11 @@ schema does not hold. A problem names the value it is about, as in
 * `docker` is chosen when the service is created too, as its `Dockerfile` is written once.
 * `architecture` is `anemic`, `ddd` or `hexagonal`, and is chosen when the service is created: the
   code of each is arranged in other packages.
+* `pack` is `default`, a Spring Boot 4 service, or `plain`, a service in plain Java without a
+  framework of dependency injection, on the HTTP server of the JDK, JDBC and Flyway. It is chosen
+  when the service is created: `tib generate entity --spec` refuses a spec of the other pack, which
+  generates for another stack. The `plain` pack arranges a service in the anemic architecture only,
+  for now; a spec of another is refused, and tib writes nothing.
 * Every entity has a name of its own and a table of its own, and every member of an entity, its
   identifier, fields and relations, a name of its own and a column of its own. Tables and columns
   are compared in any case; the columns of an audited entity include `CREATED_AT` and
@@ -86,8 +91,10 @@ schema does not hold. A problem names the value it is about, as in
   relation, the relation's field followed by the target's identifier field, as in `depotId`.
 * An entity is not named like a type that the generated code imports, such as `Entity`, `Table`,
   `Column`, `Id`, `Service`, `Component`, `Page`, `Pageable`, `List`, `Instant`, `UUID`,
-  `BigDecimal`, `LocalDate` or `LocalDateTime`. tib does not check this one, and the generated
-  code would not compile.
+  `BigDecimal`, `LocalDate` or `LocalDateTime`, and with the `plain` pack `Transactions`, `Http`,
+  `Optional`, `Connection` or `ResultSet`; nor does a DTO of the `plain` pack have a field named
+  `problems`, the method that checks it. tib does not check these, and the generated code would
+  not compile.
 * No name becomes a Java keyword: not a field, an identifier or the field of a relation (`class`),
   not a part of the group (`com.new`), not the service's name without its hyphens, and not the
   name of an entity in lower case, which is its package (`Class`).

@@ -18,11 +18,13 @@ package me.yakar.tib.cli;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import me.yakar.tib.generate.Packs;
 import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.SpecException;
@@ -41,7 +43,8 @@ import picocli.CommandLine.TypeConversionException;
 @Command(
     name = "service",
     description = {
-      "Scaffolds a new Spring Boot service, from its name or its spec file.",
+      "Scaffolds a new service, from its name or its spec file: a Spring Boot one, or one in plain"
+          + " Java with --pack plain.",
       "Without either, tib asks for what the command line would say, on standard error, and reads"
           + " the answers from standard input."
     })
@@ -73,6 +76,17 @@ class InitServiceCommand implements Callable<Integer> {
     String name;
 
     @Option(
+        names = "--pack",
+        paramLabel = "NAME",
+        converter = PackConverter.class,
+        completionCandidates = PackNames.class,
+        description =
+            "The template pack that generates the service: ${COMPLETION-CANDIDATES}; default, of"
+                + " Spring Boot, by default. plain generates a service in plain Java, without a"
+                + " framework of dependency injection.")
+    String pack;
+
+    @Option(
         names = "--java",
         paramLabel = "VERSION",
         description = "The Java version of the service: 21 (the default) or 25.")
@@ -100,6 +114,29 @@ class InitServiceCommand implements Callable<Integer> {
         names = "--docker",
         description = "Writes a Dockerfile that builds the service into an image.")
     Boolean docker;
+  }
+
+  /** The names of the packs on the class path, as in {@code default}. */
+  static class PackNames implements Iterable<String> {
+
+    @Override
+    public Iterator<String> iterator() {
+      return Packs.names().iterator();
+    }
+  }
+
+  /** Reads a pack by its name, which has to be the name of a pack on the class path. */
+  static class PackConverter implements ITypeConverter<String> {
+
+    @Override
+    public String convert(String value) {
+      List<String> names = Packs.names();
+      if (!names.contains(value)) {
+        throw new TypeConversionException(
+            "'" + value + "' is not one of " + String.join(", ", names));
+      }
+      return value;
+    }
   }
 
   /** Reads a kind of test by its name in the spec, as in {@code unit}. */
@@ -152,7 +189,8 @@ class InitServiceCommand implements Callable<Integer> {
     }
     return run.init(
         Spec.of(
-            source.named.name, null,
+            source.named.name,
+            source.named.pack,
             source.named.java,
             source.named.architecture,
             source.named.tests,
@@ -161,7 +199,10 @@ class InitServiceCommand implements Callable<Integer> {
         tree);
   }
 
-  /** The spec of the service, from the answers to the questions of tib. */
+  /**
+   * The spec of the service, from the answers to the questions of tib. The architectures that it
+   * offers are the ones that the chosen pack arranges a service in.
+   */
   private Spec asked() {
     String name =
         questions.ask(
@@ -174,24 +215,39 @@ class InitServiceCommand implements Callable<Integer> {
             "Its Java version, 21 or 25",
             String.valueOf(defaults.java()),
             answer -> checked(() -> Spec.of(name, null, number(answer), null, null, null)).java());
+    String pack =
+        questions.ask(
+            "Its template pack: " + String.join(", ", Packs.names()),
+            defaults.pack(),
+            answer -> read(new PackConverter(), answer));
+    Architecture[] architectures =
+        Arrays.stream(Architecture.values())
+            .filter(Packs.find(pack).architectures()::contains)
+            .toArray(Architecture[]::new);
     Architecture architecture =
         questions.ask(
-            "Its architecture: " + names(Architecture.values()),
+            "Its architecture: " + names(architectures),
             defaults.architecture().toString(),
-            answer -> {
-              try {
-                return new ArchitectureConverter().convert(answer);
-              } catch (TypeConversionException e) {
-                throw new IllegalArgumentException(e.getMessage(), e);
-              }
-            });
+            answer -> read(value -> named(architectures, value), answer));
     List<TestKind> tests =
         questions.ask(
             "The kinds of its tests, separated by commas, or none: " + names(TestKind.values()),
             defaults.tests().stream().map(TestKind::toString).collect(Collectors.joining(",")),
             answer -> checked(() -> Spec.of(name, null, java, null, kinds(answer), null)).tests());
     Boolean docker = questions.ask("A Dockerfile, yes or no", "no", InitServiceCommand::yes);
-    return Spec.of(name, null, java, architecture, tests, docker);
+    return Spec.of(name, pack, java, architecture, tests, docker);
+  }
+
+  /**
+   * What the converter reads the answer to, or why it cannot as the reason why the answer does not
+   * read.
+   */
+  private static <T> T read(ITypeConverter<T> converter, String answer) {
+    try {
+      return converter.convert(answer);
+    } catch (Exception e) {
+      throw new IllegalArgumentException(e.getMessage(), e);
+    }
   }
 
   /** The names of the values in the spec, as in {@code unit, integration}. */
