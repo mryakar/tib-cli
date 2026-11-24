@@ -1,9 +1,16 @@
 [versions]
-# The stack that the default pack generates. Dependabot does not update generated-postgres, the tag
-# of the postgres Docker image. The Java of the generated service is the one of its spec.
+# The stacks that the packs generate: the default pack's Spring Boot, and the libraries of the plain
+# pack. Dependabot does not update generated-postgres, the tag of the postgres Docker image. The
+# Java of the generated service is the one of its spec.
 generated-archunit = "1.5.1"
+generated-flyway = "12.11.0"
+generated-jackson = "3.3.0"
+generated-junit = "6.1.3"
+generated-mockito = "5.24.0"
+generated-pgjdbc = "42.7.14"
 generated-postgres = "18"
 generated-spring-boot = "4.1.2"
+generated-testcontainers = "2.0.5"
 google-java-format = "1.36.1"
 groovy = "5.1.3"
 # The engine's Jackson: it reads the spec and the state file and writes the JSON Schema.
@@ -34,10 +41,17 @@ picocli = { module = "info.picocli:picocli", version.ref = "picocli" }
 picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "picocli" }
 
 # Declared as libraries only so that Dependabot updates their versions; the build and the release
-# workflow read the versions: the tools that they run, and the Spring Boot and the ArchUnit of the
-# generated projects.
+# workflow read the versions: the tools that they run, and the Spring Boot, the ArchUnit and the
+# libraries of the plain pack of the generated projects.
 generated-archunit = { module = "com.tngtech.archunit:archunit", version.ref = "generated-archunit" }
+generated-flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "generated-flyway" }
+generated-flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "generated-flyway" }
+generated-jackson-databind = { module = "tools.jackson.core:jackson-databind", version.ref = "generated-jackson" }
+generated-junit-bom = { module = "org.junit:junit-bom", version.ref = "generated-junit" }
+generated-mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "generated-mockito" }
+generated-pgjdbc = { module = "org.postgresql:postgresql", version.ref = "generated-pgjdbc" }
 generated-spring-boot-gradle-plugin = { module = "org.springframework.boot:spring-boot-gradle-plugin", version.ref = "generated-spring-boot" }
+generated-testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql", version.ref = "generated-testcontainers" }
 jacoco-agent = { module = "org.jacoco:org.jacoco.agent", version.ref = "jacoco" }
 jreleaser-tool-provider = { module = "org.jreleaser:jreleaser-tool-provider", version.ref = "jreleaser" }
 ktfmt = { module = "org.jetbrains.kotlinx:ktfmt", version.ref = "ktfmt" }
