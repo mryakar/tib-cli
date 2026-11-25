@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// The plain template pack: a service in plain Java, without a framework of dependency injection,
+// The plain template pack: a service in plain Java, without a dependency injection framework,
 // on the HTTP server of the JDK, with JDBC, PostgreSQL, Flyway, Jackson and Testcontainers.
 plugins { id("tib.pack-conventions") }
 
