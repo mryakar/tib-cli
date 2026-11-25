@@ -19,6 +19,7 @@ import gg.jte.ContentType
 
 plugins {
   id("tib.java-conventions")
+  id("tib.snapshot-conventions")
   alias(libs.plugins.jte)
 }
 
