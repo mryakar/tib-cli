@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 import me.yakar.tib.spec.Entity;
@@ -214,9 +213,9 @@ public final class DdlReader {
         .orElse("");
   }
 
-  /** The key of an SQL name, under which the same name in another case is the same. */
+  /** The key of an SQL name, with or without quotes around it. */
   static String key(String name) {
-    return unquote(name).toUpperCase(Locale.ROOT);
+    return Names.key(unquote(name));
   }
 
   /**

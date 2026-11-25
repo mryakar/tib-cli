@@ -76,7 +76,7 @@ public record Entity(
     Map<String, String> generated = generated();
     Set<String> members = new HashSet<>(generated.keySet());
     members.add(id.field());
-    // The columns, in upper case: SQL names are the same in any case.
+    // The columns, by the keys of their names.
     Set<String> columns = new HashSet<>();
     if (audit) {
       columns.addAll(List.of(CREATED_AT, UPDATED_AT));
@@ -181,7 +181,7 @@ public record Entity(
 
   /** The column of a member, which no other member of the entity may have. */
   private static void column(Problems problems, String path, String column, Set<String> columns) {
-    if (!columns.add(column.toUpperCase(Locale.ROOT))) {
+    if (!columns.add(Names.key(column))) {
       problems.add(path + ".column", "'" + column + "' is already a column");
     }
   }

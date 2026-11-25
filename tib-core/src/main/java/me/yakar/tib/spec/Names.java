@@ -162,7 +162,12 @@ public final class Names {
    * Whether an SQL name, in any case, is a word that the database reserves, as {@code ORDER} is.
    */
   static boolean isReserved(String sqlName) {
-    return RESERVED.contains(sqlName.toUpperCase(Locale.ROOT));
+    return RESERVED.contains(key(sqlName));
+  }
+
+  /** The key of an SQL name: the same for the name in any case. */
+  public static String key(String sqlName) {
+    return sqlName.toUpperCase(Locale.ROOT);
   }
 
   /**

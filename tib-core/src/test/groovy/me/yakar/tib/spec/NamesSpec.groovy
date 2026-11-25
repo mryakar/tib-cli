@@ -162,4 +162,10 @@ class NamesSpec extends Specification {
     'COUNT'   | false
     'VEHICLE' | false
   }
+
+  def "an SQL name has the same key in any case"() {
+    expect:
+    Names.key('Plate_Number') == Names.key('PLATE_NUMBER')
+    Names.key('i') == 'I'
+  }
 }
