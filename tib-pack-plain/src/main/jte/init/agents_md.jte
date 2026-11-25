@@ -1,11 +1,12 @@
 @import me.yakar.tib.generate.Project
 @import me.yakar.tib.pack.plain.PlainPack
+@import me.yakar.tib.spec.Architecture
 @param Project project
 @param PlainPack pack
 @param me.yakar.tib.pack.TestsModel tests
 !{String database = project.name().replace('-', '_');}
-!{boolean ddd = project.architecture() == me.yakar.tib.spec.Architecture.DDD;}
-!{boolean hexagonal = project.architecture() == me.yakar.tib.spec.Architecture.HEXAGONAL;}
+!{boolean ddd = project.architecture() == Architecture.DDD;}
+!{boolean hexagonal = project.architecture() == Architecture.HEXAGONAL;}
 # ${project.name()}
 
 A service in plain Java ${project.java()}, scaffolded by tib, without a framework of dependency injection:
@@ -95,7 +96,13 @@ database with 409 Conflict, and one whose DTO breaks a rule or does not read wit
 as problem details; it is yours, and so are `NotFoundException`, `BadRequestException`, `Http`
 and `Page`.@if(tests.archunit())
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
-classes of the service with ArchUnit, by their ${ddd ? "packages:\n" + tests.rules() : hexagonal ? "packages: the domain knows neither JDBC nor the HTTP\nserver, the application does not use the adapters, an inbound adapter does not use an outbound\none, nor the reverse, and there is no cycle between the packages of the entities" : "names and packages: the handler of an entity over\nits service over its repository, and no cycle between the packages of the entities"}; it is yours.@endif
+classes of the service with ArchUnit, by their@if(ddd) packages:
+the domain of an entity uses neither its application nor its web, the application does
+not use the web, the domain of an aggregate does not use the domain of another, and
+there is no cycle between the packages of the entities@elseif(hexagonal) packages: the domain knows neither JDBC nor the HTTP
+server, the application does not use the adapters, an inbound adapter does not use an outbound
+one, nor the reverse, and there is no cycle between the packages of the entities@else names and packages: the handler of an entity over
+its service over its repository, and no cycle between the packages of the entities@endif; it is yours.@endif
 
 The Java that tib writes is in the layout of google-java-format ${pack.formatterVersion()}: formatted
 with it, the files of tib's stay as tib wrote them.

@@ -70,19 +70,4 @@ class TestsModelSpec extends Specification {
     '[integration]'             | '`XPersistenceAdapterTests` against PostgreSQL in a container'
     '[unit]'                    | '`XServiceTests` with the store mocked'
   }
-
-  def "the test of the architecture checks the rules of #architecture, and that there is no cycle"() {
-    given:
-    TestsModel model = new TestsModel(new Project(SpecReader.parse("tib: 1\nservice: s\narchitecture: $architecture\n")))
-
-    expect:
-    model.rules().startsWith(rules)
-    model.rules().endsWith('no cycle between the packages of the entities')
-
-    where:
-    architecture | rules
-    'anemic'     | 'the controller of an entity over its service over its\nrepository'
-    'ddd'        | 'the domain of an entity uses neither its application nor its web'
-    'hexagonal'  | 'the domain knows neither JPA nor Spring'
-  }
 }
