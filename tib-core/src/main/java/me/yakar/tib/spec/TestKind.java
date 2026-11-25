@@ -15,32 +15,28 @@
  */
 package me.yakar.tib.spec;
 
+import java.util.Locale;
+
 /** A kind of test that tib writes for the entities of a service. */
 public enum TestKind {
   /** The tests of the service of an entity, with its repository and its mapper mocked. */
-  UNIT("unit"),
+  UNIT,
 
   /**
    * The tests of the repository of an entity, and the test of the application, against the
    * database.
    */
-  INTEGRATION("integration"),
+  INTEGRATION,
 
   /** The tests of the API of an entity, against the running service and its database. */
-  API("api"),
+  API,
 
   /** The test of the rules of the architecture of the service, on its classes. */
-  ARCHUNIT("archunit");
-
-  private final String name;
-
-  TestKind(String name) {
-    this.name = name;
-  }
+  ARCHUNIT;
 
   /** The name in the spec. */
   @Override
   public String toString() {
-    return name;
+    return name().toLowerCase(Locale.ROOT);
   }
 }
