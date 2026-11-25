@@ -67,6 +67,15 @@ class BranchApiTests {
   }
 
   @Test
+  void aPathThatNoEntityHasIsNotFound() throws Exception {
+    HttpResponse<String> found = service.send("GET", "/api");
+
+    assertEquals(404, found.statusCode());
+    assertEquals(
+        "There is nothing at /api", Json.MAPPER.readTree(found.body()).path("detail").asString());
+  }
+
+  @Test
   void updatesABranch() throws Exception {
     BranchDto branch = create();
     BranchDto dto = BranchSamples.otherDto().build();

@@ -67,6 +67,15 @@ class VehicleApiTests {
   }
 
   @Test
+  void aPathThatNoEntityHasIsNotFound() throws Exception {
+    HttpResponse<String> found = service.send("GET", "/api");
+
+    assertEquals(404, found.statusCode());
+    assertEquals(
+        "There is nothing at /api", Json.MAPPER.readTree(found.body()).path("detail").asString());
+  }
+
+  @Test
   void updatesAVehicle() throws Exception {
     VehicleDto vehicle = create();
     VehicleDto dto = VehicleSamples.otherDto().build();
