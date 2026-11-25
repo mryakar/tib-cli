@@ -27,8 +27,8 @@ Either way, `tib` is in `/usr/bin`, and the application in `/opt/tib`.
 
 == macOS
 
-With Homebrew, on Apple silicon or Intel, from the tap of tib, which also brings updates with
-`brew upgrade`:
+With Homebrew, on Apple silicon or Intel, from the tap `mryakar/tap`, which also brings updates
+with `brew upgrade`:
 
 [source,bash]
 ----
