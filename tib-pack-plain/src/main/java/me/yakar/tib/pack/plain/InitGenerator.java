@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
+import me.yakar.tib.pack.GeneratedFiles;
 import me.yakar.tib.pack.Sources;
 import me.yakar.tib.pack.TestsModel;
 import me.yakar.tib.spec.TestKind;
@@ -32,9 +33,6 @@ import me.yakar.tib.tree.ProjectFiles;
  * with the entities of the spec: a new service has none.
  */
 final class InitGenerator implements Generator {
-
-  private static final String HEADER =
-      "Written by tib when the service was created; it is yours from then on.";
 
   /**
    * The Gradle wrapper, as the build of tib has it: the files of Gradle's, without a header of
@@ -55,60 +53,52 @@ final class InitGenerator implements Generator {
 
   @Override
   public void generate(Project project, ProjectFiles files) {
+    GeneratedFiles generated = new GeneratedFiles(PlainPack.TEMPLATES, files);
+    Map<String, Object> model =
+        Map.of("project", project, "pack", pack, "tests", new TestsModel(project));
     String base = project.basePackage();
     String application = project.applicationClass();
-    once(files, "settings.gradle.kts", "init/settings_gradle_kts.jte", project);
-    once(files, "build.gradle.kts", "init/build_gradle_kts.jte", project);
+    generated.onceWithService("settings.gradle.kts", "init/settings_gradle_kts.jte", model);
+    generated.onceWithService("build.gradle.kts", "init/build_gradle_kts.jte", model);
     for (String file : WRAPPER) {
       files.once(file, PlainPack.resource("wrapper/" + file), file.equals("gradlew"));
     }
-    once(files, ".gitignore", "init/gitignore.jte", project);
-    once(files, ".gitattributes", "init/gitattributes.jte", project);
-    once(files, Sources.main(base, application), "init/application_java.jte", project);
-    once(files, Sources.main(base, "Config"), "init/config_java.jte", project);
-    once(files, Sources.main(base, "Json"), "init/json_java.jte", project);
-    once(files, Sources.main(base, "Transactions"), "init/transactions_java.jte", project);
+    generated.onceWithService(".gitignore", "init/gitignore.jte", model);
+    generated.onceWithService(".gitattributes", "init/gitattributes.jte", model);
+    generated.onceWithService(Sources.main(base, application), "init/application_java.jte", model);
+    generated.onceWithService(Sources.main(base, "Config"), "init/config_java.jte", model);
+    generated.onceWithService(Sources.main(base, "Json"), "init/json_java.jte", model);
+    generated.onceWithService(
+        Sources.main(base, "Transactions"), "init/transactions_java.jte", model);
     // The application starts the routes, which follow the entities: the first run has none.
-    EntityGenerator.routes(project, List.of(), files);
-    once(files, Sources.test(base, "TestDatabase"), "init/test_database_java.jte", project);
+    EntityGenerator.routes(project, List.of(), generated);
+    generated.onceWithService(
+        Sources.test(base, "TestDatabase"), "init/test_database_java.jte", model);
     // The test of the application and the tests of the API start the service.
     if (project.tests(TestKind.INTEGRATION) || project.tests(TestKind.API)) {
-      once(files, Sources.test(base, "TestService"), "init/test_service_java.jte", project);
+      generated.onceWithService(
+          Sources.test(base, "TestService"), "init/test_service_java.jte", model);
     }
     if (project.tests(TestKind.INTEGRATION)) {
-      once(
-          files,
-          Sources.test(base, application + "Tests"),
-          "init/application_tests_java.jte",
-          project);
+      generated.onceWithService(
+          Sources.test(base, application + "Tests"), "init/application_tests_java.jte", model);
     }
     if (project.tests(TestKind.ARCHUNIT)) {
-      once(
-          files,
+      generated.onceWithService(
           Sources.test(base, "ArchitectureTests"),
           switch (project.architecture()) {
             case ANEMIC -> "init/architecture_tests_java.jte";
             case DDD -> "init/ddd_architecture_tests_java.jte";
             case HEXAGONAL -> "init/hexagonal_architecture_tests_java.jte";
           },
-          project);
+          model);
     }
-    once(
-        files, Sources.test(base, "Test" + application), "init/test_application_java.jte", project);
+    generated.onceWithService(
+        Sources.test(base, "Test" + application), "init/test_application_java.jte", model);
     if (project.docker()) {
-      once(files, "Dockerfile", "init/dockerfile.jte", project);
-      once(files, ".dockerignore", "init/dockerignore.jte", project);
+      generated.onceWithService("Dockerfile", "init/dockerfile.jte", model);
+      generated.onceWithService(".dockerignore", "init/dockerignore.jte", model);
     }
-    once(files, "AGENTS.md", "init/agents_md.jte", project);
-  }
-
-  private void once(ProjectFiles files, String path, String template, Project project) {
-    files.once(
-        path,
-        PlainPack.TEMPLATES.render(
-            path,
-            HEADER,
-            template,
-            Map.of("project", project, "pack", pack, "tests", new TestsModel(project))));
+    generated.onceWithService("AGENTS.md", "init/agents_md.jte", model);
   }
 }

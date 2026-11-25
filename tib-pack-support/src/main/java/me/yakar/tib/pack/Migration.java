@@ -31,10 +31,6 @@ public final class Migration {
   /** The directory of the migrations, where Flyway looks for them by default. */
   public static final String DIRECTORY = "src/main/resources/db/migration";
 
-  /** The header of a migration, which is the developer's. */
-  static final String HEADER =
-      "Written by tib when the entity was created. A change of the schema is a new migration.";
-
   /**
    * A versioned migration, at any depth: the major part of its version, as in V2__, V2.1__, V2_1__.
    */
@@ -45,7 +41,7 @@ public final class Migration {
   /** Stages the migration that creates the table of the entity, as a file that lasts. */
   public static void write(ProjectFiles files, EntityModel entity) {
     String path = path(files, entity);
-    files.lasting(path, Templates.comment(path, HEADER) + "\n" + sql(entity));
+    files.lasting(path, Templates.comment(path, Header.MIGRATION.text()) + "\n" + sql(entity));
   }
 
   /**
