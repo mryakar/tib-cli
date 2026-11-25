@@ -23,6 +23,7 @@ import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.SpecReader
 import me.yakar.tib.tree.Owner
 import me.yakar.tib.tree.Tree
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.TempDir
@@ -444,6 +445,33 @@ class StateSpec extends Specification {
     State.Input.of(State.Input.Kind.SPEC, service, service.resolve('spec.yaml'), '') ==
         new State.Input(State.Input.Kind.SPEC, 'spec.yaml', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
     State.Input.of(State.Input.Kind.DDL, service, service.resolve('../../db/./vehicle.sql'), '').path() == '../../db/vehicle.sql'
+  }
+
+  @IgnoreIf(value = {
+    os.windows
+  }, reason = 'a link needs rights on Windows that a build does not have')
+  def "an input of a service reached through a link is kept with the path that leads to it"() {
+    given: 'the service through a link to the directory of the spec, as /var is to /private/var on macOS'
+    Path service = Files.createDirectories(dir.resolve('real/services/vehicle'))
+    Path spec = Files.writeString(dir.resolve('real/spec.yaml'), 'spec\n')
+    Path link = Files.createSymbolicLink(dir.resolve('link'), dir.resolve('real'))
+
+    when:
+    State.Input input = State.Input.of(State.Input.Kind.SPEC, link.resolve('services/vehicle'), spec, 'spec\n')
+
+    then: 'the path leads to the spec from the service, wherever it is reached from'
+    input.path() == '../../spec.yaml'
+    !input.absent(link.resolve('services/vehicle'))
+    !input.absent(service)
+  }
+
+  def "a path is resolved as far as it is there"() {
+    given:
+    Path root = dir.root.resolve('tib-no-such-directory')
+
+    expect:
+    State.Input.real(dir.resolve('a/../b/c')) == dir.toRealPath().resolve('b/c')
+    State.Input.real(root.resolve('a')) == root.resolve('a')
   }
 
   def "the content of an input is read once, and its hash is the hash of the bytes read"() {

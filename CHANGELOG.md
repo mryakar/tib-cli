@@ -74,6 +74,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `tib init service` writes the wrapper of Gradle 9.9.1 into a new service, instead of 9.8.2.
 
+### Fixed
+
+- A spec or DDL file outside the service is found again when the service or the file is reached
+  through a link, as `/tmp` and `/var` are on macOS: tib keeps the path between them as the file
+  system resolves it. Before, `tib status` could report such a file as not there.
+
 ## [0.4.0] - 2026-11-19
 
 ### Added

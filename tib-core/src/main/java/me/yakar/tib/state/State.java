@@ -124,8 +124,27 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     public static Input of(Kind kind, Path service, Path file, String content) {
       return new Input(
           kind,
-          path(service.toAbsolutePath().normalize(), file.toAbsolutePath().normalize()),
+          path(real(service), real(file)),
           State.sha256(content.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    /**
+     * The absolute path as the file system has it, its links resolved, so that a path relative to
+     * another one leads where it says even through a link, as from {@code /var} to {@code
+     * /private/var} on macOS. A path that is not there yet is resolved as far as its part that is.
+     */
+    static Path real(Path path) {
+      Path absolute = path.toAbsolutePath().normalize();
+      Path existing = absolute;
+      while (existing.getParent() != null) {
+        try {
+          return existing.toRealPath().resolve(existing.relativize(absolute));
+        } catch (IOException e) {
+          // Not there, or not to be resolved: its parent may be.
+          existing = existing.getParent();
+        }
+      }
+      return absolute;
     }
 
     /** Whether the file is not there, as far as can be told from the directory of the service. */
