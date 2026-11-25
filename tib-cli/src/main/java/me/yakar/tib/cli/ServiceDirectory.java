@@ -51,11 +51,10 @@ final class ServiceDirectory {
   State state(Tree tree) {
     try {
       return State.in(tree, tibVersion)
-          .orElseThrow(
-              () ->
-                  new RefusalException(
-                      tree.root() + " is not a tib project: there is no " + State.PATH,
-                      "Run tib init service first."));
+          .orElseThrow(() ->
+              new RefusalException(
+                  tree.root() + " is not a tib project: there is no " + State.PATH,
+                  "Run tib init service first."));
     } catch (StateException e) {
       throw new RefusalException(tree.root() + ": " + e.getMessage());
     }

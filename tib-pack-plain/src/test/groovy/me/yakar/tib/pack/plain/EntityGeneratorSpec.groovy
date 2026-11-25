@@ -261,8 +261,8 @@ class EntityGeneratorSpec extends Specification {
     String tests = tree.read(BASE.replace('/main/', '/test/') + main.replace('.java', 'Tests.java')).orElseThrow()
 
     then:
-    service.contains("          if (!${port}.update(a)) {\n            throw notFound(id);\n          }\n")
-    service.contains("          if (!${port}.delete(id)) {\n            throw notFound(id);\n          }\n")
+    service.contains("      if (!${port}.update(a)) {\n        throw notFound(id);\n      }\n")
+    service.contains("      if (!${port}.delete(id)) {\n        throw notFound(id);\n      }\n")
     !service.contains('find(id).getId()')
     tests.contains("  void deletingAnUnknownAIsNotFound()")
     tests.contains("    when(${port}.delete(ID)).thenReturn(false);\n\n    assertThrows(NotFoundException.class, () -> service.delete(ID));\n")

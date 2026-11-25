@@ -29,34 +29,31 @@ public class BranchService {
   }
 
   public BranchDto create(BranchDto dto) {
-    return transactions.run(
-        () -> {
-          Branch branch = new Branch();
-          mapper.update(dto, branch);
-          return mapper.toDto(repository.insert(branch));
-        });
+    return transactions.run(() -> {
+      Branch branch = new Branch();
+      mapper.update(dto, branch);
+      return mapper.toDto(repository.insert(branch));
+    });
   }
 
   public BranchDto update(Long id, BranchDto dto) {
-    return transactions.run(
-        () -> {
-          Branch branch = find(id);
-          mapper.update(dto, branch);
-          if (!repository.update(branch)) {
-            throw notFound(id);
-          }
-          return mapper.toDto(branch);
-        });
+    return transactions.run(() -> {
+      Branch branch = find(id);
+      mapper.update(dto, branch);
+      if (!repository.update(branch)) {
+        throw notFound(id);
+      }
+      return mapper.toDto(branch);
+    });
   }
 
   public void delete(Long id) {
-    transactions.run(
-        () -> {
-          if (!repository.delete(id)) {
-            throw notFound(id);
-          }
-          return null;
-        });
+    transactions.run(() -> {
+      if (!repository.delete(id)) {
+        throw notFound(id);
+      }
+      return null;
+    });
   }
 
   private Branch find(Long id) throws SQLException {

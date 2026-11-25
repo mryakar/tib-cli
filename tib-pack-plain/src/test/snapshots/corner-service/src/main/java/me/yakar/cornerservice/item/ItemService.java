@@ -29,34 +29,31 @@ public class ItemService {
   }
 
   public ItemDto create(ItemDto dto) {
-    return transactions.run(
-        () -> {
-          Item item = new Item();
-          mapper.update(dto, item);
-          return mapper.toDto(repository.insert(item));
-        });
+    return transactions.run(() -> {
+      Item item = new Item();
+      mapper.update(dto, item);
+      return mapper.toDto(repository.insert(item));
+    });
   }
 
   public ItemDto update(Long id, ItemDto dto) {
-    return transactions.run(
-        () -> {
-          Item item = find(id);
-          mapper.update(dto, item);
-          if (!repository.update(item)) {
-            throw notFound(id);
-          }
-          return mapper.toDto(item);
-        });
+    return transactions.run(() -> {
+      Item item = find(id);
+      mapper.update(dto, item);
+      if (!repository.update(item)) {
+        throw notFound(id);
+      }
+      return mapper.toDto(item);
+    });
   }
 
   public void delete(Long id) {
-    transactions.run(
-        () -> {
-          if (!repository.delete(id)) {
-            throw notFound(id);
-          }
-          return null;
-        });
+    transactions.run(() -> {
+      if (!repository.delete(id)) {
+        throw notFound(id);
+      }
+      return null;
+    });
   }
 
   private Item find(Long id) throws SQLException {

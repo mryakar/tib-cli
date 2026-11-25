@@ -61,12 +61,11 @@ final class Recorder implements ProjectFiles {
   /** The files that last, by path as the tree names it, with the content that was generated. */
   SortedMap<String, byte[]> lasting() {
     SortedMap<String, byte[]> lasting = new TreeMap<>();
-    made.forEach(
-        (path, file) -> {
-          if (file.lasts()) {
-            lasting.put(path, file.content());
-          }
-        });
+    made.forEach((path, file) -> {
+      if (file.lasts()) {
+        lasting.put(path, file.content());
+      }
+    });
     return lasting;
   }
 
@@ -79,12 +78,11 @@ final class Recorder implements ProjectFiles {
    */
   List<State.File> written() {
     List<State.File> written = new ArrayList<>();
-    made.forEach(
-        (path, file) -> {
-          if (tree.bytes(path).filter(there -> Arrays.equals(there, file.content())).isPresent()) {
-            written.add(State.File.of(path, file.owner(), file.content()));
-          }
-        });
+    made.forEach((path, file) -> {
+      if (tree.bytes(path).filter(there -> Arrays.equals(there, file.content())).isPresent()) {
+        written.add(State.File.of(path, file.owner(), file.content()));
+      }
+    });
     return written;
   }
 

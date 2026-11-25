@@ -40,26 +40,24 @@ public class BranchService implements BranchUseCase {
 
   @Override
   public Branch update(Long id, Consumer<Branch> change) {
-    return transactions.run(
-        () -> {
-          Branch branch = find(id);
-          change.accept(branch);
-          if (!store.update(branch)) {
-            throw notFound(id);
-          }
-          return branch;
-        });
+    return transactions.run(() -> {
+      Branch branch = find(id);
+      change.accept(branch);
+      if (!store.update(branch)) {
+        throw notFound(id);
+      }
+      return branch;
+    });
   }
 
   @Override
   public void delete(Long id) {
-    transactions.run(
-        () -> {
-          if (!store.delete(id)) {
-            throw notFound(id);
-          }
-          return null;
-        });
+    transactions.run(() -> {
+      if (!store.delete(id)) {
+        throw notFound(id);
+      }
+      return null;
+    });
   }
 
   private Branch find(Long id) {

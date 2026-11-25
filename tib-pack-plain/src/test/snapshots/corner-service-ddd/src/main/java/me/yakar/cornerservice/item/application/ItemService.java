@@ -38,25 +38,23 @@ public class ItemService {
 
   /** Changes the item as the change does, and saves it. */
   public Item update(Long id, Consumer<Item> change) {
-    return transactions.run(
-        () -> {
-          Item item = find(id);
-          change.accept(item);
-          if (!repository.update(item)) {
-            throw notFound(id);
-          }
-          return item;
-        });
+    return transactions.run(() -> {
+      Item item = find(id);
+      change.accept(item);
+      if (!repository.update(item)) {
+        throw notFound(id);
+      }
+      return item;
+    });
   }
 
   public void delete(Long id) {
-    transactions.run(
-        () -> {
-          if (!repository.delete(id)) {
-            throw notFound(id);
-          }
-          return null;
-        });
+    transactions.run(() -> {
+      if (!repository.delete(id)) {
+        throw notFound(id);
+      }
+      return null;
+    });
   }
 
   private Item find(Long id) throws SQLException {

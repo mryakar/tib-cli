@@ -40,26 +40,24 @@ public class ItemService implements ItemUseCase {
 
   @Override
   public Item update(Long id, Consumer<Item> change) {
-    return transactions.run(
-        () -> {
-          Item item = find(id);
-          change.accept(item);
-          if (!store.update(item)) {
-            throw notFound(id);
-          }
-          return item;
-        });
+    return transactions.run(() -> {
+      Item item = find(id);
+      change.accept(item);
+      if (!store.update(item)) {
+        throw notFound(id);
+      }
+      return item;
+    });
   }
 
   @Override
   public void delete(Long id) {
-    transactions.run(
-        () -> {
-          if (!store.delete(id)) {
-            throw notFound(id);
-          }
-          return null;
-        });
+    transactions.run(() -> {
+      if (!store.delete(id)) {
+        throw notFound(id);
+      }
+      return null;
+    });
   }
 
   private Item find(Long id) {

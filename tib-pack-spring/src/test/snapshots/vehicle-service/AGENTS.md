@@ -42,7 +42,7 @@ as in `XSamples.x().name("Other").build()`.
 `ConflictHandler`, in the base package, answers a request that breaks a constraint of the database
 with 409 Conflict; it is yours.
 
-The Java that tib writes is in the layout of google-java-format 1.36.1: formatted
+The Java that tib writes is in the layout of google-java-format 2.0.0: formatted
 with it, the files of tib's stay as tib wrote them.
 
 `tib status` lists the files of tib's that differ from what it wrote, and the spec files and DDL

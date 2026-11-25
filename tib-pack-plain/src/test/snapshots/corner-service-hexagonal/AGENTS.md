@@ -85,7 +85,7 @@ classes of the service with ArchUnit, by their packages: the domain knows neithe
 server, the application does not use the adapters, an inbound adapter does not use an outbound
 one, nor the reverse, and there is no cycle between the packages of the entities; it is yours.
 
-The Java that tib writes is in the layout of google-java-format 1.36.1: formatted
+The Java that tib writes is in the layout of google-java-format 2.0.0: formatted
 with it, the files of tib's stay as tib wrote them.
 
 `tib status` lists the files of tib's that differ from what it wrote, and the spec files and DDL
