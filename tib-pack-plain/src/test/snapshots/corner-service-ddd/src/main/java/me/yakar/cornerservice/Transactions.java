@@ -1,7 +1,6 @@
 // Written by tib when the service was created; it is yours from then on.
 package me.yakar.cornerservice;
 
-import java.io.Serial;
 import java.sql.Connection;
 import java.sql.SQLException;
 import javax.sql.DataSource;
@@ -84,8 +83,6 @@ public class Transactions {
 
   /** The failure of the database in a unit of work. */
   public static final class DatabaseException extends RuntimeException {
-
-    @Serial private static final long serialVersionUID = 1L;
 
     public DatabaseException(SQLException cause) {
       super(cause.getMessage(), cause);
