@@ -40,12 +40,13 @@ ${"  "}below.
 
 `${project.applicationClass()}` reads `Config`, migrates the database with the migrations under
 `src/main/resources/db/migration`, and starts the HTTP server of the JDK with the routes that
-`Routes` adds: for every entity `X`, its `XRepository`, `XMapper` and `XService`, made by hand, and
-its `XHandler` at `/api/` and the plural of `x`, behind `ErrorHandler`. `Routes` is tib's and
-follows the spec, so that a new entity needs no change of `${project.applicationClass()}`.
-`Transactions` runs a unit of work on one connection, in one transaction, which the repositories of
-the work take from it; a service runs each of its use cases so. `Json` holds the one mapper of the
-API.
+`Routes` adds: for every entity `X` with an API, the handler that `XWiring` makes, at `/api/` and
+the plural of `x`, behind `ErrorHandler`. `Routes` is tib's and follows the spec, so that a new
+entity needs no change of `${project.applicationClass()}`. `XWiring`, in the package `x`, is yours:
+it makes the objects of the entity by hand, so what a class of the entity takes in its constructor,
+it is given there. `Transactions` runs a unit of work on one connection, in one transaction, which
+the repositories of the work take from it; a service runs each of its use cases so. `Json` holds
+the one mapper of the API.
 
 ## What tib owns
 
@@ -87,7 +88,7 @@ its identifier, as `depotId`: there is no ORM. Its code goes in `X`, never in `X
 @endif
 `XGenerated`, `XRepository`, the SQL of its table, `XDto`, which checks the rules of the spec, and
 @if(hexagonal)`XWebMapper` are tib's; `X`, `XUseCase`, `XStore`, `XService`, `XHandler`,
-`XPersistenceAdapter`@else`XMapper` are tib's; `X`, `XService`, `XHandler`@endif and the migration are yours@if(tests.any()), and so are
+`XPersistenceAdapter`, `XWiring`@else`XMapper` are tib's; `X`, `XService`, `XHandler`, `XWiring`@endif and the migration are yours@if(tests.any()), and so are
 their tests: ${tests.entityTests()}. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
 as in `XSamples.x().name("Other").build()`.@else.@endif `ErrorHandler`, in the base package, answers a
@@ -102,7 +103,8 @@ not use the web, the domain of an aggregate does not use the domain of another, 
 there is no cycle between the packages of the entities@elseif(hexagonal) packages: the domain knows neither JDBC nor the HTTP
 server, the application does not use the adapters, an inbound adapter does not use an outbound
 one, nor the reverse, and there is no cycle between the packages of the entities@else names and packages: the handler of an entity over
-its service over its repository, and no cycle between the packages of the entities@endif; it is yours.@endif
+its service over its repository, a handler used by the wiring of its entity alone, and no cycle
+between the packages of the entities@endif; it is yours.@endif
 
 The Java that tib writes is in the layout of google-java-format ${pack.formatterVersion()}: formatted
 with it, the files of tib's stay as tib wrote them.

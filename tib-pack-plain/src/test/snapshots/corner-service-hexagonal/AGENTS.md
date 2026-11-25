@@ -30,12 +30,13 @@ are Gradle's and carry no header of tib's; they are yours.
 
 `CornerServiceApplication` reads `Config`, migrates the database with the migrations under
 `src/main/resources/db/migration`, and starts the HTTP server of the JDK with the routes that
-`Routes` adds: for every entity `X`, its `XRepository`, `XMapper` and `XService`, made by hand, and
-its `XHandler` at `/api/` and the plural of `x`, behind `ErrorHandler`. `Routes` is tib's and
-follows the spec, so that a new entity needs no change of `CornerServiceApplication`.
-`Transactions` runs a unit of work on one connection, in one transaction, which the repositories of
-the work take from it; a service runs each of its use cases so. `Json` holds the one mapper of the
-API.
+`Routes` adds: for every entity `X` with an API, the handler that `XWiring` makes, at `/api/` and
+the plural of `x`, behind `ErrorHandler`. `Routes` is tib's and follows the spec, so that a new
+entity needs no change of `CornerServiceApplication`. `XWiring`, in the package `x`, is yours:
+it makes the objects of the entity by hand, so what a class of the entity takes in its constructor,
+it is given there. `Transactions` runs a unit of work on one connection, in one transaction, which
+the repositories of the work take from it; a service runs each of its use cases so. `Json` holds
+the one mapper of the API.
 
 ## What tib owns
 
@@ -65,7 +66,7 @@ maps the domain to and from its DTO; `x.adapter.out.persistence` has `XRepositor
 not use an outbound one, nor the reverse. Its code goes in `X`, never in `XGenerated`:
 `XGenerated`, `XRepository`, the SQL of its table, `XDto`, which checks the rules of the spec, and
 `XWebMapper` are tib's; `X`, `XUseCase`, `XStore`, `XService`, `XHandler`,
-`XPersistenceAdapter` and the migration are yours, and so are
+`XPersistenceAdapter`, `XWiring` and the migration are yours, and so are
 their tests: `XPersistenceAdapterTests` and `XApiTests` against PostgreSQL in a container, and
 `XServiceTests` with the store mocked. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
