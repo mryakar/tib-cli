@@ -28,10 +28,7 @@ import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
 
-/**
- * {@code tib status}: what tib generated into a service, and which of the files it wrote or read
- * differ.
- */
+/** {@code tib status}. */
 @Command(
     name = "status",
     description =

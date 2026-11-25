@@ -21,7 +21,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 
-/** {@code tib schema}: prints the JSON Schema of the spec file. */
+/** {@code tib schema}. */
 @Command(
     name = "schema",
     description =

@@ -43,8 +43,9 @@ final class Questions {
   }
 
   /**
-   * Asks the question until its answer reads, and returns what it reads to. An empty answer is the
-   * default; an answer that does not read is reported, and the question asked again.
+   * Asks the question until its answer can be read, and returns the value read. An empty answer is
+   * the default; for an answer that cannot be read, the reason is printed and the question asked
+   * again.
    *
    * @param defaultAnswer the answer that an empty one stands for, shown after the question; empty
    *     for a question without a default
