@@ -106,7 +106,7 @@ class ${name}PersistenceAdapterTests {
     store.delete(${entity.variable()}.getId());
     assertFalse(store.findById(${entity.variable()}.getId()).isPresent());
   }
-  @if(tests.unique())<%-- keeps the blank line below --%>
+  @if(tests.unique())
 
   @Test
   void refuses${entity.article()}${name}WhoseUniqueValuesAreTaken() {

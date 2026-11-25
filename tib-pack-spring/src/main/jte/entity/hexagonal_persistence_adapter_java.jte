@@ -41,7 +41,7 @@ public class ${name}PersistenceAdapter implements ${name}Store {
   public List<${name}> findAll() {
     return ${plural}.findAll().stream().map(mapper::toDomain).toList();
   }
-  @endif<%-- keeps the blank line below --%>
+  @endif
 
   @Override
   public Optional<${name}> findById(${entity.idType()} id) {

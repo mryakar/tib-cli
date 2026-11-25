@@ -22,7 +22,7 @@ public interface ${name}UseCase {
   Page<${name}> list(int page, int size);
   @else
   List<${name}> list();
-  @endif<%-- keeps the blank line below --%>
+  @endif
 
   ${name} get(${entity.idType()} id);
 

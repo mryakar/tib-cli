@@ -143,7 +143,7 @@ class ${name}ApiTests {
     assertEquals(204, deleted.statusCode());
     assertEquals(404, found.statusCode());
   }
-  @if(tests.requiresValues())<%-- keeps the blank line below --%>
+  @if(tests.requiresValues())
 
   @Test
   void refuses${entity.article()}${name}WithoutItsRequiredValues() throws Exception {
@@ -154,7 +154,7 @@ class ${name}ApiTests {
     assertEquals(400, created.statusCode());
   }
   @endif
-  @if(tests.unique())<%-- keeps the blank line below --%>
+  @if(tests.unique())
 
   @Test
   void refuses${entity.article()}${name}WhoseUniqueValuesAreTaken() throws Exception {
@@ -167,7 +167,7 @@ class ${name}ApiTests {
         "The request breaks a constraint of the database.",
         Json.MAPPER.readTree(created.body()).path("detail").asString());
   }
-  @endif<%-- keeps the blank line below --%>
+  @endif
 
   /** ${entity.article()} ${entity.variable()} created through the API, with the first sample values. */
   private ${type} create() throws Exception {

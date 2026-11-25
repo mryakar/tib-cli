@@ -30,7 +30,7 @@ public abstract class ${entity.name()}Generated {
   @if(entity.audited())
   private Instant createdAt;
   private Instant updatedAt;
-  @endif<%-- keeps the blank line below --%>
+  @endif
 
   public ${entity.idType()} getId() {
     return ${entity.idField()};
@@ -39,7 +39,7 @@ public abstract class ${entity.name()}Generated {
   public void setId(${entity.idType()} ${entity.idField()}) {
     this.${entity.idField()} = ${entity.idField()};
   }
-  @for(var field : entity.fields())<%-- keeps the blank line below --%>
+  @for(var field : entity.fields())
 
   public ${field.javaType()} get${field.property()}() {
     return ${field.name()};
@@ -49,7 +49,7 @@ public abstract class ${entity.name()}Generated {
     this.${field.name()} = ${field.name()};
   }
   @endfor
-  @for(var relation : entity.relations())<%-- keeps the blank line below --%>
+  @for(var relation : entity.relations())
 
   public ${relation.target().idType()} get${relation.idProperty()}() {
     return ${relation.idField()};
@@ -59,7 +59,7 @@ public abstract class ${entity.name()}Generated {
     this.${relation.idField()} = ${relation.idField()};
   }
   @endfor
-  @if(entity.audited())<%-- keeps the blank line below --%>
+  @if(entity.audited())
 
   public Instant getCreatedAt() {
     return createdAt;

@@ -42,7 +42,7 @@ public class ${name}PersistenceAdapter implements ${name}Store {
   public List<${name}> findAll() {
     return transactions.run(repository::findAll);
   }
-  @endif<%-- keeps the blank line below --%>
+  @endif
 
   @Override
   public Optional<${name}> findById(${entity.idType()} id) {

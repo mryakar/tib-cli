@@ -21,7 +21,7 @@ public class ${entity.webMapper()} {
   @if(!entity.targets().isEmpty() && !entity.refersById())
   @for(var target : entity.targets())
   private final ${target.name()}Repository ${target.plural()};
-  @endfor<%-- keeps the blank line below --%>
+  @endfor
 
   public ${entity.webMapper()}(${jpa.repositoryParameters()}) {
     @for(var target : entity.targets())

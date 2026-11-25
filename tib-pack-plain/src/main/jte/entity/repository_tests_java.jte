@@ -106,7 +106,7 @@ class ${name}RepositoryTests {
     assertTrue(transactions.run(() -> ${repository}.delete(${entity.variable()}.getId())));
     assertFalse(transactions.run(() -> ${repository}.findById(${entity.variable()}.getId())).isPresent());
   }
-  @if(tests.unique())<%-- keeps the blank line below --%>
+  @if(tests.unique())
 
   @Test
   void refuses${entity.article()}${name}WhoseUniqueValuesAreTaken() {
