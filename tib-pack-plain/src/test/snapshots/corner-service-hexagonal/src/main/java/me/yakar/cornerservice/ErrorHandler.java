@@ -8,13 +8,16 @@ import java.io.IOException;
 /**
  * Answers what the handlers throw, as problem details: an entity that is not there with 404 Not
  * Found; a request that breaks a constraint of the database, such as a value that has to be unique
- * or a row that others refer to, with 409 Conflict, without saying which constraint, so that the
- * schema stays inside the service; a request that the handler cannot take with 400 Bad Request; and
- * anything else with 500 Internal Server Error, logged.
+ * or a row that others refer to, or whose value does not fit its column, with 409 Conflict, without
+ * saying which, so that the schema stays inside the service; a request that the handler cannot take
+ * with 400 Bad Request; and anything else with 500 Internal Server Error, logged.
  */
 public class ErrorHandler extends Filter {
 
   private static final System.Logger LOG = System.getLogger(ErrorHandler.class.getName());
+
+  /** The class of the SQL states of a value that does not fit, as in 22003, a number too large. */
+  private static final String DATA = "22";
 
   /** The class of the SQL states of a broken constraint, as in 23505, a unique violation. */
   private static final String CONSTRAINT = "23";
@@ -29,7 +32,7 @@ public class ErrorHandler extends Filter {
       Http.problem(exchange, 400, e.getMessage());
     } catch (Transactions.DatabaseException e) {
       String state = e.getCause().getSQLState();
-      if (state != null && state.startsWith(CONSTRAINT)) {
+      if (state != null && (state.startsWith(DATA) || state.startsWith(CONSTRAINT))) {
         Http.problem(exchange, 409, "The request breaks a constraint of the database.");
       } else {
         failed(exchange, e);
