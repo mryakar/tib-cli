@@ -42,10 +42,10 @@ picocli-codegen = { module = "info.picocli:picocli-codegen", version.ref = "pico
 
 # Declared as libraries only so that Dependabot updates their versions; the build and the release
 # workflow read the versions: the tools that they run, and the Spring Boot, the ArchUnit and the
-# libraries of the plain pack of the generated projects.
+# libraries of the plain pack of the generated projects. One library stands for a version; the
+# junit-bom of the generated projects is the module of this build's, and the two move together.
 generated-archunit = { module = "com.tngtech.archunit:archunit", version.ref = "generated-archunit" }
 generated-flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "generated-flyway" }
-generated-flyway-database-postgresql = { module = "org.flywaydb:flyway-database-postgresql", version.ref = "generated-flyway" }
 generated-jackson-databind = { module = "tools.jackson.core:jackson-databind", version.ref = "generated-jackson" }
 generated-junit-bom = { module = "org.junit:junit-bom", version.ref = "generated-junit" }
 generated-mockito-junit-jupiter = { module = "org.mockito:mockito-junit-jupiter", version.ref = "generated-mockito" }
