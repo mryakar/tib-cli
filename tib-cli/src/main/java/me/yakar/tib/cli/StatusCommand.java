@@ -39,7 +39,7 @@ import picocli.CommandLine.Model.CommandSpec;
             + " and which of the files that it read the spec from were changed since.",
     exitCodeList = {
       "0:Nothing that tib needs differs.",
-      TibApplication.PROBLEM
+      TibCommand.PROBLEM
           + ":A file of tib's was edited or is missing, a file that tib read the spec from was"
           + " changed, or the project has a problem; the message says which.",
       TibCommand.USAGE_MEANS,
@@ -91,7 +91,7 @@ class StatusCommand implements Callable<Integer> {
       }
     }
     boolean wrong = differences.stream().anyMatch(difference -> difference.kind().problem());
-    return wrong ? TibApplication.PROBLEM : ExitCode.OK;
+    return wrong ? TibCommand.PROBLEM : ExitCode.OK;
   }
 
   /** The differences under their heading, after an empty line; nothing when there are none. */
