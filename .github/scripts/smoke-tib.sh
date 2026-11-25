@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 # Checks an installed or unpacked tib: <tib> runs, the start-up cache is in <app>, the directory
-# of its jars, and a service scaffolded under <out> has a Gradle wrapper to run.
+# of its jars, and tib loads it, and a service scaffolded under <out> has a Gradle wrapper to run.
 set -euo pipefail
 
 usage='usage: smoke-tib.sh <tib> <app> <out>'
@@ -26,6 +26,12 @@ out="${3:?$usage}"
 "$tib" --version
 if [[ ! -f "$app/tib.aot" ]]; then
   echo "$app has no start-up cache" >&2
+  exit 1
+fi
+# A JVM that cannot use its cache starts without it and says nothing; with AOTMode=on it does not
+# start.
+if ! JAVA_TOOL_OPTIONS=-XX:AOTMode=on "$tib" --version >/dev/null; then
+  echo "$tib does not load the start-up cache in $app" >&2
   exit 1
 fi
 "$tib" init service smoke -d "$out/smoke"
