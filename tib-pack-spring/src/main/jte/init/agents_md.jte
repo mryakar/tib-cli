@@ -73,8 +73,10 @@ For an entity `X`, its code goes in `X`, never in `XGenerated`: @if(hexagonal)`X
 are tib's; `X`, `XRepository`, `XService`, `XController`@endif and the migration are yours@if(tests.any()), and so are
 their tests: ${tests.entityTests()}. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
-as in `XSamples.x().name("Other").build()`.@else.@endif `ConflictHandler`, in the base package, answers a
-request that breaks a constraint of the database with 409 Conflict; it is yours.
+as in `XSamples.x().name("Other").build()`.@else.@endif
+`X` keeps a constructor without parameters: the files of tib's make an `X` and set its values.
+`ConflictHandler`, in the base package, answers a request that breaks a constraint of the database
+with 409 Conflict; it is yours.
 @if(tests.archunit())
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
 @if(ddd)

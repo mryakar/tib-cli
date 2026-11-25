@@ -37,8 +37,10 @@ are tib's; `X`, `XRepository`, `XService`, `XController` and the migration are y
 their tests: `XRepositoryTests` and `XApiTests` against PostgreSQL in a container, and
 `XServiceTests` with the repository and the mapper mocked. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
-as in `XSamples.x().name("Other").build()`. `ConflictHandler`, in the base package, answers a
-request that breaks a constraint of the database with 409 Conflict; it is yours.
+as in `XSamples.x().name("Other").build()`.
+`X` keeps a constructor without parameters: the files of tib's make an `X` and set its values.
+`ConflictHandler`, in the base package, answers a request that breaks a constraint of the database
+with 409 Conflict; it is yours.
 
 The Java that tib writes is in the layout of google-java-format 1.36.1: formatted
 with it, the files of tib's stay as tib wrote them.
