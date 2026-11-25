@@ -490,9 +490,9 @@ class GenerateEntityCommandSpec extends Specification {
     'a dry run' | ['--dry-run']
   }
 
-  def "a service generated for #stack is refused by #run, and tib status still reads it"() {
+  def "a service that an earlier tib generated for #stack is refused by #run, and tib status still reads it"() {
     given:
-    tib.init('--spec', Tib.SPEC)
+    new Tib(dir, '1.2.2').init('--spec', Tib.SPEC)
     Path state = dir.resolve('.tib/state.yaml')
     String pack = tib.state().pack().version()
     Files.writeString(state, Files.readString(state).replace('  stack: Spring Boot 4\n', line))
@@ -505,8 +505,8 @@ class GenerateEntityCommandSpec extends Specification {
     result.exitCode() == 1
     result.out() == ''
     result.err() == """\
-      ${tib.root} was generated for $stack by tib 1.2.3; pack default $pack generates for Spring Boot 4
-      Go on with tib 1.2.3 for this service, or move it to Spring Boot 4 by hand.
+      ${tib.root} was generated for $stack by tib 1.2.2; pack default $pack generates for Spring Boot 4
+      Go on with tib 1.2.2 for this service, or move it to Spring Boot 4 by hand.
       """.stripIndent()
     tib.files() == before
     tib.status().exitCode() == 0
@@ -534,7 +534,7 @@ class GenerateEntityCommandSpec extends Specification {
     result.out() == ''
     result.err() == """\
       ${tib.root} was generated for $stack by tib 1.2.3; pack $second $version generates for $otherStack
-      Go on with tib 1.2.3 for this service, or move it to $otherStack by hand.
+      Give the spec the pack of the service, $first, or move the service to $otherStack by hand.
       """.stripIndent()
     tib.files() == before
 
