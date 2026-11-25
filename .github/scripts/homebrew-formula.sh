@@ -50,9 +50,7 @@ class Tib < Formula
     bundle = File.basename(Dir.pwd) == "tib.app" ? "." : "tib.app"
     (libexec/"tib.app").install Dir["#{bundle}/*"]
     bin.write_exec_script libexec/"tib.app/Contents/MacOS/tib"
-  end
-
-  def post_install
+    # The cache fits the class path where tib is installed; without a bottle, that is here.
     system libexec/"tib.app/Contents/app/startup-cache.sh"
   end
 
