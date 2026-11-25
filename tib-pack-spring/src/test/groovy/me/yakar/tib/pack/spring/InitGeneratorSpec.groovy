@@ -87,6 +87,10 @@ class InitGeneratorSpec extends Specification {
     rules.contains(' * The rules of the hexagonal architecture, checked on the classes of the service by their packages:\n') == hexagonal
     rules.contains('void theInboundAdaptersDoNotUseTheOutboundOnes()') == hexagonal
     rules.contains('void controllersUseServicesAndNotRepositories()') == (!ddd && !hexagonal)
+    rules.contains('  private static final String BASE = "com.example.s";\n')
+    rules.contains('          .importPackages(BASE);\n')
+    rules.contains('        .matching(BASE + ".(*)..")\n')
+    rules.count('com.example.s') == 2
     agents.contains('The service is arranged for DDD: every entity `X` is an aggregate, in three packages.') == ddd
     agents.contains('The service is arranged in the hexagonal architecture, of ports and adapters:') == hexagonal
     agents.contains('classes of the service with ArchUnit: the domain of an entity uses neither its application nor its\nweb, the application does not use the web, the domain of an aggregate does not use the domain of\nanother, and there is no cycle between the packages of the entities; it is yours.\n\nThe Java that tib writes') == ddd
@@ -153,7 +157,7 @@ class InitGeneratorSpec extends Specification {
     then:
     (architecture != null) == archunit
     !archunit || architecture.owner() == Owner.DEVELOPER
-    !archunit || new String(architecture.after(), 'UTF-8').contains('.importPackages("com.example.s");')
+    !archunit || new String(architecture.after(), 'UTF-8').contains('  private static final String BASE = "com.example.s";\n')
     build.contains("  testImplementation(\"com.tngtech.archunit:archunit:${new SpringPack().archunitVersion()}\")\n  testRuntimeOnly(") == archunit
     agents.contains('it is yours.\n`ArchitectureTests`, in the tests of the base package,') == archunit
     agents.contains('their tests: ') == entities
