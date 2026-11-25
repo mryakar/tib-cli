@@ -69,22 +69,36 @@ class BranchServiceTests {
     Branch branch = new Branch();
     BranchDto dto = dto();
     when(repository.findById(ID)).thenReturn(Optional.of(branch));
+    when(repository.update(branch)).thenReturn(true);
     when(mapper.toDto(branch)).thenReturn(dto);
 
     assertSame(dto, service.update(ID, dto));
     verify(mapper).update(dto, branch);
-    verify(repository).update(branch);
+  }
+
+  @Test
+  void updatingABranchThatIsGoneIsNotFound() throws SQLException {
+    Branch branch = new Branch();
+    when(repository.findById(ID)).thenReturn(Optional.of(branch));
+    when(repository.update(branch)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, dto()));
   }
 
   @Test
   void deletesABranch() throws SQLException {
-    Branch branch = new Branch();
-    branch.setId(ID);
-    when(repository.findById(ID)).thenReturn(Optional.of(branch));
+    when(repository.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(repository).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknownBranchIsNotFound() throws SQLException {
+    when(repository.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 
   private static BranchDto dto() {

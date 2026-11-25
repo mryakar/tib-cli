@@ -43,7 +43,9 @@ public class VehicleService {
         () -> {
           Vehicle vehicle = find(id);
           mapper.update(dto, vehicle);
-          repository.update(vehicle);
+          if (!repository.update(vehicle)) {
+            throw notFound(id);
+          }
           return mapper.toDto(vehicle);
         });
   }
@@ -51,14 +53,18 @@ public class VehicleService {
   public void delete(Long id) {
     transactions.run(
         () -> {
-          repository.delete(find(id).getId());
+          if (!repository.delete(id)) {
+            throw notFound(id);
+          }
           return null;
         });
   }
 
   private Vehicle find(Long id) throws SQLException {
-    return repository
-        .findById(id)
-        .orElseThrow(() -> new NotFoundException("There is no vehicle " + id));
+    return repository.findById(id).orElseThrow(() -> notFound(id));
+  }
+
+  private static NotFoundException notFound(Long id) {
+    return new NotFoundException("There is no vehicle " + id);
   }
 }

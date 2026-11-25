@@ -55,12 +55,12 @@ public class ${name}PersistenceAdapter implements ${name}Store {
   }
 
   @Override
-  public void update(${name} ${variable}) {
-    transactions.run(() -> repository.update(${variable}));
+  public boolean update(${name} ${variable}) {
+    return transactions.run(() -> repository.update(${variable}));
   }
 
   @Override
-  public void delete(${entity.idType()} id) {
-    transactions.run(() -> repository.delete(id));
+  public boolean delete(${entity.idType()} id) {
+    return transactions.run(() -> repository.delete(id));
   }
 }

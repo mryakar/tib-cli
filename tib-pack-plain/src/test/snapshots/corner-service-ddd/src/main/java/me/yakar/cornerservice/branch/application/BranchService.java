@@ -41,7 +41,9 @@ public class BranchService {
         () -> {
           Branch branch = find(id);
           change.accept(branch);
-          repository.update(branch);
+          if (!repository.update(branch)) {
+            throw notFound(id);
+          }
           return branch;
         });
   }
@@ -49,14 +51,18 @@ public class BranchService {
   public void delete(Long id) {
     transactions.run(
         () -> {
-          repository.delete(find(id).getId());
+          if (!repository.delete(id)) {
+            throw notFound(id);
+          }
           return null;
         });
   }
 
   private Branch find(Long id) throws SQLException {
-    return repository
-        .findById(id)
-        .orElseThrow(() -> new NotFoundException("There is no branch " + id));
+    return repository.findById(id).orElseThrow(() -> notFound(id));
+  }
+
+  private static NotFoundException notFound(Long id) {
+    return new NotFoundException("There is no branch " + id);
   }
 }

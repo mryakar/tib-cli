@@ -67,20 +67,34 @@ class ItemServiceTests {
     Item item = new Item();
     AtomicReference<Item> changed = new AtomicReference<>();
     when(store.findById(ID)).thenReturn(Optional.of(item));
+    when(store.update(item)).thenReturn(true);
 
     assertSame(item, service.update(ID, changed::set));
     assertSame(item, changed.get());
-    verify(store).update(item);
+  }
+
+  @Test
+  void updatingAnItemThatIsGoneIsNotFound() {
+    Item item = new Item();
+    when(store.findById(ID)).thenReturn(Optional.of(item));
+    when(store.update(item)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, change -> {}));
   }
 
   @Test
   void deletesAnItem() {
-    Item item = new Item();
-    item.setId(ID);
-    when(store.findById(ID)).thenReturn(Optional.of(item));
+    when(store.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(store).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknownItemIsNotFound() {
+    when(store.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 }

@@ -44,7 +44,9 @@ public class BranchService implements BranchUseCase {
         () -> {
           Branch branch = find(id);
           change.accept(branch);
-          store.update(branch);
+          if (!store.update(branch)) {
+            throw notFound(id);
+          }
           return branch;
         });
   }
@@ -53,12 +55,18 @@ public class BranchService implements BranchUseCase {
   public void delete(Long id) {
     transactions.run(
         () -> {
-          store.delete(find(id).getId());
+          if (!store.delete(id)) {
+            throw notFound(id);
+          }
           return null;
         });
   }
 
   private Branch find(Long id) {
-    return store.findById(id).orElseThrow(() -> new NotFoundException("There is no branch " + id));
+    return store.findById(id).orElseThrow(() -> notFound(id));
+  }
+
+  private static NotFoundException notFound(Long id) {
+    return new NotFoundException("There is no branch " + id);
   }
 }

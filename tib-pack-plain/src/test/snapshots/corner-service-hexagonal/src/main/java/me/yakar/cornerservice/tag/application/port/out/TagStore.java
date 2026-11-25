@@ -16,7 +16,9 @@ public interface TagStore {
   /** Inserts the tag, and gives it back as it was inserted, with its identifier. */
   Tag insert(Tag tag);
 
-  void update(Tag tag);
+  /** Updates the tag, and says whether it is there. */
+  boolean update(Tag tag);
 
-  void delete(Long id);
+  /** Deletes the tag with the identifier, and says whether it was there. */
+  boolean delete(Long id);
 }

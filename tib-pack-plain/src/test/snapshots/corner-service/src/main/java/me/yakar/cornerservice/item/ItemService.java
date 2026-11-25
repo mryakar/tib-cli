@@ -42,7 +42,9 @@ public class ItemService {
         () -> {
           Item item = find(id);
           mapper.update(dto, item);
-          repository.update(item);
+          if (!repository.update(item)) {
+            throw notFound(id);
+          }
           return mapper.toDto(item);
         });
   }
@@ -50,14 +52,18 @@ public class ItemService {
   public void delete(Long id) {
     transactions.run(
         () -> {
-          repository.delete(find(id).getId());
+          if (!repository.delete(id)) {
+            throw notFound(id);
+          }
           return null;
         });
   }
 
   private Item find(Long id) throws SQLException {
-    return repository
-        .findById(id)
-        .orElseThrow(() -> new NotFoundException("There is no item " + id));
+    return repository.findById(id).orElseThrow(() -> notFound(id));
+  }
+
+  private static NotFoundException notFound(Long id) {
+    return new NotFoundException("There is no item " + id);
   }
 }

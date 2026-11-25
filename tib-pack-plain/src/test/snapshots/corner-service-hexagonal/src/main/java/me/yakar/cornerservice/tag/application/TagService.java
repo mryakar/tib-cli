@@ -44,7 +44,9 @@ public class TagService implements TagUseCase {
         () -> {
           Tag tag = find(id);
           change.accept(tag);
-          store.update(tag);
+          if (!store.update(tag)) {
+            throw notFound(id);
+          }
           return tag;
         });
   }
@@ -53,12 +55,18 @@ public class TagService implements TagUseCase {
   public void delete(Long id) {
     transactions.run(
         () -> {
-          store.delete(find(id).getId());
+          if (!store.delete(id)) {
+            throw notFound(id);
+          }
           return null;
         });
   }
 
   private Tag find(Long id) {
-    return store.findById(id).orElseThrow(() -> new NotFoundException("There is no tag " + id));
+    return store.findById(id).orElseThrow(() -> notFound(id));
+  }
+
+  private static NotFoundException notFound(Long id) {
+    return new NotFoundException("There is no tag " + id);
   }
 }

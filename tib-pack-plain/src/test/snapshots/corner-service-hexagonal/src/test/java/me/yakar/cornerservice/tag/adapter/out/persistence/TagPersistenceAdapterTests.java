@@ -3,6 +3,7 @@ package me.yakar.cornerservice.tag.adapter.out.persistence;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import me.yakar.cornerservice.TestDatabase;
 import me.yakar.cornerservice.Transactions;
@@ -56,7 +57,7 @@ class TagPersistenceAdapterTests {
     Tag changed = TagSamples.otherTag(branch.getId()).build();
     changed.setId(tag.getId());
 
-    store.update(changed);
+    assertTrue(store.update(changed));
     Tag found = store.findById(tag.getId()).orElseThrow();
     assertEquals(changed.getLabel(), found.getLabel());
   }
@@ -73,7 +74,7 @@ class TagPersistenceAdapterTests {
   void deletesATag() {
     Tag tag = store.insert(TagSamples.tag(branch.getId()).build());
 
-    store.delete(tag.getId());
+    assertTrue(store.delete(tag.getId()));
     assertFalse(store.findById(tag.getId()).isPresent());
   }
 }

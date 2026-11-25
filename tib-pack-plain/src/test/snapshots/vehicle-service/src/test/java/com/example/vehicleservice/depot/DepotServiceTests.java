@@ -70,22 +70,36 @@ class DepotServiceTests {
     Depot depot = new Depot();
     DepotDto dto = dto();
     when(repository.findById(ID)).thenReturn(Optional.of(depot));
+    when(repository.update(depot)).thenReturn(true);
     when(mapper.toDto(depot)).thenReturn(dto);
 
     assertSame(dto, service.update(ID, dto));
     verify(mapper).update(dto, depot);
-    verify(repository).update(depot);
+  }
+
+  @Test
+  void updatingADepotThatIsGoneIsNotFound() throws SQLException {
+    Depot depot = new Depot();
+    when(repository.findById(ID)).thenReturn(Optional.of(depot));
+    when(repository.update(depot)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, dto()));
   }
 
   @Test
   void deletesADepot() throws SQLException {
-    Depot depot = new Depot();
-    depot.setId(ID);
-    when(repository.findById(ID)).thenReturn(Optional.of(depot));
+    when(repository.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(repository).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknownDepotIsNotFound() throws SQLException {
+    when(repository.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 
   private static DepotDto dto() {

@@ -68,20 +68,34 @@ class ItemServiceTests {
     Item item = new Item();
     AtomicReference<Item> changed = new AtomicReference<>();
     when(repository.findById(ID)).thenReturn(Optional.of(item));
+    when(repository.update(item)).thenReturn(true);
 
     assertSame(item, service.update(ID, changed::set));
     assertSame(item, changed.get());
-    verify(repository).update(item);
+  }
+
+  @Test
+  void updatingAnItemThatIsGoneIsNotFound() throws SQLException {
+    Item item = new Item();
+    when(repository.findById(ID)).thenReturn(Optional.of(item));
+    when(repository.update(item)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, change -> {}));
   }
 
   @Test
   void deletesAnItem() throws SQLException {
-    Item item = new Item();
-    item.setId(ID);
-    when(repository.findById(ID)).thenReturn(Optional.of(item));
+    when(repository.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(repository).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknownItemIsNotFound() throws SQLException {
+    when(repository.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 }

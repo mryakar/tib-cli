@@ -16,7 +16,9 @@ public interface NoteStore {
   /** Inserts the note, and gives it back as it was inserted, with its identifier. */
   Note insert(Note note);
 
-  void update(Note note);
+  /** Updates the note, and says whether it is there. */
+  boolean update(Note note);
 
-  void delete(Long id);
+  /** Deletes the note with the identifier, and says whether it was there. */
+  boolean delete(Long id);
 }

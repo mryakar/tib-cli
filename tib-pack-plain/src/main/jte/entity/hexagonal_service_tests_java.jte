@@ -73,20 +73,34 @@ class ${name}ServiceTests {
     ${name} ${entity.variable()} = new ${name}();
     AtomicReference<${name}> changed = new AtomicReference<>();
     when(store.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
+    when(store.update(${entity.variable()})).thenReturn(true);
 
     assertSame(${entity.variable()}, service.update(ID, changed::set));
     assertSame(${entity.variable()}, changed.get());
-    verify(store).update(${entity.variable()});
+  }
+
+  @Test
+  void updating${entity.article()}${name}ThatIsGoneIsNotFound() {
+    ${name} ${entity.variable()} = new ${name}();
+    when(store.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
+    when(store.update(${entity.variable()})).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, change -> {}));
   }
 
   @Test
   void deletes${entity.article()}${name}() {
-    ${name} ${entity.variable()} = new ${name}();
-    ${entity.variable()}.setId(ID);
-    when(store.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
+    when(store.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(store).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknown${name}IsNotFound() {
+    when(store.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 }

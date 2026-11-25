@@ -16,7 +16,9 @@ public interface PlainStore {
   /** Inserts the plain, and gives it back as it was inserted, with its identifier. */
   Plain insert(Plain plain);
 
-  void update(Plain plain);
+  /** Updates the plain, and says whether it is there. */
+  boolean update(Plain plain);
 
-  void delete(Long id);
+  /** Deletes the plain with the identifier, and says whether it was there. */
+  boolean delete(Long id);
 }

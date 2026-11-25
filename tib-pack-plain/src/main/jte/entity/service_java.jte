@@ -58,7 +58,9 @@ public class ${name}Service {
         () -> {
           ${name} ${entity.variable()} = find(id);
           mapper.update(dto, ${entity.variable()});
-          repository.update(${entity.variable()});
+          if (!repository.update(${entity.variable()})) {
+            throw notFound(id);
+          }
           return mapper.toDto(${entity.variable()});
         });
   }
@@ -66,14 +68,18 @@ public class ${name}Service {
   public void delete(${entity.idType()} id) {
     transactions.run(
         () -> {
-          repository.delete(find(id).getId());
+          if (!repository.delete(id)) {
+            throw notFound(id);
+          }
           return null;
         });
   }
 
   private ${name} find(${entity.idType()} id) throws SQLException {
-    return repository
-        .findById(id)
-        .orElseThrow(() -> new NotFoundException("There is no ${entity.variable()} " + id));
+    return repository.findById(id).orElseThrow(() -> notFound(id));
+  }
+
+  private static NotFoundException notFound(${entity.idType()} id) {
+    return new NotFoundException("There is no ${entity.variable()} " + id);
   }
 }

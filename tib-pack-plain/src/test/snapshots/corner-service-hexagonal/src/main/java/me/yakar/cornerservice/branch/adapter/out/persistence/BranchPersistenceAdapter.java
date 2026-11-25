@@ -38,12 +38,12 @@ public class BranchPersistenceAdapter implements BranchStore {
   }
 
   @Override
-  public void update(Branch branch) {
-    transactions.run(() -> repository.update(branch));
+  public boolean update(Branch branch) {
+    return transactions.run(() -> repository.update(branch));
   }
 
   @Override
-  public void delete(Long id) {
-    transactions.run(() -> repository.delete(id));
+  public boolean delete(Long id) {
+    return transactions.run(() -> repository.delete(id));
   }
 }
