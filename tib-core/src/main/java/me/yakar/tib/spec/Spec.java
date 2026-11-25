@@ -49,7 +49,8 @@ public record Spec(
             defaultValue = Spec.GROUP)
         String group,
     @Doc(
-            value = "The template pack, by name, with its version after an at sign to pin it.",
+            value =
+                "The template pack, default or plain, with its version after an at sign to pin it.",
             pattern = Names.PACK,
             defaultValue = Spec.PACK)
         String pack,
