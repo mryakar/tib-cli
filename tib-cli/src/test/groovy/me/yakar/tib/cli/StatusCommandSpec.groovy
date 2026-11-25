@@ -216,7 +216,7 @@ class StatusCommandSpec extends Specification {
     then:
     result.exitCode() == 1
     result.out() == ''
-    result.err().startsWith("cannot read ${dir.toAbsolutePath().normalize().resolve('vehicle-service.yaml')}: ")
+    result.err().startsWith("cannot read ${dir.toRealPath().resolve('vehicle-service.yaml')}: ")
   }
 
   def "the count of entities and files is #what"() {
