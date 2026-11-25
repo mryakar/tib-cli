@@ -1,0 +1,168 @@
+= Architectures
+:description: Where each of the three architectures puts the classes of an entity, and its rules.
+
+A service has one of three architectures: `anemic`, `ddd` or `hexagonal`. It is chosen when the
+service is created, with `--architecture` or with `architecture` in the
+xref:spec.adoc[spec file], and stays; without it, the service is anemic. Both
+xref:packs.adoc[packs] arrange a service in all three.
+
+The architecture decides the packages of the classes of an entity, and which class may use which.
+The API, the table and the migration of an entity are the same in all three.
+
+In this page `X` is an entity, such as `Vehicle`, and `x` is its package, such as
+`com.example.vehicleservice.vehicle`. The default pack writes a controller, `XController`, and the
+plain pack a handler, `XHandler`, in its place.
+
+== Anemic
+
+Every class of an entity is in the package of the entity. The controller or handler calls the
+service, and the service calls the repository and maps the entity to and from its DTO.
+
+[cols="1,3,3"]
+|===
+|Package |Default pack |Plain pack
+
+|`x`
+|`X`, `XGenerated`, `XRepository`, `XDto`, `XMapper`, `XService`, `XController`
+|`X`, `XGenerated`, `XRepository`, `XDto`, `XMapper`, `XService`, `XHandler`, `XWiring`
+|===
+
+With the default pack, an entity refers to another by the entity, a relation of JPA. With the plain
+pack, it refers to another by its identifier, as `depotId`.
+
+== DDD
+
+Every entity is an aggregate in three packages: its domain, its application and its web. The
+service has the use cases of the aggregate: it takes and gives the aggregate, not the DTO. The
+controller or handler maps the aggregate to and from its DTO with the mapper.
+
+[cols="1,3,3"]
+|===
+|Package |Default pack |Plain pack
+
+|`x.domain`
+|`X`, `XGenerated`, `XRepository`
+|`X`, `XGenerated`, `XRepository`
+
+|`x.application`
+|`XService`
+|`XService`
+
+|`x.web`
+|`XController`, `XDto`, `XMapper`
+|`XHandler`, `XDto`, `XMapper`
+
+|`x`
+|
+|`XWiring`
+|===
+
+== Hexagonal
+
+The domain of every entity is in plain Java, among ports and adapters. `XService` implements
+`XUseCase`, the port that the inbound adapters call, and keeps the domain through `XStore`, the
+port that an outbound adapter implements. `XPersistenceAdapter` is that adapter: the store on the
+table.
+
+[cols="1,3,3"]
+|===
+|Package |Default pack |Plain pack
+
+|`x.domain`
+|`X`, `XGenerated`
+|`X`, `XGenerated`
+
+|`x.application`
+|`XService`
+|`XService`
+
+|`x.application.port.in`
+|`XUseCase`
+|`XUseCase`
+
+|`x.application.port.out`
+|`XStore`
+|`XStore`
+
+|`x.adapter.in.web`
+|`XController`, `XDto`, `XWebMapper`
+|`XHandler`, `XDto`, `XWebMapper`
+
+|`x.adapter.out.persistence`
+|`XEntity`, `XJpaRepository`, `XPersistenceMapper`, `XPersistenceAdapter`
+|`XRepository`, `XPersistenceAdapter`
+
+|`x`
+|
+|`XWiring`
+|===
+
+With the default pack, the domain knows neither JPA nor Spring: `XEntity` is the class that JPA
+maps to the table, `XJpaRepository` its repository, and `XPersistenceMapper` maps the domain to
+and from `XEntity`. With the plain pack, the domain knows neither JDBC nor the HTTP server:
+`XRepository` is the SQL of the table, and `XPersistenceAdapter` joins the transaction of the use
+case.
+
+== In DDD and in the hexagonal architecture
+
+* An entity refers to another by its identifier, as `depotId`, not by the entity.
+* `XService` throws `NotFoundException` for an entity that is not there, and the request gets
+  `404 Not Found`. `NotFoundException` is in the base package, written once with the first entity
+  that has an API.
+
+== Whose the classes are
+
+tib writes these classes on every run, so they are not to be edited:
+
+* `XGenerated`, `XDto`, and `XMapper` or `XWebMapper`, with both packs;
+* `XEntity` and `XPersistenceMapper`, with the default pack;
+* `XRepository`, with the plain pack.
+
+Every other class of the tables above is written once and is yours. Your code for the entity goes
+in `X`, never in `XGenerated`. An entity whose spec turns off its DTO or its mapper has no service,
+no controller or handler, and no `XWiring`.
+
+== The tests
+
+The tests of an entity are written once, each in the package of the class it tests, under
+`src/test/java`. `XSamples`, which builds the sample entities and DTOs of the tests, is in `x` and
+is written on every run.
+
+[cols="1,2,3"]
+|===
+|Kind of test |Class |What it does
+
+|`unit`
+|`XServiceTests`
+|Tests the service with what it uses mocked: the repository and the mapper in the anemic
+architecture, the repository in DDD, the store in the hexagonal architecture.
+
+|`integration`
+|`XRepositoryTests`; in the hexagonal architecture `XPersistenceAdapterTests`
+|Saves and reads an entity against PostgreSQL in a container.
+
+|`api`
+|`XApiTests`
+|Calls every operation of the API over HTTP, against the running service and PostgreSQL in a
+container.
+|===
+
+== The rules that ArchUnit checks
+
+A service with the kind of test `archunit` has `ArchitectureTests`, in the tests of the base
+package, written once. It checks the rules of the architecture of the service on its classes:
+
+Anemic::
+The controller or handler of an entity uses its service, and not a repository. An entity or a
+repository uses no service and no controller or handler.
+
+DDD::
+The domain uses neither the application nor the web. The application does not use the web. The
+domain of an aggregate does not use the domain of another.
+
+Hexagonal::
+The domain knows neither JPA nor Spring with the default pack, and neither JDBC nor the HTTP
+server with the plain pack. The application does not use the adapters. An inbound adapter does not
+use an outbound one, nor the reverse.
+
+In all three, there is no cycle between the packages of the entities.
