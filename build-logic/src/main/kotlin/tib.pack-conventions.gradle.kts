@@ -31,8 +31,8 @@ val pack = extensions.create<PackExtension>("pack")
 
 dependencies {
   implementation(project(":tib-pack-support"))
-  // The tests check that the generated Java is in the layout of google-java-format.
-  testImplementation(versionCatalogs.named("libs").findLibrary("google-java-format").get())
+  // The specification that the one of every pack extends.
+  testImplementation(testFixtures(project(":tib-pack-support")))
 }
 
 // The templates of a pack are its own and the ones that every pack shares, which tib-pack-support
@@ -81,9 +81,9 @@ testing {
       dependencies {
         implementation(project())
         implementation(project(":tib-core"))
+        // The specification that the acceptance test of every pack extends.
+        implementation(testFixtures(project(":tib-pack-support")))
       }
-      // The corner spec, which the unit tests compare with its snapshot, is built here too.
-      sources { resources.srcDir("src/test/resources") }
       targets.all {
         testTask.configure {
           shouldRunAfter(tasks.test)

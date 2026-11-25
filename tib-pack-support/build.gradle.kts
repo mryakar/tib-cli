@@ -15,11 +15,13 @@
  */
 // What a template pack shares whatever stack it generates: the models of a service, its entities
 // and their tests that the templates read, the rendering of a pack's precompiled templates, the
-// templates that are the same for every stack, and the Gradle wrapper of a new service.
+// templates that are the same for every stack, and the Gradle wrapper of a new service. Its test
+// fixtures are the specifications that the tests of every pack extend.
 import gg.jte.ContentType
 
 plugins {
   `java-library`
+  `java-test-fixtures`
   id("tib.java-conventions")
   id("gg.jte.gradle")
 }
@@ -30,6 +32,10 @@ dependencies {
   api(project(":tib-core"))
   api(libs.jte.runtime)
   implementation(libs.google.java.format)
+  testFixturesApi(platform(libs.groovy.bom))
+  testFixturesApi(libs.spock.core)
+  // The fixtures check that the generated Java is in the layout of google-java-format.
+  testFixturesImplementation(libs.google.java.format)
 }
 
 // The Gradle wrapper of this build, which a pack writes into a new service.
