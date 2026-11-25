@@ -19,11 +19,14 @@ import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.cli.Tib.Result
+import me.yakar.tib.generate.Packs
 import me.yakar.tib.spec.Architecture
 import me.yakar.tib.spec.Names
 import me.yakar.tib.spec.Spec
+import me.yakar.tib.spec.TestKind
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Owner
+import picocli.CommandLine.Model.CommandSpec
 import spock.lang.Specification
 import spock.lang.TempDir
 
@@ -35,11 +38,11 @@ class InitServiceCommandSpec extends Specification {
   Tib tib
 
   static final String NAME = 'The name of the service, in lower case words joined with hyphens: '
-  static final String JAVA = 'Its Java version, 21 or 25 [21]: '
+  static final String JAVA = 'Its Java version: 21 or 25 [21]: '
   static final String PACK = 'Its template pack: default, plain [default]: '
   static final String ARCHITECTURE = 'Its architecture: anemic, ddd, hexagonal [anemic]: '
   static final String TESTS = 'The kinds of its tests, separated by commas, or none: unit, integration, api, archunit [unit,integration,api]: '
-  static final String DOCKER = 'A Dockerfile, yes or no [no]: '
+  static final String DOCKER = 'A Dockerfile: yes or no [no]: '
   static final String QUESTIONS = NAME + PACK + JAVA + ARCHITECTURE + TESTS + DOCKER
 
   def setup() {
@@ -71,7 +74,7 @@ class InitServiceCommandSpec extends Specification {
     'answers of their own, with spaces'     | ' vehicle-service \n default \n25\n anemic \napi, unit, archunit\nY\n' | 'default' | 25 | ['api', 'unit', 'archunit'] | true | QUESTIONS
     'none for the tests'                    | 'vehicle-service\n\n21\n\nnone\nno\n'               | 'default' | 21   | []                             | false  | QUESTIONS
     'the plain pack'                        | 'vehicle-service\nplain\n\n\n\n\n'                  | 'plain'   | 21   | ['unit', 'integration', 'api'] | false  | QUESTIONS
-    'answers that do not read, asked again' | '\nVehicle Service\nvehicle-service\nspring\nplain\n17\nx\n25\nonion\n\nunit,e2e\nunit,unit\nunit\nmaybe\nyes\n' | 'plain' | 25 | ['unit'] | true | NAME + "service: '' does not match ${Names.SERVICE}\n" + NAME + "service: 'Vehicle Service' does not match ${Names.SERVICE}\n" + NAME + PACK + "'spring' is not one of default, plain\n" + PACK + JAVA + 'java: 17 is not one of 21, 25\n' + JAVA + "'x' is not a number\n" + JAVA + ARCHITECTURE + "'onion' is not one of anemic, ddd, hexagonal\n" + ARCHITECTURE + TESTS + "'e2e' is not one of unit, integration, api, archunit\n" + TESTS + "tests[1]: 'unit' is already there\n" + TESTS + DOCKER + 'Answer yes or no.\n' + DOCKER
+    'answers that do not read, asked again' | '\nVehicle Service\nvehicle-service\nspring\nplain\n17\nx\n25\nonion\n\nunit,e2e\nunit,unit\nunit\nmaybe\nyes\n' | 'plain' | 25 | ['unit'] | true | NAME + "service: '' does not match ${Names.SERVICE}\n" + NAME + "service: 'Vehicle Service' does not match ${Names.SERVICE}\n" + NAME + PACK + "'spring' is not one of default, plain\n" + PACK + JAVA + 'java: 17 is not one of 21, 25\n' + JAVA + "'x' is not a number\n" + JAVA + ARCHITECTURE + "'onion' is not one of anemic, ddd, hexagonal\n" + ARCHITECTURE + TESTS + "'e2e' is not one of unit, integration, api, archunit\n" + TESTS + "tests[1]: 'unit' is already there\n" + TESTS + DOCKER + "'maybe' is not yes or no\n" + DOCKER
     'an architecture that the pack has'     | 'vehicle-service\n\n\nlayered\nhexagonal\n\n\n'    | 'default' | 21   | ['unit', 'integration', 'api'] | false  | NAME + PACK + JAVA + ARCHITECTURE + "'layered' is not one of anemic, ddd, hexagonal\n" + ARCHITECTURE + TESTS + DOCKER
   }
 
@@ -144,6 +147,37 @@ class InitServiceCommandSpec extends Specification {
     then:
     result.exitCode() == 1
     result.err() == "${tib.root} is already a tib project: .tib/state.yaml is there\n"
+  }
+
+  def "the help says what the name and each option take"() {
+    when:
+    Result result = tib.run('init', 'service', '--help')
+    String help = result.out().replaceAll(/\s+/, ' ')
+
+    then:
+    result.exitCode() == 0
+    help.startsWith('Usage: tib init service [-hV] [--allow-dirty] [--dry-run] [-d=DIR] [--spec=FILE | (NAME [--pack=PACK] ' +
+        '[--java=VERSION] [--architecture=ARCHITECTURE] [--tests=KINDS] [--docker])] ' +
+        'Scaffolds a new service, from its name or its spec file. ' +
+        'Without a name and without a spec file, tib asks for the name and for what the options choose, ' +
+        'on standard error, and reads the answers from standard input. ' +
+        'NAME The name of the service, in lower case words joined with hyphens. ')
+    help.contains(' --pack=PACK The template pack that generates the service: default (the default), a Spring Boot service, ' +
+        'or plain, a service in plain Java without a dependency injection framework. ')
+    help.contains(' --java=VERSION The Java version of the service: 21 (the default) or 25. ')
+    help.contains(' --architecture=ARCHITECTURE How the code of the service is arranged: anemic (the default), ddd or hexagonal. ')
+    help.contains(' --tests=KINDS The kinds of tests that tib writes, separated by commas: unit, integration, api and archunit, ' +
+        'or none; unit, integration and api by default. ')
+
+    and: 'no pack, architecture or kind of test is missing from it'
+    CommandSpec service = tib.commandLine().subcommands['init'].subcommands['service'].commandSpec
+    Packs.names().every { service.findOption('--pack').description()[0].contains(it) }
+    Architecture.values().every {
+      service.findOption('--architecture').description()[0].contains(it.toString())
+    }
+    TestKind.values().every {
+      service.findOption('--tests').description()[0].contains(it.toString())
+    }
   }
 
   def "the name and the spec exclude each other"() {

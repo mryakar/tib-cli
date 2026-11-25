@@ -18,7 +18,6 @@ package me.yakar.tib.cli;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Callable;
@@ -47,12 +46,15 @@ import picocli.CommandLine.TypeConversionException;
 @Command(
     name = "service",
     description = {
-      "Scaffolds a new service, from its name or its spec file: a Spring Boot one, or one in plain"
-          + " Java with --pack plain.",
-      "Without either, tib asks for what the command line would say, on standard error, and reads"
-          + " the answers from standard input."
+      "Scaffolds a new service, from its name or its spec file.",
+      "Without a name and without a spec file, tib asks for the name and for what the options"
+          + " choose, on standard error, and reads the answers from standard input."
     })
 class InitServiceCommand implements Callable<Integer> {
+
+  /** What the name of a service is, for the help and for the question. */
+  private static final String NAME =
+      "The name of the service, in lower case words joined with hyphens";
 
   @ArgGroup private Source source;
 
@@ -73,21 +75,17 @@ class InitServiceCommand implements Callable<Integer> {
   /** A service by its name, with what the spec of the service would otherwise say. */
   static class Named {
 
-    @Parameters(
-        arity = "1",
-        paramLabel = "NAME",
-        description = "The name of the service, in lower case words joined with hyphens.")
+    @Parameters(arity = "1", paramLabel = "NAME", description = NAME + ".")
     String name;
 
     @Option(
         names = "--pack",
-        paramLabel = "NAME",
+        paramLabel = "PACK",
         converter = PackConverter.class,
-        completionCandidates = PackNames.class,
         description =
-            "The template pack that generates the service: ${COMPLETION-CANDIDATES}; default, of"
-                + " Spring Boot, by default. plain generates a service in plain Java, without a"
-                + " framework of dependency injection.")
+            "The template pack that generates the service: default (the default), a Spring Boot"
+                + " service, or plain, a service in plain Java without a dependency injection"
+                + " framework.")
     String pack;
 
     @Option(
@@ -117,15 +115,6 @@ class InitServiceCommand implements Callable<Integer> {
         names = "--docker",
         description = "Writes a Dockerfile that builds the service into an image.")
     Boolean docker;
-  }
-
-  /** The names of the packs on the class path, as in {@code default}. */
-  static class PackNames implements Iterable<String> {
-
-    @Override
-    public Iterator<String> iterator() {
-      return Packs.names().iterator();
-    }
   }
 
   /**
@@ -232,11 +221,7 @@ class InitServiceCommand implements Callable<Integer> {
 
   /** The spec of the service, from the answers to the questions of tib. */
   private Spec asked() {
-    String name =
-        questions.ask(
-            "The name of the service, in lower case words joined with hyphens",
-            "",
-            answer -> checked(() -> Spec.of(answer)).service());
+    String name = questions.ask(NAME, "", answer -> checked(() -> Spec.of(answer)).service());
     Spec defaults = Spec.of(name);
     String pack =
         questions.ask(
@@ -245,7 +230,7 @@ class InitServiceCommand implements Callable<Integer> {
             answer -> read(new PackConverter(), answer));
     Integer java =
         questions.ask(
-            "Its Java version, 21 or 25",
+            "Its Java version: 21 or 25",
             String.valueOf(defaults.java()),
             answer -> checked(() -> Spec.of(name, null, number(answer), null, null, null)).java());
     Architecture architecture =
@@ -268,7 +253,7 @@ class InitServiceCommand implements Callable<Integer> {
                                 read(new TestKindsConverter(), answer).list(),
                                 null))
                     .tests());
-    Boolean docker = questions.ask("A Dockerfile, yes or no", "no", InitServiceCommand::yes);
+    Boolean docker = questions.ask("A Dockerfile: yes or no", "no", InitServiceCommand::yes);
     return Spec.of(name, pack, java, architecture, tests, docker);
   }
 
@@ -310,7 +295,7 @@ class InitServiceCommand implements Callable<Integer> {
     return switch (answer.toLowerCase(Locale.ROOT)) {
       case "y", "yes" -> true;
       case "n", "no" -> false;
-      default -> throw new IllegalArgumentException("Answer yes or no.");
+      default -> throw new IllegalArgumentException("'" + answer + "' is not yes or no");
     };
   }
 }
