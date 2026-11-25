@@ -34,10 +34,8 @@ class InitGeneratorSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    new InitGenerator(new SpringPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\n$yaml")), tree)
-    Map<String, String> files = tree.changes().collectEntries {
-      [it.path(), new String(it.after(), 'UTF-8')]
-    }
+    new InitGenerator(new SpringPack()).generate(project(yaml), tree)
+    Map<String, String> files = texts(tree)
 
     then:
     files['build.gradle.kts'].contains("java { toolchain { languageVersion = JavaLanguageVersion.of($java) } }\n")
@@ -54,7 +52,7 @@ class InitGeneratorSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    new InitGenerator(new SpringPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\ntests: $tests\n")), tree)
+    new InitGenerator(new SpringPack()).generate(project("tests: $tests\n"), tree)
     String build = new String(tree.changes().find {
       it.path() == 'build.gradle.kts'
     }.after(), 'UTF-8')
@@ -86,7 +84,7 @@ class InitGeneratorSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    new InitGenerator(new SpringPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\ntests: $tests\n")), tree)
+    new InitGenerator(new SpringPack()).generate(project("tests: $tests\n"), tree)
     Map<String, Change> files = tree.changes().collectEntries { [it.path(), it] }
     String build = new String(files['build.gradle.kts'].after(), 'UTF-8')
     String agents = new String(files['AGENTS.md'].after(), 'UTF-8')
@@ -112,7 +110,7 @@ class InitGeneratorSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    new InitGenerator(new SpringPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\n$yaml")), tree)
+    new InitGenerator(new SpringPack()).generate(project(yaml), tree)
     Map<String, Change> files = tree.changes().collectEntries { [it.path(), it] }
     String dockerfile = files['Dockerfile'] ? new String(files['Dockerfile'].after(), 'UTF-8') : null
     String agents = new String(files['AGENTS.md'].after(), 'UTF-8')
@@ -139,10 +137,8 @@ class InitGeneratorSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    new InitGenerator(new SpringPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\ntests: $tests\n")), tree)
-    Map<String, String> files = tree.changes().collectEntries {
-      [it.path(), new String(it.after(), 'UTF-8')]
-    }
+    new InitGenerator(new SpringPack()).generate(project("tests: $tests\n"), tree)
+    Map<String, String> files = texts(tree)
     String agents = files['AGENTS.md']
 
     then:
@@ -158,5 +154,15 @@ class InitGeneratorSpec extends Specification {
     '[api]'               | false       | true      | 'are yours, and so are\ntheir tests: `XApiTests` against PostgreSQL in a container. Their sample'
     '[unit]'              | false       | false     | 'their tests: `XServiceTests` with the repository and the mapper mocked. Their sample'
     '[]'                  | false       | false     | 'and the migration are yours.\n`X` keeps a constructor without parameters: the files of tib\'s make an `X` and set its values.\n'
+  }
+
+  private static Project project(String yaml) {
+    new Project(SpecReader.parse("tib: 1\nservice: s\n$yaml"))
+  }
+
+  private static Map<String, String> texts(Tree tree) {
+    tree.changes().collectEntries {
+      [it.path(), new String(it.after(), 'UTF-8')]
+    }
   }
 }
