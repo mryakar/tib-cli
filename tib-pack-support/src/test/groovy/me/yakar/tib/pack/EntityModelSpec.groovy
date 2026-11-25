@@ -151,7 +151,7 @@ class EntityModelSpec extends Specification {
     '{ pagination: false }'        | [true, true, false]
   }
 
-  def "the members of an entity make its DTO and its mapper, in the order of the spec: #architecture"() {
+  def "the members of an entity come in the order of the spec, and its mapper reads them in it: #architecture"() {
     given:
     Map<String, EntityModel> models = models("""\
       architecture: $architecture
@@ -175,10 +175,8 @@ class EntityModelSpec extends Specification {
     model.relations()*.field() == ['b', 'c', 'parent']
     model.targets()*.name() == ['B', 'C', 'A']
     model.otherTargets()*.name() == ['B', 'C']
-    model.dtoComponents() == 'Long id, @NotNull @Size(max = 255) String label, Long bId, @NotNull UUID cId, Long parentId, Instant createdAt, Instant updatedAt'
     model.dtoArguments() == arguments
     !models.B.audited()
-    models.B.dtoComponents() == 'Long id'
     models.B.dtoArguments() == 'b.getId()'
 
     where:

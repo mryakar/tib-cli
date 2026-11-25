@@ -60,7 +60,7 @@ final class EntityGenerator implements Generator {
     // DDD and hexagonal have services of their own: the use cases of the domain, which know no DTO.
     String architecture = Templates.prefix(project.architecture());
     JpaModel jpa = new JpaModel(entity);
-    Map<String, Object> model = Map.of("entity", entity, "jpa", jpa);
+    Map<String, Object> model = Map.of("entity", entity, "jpa", jpa, "dto", new DtoModel(entity));
     Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity), "jpa", jpa);
     if (entity.hexagonal()) {
       // The domain knows no JPA: the table is mapped by a class of the persistence adapter, which

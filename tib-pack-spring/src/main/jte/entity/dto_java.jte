@@ -1,5 +1,7 @@
 @import me.yakar.tib.pack.EntityModel
+@import me.yakar.tib.pack.spring.DtoModel
 @param EntityModel entity
+@param DtoModel dto
 package ${entity.webPackage()};
 
 import jakarta.validation.constraints.NotNull;
@@ -18,4 +20,4 @@ import java.util.UUID;
  * The identifier is read only; the service ignores it.
  @endif
  */
-public record ${entity.name()}Dto(${entity.dtoComponents()}) {}
+public record ${entity.name()}Dto(${dto.components()}) {}
