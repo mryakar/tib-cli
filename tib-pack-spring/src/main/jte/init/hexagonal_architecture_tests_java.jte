@@ -11,9 +11,10 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import org.junit.jupiter.api.Test;
 
 /**
- * The rules of the hexagonal architecture, checked on the classes of the service: the domain knows
- * neither JPA nor Spring, the application does not use the adapters, an inbound adapter does not
- * use an outbound one, nor the reverse, and there is no cycle between the packages of the entities.
+ * The rules of the hexagonal architecture, checked on the classes of the service by their packages:
+ * the domain knows neither JPA nor Spring, the application does not use the adapters, an inbound
+ * adapter does not use an outbound one, nor the reverse, and there is no cycle between the packages
+ * of the entities.
  */
 class ArchitectureTests {
 
