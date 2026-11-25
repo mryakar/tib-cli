@@ -4,12 +4,13 @@ The Idempotent Boilerplate: a scaffolding CLI for Java services, on Spring Boot 
 
 ## What it does
 
-- `tib init service` scaffolds a Spring Boot 4 service with JPA, PostgreSQL, Flyway and
-  Testcontainers, from its name or from a spec file; with `--pack plain`, a service in plain Java
-  instead, without a framework of dependency injection, on the HTTP server of the JDK and JDBC.
+- `tib init service` scaffolds a service from its name, a spec file or the answers to its
+  questions: on Spring Boot 4 with JPA, or in plain Java on the HTTP server of the JDK and JDBC;
+  in the anemic, DDD or hexagonal architecture; on Java 21 or 25; with PostgreSQL, Flyway and
+  Testcontainers, the kinds of tests you choose and, if you want one, a `Dockerfile`.
 - `tib generate entity` adds the entity layer of the spec's entities, or of the tables of SQL DDL,
   such as the schema that `pg_dump` writes: the entity, repository, DTO, mapper, service,
-  controller and Flyway migration, with tests of the repository, the service and the API.
+  controller or handler and Flyway migration, with their tests.
 - In a git repository, tib writes only into a service whose tracked files are committed, unless
   `--allow-dirty` says so.
 - `--dry-run` shows the diff and writes nothing; running `tib generate entity` again changes
@@ -30,7 +31,8 @@ own Java runtime: the
 
 ## Building
 
-tib needs JDK 21. [CONTRIBUTING.md](CONTRIBUTING.md) says how to build and test it.
+Building tib needs JDK 21 and 25; Gradle downloads the one that is not there.
+[CONTRIBUTING.md](CONTRIBUTING.md) says how to build and test it.
 
 ## License
 
