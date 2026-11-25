@@ -104,9 +104,10 @@ final class Table {
 
   /** Makes the column an identity, when it becomes one; a column that is not there is a problem. */
   private void identify(String name, boolean identity, List<String> problems) {
-    Column column = column(unquote(name));
+    String unquoted = unquote(name);
+    Column column = column(unquoted);
     if (column == null) {
-      problems.add(this.name + ": there is no column " + unquote(name));
+      problems.add(this.name + ": there is no column " + unquoted);
     } else {
       column.identity |= identity;
     }
