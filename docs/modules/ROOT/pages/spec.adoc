@@ -2,8 +2,9 @@
 :description: The YAML file that tells tib what to generate, and its JSON Schema.
 
 A spec is a YAML file that says what tib generates: the service, its group, template pack, Java
-version, architecture, kinds of tests and Dockerfile, and its entities with their fields and relations. `tib init service --spec` scaffolds the service
-from it, and `tib generate entity --spec` adds the entity layer of its entities.
+version, architecture, kinds of tests and Dockerfile, and its entities with their fields and
+relations. `tib init service --spec` scaffolds the service from it, and
+`tib generate entity --spec` adds the entity layer of its entities.
 
 == An example
 
@@ -30,11 +31,11 @@ Some values follow from others, always the same way:
   `UUID`.
 * A `String` without a length gets 255 from the packs: in its column, in the validation of
   its DTO and in its migration. A `Text` is a `String` in Java that has no limit: a `TEXT` column
-  in its migration, and no `@Size` in its DTO.
-* Without the DTO, or without the mapper, an entity has no service and no controller either. A
-  DTO without a mapper is there for a mapper that you write.
-* `pagination` acts when the entity is created: the service and the controller are written once,
-  so a later change of the option leaves them as they are.
+  in its migration, and no limit in its DTO.
+* Without the DTO, or without the mapper, an entity has no service and no controller, or handler,
+  either. A DTO without a mapper is there for a mapper that you write.
+* `pagination` acts when the entity is created: the service and the controller, or handler, are
+  written once, so a later change of the option leaves them as they are.
 
 == The schema
 
@@ -67,19 +68,15 @@ schema does not hold. A problem names the value it is about, as in
 
 * `tib` is `1`, the version of the spec format that this tib reads; a later one is refused, as in
   `tib: 2 is above 1`.
-* `java` is `21` or `25`, and is chosen when the service is created: `tib generate entity --spec`
-  refuses a spec whose `java` is not the one of the service, as in `vehicle-service.yaml is the spec
-  of a service on Java 25; this project is on Java 21`.
-* `tests` names each kind of test once, as in `tests: [unit, api]`, and is chosen when the
-  service is created too: a spec with other kinds is refused, in any order. Without `tests`, the
-  service has all three kinds; with `tests: []`, none.
-* `docker` is chosen when the service is created too, as its `Dockerfile` is written once.
-* `architecture` is `anemic`, `ddd` or `hexagonal`, and is chosen when the service is created: the
-  code of each is arranged in other packages.
-* `pack` is `default`, a Spring Boot 4 service, or `plain`, a service in plain Java without a
-  framework of dependency injection, on the HTTP server of the JDK, JDBC and Flyway. It is chosen
-  when the service is created: `tib generate entity --spec` refuses a spec of the other pack, which
-  generates for another stack. Both packs arrange a service in all three architectures.
+* `pack` is `default`, a Spring Boot 4 service, or `plain`, a service in plain Java on the HTTP
+  server of the JDK, JDBC and Flyway, as xref:packs.adoc[] says; the version of the pack may
+  follow the name after an at sign, which pins it. `java` is `21` or `25`. `architecture` is
+  `anemic`, `ddd` or `hexagonal`, as xref:architectures.adoc[] says. `tests` names each kind once,
+  in any order, as in `tests: [unit, api]`: without it the service has `unit`, `integration` and
+  `api`, and with `tests: []` none.
+* These four and `docker` are chosen when the service is created: `tib generate entity --spec`
+  refuses a spec that gives another, as in `vehicle-service.yaml is the spec of a service on Java
+  25; this project is on Java 21`. Both packs arrange a service in all three architectures.
 * Every entity has a name of its own and a table of its own, and every member of an entity, its
   identifier, fields and relations, a name of its own and a column of its own. Tables and columns
   are compared in any case; the columns of an audited entity include `CREATED_AT` and
