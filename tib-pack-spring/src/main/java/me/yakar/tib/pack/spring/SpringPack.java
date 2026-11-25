@@ -21,8 +21,8 @@ import me.yakar.tib.pack.PackProperties;
 import me.yakar.tib.pack.Templates;
 
 /**
- * The default pack: a plain Spring Boot 4 service with JPA, PostgreSQL, Flyway and Testcontainers,
- * built with Gradle.
+ * The default pack: a Spring Boot service with JPA, PostgreSQL, Flyway and Testcontainers, built
+ * with Gradle.
  */
 public final class SpringPack implements Pack {
 
