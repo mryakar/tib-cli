@@ -25,7 +25,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Change;
 import me.yakar.tib.tree.Owner;
@@ -69,7 +68,6 @@ public final class Generation {
    *
    * @param inputs the files that the spec of this run was read from
    * @param pack the pack of the generator
-   * @throws PackException when the pack does not arrange a service in the architecture of the spec
    */
   public static Result first(
       Project project,
@@ -78,7 +76,6 @@ public final class Generation {
       Generator generator,
       String tibVersion,
       Tree tree) {
-    arranges(pack, project);
     Recorder recorder = new Recorder(tree);
     generator.generate(project, recorder);
     State first = new State(tibVersion, ref(pack), inputs, project.spec(), recorder.written());
@@ -106,8 +103,7 @@ public final class Generation {
    * @param previous the state file of the project
    * @param inputs the files that the spec of this run was read from
    * @param pack the pack of the generator
-   * @throws PackException when the pack generates for another stack than the service has, or does
-   *     not arrange a service in the architecture of the spec
+   * @throws PackException when the pack generates for another stack than the service has
    */
   public static Result next(
       State previous,
@@ -136,7 +132,6 @@ public final class Generation {
               + pack.stack()
               + " by hand.");
     }
-    arranges(pack, project);
     Recorder now = generate(generator, project, previous, tree);
     // What the generator makes of the previous spec, in a tree of its own that is never applied.
     Recorder before =
@@ -202,28 +197,6 @@ public final class Generation {
       }
     }
     return new Left(List.copyOf(changed), List.copyOf(dropped), List.copyOf(returned));
-  }
-
-  /**
-   * Refuses the project when the pack does not arrange a service in its architecture, before
-   * anything is staged.
-   */
-  private static void arranges(Pack pack, Project project) {
-    if (!pack.architectures().contains(project.architecture())) {
-      throw new PackException(
-          "pack "
-              + pack.name()
-              + " "
-              + pack.version()
-              + " does not arrange a service in the architecture "
-              + project.architecture()
-              + ", only in "
-              + pack.architectures().stream()
-                  .sorted()
-                  .map(Architecture::toString)
-                  .collect(Collectors.joining(", "))
-              + "\nChoose another architecture for the service, or another pack.");
-    }
   }
 
   private static State.PackRef ref(Pack pack) {

@@ -199,10 +199,7 @@ class InitServiceCommand implements Callable<Integer> {
         tree);
   }
 
-  /**
-   * The spec of the service, from the answers to the questions of tib. The architectures that it
-   * offers are the ones that the chosen pack arranges a service in.
-   */
+  /** The spec of the service, from the answers to the questions of tib. */
   private Spec asked() {
     String name =
         questions.ask(
@@ -220,15 +217,11 @@ class InitServiceCommand implements Callable<Integer> {
             "Its template pack: " + String.join(", ", Packs.names()),
             defaults.pack(),
             answer -> read(new PackConverter(), answer));
-    Architecture[] architectures =
-        Arrays.stream(Architecture.values())
-            .filter(Packs.find(pack).architectures()::contains)
-            .toArray(Architecture[]::new);
     Architecture architecture =
         questions.ask(
-            "Its architecture: " + names(architectures),
+            "Its architecture: " + names(Architecture.values()),
             defaults.architecture().toString(),
-            answer -> read(value -> named(architectures, value), answer));
+            answer -> read(new ArchitectureConverter(), answer));
     List<TestKind> tests =
         questions.ask(
             "The kinds of its tests, separated by commas, or none: " + names(TestKind.values()),
