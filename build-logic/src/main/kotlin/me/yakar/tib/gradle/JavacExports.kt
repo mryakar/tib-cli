@@ -16,9 +16,9 @@
 package me.yakar.tib.gradle
 
 /**
- * The packages of the JDK's compiler that google-java-format reads, which the default pack runs on
- * the Java it generates: every JVM that generates, the launcher's and the tests', opens them to the
- * class path.
+ * The packages of the JDK's compiler that google-java-format reads, which the packs run on the Java
+ * they generate: every JVM that generates, the launcher's and the tests', opens them to the class
+ * path.
  */
 object JavacExports {
 

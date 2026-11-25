@@ -50,8 +50,8 @@ jobs:
     name: Packages
     uses: ./.github/workflows/packages.yml
 
-  # The scripts of the release and of the Pages site run only there: they are linted here, and the
-  # one that reads the changelog reads the section of a published release.
+  # The scripts are linted here, and the one that reads the changelog reads the section of a
+  # published release.
   scripts:
     name: Scripts
     runs-on: ubuntu-latest
