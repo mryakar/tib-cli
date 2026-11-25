@@ -22,7 +22,6 @@ import me.yakar.tib.cli.Tib.Result
 import me.yakar.tib.generate.Packs
 import me.yakar.tib.spec.Architecture
 import me.yakar.tib.spec.Names
-import me.yakar.tib.spec.Spec
 import me.yakar.tib.spec.TestKind
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Owner
@@ -35,47 +34,12 @@ class InitServiceCommandSpec extends Specification {
   @TempDir
   Path dir
 
-  Tib tib
+  static final String VERSION = System.getProperty('tib.version')
 
-  static final String NAME = 'The name of the service, in lower case words joined with hyphens: '
-  static final String JAVA = 'Its Java version: 21 or 25 [21]: '
-  static final String PACK = 'Its template pack: default, plain [default]: '
-  static final String ARCHITECTURE = 'Its architecture: anemic, ddd, hexagonal [anemic]: '
-  static final String TESTS = 'The kinds of its tests, separated by commas, or none: unit, integration, api, archunit [unit,integration,api]: '
-  static final String DOCKER = 'A Dockerfile: yes or no [no]: '
-  static final String QUESTIONS = NAME + PACK + JAVA + ARCHITECTURE + TESTS + DOCKER
+  Tib tib
 
   def setup() {
     tib = new Tib(dir)
-  }
-
-  def "without the name and the spec, tib asks for them on standard error and reads the answers: #what"() {
-    given:
-    tib.answers = new ByteArrayInputStream(answers.getBytes('UTF-8'))
-
-    when:
-    Result result = tib.init()
-
-    then:
-    result.exitCode() == 0
-    result.out() == "Wrote ${tib.state().files().size() + 1} files to ${tib.root}.\n"
-    result.err() == err
-    Spec spec = tib.state().spec()
-    spec.service() == 'vehicle-service'
-    spec.pack() == pack
-    spec.java() == java
-    spec.tests()*.toString() == tests
-    spec.docker() == docker
-    tib.state().inputs() == []
-
-    where:
-    what                                    | answers                                             | pack      | java | tests                          | docker | err
-    'the defaults'                          | 'vehicle-service\n\n\n\n\n\n'                       | 'default' | 21   | ['unit', 'integration', 'api'] | false  | QUESTIONS
-    'answers of their own, with spaces'     | ' vehicle-service \n default \n25\n anemic \napi, unit, archunit\nY\n' | 'default' | 25 | ['api', 'unit', 'archunit'] | true | QUESTIONS
-    'none for the tests'                    | 'vehicle-service\n\n21\n\nnone\nno\n'               | 'default' | 21   | []                             | false  | QUESTIONS
-    'the plain pack'                        | 'vehicle-service\nplain\n\n\n\n\n'                  | 'plain'   | 21   | ['unit', 'integration', 'api'] | false  | QUESTIONS
-    'answers that do not read, asked again' | '\nVehicle Service\nvehicle-service\nspring\nplain\n17\nx\n25\nonion\n\nunit,e2e\nunit,unit\nunit\nmaybe\nyes\n' | 'plain' | 25 | ['unit'] | true | NAME + "service: '' does not match ${Names.SERVICE}\n" + NAME + "service: 'Vehicle Service' does not match ${Names.SERVICE}\n" + NAME + PACK + "'spring' is not one of default, plain\n" + PACK + JAVA + 'java: 17 is not one of 21, 25\n' + JAVA + "'x' is not a number\n" + JAVA + ARCHITECTURE + "'onion' is not one of anemic, ddd, hexagonal\n" + ARCHITECTURE + TESTS + "'e2e' is not one of unit, integration, api, archunit\n" + TESTS + "tests[1]: 'unit' is already there\n" + TESTS + DOCKER + "'maybe' is not yes or no\n" + DOCKER
-    'an architecture that the pack has'     | 'vehicle-service\n\n\nlayered\nhexagonal\n\n\n'    | 'default' | 21   | ['unit', 'integration', 'api'] | false  | NAME + PACK + JAVA + ARCHITECTURE + "'layered' is not one of anemic, ddd, hexagonal\n" + ARCHITECTURE + TESTS + DOCKER
   }
 
   def "a dry run that asks prints the diff on standard output, and the questions on standard error"() {
@@ -88,7 +52,7 @@ class InitServiceCommandSpec extends Specification {
     then:
     result.exitCode() == 0
     result.out().startsWith('--- /dev/null\n+++ b/.gitattributes\n')
-    result.err().startsWith(QUESTIONS)
+    result.err().startsWith(ServiceQuestionsSpec.QUESTIONS)
     dir.toFile().list().length == 0
   }
 
@@ -99,7 +63,7 @@ class InitServiceCommandSpec extends Specification {
     then:
     result.exitCode() == 2
     result.out() == ''
-    result.err().startsWith(NAME + '\nThe command line leaves out what tib asks for, and there are no more answers.\nUsage: tib init service ')
+    result.err().startsWith(ServiceQuestionsSpec.NAME + '\nThe command line leaves out what tib asks for, and there are no more answers.\nUsage: tib init service ')
     result.err().contains('NAME')
     result.err().contains('--spec=FILE')
   }
@@ -114,7 +78,7 @@ class InitServiceCommandSpec extends Specification {
     then:
     result.exitCode() == 2
     result.out() == ''
-    result.err().startsWith(NAME + PACK + JAVA + ARCHITECTURE + '\nThe command line leaves out what tib asks for, and there are no more answers.\nUsage: tib init service ')
+    result.err().startsWith(ServiceQuestionsSpec.NAME + ServiceQuestionsSpec.PACK + ServiceQuestionsSpec.JAVA + ServiceQuestionsSpec.ARCHITECTURE + '\nThe command line leaves out what tib asks for, and there are no more answers.\nUsage: tib init service ')
     dir.toFile().list().length == 0
   }
 
@@ -132,7 +96,7 @@ class InitServiceCommandSpec extends Specification {
 
     then:
     result.exitCode() == 1
-    result.err() == NAME + 'cannot read the answers: the terminal is gone\n'
+    result.err() == ServiceQuestionsSpec.NAME + 'cannot read the answers: the terminal is gone\n'
     dir.toFile().list().length == 0
   }
 
@@ -252,73 +216,59 @@ class InitServiceCommandSpec extends Specification {
     ['--docker'] | true
   }
 
-  def "the architecture of the service is the one of --architecture; another is a mistake of the command line"() {
+  def "the service is arranged as #how says"() {
     when:
-    Result result = tib.init('vehicle-service', '--architecture', 'ddd')
+    Result result = tib.init(['vehicle-service'] + args as String[])
 
     then:
     result.exitCode() == 0
-    tib.state().spec().architecture() == Architecture.DDD
+    tib.state().spec().architecture() == architecture
 
-    when:
-    Tib hexagonal = new Tib(dir.resolve('hexagonal'))
-
-    then:
-    hexagonal.init('hexagonal-service', '--architecture', 'hexagonal').exitCode() == 0
-    hexagonal.state().spec().architecture() == Architecture.HEXAGONAL
-
-    when:
-    Result other = new Tib(dir.resolve('other')).init('other-service', '--architecture', 'layered')
-
-    then:
-    other.exitCode() == 2
-    other.err().startsWith("Invalid value for option '--architecture': 'layered' is not one of anemic, ddd, hexagonal\n")
+    where:
+    how              | args                            | architecture
+    'no option'      | []                              | Architecture.ANEMIC
+    '--architecture' | ['--architecture', 'ddd']       | Architecture.DDD
+    '--architecture' | ['--architecture', 'hexagonal'] | Architecture.HEXAGONAL
   }
 
-  def "the pack of the service is the one of --pack, default without it; another is a mistake of the command line"() {
+  def "an architecture that tib does not know is a mistake of the command line"() {
     when:
-    Result result = tib.init('vehicle-service', '--pack', 'plain')
+    Result result = tib.init('vehicle-service', '--architecture', 'layered')
 
     then:
-    result.exitCode() == 0
-    tib.state().spec().pack() == 'plain'
-    tib.state().pack().stack() == 'Plain Java'
-    Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/Routes.java'))
-
-    when:
-    Tib spring = new Tib(dir.resolve('spring'))
-
-    then:
-    spring.init('spring-service').exitCode() == 0
-    spring.state().spec().pack() == 'default'
-    spring.state().pack().stack() == 'Spring Boot 4'
-
-    when:
-    Result other = new Tib(dir.resolve('other')).init('other-service', '--pack', 'spring')
-
-    then:
-    other.exitCode() == 2
-    other.err().startsWith("Invalid value for option '--pack': 'spring' is not one of default, plain\n")
+    result.exitCode() == 2
+    result.err().startsWith("Invalid value for option '--architecture': 'layered' is not one of anemic, ddd, hexagonal\n")
+    dir.toFile().list().length == 0
   }
 
-  def "the pack of --pack may pin its version, as the pack of a spec may"() {
-    given:
-    String version = System.getProperty('tib.version')
-
+  def "the service is generated by the pack that #how says: #pack"() {
     when:
-    Result result = tib.init('vehicle-service', '--pack', "plain@$version")
+    Result result = tib.init(['vehicle-service'] + args as String[])
 
     then:
     result.exitCode() == 0
-    tib.state().spec().pack() == "plain@$version"
-    tib.state().pack() == new State.PackRef('plain', version, 'Plain Java')
+    tib.state().spec().pack() == pack
+    tib.state().pack() == new State.PackRef(name, VERSION, stack)
+    Files.exists(dir.resolve('src/main/java/com/example/vehicleservice/Routes.java')) == (name == 'plain')
 
+    where:
+    how         | args                         | pack             | name      | stack
+    'no option' | []                           | 'default'        | 'default' | 'Spring Boot 4'
+    '--pack'    | ['--pack', 'plain']          | 'plain'          | 'plain'   | 'Plain Java'
+    '--pack'    | ['--pack', "plain@$VERSION"] | "plain@$VERSION" | 'plain'   | 'Plain Java'
+  }
+
+  def "a pack that is not there is a mistake of the command line: #pack"() {
     when:
-    Result other = new Tib(dir.resolve('other')).init('other-service', '--pack', 'plain@0')
+    Result result = tib.init('vehicle-service', '--pack', pack)
 
     then:
-    other.exitCode() == 2
-    other.err().startsWith("Invalid value for option '--pack': 'plain@0' is not one of default, plain\n")
+    result.exitCode() == 2
+    result.err().startsWith("Invalid value for option '--pack': '$pack' is not one of default, plain\n")
+    dir.toFile().list().length == 0
+
+    where:
+    pack << ['spring', 'plain@0']
   }
 
   def "kinds of tests that tib cannot read are a mistake of the command line: #args"() {
