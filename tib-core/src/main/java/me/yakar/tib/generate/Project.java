@@ -21,8 +21,8 @@ import me.yakar.tib.spec.Spec;
 import me.yakar.tib.spec.TestKind;
 
 /**
- * What the generators know about the project of a spec: its names, derived from the spec the same
- * way every time.
+ * What the generators know about the project of a spec: its names and the choices of its service,
+ * derived from the spec the same way every time.
  */
 public record Project(Spec spec) {
 
@@ -59,7 +59,7 @@ public record Project(Spec spec) {
     return spec.architecture();
   }
 
-  /** Whether tib writes the tests of the kind for the entities of the service. */
+  /** Whether tib writes the tests of the kind for the service. */
   public boolean tests(TestKind kind) {
     return spec.tests().contains(kind);
   }
