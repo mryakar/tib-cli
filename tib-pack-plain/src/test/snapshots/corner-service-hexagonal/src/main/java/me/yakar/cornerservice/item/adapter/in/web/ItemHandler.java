@@ -11,9 +11,7 @@ import me.yakar.cornerservice.item.domain.Item;
 
 /**
  * The API of items, at the path of its context: /api/items, and /api/items/{id} for one of them;
- * their DTOs, mapped to and from the domain. A request whose DTO does not read or breaks a rule is
- * a bad request, and an identifier that no item has is not found: {@code ErrorHandler} answers
- * them.
+ * their DTOs, mapped to and from the domain.
  */
 public class ItemHandler implements HttpHandler {
 

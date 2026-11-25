@@ -20,9 +20,7 @@ import java.util.UUID;
 
 /**
  * The API of ${entity.plural()}, at the path of its context: ${entity.path()}, and ${entity.path()}/{id} for one of
- * them; their DTOs, mapped to and from the ${hexagonal ? "domain" : "aggregate"}. A request whose DTO does not read or breaks a
- * rule is a bad request, and an identifier that no ${entity.variable()} has is not found: {@code ErrorHandler}
- * answers them.
+ * them; their DTOs, mapped to and from the ${hexagonal ? "domain" : "aggregate"}.
  */
 public class ${name}Handler implements HttpHandler {
 

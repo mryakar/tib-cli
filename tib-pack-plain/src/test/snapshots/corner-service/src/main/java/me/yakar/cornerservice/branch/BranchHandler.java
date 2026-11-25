@@ -9,8 +9,7 @@ import me.yakar.cornerservice.Http;
 
 /**
  * The API of branches, at the path of its context: /api/branches, and /api/branches/{id} for one of
- * them. A request whose DTO does not read or breaks a rule is a bad request, and an identifier that
- * no branch has is not found: {@code ErrorHandler} answers them.
+ * them.
  */
 public class BranchHandler implements HttpHandler {
 

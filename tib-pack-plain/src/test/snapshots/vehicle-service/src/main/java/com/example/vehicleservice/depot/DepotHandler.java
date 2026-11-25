@@ -10,8 +10,6 @@ import java.util.UUID;
 
 /**
  * The API of depots, at the path of its context: /api/depots, and /api/depots/{id} for one of them.
- * A request whose DTO does not read or breaks a rule is a bad request, and an identifier that no
- * depot has is not found: {@code ErrorHandler} answers them.
  */
 public class DepotHandler implements HttpHandler {
 

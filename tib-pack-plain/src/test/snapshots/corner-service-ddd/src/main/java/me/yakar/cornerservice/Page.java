@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * A page of a list, as the API answers it, in the JSON of the pages of Spring Data: the content,
- * then the size of the page, its number from 0, and how many elements and pages there are.
+ * A page of a list, as the API answers it: the content, then the size of the page, its number from
+ * 0, and how many elements and pages there are.
  */
 public record Page<T>(List<T> content, Metadata page) {
 
