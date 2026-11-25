@@ -222,10 +222,8 @@ The first is a service whose spec names the other xref:packs.adoc[pack], as a sp
 [source,text]
 ----
 /home/you/vehicle-service was generated for Plain Java by tib 0.5.0; pack default 0.5.0 generates for Spring Boot 4
+Give the spec the pack of the service, plain, or move the service to Spring Boot 4 by hand.
 ----
-
-The line after it says what to do: give the spec the pack of the service, or move the service to
-the other stack by hand.
 
 The second is a service of a tib before 0.3.0, which generated Spring Boot 3. The tib that wrote
 the service goes on with it, until the service moves to the stack of the pack:

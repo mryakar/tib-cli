@@ -137,10 +137,10 @@ nothing and exits with 2.
 $ tib init service
 The name of the service, in lower case words joined with hyphens: vehicle-service
 Its template pack: default, plain [default]:
-Its Java version, 21 or 25 [21]: 25
+Its Java version: 21 or 25 [21]: 25
 Its architecture: anemic, ddd, hexagonal [anemic]:
 The kinds of its tests, separated by commas, or none: unit, integration, api, archunit [unit,integration,api]: unit,api
-A Dockerfile, yes or no [no]: yes
+A Dockerfile: yes or no [no]: yes
 Wrote 16 files to /home/you/vehicle-service.
 ----
 
