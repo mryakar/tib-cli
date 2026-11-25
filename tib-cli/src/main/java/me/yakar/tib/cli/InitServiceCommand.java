@@ -19,9 +19,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.concurrent.Callable;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import me.yakar.tib.generate.PackException;
 import me.yakar.tib.generate.Packs;
@@ -53,8 +51,7 @@ import picocli.CommandLine.TypeConversionException;
 class InitServiceCommand implements Callable<Integer> {
 
   /** What the name of a service is, for the help and for the question. */
-  private static final String NAME =
-      "The name of the service, in lower case words joined with hyphens";
+  static final String NAME = "The name of the service, in lower case words joined with hyphens";
 
   @ArgGroup private Source source;
 
@@ -115,6 +112,15 @@ class InitServiceCommand implements Callable<Integer> {
         names = "--docker",
         description = "Writes a Dockerfile that builds the service into an image.")
     Boolean docker;
+
+    /**
+     * The spec that the name and the options make, checked.
+     *
+     * @throws SpecException when the spec refuses one of them
+     */
+    Spec spec() {
+      return Spec.of(name, pack, java, architecture, tests == null ? null : tests.list(), docker);
+    }
   }
 
   /**
@@ -139,8 +145,8 @@ class InitServiceCommand implements Callable<Integer> {
   record TestKinds(List<TestKind> list) {}
 
   /**
-   * Reads kinds of tests by their names in the spec, separated by commas, as in {@code unit,api};
-   * {@code none} is no kind at all.
+   * Reads kinds of tests by their names, separated by commas, as in {@code unit,api}; {@code none}
+   * is no kind at all.
    */
   static class TestKindsConverter implements ITypeConverter<TestKinds> {
 
@@ -157,7 +163,7 @@ class InitServiceCommand implements Callable<Integer> {
     }
   }
 
-  /** Reads an architecture by its name in the spec, as in {@code anemic}. */
+  /** Reads an architecture by its name, as in {@code anemic}. */
   static class ArchitectureConverter implements ITypeConverter<Architecture> {
 
     @Override
@@ -166,7 +172,7 @@ class InitServiceCommand implements Callable<Integer> {
     }
   }
 
-  /** The value whose name in the spec is the one given. */
+  /** The value whose name is the one given. */
   private static <E extends Enum<E>> E named(E[] values, String name) {
     for (E value : values) {
       if (value.toString().equals(name)) {
@@ -192,7 +198,7 @@ class InitServiceCommand implements Callable<Integer> {
           tree.root() + " is already a tib project: " + State.PATH + " is there");
     }
     if (source == null) {
-      return run.init(asked(), List.of(), tree);
+      return run.init(ServiceQuestions.ask(questions), List.of(), tree);
     }
     if (source.spec != null) {
       SpecFile file = SpecFile.read(source.spec, tree);
@@ -207,95 +213,14 @@ class InitServiceCommand implements Callable<Integer> {
    */
   private Spec named() {
     try {
-      return Spec.of(
-          source.named.name,
-          source.named.pack,
-          source.named.java,
-          source.named.architecture,
-          source.named.tests == null ? null : source.named.tests.list(),
-          source.named.docker);
+      return source.named.spec();
     } catch (SpecException e) {
       throw new ParameterException(commandSpec.commandLine(), String.join("\n", e.problems()), e);
     }
   }
 
-  /** The spec of the service, from the answers to the questions of tib. */
-  private Spec asked() {
-    String name = questions.ask(NAME, "", answer -> checked(() -> Spec.of(answer)).service());
-    Spec defaults = Spec.of(name);
-    String pack =
-        questions.ask(
-            "Its template pack: " + String.join(", ", Packs.names()),
-            defaults.pack(),
-            answer -> read(new PackConverter(), answer));
-    Integer java =
-        questions.ask(
-            "Its Java version: 21 or 25",
-            String.valueOf(defaults.java()),
-            answer -> checked(() -> Spec.of(name, null, number(answer), null, null, null)).java());
-    Architecture architecture =
-        questions.ask(
-            "Its architecture: " + names(Architecture.values()),
-            defaults.architecture().toString(),
-            answer -> read(new ArchitectureConverter(), answer));
-    List<TestKind> tests =
-        questions.ask(
-            "The kinds of its tests, separated by commas, or none: " + names(TestKind.values()),
-            defaults.tests().stream().map(TestKind::toString).collect(Collectors.joining(",")),
-            answer ->
-                checked(
-                        () ->
-                            Spec.of(
-                                name,
-                                null,
-                                java,
-                                null,
-                                read(new TestKindsConverter(), answer).list(),
-                                null))
-                    .tests());
-    Boolean docker = questions.ask("A Dockerfile: yes or no", "no", InitServiceCommand::yes);
-    return Spec.of(name, pack, java, architecture, tests, docker);
-  }
-
-  /**
-   * What the converter reads the answer to, or why it cannot as the reason why the answer does not
-   * read.
-   */
-  private static <T> T read(ITypeConverter<T> converter, String answer) {
-    try {
-      return converter.convert(answer);
-    } catch (Exception e) {
-      throw new IllegalArgumentException(e.getMessage(), e);
-    }
-  }
-
-  /** The names of the values in the spec, as in {@code unit, integration}. */
-  private static String names(Object[] values) {
+  /** The names of the values, as in {@code unit, integration}. */
+  static String names(Object[] values) {
     return Arrays.stream(values).map(Object::toString).collect(Collectors.joining(", "));
-  }
-
-  /** The spec, or the problems that it has as the reason why the answer does not read. */
-  private static Spec checked(Supplier<Spec> spec) {
-    try {
-      return spec.get();
-    } catch (SpecException e) {
-      throw new IllegalArgumentException(String.join("\n", e.problems()), e);
-    }
-  }
-
-  private static Integer number(String answer) {
-    try {
-      return Integer.valueOf(answer);
-    } catch (NumberFormatException e) {
-      throw new IllegalArgumentException("'" + answer + "' is not a number", e);
-    }
-  }
-
-  private static Boolean yes(String answer) {
-    return switch (answer.toLowerCase(Locale.ROOT)) {
-      case "y", "yes" -> true;
-      case "n", "no" -> false;
-      default -> throw new IllegalArgumentException("'" + answer + "' is not yes or no");
-    };
   }
 }
