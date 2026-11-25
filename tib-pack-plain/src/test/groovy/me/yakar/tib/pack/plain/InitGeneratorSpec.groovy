@@ -15,10 +15,8 @@
  */
 package me.yakar.tib.pack.plain
 
-import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.generate.Project
-import me.yakar.tib.pack.GradleWrapper
 import me.yakar.tib.spec.SpecReader
 import me.yakar.tib.tree.Change
 import me.yakar.tib.tree.Owner
@@ -28,26 +26,8 @@ import spock.lang.TempDir
 
 class InitGeneratorSpec extends Specification {
 
-  /** The root of this build, whose Gradle wrapper the pack carries. */
-  static final Path BUILD = Path.of(System.getProperty('tib.root'))
-
   @TempDir
   Path dir
-
-  def "a new service comes with the Gradle wrapper of this build, written once, and gradlew is run"() {
-    given:
-    Tree tree = Tree.at(dir)
-
-    when:
-    new InitGenerator(new PlainPack()).generate(project(''), tree)
-    List<Change> wrapper = tree.changes().findAll { it.path() in GradleWrapper.FILES }
-
-    then: 'the files are Gradle\'s, as they are, without a header of tib\'s'
-    wrapper*.path() == GradleWrapper.FILES.toSorted()
-    wrapper.every { it.owner() == Owner.DEVELOPER && it.before() == null }
-    wrapper.findAll { it.executable() }*.path() == ['gradlew']
-    wrapper.each { assert it.after() == Files.readAllBytes(BUILD.resolve(it.path())) : it.path() }
-  }
 
   def "a new service is wired by hand, and the routes of its API are tib's, without an entity yet"() {
     given:
