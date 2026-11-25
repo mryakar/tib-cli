@@ -124,6 +124,7 @@ class InitGeneratorSpec extends Specification {
     (architecture != null) == archunit
     !archunit || architecture.owner() == Owner.DEVELOPER
     !archunit || new String(architecture.after(), 'UTF-8').contains('void handlersUseServicesAndNotRepositories()')
+    !archunit || new String(architecture.after(), 'UTF-8').contains('  void onlyHandlersAndTheWiringUseHandlers() {\n    noClasses()\n        .that(not(HANDLERS).and(not(WIRING)))\n')
     build.contains("  testImplementation(\"com.tngtech.archunit:archunit:${new PlainPack().archunitVersion()}\")\n  testRuntimeOnly(") == archunit
     agents.contains('and `Page`.\n`ArchitectureTests`, in the tests of the base package,') == archunit
     agents.contains('their tests: ') == entities

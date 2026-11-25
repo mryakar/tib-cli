@@ -4,7 +4,6 @@ package ${project.basePackage()};
 
 import static com.tngtech.archunit.base.DescribedPredicate.not;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.assignableTo;
-import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameEndingWith;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
@@ -20,7 +19,8 @@ import org.junit.jupiter.api.Test;
 /**
  * The rules of the anemic architecture, checked on the classes of the service by their names and
  * packages, as no annotation marks them: the handler of an entity over its service over its
- * repository, and no cycle between the packages of the entities.
+ * repository, a handler used by the wiring of its entity alone, and no cycle between the packages
+ * of the entities.
  */
 class ArchitectureTests {
 
@@ -43,13 +43,13 @@ class ArchitectureTests {
           .and(assignableTo(simpleNameEndingWith("Generated")))
           .as("entities");
 
-  /** The routes, which wire the handlers by hand. */
-  private static final DescribedPredicate<JavaClass> ROUTES = equivalentTo(Routes.class);
+  /** The wiring of an entity, which makes its handler, its service and its repository by hand. */
+  private static final DescribedPredicate<JavaClass> WIRING = ofEntities("Wiring", "wiring");
 
   @Test
-  void onlyHandlersAndTheRoutesUseHandlers() {
+  void onlyHandlersAndTheWiringUseHandlers() {
     noClasses()
-        .that(not(HANDLERS).and(not(ROUTES)))
+        .that(not(HANDLERS).and(not(WIRING)))
         .should()
         .dependOnClassesThat(HANDLERS)
         .allowEmptyShould(true)

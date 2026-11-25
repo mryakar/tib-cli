@@ -555,7 +555,7 @@ class GenerateEntityCommandSpec extends Specification {
     then:
     result.exitCode() == 0
     Files.exists(dir.resolve("src/main/java/com/example/vehicleservice/vehicle/${handler}VehicleHandler.java"))
-    Files.readString(dir.resolve('src/main/java/com/example/vehicleservice/Routes.java')).contains('new VehicleHandler(')
+    Files.readString(dir.resolve('src/main/java/com/example/vehicleservice/Routes.java')).contains('VehicleWiring.handler(transactions)')
 
     where:
     architecture | handler

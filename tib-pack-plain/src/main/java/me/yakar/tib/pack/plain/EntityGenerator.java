@@ -31,7 +31,7 @@ import me.yakar.tib.tree.ProjectFiles;
 /**
  * Generates the entity layer of every entity of the spec, with its tests, each entity after the
  * entities it refers to, so that its migration can reference their tables; and the routes of the
- * API, which wire the classes of the entities by hand. An entity refers to another by the
+ * API, which put the handler of every entity at its path. An entity refers to another by the
  * identifier of its target: there is no ORM.
  */
 final class EntityGenerator implements Generator {
@@ -69,8 +69,8 @@ final class EntityGenerator implements Generator {
   }
 
   /**
-   * Writes the routes of the API, which tib keeps in step with the entities: the classes of every
-   * entity with a service and a handler, wired by hand.
+   * Writes the routes of the API, which tib keeps in step with the entities: the handler that the
+   * wiring of every entity with a service makes, at the path of the entity.
    */
   static void routes(Project project, Collection<EntityModel> entities, GeneratedFiles generated) {
     generated.own(
@@ -126,6 +126,12 @@ final class EntityGenerator implements Generator {
       generated.onceWithEntity(
           Sources.main(web, name + "Handler"),
           "entity/" + Templates.domainPrefix(project.architecture()) + "handler_java.jte",
+          model);
+      // The routes call the wiring alone, so that the constructors of the classes it makes are the
+      // developer's to change.
+      generated.onceWithEntity(
+          Sources.main(entity.packageName(), name + "Wiring"),
+          "entity/" + Templates.prefix(project.architecture()) + "wiring_java.jte",
           model);
     }
   }

@@ -56,7 +56,7 @@ class EntityGeneratorSpec extends Specification {
     }.collect {
       it - 'src/main/java/com/example/s/a/' - '.java'
     }.toSorted() ==
-    ['A', 'ADto', 'AGenerated', 'AHandler', 'AMapper', 'ARepository', 'AService']
+    ['A', 'ADto', 'AGenerated', 'AHandler', 'AMapper', 'ARepository', 'AService', 'AWiring']
     tree.changes()*.path().findAll {
       it.startsWith('src/main/java/com/example/s/b/')
     }.collect {
@@ -99,6 +99,7 @@ class EntityGeneratorSpec extends Specification {
       'a/A.java',
       'a/AService.java',
       'a/AHandler.java',
+      'a/AWiring.java',
       'a/AServiceTests.java',
       'a/ARepositoryTests.java',
       'a/AApiTests.java'
@@ -107,7 +108,7 @@ class EntityGeneratorSpec extends Specification {
     }
   }
 
-  def "the routes wire the entities with a service and a handler, and only those: #entities"() {
+  def "the routes put the handler that the wiring of an entity makes at its path, for the entities with a service and a handler only: #entities"() {
     given:
     Tree tree = Tree.at(dir)
 
@@ -116,8 +117,10 @@ class EntityGeneratorSpec extends Specification {
     String routes = tree.read(BASE + 'Routes.java').orElseThrow()
 
     then:
-    routes.contains('new AHandler(') == a
-    routes.contains('new BHandler(') == b
+    routes.contains('    route(server, "/api/as", AWiring.handler(transactions));\n') == a
+    routes.contains('    route(server, "/api/bs", BWiring.handler(transactions));\n') == b
+    ['AHandler', 'AService', 'ARepository', 'AMapper'].every { !routes.contains(it) }
+    tree.read(BASE + 'b/BWiring.java').present == b
     routes.contains('getFilters().add(new ErrorHandler())') == (a || b)
 
     where:
@@ -152,6 +155,26 @@ class EntityGeneratorSpec extends Specification {
     '  - name: A\n    options: { pagination: false }\n'                         | true  | false
     '  - name: A\n    options: { mapper: false }\n'                             | false | true
     '  - name: A\n    options: { mapper: false, pagination: false }\n'          | false | false
+  }
+
+  def "the wiring of an entity, which is the developer's, makes its handler with what the handler works on: #architecture"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new EntityGenerator().generate(project("architecture: $architecture\nentities:\n  - name: A\n"), tree)
+    String wiring = tree.read(BASE + 'a/AWiring.java').orElseThrow()
+
+    then:
+    wiring.startsWith('// Written by tib when the entity was created; it is yours from then on.\npackage com.example.s.a;\n')
+    wiring.contains('  public static HttpHandler handler(Transactions transactions) {\n    ARepository repository = new ARepository(transactions);\n')
+    wiring.contains(made)
+
+    where:
+    architecture | made
+    'anemic'     | '    AService service = new AService(transactions, repository, new AMapper());\n    return new AHandler(service);\n'
+    'ddd'        | '    AService service = new AService(transactions, repository);\n    return new AHandler(service, new AMapper());\n'
+    'hexagonal'  | '    AStore store = new APersistenceAdapter(transactions, repository);\n    AService service = new AService(transactions, store);\n    return new AHandler(service, new AWebMapper());\n'
   }
 
   def "a repository has nothing that only the tests call: they empty the tables through the database of the tests, and count the rows of a list in pages"() {
