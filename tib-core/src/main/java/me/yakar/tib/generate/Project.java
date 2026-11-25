@@ -68,9 +68,4 @@ public record Project(Spec spec) {
   public boolean docker() {
     return spec.docker();
   }
-
-  /** The directory of the base package, relative to a source root. */
-  public String packagePath() {
-    return basePackage().replace('.', '/');
-  }
 }
