@@ -9,76 +9,55 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- A service is on Java 21 or 25: `tib init service NAME --java 25`, or `java: 25` in its spec. The
-  default is 21, as before; the build of the service compiles for its Java, and `AGENTS.md` names
-  it. The Java is chosen when the service is created: `tib generate entity --spec` refuses a spec
-  on another Java than the one of the service.
-- A service has the kinds of tests it chooses: `unit`, `integration` and `api`, as
-  `tib init service NAME --tests unit,api` or `tests: [unit, api]` in its spec. All three are the
-  default, as before. `unit` writes the tests of the services of the entities, `integration` the
-  tests of their repositories and the test of the application, and `api` the tests of their API;
-  a service with only unit tests builds without Docker. The kinds are chosen when the service is
-  created, as its Java is.
-- A service may have a `Dockerfile`: `tib init service NAME --docker`, or `docker: true` in its
-  spec. tib writes it once, with a `.dockerignore`; it builds the service with its Gradle wrapper,
-  extracts the layers of its jar as Spring Boot does, and runs it on the Java runtime of the
-  service, as a user without root rights. Without the option, there is none, as before.
-- `tib init service` without a name and without `--spec` asks for the name, the Java version, the
-  architecture, the kinds of tests and the Dockerfile, on standard error, and reads the answers from standard input;
-  an empty answer takes the default, and one that tib cannot use is asked again. When the answers
-  end first, it exits with 2, as it did for a command line without the name.
-- A service has an architecture: `--architecture` or `architecture:` in its spec, chosen when the
-  service is created. `anemic`, the default, arranges the code as before. `ddd` makes every entity
-  an aggregate in three packages: its `domain`, with the entity and its repository; its
-  `application`, with the service of its use cases on the aggregate; and its `web`, with its
-  controller, DTO and mapper. `hexagonal` puts the domain of every entity, in plain Java without
-  JPA or Spring, among ports and adapters: its `domain`; its `application`, with the service of its
-  use cases, `XUseCase`, the port that the inbound adapters call, and `XStore`, the port that keeps
-  the domain; its `adapter.in.web`, with its controller, DTO and mapper; and its
-  `adapter.out.persistence`, with the JPA entity of its table, its repository, the mapper between
-  the two and the adapter of the store. In both, an entity refers to another by its identifier,
-  not by the entity, and a service throws `NotFoundException`, which `ConflictHandler` answers
-  with 404.
-- A fourth kind of tests, `archunit`: `ArchitectureTests`, written once, checks the rules of the
-  architecture on the classes of the service with ArchUnit. For the anemic architecture: the
-  controller of an entity over its service over its repository. For DDD: the domain uses neither
-  the application nor the web, the application does not use the web, and the domain of an
-  aggregate does not use the domain of another. For the hexagonal architecture: the domain knows
-  neither JPA nor Spring, the application does not use the adapters, and an inbound adapter does
-  not use an outbound one, nor the reverse. For all three, no cycle between the packages of the
-  entities. It is not among the kinds that a service has by default.
-
-- A second template pack, `plain`: `tib init service NAME --pack plain`, `pack: plain` in the spec,
-  or the answer to a new question of `tib init service`, which comes before the architecture. It
-  generates a service in plain Java, without a framework of dependency injection: its application
-  class reads its configuration from the environment (`DATABASE_URL`, `DATABASE_USER`,
-  `DATABASE_PASSWORD` and `PORT`, each with a default), migrates the database with Flyway and
-  starts the HTTP server of the JDK with the routes of the entities, which `Routes`, written on
-  every run, wires by hand. An entity gets plain Java values, a repository in SQL on JDBC, a DTO
-  that checks the rules of the spec itself, a mapper, a service whose use cases run in transactions,
-  and a handler with the API of the default pack, its JSON and pages included; errors are answered
-  as problem details with 404, 409 and 400. Its tests are of the same four kinds, with JUnit,
-  Mockito, Testcontainers, the HTTP client of the JDK and ArchUnit, and a `Dockerfile` runs what
-  `installDist` installs. The pack arranges a service in all three architectures. In DDD, every
-  entity is an aggregate in its `domain`, with the entity and its repository, its `application`,
-  with the service of its use cases on the aggregate, and its `web`, with its handler, DTO and
-  mapper. In the hexagonal architecture, the domain of every entity knows neither JDBC nor the
-  HTTP server: its `application` has the service of its use cases and the ports `XUseCase` and
-  `XStore`; its `adapter.in.web` has its handler, DTO and mapper; and its
-  `adapter.out.persistence` has its repository in SQL and `XPersistenceAdapter`, the store on it,
-  whose tests run against PostgreSQL. The rules of `ArchitectureTests` are the ones of the
-  architecture, by the packages of the classes. A service stays with its pack, as before:
-  `tib generate entity` refuses a spec of the other one.
-
-- tib runs on macOS, on Apple silicon and Intel: `brew install mryakar/tap/tib` installs it from
-  the Homebrew tap `mryakar/tap`, with its own Java runtime, as the other packages have, and builds
-  its start-up cache. Each release has a zip of each processor, `tib-<version>-macos-arm64.zip` and
-  `tib-<version>-macos-x64.zip`, signed as the other files; its formula comes into the tap once the
-  release is published.
+- A second template pack, `plain`: `tib init service NAME --pack plain`, or `pack: plain` in the
+  spec. It generates a service in plain Java, without a dependency injection framework: the HTTP
+  server of the JDK, JDBC, Flyway and Jackson. Its objects are wired by hand, in `XWiring` of every
+  entity, which is yours, and in `Routes`, which tib writes on every run. Its API is that of the
+  default pack, and so are its migrations, but for the sequence of an identifier, which advances
+  by 1.
+- `--pack` takes the name of the pack, or the name with its version after an at sign, as `pack:`
+  in the spec does. A service stays with its pack: `tib generate entity` refuses a spec that names
+  the other one, and says to give the spec the pack of the service.
+- A service has an architecture: `--architecture`, or `architecture:` in its spec. `anemic`, the
+  default, arranges the code as before; `ddd` makes every entity an aggregate in the packages
+  `domain`, `application` and `web`; `hexagonal` puts the domain of every entity, in plain Java,
+  among ports and adapters. In `ddd` and `hexagonal`, an entity refers to another by its
+  identifier. Both packs arrange a service in all three.
+- A service is on Java 21 or 25: `--java 25`, or `java: 25` in its spec. The default is 21, as
+  before; the build of the service compiles for its Java, and `AGENTS.md` names it.
+- A service has the kinds of tests it chooses: `--tests unit,api`, or `tests: [unit, api]` in its
+  spec. `unit` writes the tests of the services of the entities, `integration` the tests of their
+  repositories and the test of the application, `api` the tests of their API, and `archunit`
+  `ArchitectureTests`, which checks the rules of the architecture with ArchUnit. Without the
+  option, a service has `unit`, `integration` and `api`, as before; without `integration` and
+  `api`, it builds without Docker; with `--tests none`, it has no tests.
+- A service may have a `Dockerfile`: `--docker`, or `docker: true` in its spec. tib writes it
+  once, with a `.dockerignore`; it builds the service with its Gradle wrapper and runs it on the
+  Java runtime of the service, as a user without root rights.
+- The pack, the architecture, the Java, the kinds of tests and the Dockerfile are chosen when the
+  service is created: `tib generate entity --spec` refuses a spec that gives another.
+- `tib init service` without a name and without `--spec` asks for the name, the pack, the Java
+  version, the architecture, the kinds of tests and the Dockerfile, on standard error, and reads
+  the answers from standard input; an empty answer takes the default, and one that tib cannot use
+  is asked again. When the answers end first, it exits with 2, as it did for a command line
+  without the name.
+- tib runs on macOS, on Apple silicon and Intel: `brew install mryakar/tap/tib` installs it with
+  its own Java runtime and builds its start-up cache. Each release has a zip of each processor,
+  `tib-<version>-macos-arm64.zip` and `tib-<version>-macos-x64.zip`, signed as the other files.
+- Two pages of the documentation: the architectures, with the packages of every class in both
+  packs, and the template packs, side by side.
 
 ### Changed
 
+- Breaking: `tib init service` with a name that is not the name of a service, such as
+  `Vehicle_Service`, exits with 2, as for every other wrong value of its command line; it exited
+  with 1.
+- The API that the default pack writes for a new entity lists the entities in the order of their
+  identifiers, whole or in pages. The classes of an entity that is there already are yours, and
+  stay as they are.
 - `tib init service` writes the wrapper of Gradle 9.9.1 into a new service, instead of 9.8.2.
+- The help of `tib` and of `tib init service` names both stacks, and that of `tib init service`
+  says what it asks for when the command line has no name.
 
 ### Fixed
 
