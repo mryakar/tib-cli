@@ -21,7 +21,6 @@ import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.pack.EntityModel;
 import me.yakar.tib.pack.TestsModel;
-import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
 
@@ -91,9 +90,11 @@ final class InitGenerator implements Generator {
       once(
           files,
           tests + "/ArchitectureTests.java",
-          project.architecture() == Architecture.DDD
-              ? "init/ddd_architecture_tests_java.jte"
-              : "init/architecture_tests_java.jte",
+          switch (project.architecture()) {
+            case ANEMIC -> "init/architecture_tests_java.jte";
+            case DDD -> "init/ddd_architecture_tests_java.jte";
+            case HEXAGONAL -> "init/hexagonal_architecture_tests_java.jte";
+          },
           project);
     }
     once(

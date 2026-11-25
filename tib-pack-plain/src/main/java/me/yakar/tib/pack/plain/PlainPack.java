@@ -18,18 +18,16 @@ package me.yakar.tib.pack.plain;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.util.EnumSet;
 import java.util.Properties;
-import java.util.Set;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Pack;
 import me.yakar.tib.pack.Templates;
-import me.yakar.tib.spec.Architecture;
 
 /**
  * The plain pack: a service in plain Java, without a framework of dependency injection, its objects
  * wired by hand; the HTTP server of the JDK, JDBC on PostgreSQL, Flyway, Jackson and
- * Testcontainers, built with Gradle. It arranges a service in the anemic architecture or in DDD.
+ * Testcontainers, built with Gradle. It arranges a service in the anemic architecture, in DDD or in
+ * the hexagonal one.
  */
 public final class PlainPack implements Pack {
 
@@ -52,12 +50,6 @@ public final class PlainPack implements Pack {
   @Override
   public String stack() {
     return "Plain Java";
-  }
-
-  /** The anemic architecture and DDD, for now. */
-  @Override
-  public Set<Architecture> architectures() {
-    return EnumSet.of(Architecture.ANEMIC, Architecture.DDD);
   }
 
   /** The Jackson version of the JSON of the generated service. */

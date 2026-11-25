@@ -21,7 +21,6 @@ import java.nio.file.Path
 import me.yakar.tib.ddl.DdlReader
 import me.yakar.tib.generate.Generation
 import me.yakar.tib.generate.Pack
-import me.yakar.tib.generate.PackException
 import me.yakar.tib.generate.Packs
 import me.yakar.tib.generate.Project
 import me.yakar.tib.pack.Migration
@@ -56,6 +55,9 @@ class PlainPackSpec extends Specification {
 
   /** The corners of the entity layer in the DDD architecture. */
   static final Spec CORNERS_DDD = SpecReader.parse(CORNER_SPEC.replace('java: 25\n', 'java: 25\narchitecture: ddd\n'))
+
+  /** The corners of the entity layer in the hexagonal architecture. */
+  static final Spec CORNERS_HEXAGONAL = SpecReader.parse(CORNER_SPEC.replace('java: 25\n', 'java: 25\narchitecture: hexagonal\n'))
 
   /**
    * The corner spec as its migrations read back. Two types do not come back as the spec gives them:
@@ -93,26 +95,10 @@ class PlainPackSpec extends Specification {
     pack.name() == 'plain'
     pack.version() == VERSION
     pack.stack() == 'Plain Java'
-    pack.architectures() == [Architecture.ANEMIC, Architecture.DDD] as Set
+    pack.architectures() == EnumSet.allOf(Architecture)
     Packs.find('plain') instanceof PlainPack
     Packs.find("plain@$VERSION") instanceof PlainPack
     Packs.names() == ['plain']
-  }
-
-  def "the pack refuses a service of another architecture than the anemic one and DDD, before anything is staged"() {
-    given:
-    Spec spec = SpecReader.parse("tib: 1\nservice: s\npack: plain\narchitecture: hexagonal\n")
-    Tree tree = Tree.at(dir)
-    PlainPack pack = new PlainPack()
-
-    when:
-    Generation.first(new Project(spec), [], pack, pack.init(), TIB, tree)
-
-    then:
-    PackException e = thrown()
-    e.message == "pack plain $VERSION does not arrange a service in the architecture hexagonal, only in anemic, ddd\n" +
-        'Choose another architecture for the service, or another pack.'
-    tree.changes() == []
   }
 
   def "the generated service has the versions of the stack of the pack"() {
@@ -187,6 +173,16 @@ class PlainPackSpec extends Specification {
     matches('corner-service-ddd', changes)
   }
 
+  def "generates the corners of the entity layer in the hexagonal architecture as the snapshot says"() {
+    when:
+    List<Change> changes = corners(dir, CORNERS_HEXAGONAL).changes()
+
+    then:
+    CORNERS_HEXAGONAL.architecture() == Architecture.HEXAGONAL
+    write('corner-service-hexagonal', changes)
+    matches('corner-service-hexagonal', changes)
+  }
+
   def "a machine in Turkish, where the upper case of i is not I, generates the same services"() {
     given:
     Locale locale = Locale.default
@@ -220,6 +216,7 @@ class PlainPackSpec extends Specification {
     'vehicle-service'    | VEHICLES
     'corner-service'     | CORNERS
     'corner-service-ddd' | CORNERS_DDD
+    'corner-service-hexagonal' | CORNERS_HEXAGONAL
   }
 
   def "the first line of every generated file states its owner: #name"() {
@@ -237,6 +234,7 @@ class PlainPackSpec extends Specification {
     'vehicle-service'    | VEHICLES
     'corner-service'     | CORNERS
     'corner-service-ddd' | CORNERS_DDD
+    'corner-service-hexagonal' | CORNERS_HEXAGONAL
   }
 
   def "the notes for agents name every header: #header"() {
@@ -270,6 +268,7 @@ class PlainPackSpec extends Specification {
     'vehicle-service'    | VEHICLES
     'corner-service'     | CORNERS
     'corner-service-ddd' | CORNERS_DDD
+    'corner-service-hexagonal' | CORNERS_HEXAGONAL
   }
 
   def "a second run on the generated service changes nothing: #name"() {
@@ -293,6 +292,7 @@ class PlainPackSpec extends Specification {
     'vehicle-service'    | VEHICLES    | false
     'corner-service'     | CORNERS     | true
     'corner-service-ddd' | CORNERS_DDD | true
+    'corner-service-hexagonal' | CORNERS_HEXAGONAL | true
   }
 
   def "the migrations of the service read back into its spec: #name"() {

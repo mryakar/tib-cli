@@ -22,7 +22,6 @@ import me.yakar.tib.generate.Project;
 import me.yakar.tib.pack.EntityModel;
 import me.yakar.tib.pack.EntityTestsModel;
 import me.yakar.tib.pack.Migration;
-import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
 
@@ -96,7 +95,9 @@ final class EntityGenerator implements Generator {
     String domain = EntityModel.directory(entity.domainPackage()) + name;
     String application = EntityModel.directory(entity.applicationPackage()) + name;
     String web = EntityModel.directory(entity.webPackage()) + name;
-    // DDD has a service of its own, on the aggregate, and a handler that maps it to its DTO.
+    String persistence = EntityModel.directory(entity.persistencePackage()) + name;
+    // DDD and hexagonal have services of their own, on the domain, and handlers that map it to its
+    // DTO.
     String architecture = architecture(project);
     Map<String, Object> model =
         Map.of(
@@ -111,11 +112,21 @@ final class EntityGenerator implements Generator {
     own(files, domain + "Generated.java", "entity/generated_java.jte", model);
     once(files, domain + ".java", "entity/entity_java.jte", model);
     // The repository is the SQL of the table that the spec makes, so it follows the spec.
-    own(
-        files,
-        EntityModel.directory(entity.persistencePackage()) + name + "Repository.java",
-        "entity/repository_java.jte",
-        model);
+    own(files, persistence + "Repository.java", "entity/repository_java.jte", model);
+    if (entity.hexagonal()) {
+      // The application keeps the entity through the store, its port, which the persistence
+      // adapter implements on the repository.
+      once(
+          files,
+          EntityModel.directory(entity.storePackage()) + name + "Store.java",
+          "entity/hexagonal_store_java.jte",
+          model);
+      once(
+          files,
+          persistence + "PersistenceAdapter.java",
+          "entity/hexagonal_persistence_adapter_java.jte",
+          model);
+    }
     if (entity.dto()) {
       own(files, web + "Dto.java", "entity/dto_java.jte", model);
     }
@@ -131,15 +142,33 @@ final class EntityGenerator implements Generator {
           "entity/samples_java.jte",
           tests);
     }
-    if (repositoryTests) {
+    String persistenceTests = EntityModel.testDirectory(entity.persistencePackage()) + name;
+    if (repositoryTests && entity.hexagonal()) {
       once(
           files,
-          EntityModel.testDirectory(entity.persistencePackage()) + name + "RepositoryTests.java",
+          persistenceTests + "PersistenceAdapterTests.java",
+          "entity/hexagonal_persistence_adapter_tests_java.jte",
+          tests);
+    } else if (repositoryTests) {
+      once(
+          files,
+          persistenceTests + "RepositoryTests.java",
           "entity/repository_tests_java.jte",
           tests);
     }
     if (entity.layer()) {
-      own(files, web + "Mapper.java", "entity/mapper_java.jte", model);
+      own(
+          files,
+          EntityModel.directory(entity.webPackage()) + "/" + entity.webMapper() + ".java",
+          "entity/mapper_java.jte",
+          model);
+      if (entity.hexagonal()) {
+        once(
+            files,
+            EntityModel.directory(entity.useCasePackage()) + name + "UseCase.java",
+            "entity/hexagonal_use_case_java.jte",
+            model);
+      }
       once(
           files,
           application + "Service.java",
@@ -168,7 +197,11 @@ final class EntityGenerator implements Generator {
    * the project: none for the anemic one, whose service maps the entity to and from its DTO.
    */
   private static String architecture(Project project) {
-    return project.architecture() == Architecture.DDD ? "ddd_" : "";
+    return switch (project.architecture()) {
+      case ANEMIC -> "";
+      case DDD -> "ddd_";
+      case HEXAGONAL -> "hexagonal_";
+    };
   }
 
   /** Writes a file of tib's: on every run. */

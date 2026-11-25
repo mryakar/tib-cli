@@ -9,6 +9,7 @@ package ${entity.persistencePackage()};
 
 import ${entity.basePackage()}.Page;
 import ${entity.basePackage()}.Transactions;
+${EntityModel.importOf(entity.persistencePackage(), entity.domainPackage(), name)}
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
