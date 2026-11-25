@@ -72,10 +72,9 @@ database with 409 Conflict, and one whose DTO breaks a rule or cannot be read wi
 Request, as problem details; it is yours, and so are `NotFoundException`, `BadRequestException`,
 `Http` and `Page`.
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
-classes of the service with ArchUnit, by their packages:
-the domain of an entity uses neither its application nor its web, the application does
-not use the web, the domain of an aggregate does not use the domain of another, and
-there is no cycle between the packages of the entities; it is yours.
+classes of the service with ArchUnit, by their packages: the domain of an entity uses neither its
+application nor its web, the application does not use the web, the domain of an aggregate does not
+use the domain of another, and there is no cycle between the packages of the entities; it is yours.
 
 The Java that tib writes is in the layout of google-java-format 1.36.1: formatted
 with it, the files of tib's stay as tib wrote them.

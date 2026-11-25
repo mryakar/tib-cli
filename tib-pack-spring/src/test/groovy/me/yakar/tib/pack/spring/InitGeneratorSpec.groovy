@@ -87,8 +87,8 @@ class InitGeneratorSpec extends Specification {
     rules.contains('void controllersUseServicesAndNotRepositories()') == (!ddd && !hexagonal)
     agents.contains('The service is arranged for DDD: every entity `X` is an aggregate, in three packages.') == ddd
     agents.contains('The service is arranged in the hexagonal architecture, of ports and adapters:') == hexagonal
-    agents.contains('with ArchUnit: the domain of an entity uses neither its application nor its web, the application does\nnot use the web,') == ddd
-    agents.contains('with ArchUnit: the domain knows neither JPA nor Spring, the application does\nnot use the adapters,') == hexagonal
+    agents.contains('classes of the service with ArchUnit: the domain of an entity uses neither its application nor its\nweb, the application does not use the web, the domain of an aggregate does not use the domain of\nanother, and there is no cycle between the packages of the entities; it is yours.\n\nThe Java that tib writes') == ddd
+    agents.contains('classes of the service with ArchUnit: the domain knows neither JPA nor Spring, the application does\nnot use the adapters, an inbound adapter does not use an outbound one, nor the reverse, and there\nis no cycle between the packages of the entities; it is yours.\n\nThe Java that tib writes') == hexagonal
     agents.contains('with ArchUnit: the controller of an entity over its service over its\nrepository, and no cycle') == (!ddd && !hexagonal)
     agents.contains('`XGenerated`, `XDto` and `XMapper`\nare tib\'s; `X`, `XRepository`, `XService`, `XController` and the migration are yours.') == !hexagonal
     files['.gitignore'].contains('\nout/\n') == !hexagonal

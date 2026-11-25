@@ -96,16 +96,23 @@ as in `XSamples.x().name("Other").build()`.@else.@endif `ErrorHandler`, in the b
 request for an entity that is not there with 404 Not Found, one that breaks a constraint of the
 database with 409 Conflict, and one whose DTO breaks a rule or cannot be read with 400 Bad
 Request, as problem details; it is yours, and so are `NotFoundException`, `BadRequestException`,
-`Http` and `Page`.@if(tests.archunit())
+`Http` and `Page`.
+@if(tests.archunit())
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
-classes of the service with ArchUnit, by their@if(ddd) packages:
-the domain of an entity uses neither its application nor its web, the application does
-not use the web, the domain of an aggregate does not use the domain of another, and
-there is no cycle between the packages of the entities@elseif(hexagonal) packages: the domain knows neither JDBC nor the HTTP
+@if(ddd)
+classes of the service with ArchUnit, by their packages: the domain of an entity uses neither its
+application nor its web, the application does not use the web, the domain of an aggregate does not
+use the domain of another, and there is no cycle between the packages of the entities; it is yours.
+@elseif(hexagonal)
+classes of the service with ArchUnit, by their packages: the domain knows neither JDBC nor the HTTP
 server, the application does not use the adapters, an inbound adapter does not use an outbound
-one, nor the reverse, and there is no cycle between the packages of the entities@else names and packages: the handler of an entity over
+one, nor the reverse, and there is no cycle between the packages of the entities; it is yours.
+@else
+classes of the service with ArchUnit, by their names and packages: the handler of an entity over
 its service over its repository, a handler used by the wiring of its entity alone, and no cycle
-between the packages of the entities@endif; it is yours.@endif
+between the packages of the entities; it is yours.
+@endif
+@endif<%-- keeps the blank line below --%>
 
 The Java that tib writes is in the layout of google-java-format ${pack.formatterVersion()}: formatted
 with it, the files of tib's stay as tib wrote them.
