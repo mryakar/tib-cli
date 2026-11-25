@@ -23,8 +23,9 @@ every command; the [roadmap](ROADMAP.md) says what is done and what comes next.
 
 ## Install
 
-On Debian and Ubuntu from the APT repository, on Windows with the `.msi`, or from a portable zip,
-each with its own Java runtime: the
+On Debian and Ubuntu from the APT repository, on macOS with Homebrew
+(`brew install mryakar/tap/tib`), on Windows with the `.msi`, or from a portable zip, each with its
+own Java runtime: the
 [install page](https://mryakar.github.io/tib-cli/tib/latest/install.html) says how.
 
 ## Building

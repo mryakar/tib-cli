@@ -1,4 +1,4 @@
-# The GitHub Release of a version: the packages of both platforms, their checksums and signatures,
+# The GitHub Release of a version: the packages of each platform, their checksums and signatures,
 # with the notes that the release workflow takes from the changelog. The release stays a draft until
 # the maintainer publishes it.
 project:
