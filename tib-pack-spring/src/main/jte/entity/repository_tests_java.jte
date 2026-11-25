@@ -1,7 +1,9 @@
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.EntityTestsModel
 @import me.yakar.tib.pack.Sources
+@import me.yakar.tib.pack.spring.JpaModel
 @param EntityTestsModel tests
+@param JpaModel jpa
 !{EntityModel entity = tests.entity();}
 package ${entity.domainPackage()};
 
@@ -39,7 +41,7 @@ class ${entity.name()}RepositoryTests {
   @Autowired private ${target.name()}Repository ${target.plural()};
   @endfor
   @Autowired private TestEntityManager entityManager;
-  @template.entity.required_targets(tests = tests)
+  @template.entity.required_targets(tests = tests, jpa = jpa)
 
   @Test
   void savesAndFinds${entity.article()}${entity.name()}() {

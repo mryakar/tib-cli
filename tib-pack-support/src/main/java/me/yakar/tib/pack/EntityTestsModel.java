@@ -101,41 +101,6 @@ public final class EntityTestsModel {
         + ").build()";
   }
 
-  /**
-   * The method that saves an entity in a test and flushes it, so that a broken constraint shows:
-   * {@code saveAndFlush} of its repository, or {@code save} of its store in the hexagonal
-   * architecture, which flushes.
-   */
-  public String save() {
-    return entity.hexagonal() ? "save" : "saveAndFlush";
-  }
-
-  /**
-   * The variable of the repository of an entity in the test of the API, which deletes its rows:
-   * {@code depots}, or {@code depotRepository} in the hexagonal architecture, where {@code depots}
-   * is the store that saves what the entity needs.
-   */
-  public String repositoryVariable(EntityModel model) {
-    return entity.hexagonal() ? model.variable() + "Repository" : model.plural();
-  }
-
-  /**
-   * The classes that the test of the persistence adapter imports into its context: the
-   * configuration of the container, and the adapter and the persistence mapper of the entity and of
-   * every entity it needs.
-   */
-  public String persistenceClasses() {
-    List<String> classes = new ArrayList<>();
-    classes.add("TestcontainersConfiguration.class");
-    Stream.concat(Stream.of(entity), requiredTargets.stream())
-        .forEach(
-            model -> {
-              classes.add(model.name() + "PersistenceAdapter.class");
-              classes.add(model.name() + "PersistenceMapper.class");
-            });
-    return String.join(", ", classes);
-  }
-
   /** The arguments of the DTO samples in a test that saved what the entity needs first. */
   public String requiredIdArguments() {
     return required(entity, relation -> relation.target().variable() + ".getId()");

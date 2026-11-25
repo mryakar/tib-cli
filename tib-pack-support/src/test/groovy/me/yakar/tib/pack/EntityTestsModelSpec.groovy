@@ -96,26 +96,6 @@ class EntityTestsModelSpec extends Specification {
     'ddd'        | 'Long bId' | 'ASamples.a(b.getId()).build()' | '.label("One").code(1).bId(bId)' | [['String', 'label'], ['Integer', 'code'], ['Long', 'bId'], ['UUID', 'cId'], ['Long', 'parentId']]
   }
 
-  def "the tests save an entity and delete its rows by the architecture: #architecture"() {
-    given:
-    Map<String, EntityTestsModel> tests = tests("architecture: $architecture\n$NEEDS")
-
-    expect:
-    tests.A.save() == save
-    tests.A.repositoryVariable(tests.B.entity()) == repository
-
-    where:
-    architecture | save           | repository
-    'anemic'     | 'saveAndFlush' | 'bs'
-    'hexagonal'  | 'save'         | 'bRepository'
-  }
-
-  def "the test of the persistence adapter imports the adapters and the mappers of the entity and of what it needs"() {
-    expect:
-    tests("architecture: hexagonal\n$NEEDS").A.persistenceClasses() ==
-        'TestcontainersConfiguration.class, APersistenceAdapter.class, APersistenceMapper.class, CPersistenceAdapter.class, CPersistenceMapper.class, BPersistenceAdapter.class, BPersistenceMapper.class'
-  }
-
   def "the DTO of the samples has every value, and the identifiers of the tests fit the type of the identifier"() {
     given:
     Map<String, EntityTestsModel> tests = tests(NEEDS)

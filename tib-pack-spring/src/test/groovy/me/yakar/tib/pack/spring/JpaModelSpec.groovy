@@ -116,6 +116,31 @@ class JpaModelSpec extends Specification {
     new JpaModel(models.B).repositoryParameters() == ''
   }
 
+  def "the tests save an entity and delete its rows by the architecture: #architecture"() {
+    given:
+    Map<String, EntityModel> models = models("architecture: $architecture\nentities:\n  - name: B\n  - name: A\n")
+    JpaModel jpa = new JpaModel(models.A)
+
+    expect:
+    jpa.save() == save
+    jpa.repositoryVariable(models.B) == repository
+
+    where:
+    architecture | save           | repository
+    'anemic'     | 'saveAndFlush' | 'bs'
+    'hexagonal'  | 'save'         | 'bRepository'
+  }
+
+  def "the test of the persistence adapter imports the adapters and the mappers of the entity and of what it needs"() {
+    given:
+    Map<String, EntityModel> models = models("architecture: hexagonal\nentities:\n  - name: C\n  - name: B\n  - name: A\n")
+
+    expect:
+    new JpaModel(models.A).persistenceClasses([models.C, models.B]) ==
+    'TestcontainersConfiguration.class, APersistenceAdapter.class, APersistenceMapper.class, CPersistenceAdapter.class, CPersistenceMapper.class, BPersistenceAdapter.class, BPersistenceMapper.class'
+    new JpaModel(models.C).persistenceClasses([]) == 'TestcontainersConfiguration.class, CPersistenceAdapter.class, CPersistenceMapper.class'
+  }
+
   /** The models of the entities of the spec of a service, by name. */
   private static Map<String, EntityModel> models(String spec) {
     EntityModel.models(new Project(SpecReader.parse("tib: 1\nservice: s\n$spec")))
