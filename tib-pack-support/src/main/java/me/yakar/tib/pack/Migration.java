@@ -24,9 +24,9 @@ import me.yakar.tib.spec.IdStrategy;
 import me.yakar.tib.tree.ProjectFiles;
 
 /**
- * The Flyway migration that creates the table of an entity, whatever the stack that reads it: its
- * path among the migrations of the service, and its SQL. A migration lasts: a database may have run
- * it, so it stays when the entity leaves the spec.
+ * The Flyway migration that creates the table of an entity: its path among the migrations of the
+ * service, and its SQL, which every pack shares but for the step of a sequence. A migration lasts:
+ * a database may have run it, so it stays when the entity leaves the spec.
  */
 public final class Migration {
 

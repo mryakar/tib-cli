@@ -36,8 +36,11 @@ import me.yakar.tib.tree.ProjectFiles;
  */
 final class EntityGenerator implements Generator {
 
-  /** By how much the sequence of a sequence identifier advances. */
-  private static final int SEQUENCE_STEP = 50;
+  /**
+   * By how much the sequence of a sequence identifier advances: the repository takes one identifier
+   * for every row.
+   */
+  private static final int SEQUENCE_STEP = 1;
 
   @Override
   public void generate(Project project, ProjectFiles files) {

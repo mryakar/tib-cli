@@ -1,5 +1,5 @@
 -- Written by tib when the entity was created. A change of the schema is a new migration.
-CREATE SEQUENCE BRANCH_SEQ START WITH 1 INCREMENT BY 50;
+CREATE SEQUENCE BRANCH_SEQ START WITH 1 INCREMENT BY 1;
 
 CREATE TABLE BRANCH (
   BRANCH_KEY BIGINT PRIMARY KEY,
