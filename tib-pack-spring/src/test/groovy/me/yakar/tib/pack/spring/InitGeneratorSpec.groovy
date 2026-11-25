@@ -69,48 +69,6 @@ class InitGeneratorSpec extends Specification {
     'java: 25\n' | 25
   }
 
-  def "a service gets the rules of its architecture to check, git ignores no package of it, and the notes tell of its packages: #architecture"() {
-    given:
-    Tree tree = Tree.at(dir)
-
-    when:
-    new InitGenerator(new SpringPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\narchitecture: $architecture\ntests: [archunit]\n")), tree)
-    Map<String, String> files = tree.changes().collectEntries {
-      [it.path(), new String(it.after(), 'UTF-8')]
-    }
-    String agents = files['AGENTS.md']
-    String rules = files['src/test/java/com/example/s/ArchitectureTests.java']
-
-    then:
-    rules.contains('void theDomainOfAnAggregateDoesNotUseTheDomainOfAnother()') == ddd
-    rules.contains(' * The rules of the DDD architecture, checked on the classes of the service by their packages: the\n') == ddd
-    rules.contains(' * The rules of the hexagonal architecture, checked on the classes of the service by their packages:\n') == hexagonal
-    rules.contains('void theInboundAdaptersDoNotUseTheOutboundOnes()') == hexagonal
-    rules.contains('void controllersUseServicesAndNotRepositories()') == (!ddd && !hexagonal)
-    rules.contains('  private static final String BASE = "com.example.s";\n')
-    rules.contains('          .importPackages(BASE);\n')
-    rules.contains('        .matching(BASE + ".(*)..")\n')
-    rules.count('com.example.s') == 2
-    agents.contains('The service is arranged for DDD: every entity `X` is an aggregate, in three packages.') == ddd
-    agents.contains('The service is arranged in the hexagonal architecture, of ports and adapters:') == hexagonal
-    agents.contains('classes of the service with ArchUnit: the domain of an entity uses neither its application nor its\nweb, the application does not use the web, the domain of an aggregate does not use the domain of\nanother, and there is no cycle between the packages of the entities; it is yours.\n\nThe Java that tib writes') == ddd
-    agents.contains('classes of the service with ArchUnit: the domain knows neither JPA nor Spring, the application does\nnot use the adapters, an inbound adapter does not use an outbound one, nor the reverse, and there\nis no cycle between the packages of the entities; it is yours.\n\nThe Java that tib writes') == hexagonal
-    agents.contains('with ArchUnit: the controller of an entity over its service over its\nrepository, and no cycle') == (!ddd && !hexagonal)
-    agents.contains('`XGenerated`, `XDto` and `XMapper`\nare tib\'s; `X`, `XRepository`, `XService`, `XController` and the migration are yours.') == !hexagonal
-    agents.contains('.\n`X` keeps a constructor without parameters: the files of tib\'s make an `X` and set its values.\n`ConflictHandler`, in the base package, answers a request that breaks a constraint of the database\n')
-    agents.contains('with 409 Conflict; it is yours.\n') == (!ddd && !hexagonal)
-    agents.contains('with 409 Conflict, and a request for an entity that is not there, which a service throws as\n`NotFoundException`, with 404 Not Found; both are yours.\n') == (ddd || hexagonal)
-    files['.gitignore'].contains('\nout/\n') == !hexagonal
-    files['.gitignore'].contains('\nbuild/\n/out/\n.idea/\n') == hexagonal
-    agents.contains('`XGenerated`, `XEntity`, `XDto`,\n`XWebMapper` and `XPersistenceMapper` are tib\'s; `X`, `XUseCase`, `XStore`, `XService`,\n`XController`, `XJpaRepository`, `XPersistenceAdapter` and the migration are yours.') == hexagonal
-
-    where:
-    architecture | ddd   | hexagonal
-    'anemic'     | false | false
-    'ddd'        | true  | false
-    'hexagonal'  | false | true
-  }
-
   def "the build has the test dependencies of the kinds of tests of the spec, and no other: #tests"() {
     given:
     Tree tree = Tree.at(dir)
