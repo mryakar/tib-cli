@@ -49,7 +49,7 @@ public final class RepositoryModel {
     List<String> columns = new ArrayList<>();
     columns.add(entity.idColumn());
     for (FieldModel field : entity.fields()) {
-      columns.add(field.field().column());
+      columns.add(field.column());
     }
     for (RelationModel relation : entity.relations()) {
       columns.add(relation.column());
@@ -163,7 +163,7 @@ public final class RepositoryModel {
     List<Read> reads = new ArrayList<>();
     reads.add(id());
     for (FieldModel field : entity.fields()) {
-      String column = field.field().column();
+      String column = field.column();
       reads.add(
           new Read(
               field.property(),
@@ -190,7 +190,7 @@ public final class RepositoryModel {
   /** The columns of the fields and of the relations, which the statements bind. */
   private List<String> valueColumns() {
     List<String> columns = new ArrayList<>();
-    entity.fields().forEach(field -> columns.add(field.field().column()));
+    entity.fields().forEach(field -> columns.add(field.column()));
     entity.relations().forEach(relation -> columns.add(relation.column()));
     return columns;
   }
@@ -248,6 +248,6 @@ public final class RepositoryModel {
   }
 
   private static boolean instant(FieldModel field) {
-    return field.field().type() == FieldType.INSTANT;
+    return field.type() == FieldType.INSTANT;
   }
 }
