@@ -54,10 +54,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+  # The files of a release are built from the tagged commit alone, without the caches of other runs.
   packages:
     name: Packages
     needs: verify
     uses: ./.github/workflows/packages.yml
+    with:
+      cache: false
 
   # A separate job for the token that can write to the repository and for the signing key: the
   # build runs elsewhere, and a maintainer approves the run in the release environment.
