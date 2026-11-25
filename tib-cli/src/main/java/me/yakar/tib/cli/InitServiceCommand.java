@@ -31,11 +31,14 @@ import me.yakar.tib.spec.SpecException;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.state.State;
 import me.yakar.tib.tree.Tree;
+import picocli.CommandLine;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ITypeConverter;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.TypeConversionException;
 
@@ -167,6 +170,8 @@ class InitServiceCommand implements Callable<Integer> {
     throw new TypeConversionException("'" + name + "' is not one of " + names(values));
   }
 
+  @CommandLine.Spec private CommandSpec commandSpec;
+
   @Mixin private ServiceDirectory directory;
 
   @Mixin private GenerationRun run;
@@ -187,16 +192,25 @@ class InitServiceCommand implements Callable<Integer> {
       SpecFile file = SpecFile.read(source.spec, tree);
       return run.init(file.spec(), List.of(file.input()), tree);
     }
-    return run.init(
-        Spec.of(
-            source.named.name,
-            source.named.pack,
-            source.named.java,
-            source.named.architecture,
-            source.named.tests,
-            source.named.docker),
-        List.of(),
-        tree);
+    return run.init(named(), List.of(), tree);
+  }
+
+  /**
+   * The spec that the name and the options make. A value among them that the spec refuses is a
+   * mistake of the command line.
+   */
+  private Spec named() {
+    try {
+      return Spec.of(
+          source.named.name,
+          source.named.pack,
+          source.named.java,
+          source.named.architecture,
+          source.named.tests,
+          source.named.docker);
+    } catch (SpecException e) {
+      throw new ParameterException(commandSpec.commandLine(), String.join("\n", e.problems()), e);
+    }
   }
 
   /** The spec of the service, from the answers to the questions of tib. */

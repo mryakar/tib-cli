@@ -276,23 +276,22 @@ class InitServiceCommandSpec extends Specification {
     dir.toFile().list().length == 0
   }
 
-  def "a kind of test given twice is reported"() {
+  def "a value that the spec of a service refuses is a mistake of the command line: #args"() {
     when:
-    Result result = tib.init('vehicle-service', '--tests', 'unit,unit')
+    Result result = tib.init(args as String[])
 
     then:
-    result.exitCode() == 1
-    result.err() == "the spec has a problem: tests[1]: 'unit' is already there\n"
-  }
-
-  def "a Java that tib does not generate for is reported"() {
-    when:
-    Result result = tib.init('vehicle-service', '--java', '17')
-
-    then:
-    result.exitCode() == 1
-    result.err() == 'the spec has a problem: java: 17 is not one of 21, 25\n'
+    result.exitCode() == 2
+    result.out() == ''
+    result.err().startsWith(message + '\nUsage: tib init service ')
     dir.toFile().list().length == 0
+
+    where:
+    args                                              | message
+    ['Vehicle Service']                               | "service: 'Vehicle Service' does not match ${Names.SERVICE}"
+    ['vehicle-service', '--java', '17']               | 'java: 17 is not one of 21, 25'
+    ['vehicle-service', '--tests', 'unit,unit']       | "tests[1]: 'unit' is already there"
+    ['Vehicle Service', '--java', '17']               | "service: 'Vehicle Service' does not match ${Names.SERVICE}\njava: 17 is not one of 21, 25"
   }
 
   def "a dry run prints the diff and writes nothing"() {
@@ -378,15 +377,6 @@ class InitServiceCommandSpec extends Specification {
     State.Input input = new Tib(service).state().inputs()[0]
     input.kind() == State.Input.Kind.SPEC
     input.path() == '../vehicle-service.yaml'
-  }
-
-  def "a name that is not the name of a service is reported"() {
-    when:
-    Result result = tib.init('Vehicle Service')
-
-    then:
-    result.exitCode() == 1
-    result.err() == "the spec has a problem: service: 'Vehicle Service' does not match ^[a-z][a-z0-9]*(-[a-z0-9]+)*\$\n"
   }
 
   def "a spec that tib cannot use is reported: #message"() {
