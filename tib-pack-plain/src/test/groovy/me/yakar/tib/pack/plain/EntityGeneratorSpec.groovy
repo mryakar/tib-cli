@@ -179,7 +179,19 @@ class EntityGeneratorSpec extends Specification {
     true  | true
   }
 
-  def "the migration of a table is the one of the default pack, and lasts: a run whose spec no longer has the table does not delete it"() {
+  def "the sequence of a sequence identifier advances by one, as the repository takes an identifier for every row"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new EntityGenerator().generate(project('entities:\n  - name: A\n    id: { strategy: sequence }\n'), tree)
+
+    then:
+    tree.read("${Migration.DIRECTORY}/V1__create_a.sql").orElseThrow().contains('CREATE SEQUENCE A_SEQ START WITH 1 INCREMENT BY 1;\n')
+    tree.read(BASE + 'a/ARepository.java').orElseThrow().contains("nextval('A_SEQ')")
+  }
+
+  def "the migration of a table lasts: a run whose spec no longer has the table does not delete it"() {
     given:
     PlainPack pack = new PlainPack()
     Tree tree = Tree.at(dir)
