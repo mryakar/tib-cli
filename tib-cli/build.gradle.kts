@@ -274,7 +274,7 @@ val specReference =
     description = "Writes the properties of the spec file as tables for the documentation site."
     group = "documentation"
     classpath = docs.runtimeClasspath
-    mainClass = "me.yakar.tib.cli.docs.SpecReference"
+    mainClass = "me.yakar.tib.docs.SpecReference"
     val file = layout.buildDirectory.file("docs/spec/spec-properties.adoc")
     outputs.file(file)
     argumentProviders.add(CommandLineArgumentProvider { listOf(file.get().asFile.absolutePath) })
