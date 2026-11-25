@@ -1,0 +1,70 @@
+# Writes the Homebrew formula of a release into the tap, mryakar/homebrew-tap, once the maintainer
+# has published the release: the formula points at the macOS zips of the release, so it waits until
+# they can be downloaded. A pre-release gets no formula. It can be run again for a published tag.
+name: Homebrew
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "The tag of a published release, as v1.2.3"
+        required: true
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+concurrency:
+  group: homebrew
+  cancel-in-progress: false
+
+jobs:
+  formula:
+    name: Write the formula into the tap
+    if: ${{ !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # The token that writes into the tap lives in the release environment.
+    environment: release
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The zips are checked against the checksums of the release, which are signed with them.
+      - name: Download the macOS zips of the release
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir release \
+            --pattern 'tib-*-macos-*.zip' --pattern 'checksums_sha256.txt'
+          cd release
+          grep -e '-macos-arm64\.zip$' -e '-macos-x64\.zip$' checksums_sha256.txt | sha256sum --check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      - name: Write the formula
+        run: |
+          version="${TAG#v}"
+          download="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
+          sum() { sha256sum "release/tib-$version-macos-$1.zip" | cut -d ' ' -f 1; }
+          .github/scripts/homebrew-formula.sh "$version" \
+            "$download/tib-$version-macos-arm64.zip" "$(sum arm64)" \
+            "$download/tib-$version-macos-x64.zip" "$(sum x64)" > tib.rb
+          cat tib.rb
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      # Through the contents API, so that the commit is the token owner's, as the maintainer's.
+      - name: Put the formula into the tap
+        run: |
+          sha="$(gh api "repos/$TAP/contents/Formula/tib.rb" --jq .sha 2>/dev/null || true)"
+          args=(--method PUT "repos/$TAP/contents/Formula/tib.rb"
+            -f message="tib ${TAG#v}" -f content="$(base64 -w 0 tib.rb)")
+          if [[ -n "$sha" ]]; then args+=(-f sha="$sha"); fi
+          gh api "${args[@]}" --jq .commit.html_url
+        env:
+          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          TAP: mryakar/homebrew-tap
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
