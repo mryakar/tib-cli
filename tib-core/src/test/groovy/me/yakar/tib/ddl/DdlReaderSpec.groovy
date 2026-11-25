@@ -61,13 +61,14 @@ class DdlReaderSpec extends Specification {
     spec.entities() == [DEPOT, VEHICLE,]
   }
 
-  def "the DDL keeps the Java, the architecture, the tests and the Dockerfile of the service"() {
+  def "the DDL keeps the pack, the Java, the architecture, the tests and the Dockerfile of the service"() {
     when:
-    Spec spec = DdlReader.parse('CREATE TABLE T (ID BIGINT PRIMARY KEY);', SpecReader.parse('tib: 1\nservice: s\njava: 25\ntests: [unit]\ndocker: true\n'))
+    Spec spec = DdlReader.parse('CREATE TABLE T (ID BIGINT PRIMARY KEY);', SpecReader.parse('tib: 1\nservice: s\npack: plain\njava: 25\narchitecture: hexagonal\ntests: [unit]\ndocker: true\n'))
 
     then:
+    spec.pack() == 'plain'
     spec.java() == 25
-    spec.architecture() == Architecture.ANEMIC
+    spec.architecture() == Architecture.HEXAGONAL
     spec.tests()*.toString() == ['unit']
     spec.docker()
   }

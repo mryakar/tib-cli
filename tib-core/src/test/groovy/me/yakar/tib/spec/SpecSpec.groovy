@@ -116,18 +116,39 @@ class SpecSpec extends Specification {
     ]
   }
 
-  def "the spec of a service that has only its name, its pack and its Java has the defaults, and is checked"() {
+  def "the spec with other entities keeps everything else"() {
+    given:
+    Spec spec = SpecReader.parse('tib: 1\nservice: s\ngroup: me.yakar\npack: plain\njava: 25\narchitecture: ddd\ntests: [api]\ndocker: true\nentities:\n  - name: A\n')
+    List<Entity> entities = SpecReader.parse('tib: 1\nservice: other\nentities:\n  - name: B\n').entities()
+
     expect:
-    Spec.of('vehicle-service', null, null, null, null, null) == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
-    Spec.of('vehicle-service', null, null, null, null, null).java() == 21
-    Spec.of('vehicle-service', null, null, null, null, null).architecture() == Architecture.ANEMIC
+    spec.withEntities(entities) == SpecReader.parse('tib: 1\nservice: s\ngroup: me.yakar\npack: plain\njava: 25\narchitecture: ddd\ntests: [api]\ndocker: true\nentities:\n  - name: B\n')
+  }
+
+  def "the spec of a service that has only its name has the defaults, and is checked"() {
+    expect:
+    Spec.of('vehicle-service') == SpecReader.parse('tib: 1\nservice: vehicle-service\n')
+    Spec.of('vehicle-service').pack() == 'default'
+    Spec.of('vehicle-service').java() == 21
+    Spec.of('vehicle-service').architecture() == Architecture.ANEMIC
+    Spec.of('vehicle-service').tests() == [TestKind.UNIT, TestKind.INTEGRATION, TestKind.API]
+    !Spec.of('vehicle-service').docker()
+
+    when:
+    Spec.of('Vehicle Service')
+
+    then:
+    SpecException e = thrown()
+    e.problems() == ["service: 'Vehicle Service' does not match ${Names.SERVICE}"]
+  }
+
+  def "the spec of a service from what the command line gives has the defaults for the rest, and is checked"() {
+    expect:
+    Spec.of('vehicle-service', null, null, null, null, null) == Spec.of('vehicle-service')
     Spec.of('vehicle-service', null, null, Architecture.ANEMIC, [TestKind.ARCHUNIT], null) == SpecReader.parse('tib: 1\nservice: vehicle-service\narchitecture: anemic\ntests: [archunit]\n')
-    !Spec.of('vehicle-service', null, null, null, null, null).docker()
-    Spec.of('vehicle-service', null, null, null, null, null).tests() == [TestKind.UNIT, TestKind.INTEGRATION, TestKind.API]
     Spec.of('vehicle-service', null, 25, null, [TestKind.API], true) == SpecReader.parse('tib: 1\nservice: vehicle-service\njava: 25\ntests: [api]\ndocker: true\n')
     Spec.of('vehicle-service', null, null, null, [], null).tests() == []
     Spec.of('vehicle-service', 'plain', null, null, null, null) == SpecReader.parse('tib: 1\nservice: vehicle-service\npack: plain\n')
-    Spec.of('vehicle-service', null, null, null, null, null).pack() == 'default'
 
     when:
     Spec.of('Vehicle Service', 'Plain', 23, null, null, null)

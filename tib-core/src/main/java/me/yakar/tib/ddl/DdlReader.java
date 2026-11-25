@@ -102,17 +102,7 @@ public final class DdlReader {
             merged.add(entity);
           }
         });
-    return new Spec(
-            service.tib(),
-            service.service(),
-            service.group(),
-            service.pack(),
-            service.java(),
-            service.architecture(),
-            service.tests(),
-            service.docker(),
-            merged)
-        .check();
+    return service.withEntities(merged).check();
   }
 
   /**
