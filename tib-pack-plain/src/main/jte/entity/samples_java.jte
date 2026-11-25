@@ -1,5 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.EntityTestsModel
+@import me.yakar.tib.pack.Sources
 @param EntityTestsModel tests
 !{EntityModel entity = tests.entity();}
 !{String name = entity.name();}
@@ -18,9 +19,9 @@ ${field.typeImport()}
 import java.util.UUID;
 @endif
 @endfor
-${EntityModel.importOf(entity.packageName(), entity.domainPackage(), name)}
+${Sources.importOf(entity.packageName(), entity.domainPackage(), name)}
 @if(entity.dto())
-${EntityModel.importOf(entity.packageName(), entity.webPackage(), name + "Dto")}
+${Sources.importOf(entity.packageName(), entity.webPackage(), name + "Dto")}
 @endif
 @if(!entity.refersById())
 @for(var target : entity.otherTargets())

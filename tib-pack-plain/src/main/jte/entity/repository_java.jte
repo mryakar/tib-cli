@@ -1,5 +1,6 @@
 @import gg.jte.support.ForSupport
 @import me.yakar.tib.pack.EntityModel
+@import me.yakar.tib.pack.Sources
 @import me.yakar.tib.pack.plain.RepositoryModel
 @param EntityModel entity
 @param RepositoryModel repository
@@ -9,7 +10,7 @@ package ${entity.persistencePackage()};
 
 import ${entity.basePackage()}.Page;
 import ${entity.basePackage()}.Transactions;
-${EntityModel.importOf(entity.persistencePackage(), entity.domainPackage(), name)}
+${Sources.importOf(entity.persistencePackage(), entity.domainPackage(), name)}
 import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;

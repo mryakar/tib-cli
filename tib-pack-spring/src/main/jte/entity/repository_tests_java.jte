@@ -1,5 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.EntityTestsModel
+@import me.yakar.tib.pack.Sources
 @param EntityTestsModel tests
 !{EntityModel entity = tests.entity();}
 package ${entity.domainPackage()};
@@ -10,11 +11,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @endif
 
 import ${entity.basePackage()}.TestcontainersConfiguration;
-${EntityModel.importOf(entity.domainPackage(), entity.packageName(), entity.name() + "Samples")}
+${Sources.importOf(entity.domainPackage(), entity.packageName(), entity.name() + "Samples")}
 @for(var target : tests.requiredTargets())
-${EntityModel.importOf(entity.domainPackage(), target.domainPackage(), target.name())}
-${EntityModel.importOf(entity.domainPackage(), target.domainPackage(), target.name() + "Repository")}
-${EntityModel.importOf(entity.domainPackage(), target.packageName(), target.name() + "Samples")}
+${Sources.importOf(entity.domainPackage(), target.domainPackage(), target.name())}
+${Sources.importOf(entity.domainPackage(), target.domainPackage(), target.name() + "Repository")}
+${Sources.importOf(entity.domainPackage(), target.packageName(), target.name() + "Samples")}
 @endfor
 @if(!tests.requiredTargets().isEmpty())
 import org.junit.jupiter.api.BeforeEach;

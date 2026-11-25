@@ -1,5 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.EntityTestsModel
+@import me.yakar.tib.pack.Sources
 @import me.yakar.tib.pack.plain.DtoModel
 @param EntityTestsModel tests
 @param DtoModel dto
@@ -18,12 +19,12 @@ import ${entity.basePackage()}.Json;
 import ${entity.basePackage()}.TestDatabase;
 import ${entity.basePackage()}.TestService;
 import ${entity.basePackage()}.Transactions;
-${EntityModel.importOf(entity.webPackage(), entity.packageName(), name + "Samples")}
-${EntityModel.importOf(entity.webPackage(), entity.persistencePackage(), name + "Repository")}
+${Sources.importOf(entity.webPackage(), entity.packageName(), name + "Samples")}
+${Sources.importOf(entity.webPackage(), entity.persistencePackage(), name + "Repository")}
 @for(var target : tests.requiredTargets())
-${EntityModel.importOf(entity.webPackage(), target.domainPackage(), target.name())}
-${EntityModel.importOf(entity.webPackage(), target.persistencePackage(), target.name() + "Repository")}
-${EntityModel.importOf(entity.webPackage(), target.packageName(), target.name() + "Samples")}
+${Sources.importOf(entity.webPackage(), target.domainPackage(), target.name())}
+${Sources.importOf(entity.webPackage(), target.persistencePackage(), target.name() + "Repository")}
+${Sources.importOf(entity.webPackage(), target.packageName(), target.name() + "Samples")}
 @endfor
 import java.io.IOException;
 import java.net.http.HttpResponse;

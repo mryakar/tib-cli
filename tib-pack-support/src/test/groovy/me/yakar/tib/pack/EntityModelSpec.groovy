@@ -115,14 +115,6 @@ class EntityModelSpec extends Specification {
     ] | true | true | ['VehicleEntity', 'VehicleJpaRepository', 'VehicleWebMapper']
   }
 
-  def "a type is imported into a file of another package, and the directories of a package are under the sources and the tests"() {
-    expect:
-    EntityModel.importOf('a.b', 'a.b', 'C') == ''
-    EntityModel.importOf('a', 'a.b', 'C') == 'import a.b.C;'
-    EntityModel.directory('a.b') == 'src/main/java/a/b'
-    EntityModel.testDirectory('a.b') == 'src/test/java/a/b'
-  }
-
   def "the identifier is mapped by its strategy: #id"() {
     given:
     EntityModel model = models("entities:\n  - name: A\n    id: $id\n").A

@@ -21,6 +21,7 @@ import me.yakar.tib.generate.Project;
 import me.yakar.tib.pack.EntityModel;
 import me.yakar.tib.pack.EntityTestsModel;
 import me.yakar.tib.pack.Migration;
+import me.yakar.tib.pack.Sources;
 import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
@@ -60,18 +61,18 @@ final class EntityGenerator implements Generator {
   /** Writes a class of the base package once, with the first entity that needs it. */
   private static void firstEntity(
       ProjectFiles files, Project project, String type, String template) {
-    String path = EntityModel.directory(project.basePackage()) + "/" + type + ".java";
+    String path = Sources.main(project.basePackage(), type);
     files.once(
         path,
         SpringPack.TEMPLATES.render(path, FIRST_ENTITY, template, Map.of("project", project)));
   }
 
   private static void generateEntity(Project project, EntityModel entity, ProjectFiles files) {
-    String name = "/" + entity.name();
-    String domain = EntityModel.directory(entity.domainPackage()) + name;
-    String application = EntityModel.directory(entity.applicationPackage()) + name;
-    String web = EntityModel.directory(entity.webPackage()) + name;
-    String persistence = EntityModel.directory(entity.persistencePackage()) + name;
+    String name = entity.name();
+    String domain = entity.domainPackage();
+    String application = entity.applicationPackage();
+    String web = entity.webPackage();
+    String persistence = entity.persistencePackage();
     // DDD and hexagonal have services of their own: the use cases of the domain, which know no DTO.
     String architecture = architecture(project);
     Map<String, Object> model = Map.of("entity", entity);
@@ -79,37 +80,37 @@ final class EntityGenerator implements Generator {
     if (entity.hexagonal()) {
       // The domain knows no JPA: the table is mapped by a class of the persistence adapter, which
       // keeps the domain through the store, the port of the application.
-      own(files, domain + "Generated.java", "entity/hexagonal_domain_generated_java.jte", model);
-      once(files, domain + ".java", "entity/hexagonal_domain_java.jte", model);
-      own(files, persistence + "Entity.java", "entity/generated_java.jte", model);
       own(
           files,
-          persistence + "PersistenceMapper.java",
+          Sources.main(domain, name + "Generated"),
+          "entity/hexagonal_domain_generated_java.jte",
+          model);
+      once(files, Sources.main(domain, name), "entity/hexagonal_domain_java.jte", model);
+      own(files, Sources.main(persistence, entity.jpaEntity()), "entity/generated_java.jte", model);
+      own(
+          files,
+          Sources.main(persistence, name + "PersistenceMapper"),
           "entity/hexagonal_persistence_mapper_java.jte",
           model);
       once(
           files,
-          EntityModel.directory(entity.storePackage()) + name + "Store.java",
+          Sources.main(entity.storePackage(), name + "Store"),
           "entity/hexagonal_store_java.jte",
           model);
       once(
           files,
-          persistence + "PersistenceAdapter.java",
+          Sources.main(persistence, name + "PersistenceAdapter"),
           "entity/hexagonal_persistence_adapter_java.jte",
           model);
     } else {
-      own(files, domain + "Generated.java", "entity/generated_java.jte", model);
-      once(files, domain + ".java", "entity/entity_java.jte", model);
+      own(files, Sources.main(domain, name + "Generated"), "entity/generated_java.jte", model);
+      once(files, Sources.main(domain, name), "entity/entity_java.jte", model);
     }
     once(
-        files,
-        EntityModel.directory(entity.persistencePackage()) + "/" + entity.repository() + ".java",
-        "entity/repository_java.jte",
-        model);
+        files, Sources.main(persistence, entity.repository()), "entity/repository_java.jte", model);
     if (entity.dto()) {
-      own(files, web + "Dto.java", "entity/dto_java.jte", model);
+      own(files, Sources.main(web, name + "Dto"), "entity/dto_java.jte", model);
     }
-    // A migration lasts: a database may have run it, so it stays when the entity leaves the spec.
     Migration.write(files, entity);
     // The tests of the kinds of the spec; the service and the API only of an entity with a layer.
     boolean repositoryTests = project.tests(TestKind.INTEGRATION);
@@ -118,58 +119,52 @@ final class EntityGenerator implements Generator {
     if (repositoryTests || serviceTests || apiTests) {
       own(
           files,
-          EntityModel.testDirectory(entity.packageName()) + name + "Samples.java",
+          Sources.test(entity.packageName(), name + "Samples"),
           "entity/samples_java.jte",
           tests);
     }
     if (repositoryTests && entity.hexagonal()) {
       once(
           files,
-          EntityModel.testDirectory(entity.persistencePackage())
-              + name
-              + "PersistenceAdapterTests.java",
+          Sources.test(persistence, name + "PersistenceAdapterTests"),
           "entity/hexagonal_persistence_adapter_tests_java.jte",
           tests);
     } else if (repositoryTests) {
       once(
           files,
-          EntityModel.testDirectory(entity.domainPackage()) + name + "RepositoryTests.java",
+          Sources.test(persistence, name + "RepositoryTests"),
           "entity/repository_tests_java.jte",
           tests);
     }
     if (entity.layer()) {
-      own(
-          files,
-          EntityModel.directory(entity.webPackage()) + "/" + entity.webMapper() + ".java",
-          "entity/mapper_java.jte",
-          model);
+      own(files, Sources.main(web, entity.webMapper()), "entity/mapper_java.jte", model);
       if (entity.hexagonal()) {
         once(
             files,
-            EntityModel.directory(entity.useCasePackage()) + name + "UseCase.java",
+            Sources.main(entity.useCasePackage(), name + "UseCase"),
             "entity/hexagonal_use_case_java.jte",
             model);
       }
       once(
           files,
-          application + "Service.java",
+          Sources.main(application, name + "Service"),
           "entity/" + architecture + "service_java.jte",
           model);
-      once(files, web + "Controller.java", "entity/" + architecture + "controller_java.jte", model);
+      once(
+          files,
+          Sources.main(web, name + "Controller"),
+          "entity/" + architecture + "controller_java.jte",
+          model);
     }
     if (serviceTests) {
       once(
           files,
-          EntityModel.testDirectory(entity.applicationPackage()) + name + "ServiceTests.java",
+          Sources.test(application, name + "ServiceTests"),
           "entity/" + architecture + "service_tests_java.jte",
           tests);
     }
     if (apiTests) {
-      once(
-          files,
-          EntityModel.testDirectory(entity.webPackage()) + name + "ApiTests.java",
-          "entity/api_tests_java.jte",
-          tests);
+      once(files, Sources.test(web, name + "ApiTests"), "entity/api_tests_java.jte", tests);
     }
   }
 

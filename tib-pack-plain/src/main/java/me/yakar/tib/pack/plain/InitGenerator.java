@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
-import me.yakar.tib.pack.EntityModel;
+import me.yakar.tib.pack.Sources;
 import me.yakar.tib.pack.TestsModel;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
@@ -55,8 +55,8 @@ final class InitGenerator implements Generator {
 
   @Override
   public void generate(Project project, ProjectFiles files) {
-    String sources = EntityModel.directory(project.basePackage());
-    String tests = EntityModel.testDirectory(project.basePackage());
+    String base = project.basePackage();
+    String application = project.applicationClass();
     once(files, "settings.gradle.kts", "init/settings_gradle_kts.jte", project);
     once(files, "build.gradle.kts", "init/build_gradle_kts.jte", project);
     for (String file : WRAPPER) {
@@ -64,32 +64,28 @@ final class InitGenerator implements Generator {
     }
     once(files, ".gitignore", "init/gitignore.jte", project);
     once(files, ".gitattributes", "init/gitattributes.jte", project);
-    once(
-        files,
-        sources + "/" + project.applicationClass() + ".java",
-        "init/application_java.jte",
-        project);
-    once(files, sources + "/Config.java", "init/config_java.jte", project);
-    once(files, sources + "/Json.java", "init/json_java.jte", project);
-    once(files, sources + "/Transactions.java", "init/transactions_java.jte", project);
+    once(files, Sources.main(base, application), "init/application_java.jte", project);
+    once(files, Sources.main(base, "Config"), "init/config_java.jte", project);
+    once(files, Sources.main(base, "Json"), "init/json_java.jte", project);
+    once(files, Sources.main(base, "Transactions"), "init/transactions_java.jte", project);
     // The application starts the routes, which follow the entities: the first run has none.
     EntityGenerator.routes(project, List.of(), files);
-    once(files, tests + "/TestDatabase.java", "init/test_database_java.jte", project);
+    once(files, Sources.test(base, "TestDatabase"), "init/test_database_java.jte", project);
     // The test of the application and the tests of the API start the service.
     if (project.tests(TestKind.INTEGRATION) || project.tests(TestKind.API)) {
-      once(files, tests + "/TestService.java", "init/test_service_java.jte", project);
+      once(files, Sources.test(base, "TestService"), "init/test_service_java.jte", project);
     }
     if (project.tests(TestKind.INTEGRATION)) {
       once(
           files,
-          tests + "/" + project.applicationClass() + "Tests.java",
+          Sources.test(base, application + "Tests"),
           "init/application_tests_java.jte",
           project);
     }
     if (project.tests(TestKind.ARCHUNIT)) {
       once(
           files,
-          tests + "/ArchitectureTests.java",
+          Sources.test(base, "ArchitectureTests"),
           switch (project.architecture()) {
             case ANEMIC -> "init/architecture_tests_java.jte";
             case DDD -> "init/ddd_architecture_tests_java.jte";
@@ -98,10 +94,7 @@ final class InitGenerator implements Generator {
           project);
     }
     once(
-        files,
-        tests + "/Test" + project.applicationClass() + ".java",
-        "init/test_application_java.jte",
-        project);
+        files, Sources.test(base, "Test" + application), "init/test_application_java.jte", project);
     if (project.docker()) {
       once(files, "Dockerfile", "init/dockerfile.jte", project);
       once(files, ".dockerignore", "init/dockerignore.jte", project);

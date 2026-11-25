@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
-import me.yakar.tib.pack.EntityModel;
+import me.yakar.tib.pack.Sources;
 import me.yakar.tib.pack.TestsModel;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
@@ -53,8 +53,8 @@ final class InitGenerator implements Generator {
 
   @Override
   public void generate(Project project, ProjectFiles files) {
-    String sources = EntityModel.directory(project.basePackage());
-    String tests = EntityModel.testDirectory(project.basePackage());
+    String base = project.basePackage();
+    String application = project.applicationClass();
     once(files, "settings.gradle.kts", "init/settings_gradle_kts.jte", project);
     once(files, "build.gradle.kts", "init/build_gradle_kts.jte", project);
     for (String file : WRAPPER) {
@@ -62,29 +62,25 @@ final class InitGenerator implements Generator {
     }
     once(files, ".gitignore", "init/gitignore.jte", project);
     once(files, ".gitattributes", "init/gitattributes.jte", project);
-    once(
-        files,
-        sources + "/" + project.applicationClass() + ".java",
-        "init/application_java.jte",
-        project);
+    once(files, Sources.main(base, application), "init/application_java.jte", project);
     once(files, "src/main/resources/application.yaml", "init/application_yaml.jte", project);
     once(
         files,
-        tests + "/TestcontainersConfiguration.java",
+        Sources.test(base, "TestcontainersConfiguration"),
         "init/testcontainers_configuration_java.jte",
         project);
     // The test of the application starts it against the database, as the integration tests do.
     if (project.tests(TestKind.INTEGRATION)) {
       once(
           files,
-          tests + "/" + project.applicationClass() + "Tests.java",
+          Sources.test(base, application + "Tests"),
           "init/application_tests_java.jte",
           project);
     }
     if (project.tests(TestKind.ARCHUNIT)) {
       once(
           files,
-          tests + "/ArchitectureTests.java",
+          Sources.test(base, "ArchitectureTests"),
           switch (project.architecture()) {
             case ANEMIC -> "init/architecture_tests_java.jte";
             case DDD -> "init/ddd_architecture_tests_java.jte";
@@ -93,10 +89,7 @@ final class InitGenerator implements Generator {
           project);
     }
     once(
-        files,
-        tests + "/Test" + project.applicationClass() + ".java",
-        "init/test_application_java.jte",
-        project);
+        files, Sources.test(base, "Test" + application), "init/test_application_java.jte", project);
     if (project.docker()) {
       once(files, "Dockerfile", "init/dockerfile.jte", project);
       once(files, ".dockerignore", "init/dockerignore.jte", project);
