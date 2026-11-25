@@ -15,8 +15,11 @@
  */
 package me.yakar.tib.cli
 
+import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.SimpleFileVisitor
+import java.nio.file.attribute.BasicFileAttributes
 import me.yakar.tib.state.State
 import me.yakar.tib.tree.Tree
 import picocli.CommandLine
@@ -97,19 +100,32 @@ class Tib {
 
   /**
    * Every file and directory of the service by path, with the content of each file, a character for
-   * each byte; git's own files are not the service's.
+   * each byte. Git's own directory is not the service's, and is not entered: git may still be
+   * tidying it after a commit.
    */
   Map<String, String> files() {
-    Files.walk(service).withCloseable { paths ->
-      paths.filter {
-        it != service && !service.relativize(it).startsWith('.git')
-      }.toList().collectEntries {
-        [
-          service.relativize(it).toString(),
-          Files.isDirectory(it) ? 'a directory' : new String(Files.readAllBytes(it), 'ISO-8859-1')
-        ]
-      }
-    }
+    Map<String, String> files = [:]
+    Files.walkFileTree(service, new SimpleFileVisitor<Path>() {
+
+          @Override
+          FileVisitResult preVisitDirectory(Path directory, BasicFileAttributes attributes) {
+            if (directory == service) {
+              return FileVisitResult.CONTINUE
+            }
+            if (directory.fileName.toString() == '.git') {
+              return FileVisitResult.SKIP_SUBTREE
+            }
+            files[service.relativize(directory).toString()] = 'a directory'
+            FileVisitResult.CONTINUE
+          }
+
+          @Override
+          FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+            files[service.relativize(file).toString()] = new String(Files.readAllBytes(file), 'ISO-8859-1')
+            FileVisitResult.CONTINUE
+          }
+        })
+    files
   }
 
   /** The commands of tib, with the version of the test. */
