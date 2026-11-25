@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -199,7 +198,7 @@ public record Spec(
     // The entities by name, and their indexes; the first one of a name.
     Map<String, Entity> names = new HashMap<>();
     Map<String, Integer> indexes = new HashMap<>();
-    // The tables, in upper case: SQL names are the same in any case.
+    // The tables, by the keys of their names.
     Set<String> tables = new HashSet<>();
     for (int i = 0; i < entities.size(); i++) {
       Entity entity = entities.get(i);
@@ -207,7 +206,7 @@ public record Spec(
         problems.add("entities[" + i + "].name", "'" + entity.name() + "' is already an entity");
       } else {
         indexes.put(entity.name(), i);
-        if (!tables.add(entity.table().toUpperCase(Locale.ROOT))) {
+        if (!tables.add(Names.key(entity.table()))) {
           problems.add("entities[" + i + "].table", "'" + entity.table() + "' is already a table");
         }
       }
