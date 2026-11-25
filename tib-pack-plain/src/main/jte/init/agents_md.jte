@@ -102,9 +102,10 @@ A query of your own goes in a class of yours, which takes the connection of the 
 `Transactions.connection()`.
 @endif
 `ErrorHandler`, in the base package, answers a request for an entity that is not there with 404
-Not Found, one that breaks a constraint of the database with 409 Conflict, and one whose DTO breaks
-a rule or cannot be read with 400 Bad Request, as problem details; it is yours, and so are
-`NotFoundException`, `BadRequestException`, `Http` and `Page`.
+Not Found, one that breaks a constraint of the database or whose value does not fit its column
+with 409 Conflict, and one whose DTO breaks a rule or cannot be read with 400 Bad Request, as
+problem details; it is yours, and so are `NotFoundException`, `BadRequestException`, `Http` and
+`Page`.
 @if(tests.archunit())
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
 @if(ddd)
@@ -117,7 +118,7 @@ server, the application does not use the adapters, an inbound adapter does not u
 one, nor the reverse, and there is no cycle between the packages of the entities; it is yours.
 @else
 classes of the service with ArchUnit, by their names and packages: the handler of an entity over
-its service over its repository, a handler used by the wiring of its entity alone, and no cycle
+its service over its repository, a handler used by the wiring alone, and no cycle
 between the packages of the entities; it is yours.
 @endif
 @endif<%-- keeps the blank line below --%>
