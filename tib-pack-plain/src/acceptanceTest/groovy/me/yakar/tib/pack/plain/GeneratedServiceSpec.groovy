@@ -27,7 +27,9 @@ import me.yakar.tib.spec.TestKind
 
 /**
  * The services of the plain pack: beside the ones that every pack builds, the example service with
- * the tests that need no database, and the one of its DDL.
+ * the tests that need no database, and the one of its DDL. Both are on Java 21 and without a
+ * Dockerfile, with some of the kinds of tests: one in the hexagonal architecture, the other in the
+ * DDD.
  */
 class GeneratedServiceSpec extends PackAcceptanceSpec {
 
@@ -40,9 +42,9 @@ class GeneratedServiceSpec extends PackAcceptanceSpec {
   Map<String, Spec> others() {
     [
       // Only the unit tests and the test of the architecture, which need no database.
-      'example spec, without a database': Services.of(Services.vehicles(pack()), pack(), Architecture.ANEMIC, [TestKind.UNIT, TestKind.ARCHUNIT]),
+      'example spec, hexagonal, without a database': Services.of(Services.vehicles(pack()), pack(), Architecture.HEXAGONAL, [TestKind.UNIT, TestKind.ARCHUNIT]),
       // The tables of the DDL, with the tests of the API only.
-      'example DDL': DdlReader.parse(Files.readString(Services.EXAMPLES.resolve('vehicle-service.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\npack: plain\ntests: [api]\n')),
+      'example DDL, DDD': DdlReader.parse(Files.readString(Services.EXAMPLES.resolve('vehicle-service.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\npack: plain\narchitecture: ddd\ntests: [api]\n')),
     ]
   }
 
