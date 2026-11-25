@@ -58,8 +58,8 @@ tasks.withType<Test>().configureEach {
   javaLauncher = javaToolchains.launcherFor {
     languageVersion = testJavaVersion.map(JavaLanguageVersion::of)
   }
-  // The tests of the default pack and of the command line generate, and the pack formats what it
-  // generates with google-java-format; the engine's tests do not need the options.
+  // The tests of the packs and of the command line generate, and a pack formats what it generates
+  // with google-java-format; the engine's tests do not need the options.
   jvmArgs(me.yakar.tib.gradle.JavacExports.JVM_OPTIONS)
   systemProperty("tib.version", tibVersion)
   val root = layout.settingsDirectory

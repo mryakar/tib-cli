@@ -34,7 +34,7 @@ updates:
           - "org.postgresql:*"
           - "org.testcontainers:*"
       # The formatter and the plugin that runs it move together. google-java-format also formats
-      # what the default pack generates: its update changes the snapshots and comes with them.
+      # what the packs generate: its update changes the snapshots and comes with them.
       format:
         patterns: ["com.diffplug.spotless:*", "com.google.googlejavaformat:*"]
       gradle:

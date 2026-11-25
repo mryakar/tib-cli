@@ -27,7 +27,7 @@ spock = "2.5-groovy-5.0"
 spotless = "8.11.0"
 
 [libraries]
-# The formatter of the default pack, and of this build through Spotless.
+# The formatter of the packs, and of this build through Spotless.
 google-java-format = { module = "com.google.googlejavaformat:google-java-format", version.ref = "google-java-format" }
 groovy-bom = { module = "org.apache.groovy:groovy-bom", version.ref = "groovy" }
 jackson-bom = { module = "tools.jackson:jackson-bom", version.ref = "jackson" }
