@@ -561,6 +561,7 @@ class GenerateEntityCommandSpec extends Specification {
     architecture | handler
     'anemic'     | ''
     'ddd'        | 'web/'
+    'hexagonal'  | 'adapter/in/web/'
   }
 
   def "#problem is reported with exit code 1"() {

@@ -1,0 +1,85 @@
+@import me.yakar.tib.generate.Project
+@param Project project
+package ${project.basePackage()};
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
+
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
+import org.junit.jupiter.api.Test;
+
+/**
+ * The rules of the hexagonal architecture, checked on the classes of the service by their packages,
+ * as no annotation marks them: the domain knows neither JDBC nor the HTTP server, the application
+ * does not use the adapters, an inbound adapter does not use an outbound one, nor the reverse, and
+ * there is no cycle between the packages of the entities.
+ */
+class ArchitectureTests {
+
+  private static final String BASE = "${project.basePackage()}";
+
+  private static final JavaClasses CLASSES =
+      new ClassFileImporter()
+          .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+          .importPackages(BASE);
+
+  @Test
+  void theDomainKnowsNeitherJdbcNorTheHttpServer() {
+    noClasses()
+        .that()
+        .resideInAPackage(BASE + ".*.domain..")
+        .should()
+        .dependOnClassesThat()
+        .resideInAnyPackage("java.sql..", "javax.sql..", "com.sun.net.httpserver..")
+        .allowEmptyShould(true)
+        .check(CLASSES);
+  }
+
+  @Test
+  void theApplicationDoesNotUseTheAdapters() {
+    noClasses()
+        .that()
+        .resideInAPackage(BASE + ".*.application..")
+        .should()
+        .dependOnClassesThat()
+        .resideInAPackage(BASE + ".*.adapter..")
+        .allowEmptyShould(true)
+        .check(CLASSES);
+  }
+
+  @Test
+  void theInboundAdaptersDoNotUseTheOutboundOnes() {
+    noClasses()
+        .that()
+        .resideInAPackage(BASE + ".*.adapter.in..")
+        .should()
+        .dependOnClassesThat()
+        .resideInAPackage(BASE + ".*.adapter.out..")
+        .allowEmptyShould(true)
+        .check(CLASSES);
+  }
+
+  @Test
+  void theOutboundAdaptersDoNotUseTheInboundOnes() {
+    noClasses()
+        .that()
+        .resideInAPackage(BASE + ".*.adapter.out..")
+        .should()
+        .dependOnClassesThat()
+        .resideInAPackage(BASE + ".*.adapter.in..")
+        .allowEmptyShould(true)
+        .check(CLASSES);
+  }
+
+  @Test
+  void thePackagesOfTheEntitiesHaveNoCycle() {
+    slices()
+        .matching(BASE + ".(*)..")
+        .should()
+        .beFreeOfCycles()
+        .allowEmptyShould(true)
+        .check(CLASSES);
+  }
+}

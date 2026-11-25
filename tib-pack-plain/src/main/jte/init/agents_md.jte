@@ -5,6 +5,7 @@
 @param me.yakar.tib.pack.TestsModel tests
 !{String database = project.name().replace('-', '_');}
 !{boolean ddd = project.architecture() == me.yakar.tib.spec.Architecture.DDD;}
+!{boolean hexagonal = project.architecture() == me.yakar.tib.spec.Architecture.HEXAGONAL;}
 # ${project.name()}
 
 A service in plain Java ${project.java()}, scaffolded by tib, without a framework of dependency injection:
@@ -68,12 +69,24 @@ aggregate, which throw `NotFoundException` for one that is not there; `x.web` ha
 `XDto` and `XMapper`, which maps the aggregate to and from its DTO. An entity refers to another by
 its identifier, as `depotId`: there is no ORM. The domain uses neither the application nor the
 web, and the application does not use the web. Its code goes in `X`, never in `XGenerated`:
+@elseif(hexagonal)
+The service is arranged in the hexagonal architecture, of ports and adapters: every entity `X` has
+a domain in plain Java, which knows neither JDBC nor the HTTP server, in the middle of its adapters.
+`x.domain` has `X` and `XGenerated`; `x.application` has `XService`, the use cases on the domain,
+which throw `NotFoundException` for one that is not there, and the ports: `x.application.port.in`
+has `XUseCase`, which the inbound adapters call, and `x.application.port.out` has `XStore`, which
+an outbound adapter implements. `x.adapter.in.web` has `XHandler`, `XDto` and `XWebMapper`, which
+maps the domain to and from its DTO; `x.adapter.out.persistence` has `XRepository` and
+`XPersistenceAdapter`, the `XStore` on it. An entity refers to another by its identifier, as
+`depotId`: there is no ORM. The application does not use the adapters, and an inbound adapter does
+not use an outbound one, nor the reverse. Its code goes in `X`, never in `XGenerated`:
 @else
 Every class of an entity `X` is in the package of the entity, `x`, and refers to another entity by
 its identifier, as `depotId`: there is no ORM. Its code goes in `X`, never in `XGenerated`:
 @endif
 `XGenerated`, `XRepository`, the SQL of its table, `XDto`, which checks the rules of the spec, and
-`XMapper` are tib's; `X`, `XService`, `XHandler` and the migration are yours@if(tests.any()), and so are
+@if(hexagonal)`XWebMapper` are tib's; `X`, `XUseCase`, `XStore`, `XService`, `XHandler`,
+`XPersistenceAdapter`@else`XMapper` are tib's; `X`, `XService`, `XHandler`@endif and the migration are yours@if(tests.any()), and so are
 their tests: ${tests.entityTests()}. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
 as in `XSamples.x().name("Other").build()`.@else.@endif `ErrorHandler`, in the base package, answers a
@@ -82,7 +95,7 @@ database with 409 Conflict, and one whose DTO breaks a rule or does not read wit
 as problem details; it is yours, and so are `NotFoundException`, `BadRequestException`, `Http`
 and `Page`.@if(tests.archunit())
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
-classes of the service with ArchUnit, by their ${ddd ? "packages:\n" + tests.rules() : "names and packages: the handler of an entity over\nits service over its repository, and no cycle between the packages of the entities"}; it is yours.@endif
+classes of the service with ArchUnit, by their ${ddd ? "packages:\n" + tests.rules() : hexagonal ? "packages: the domain knows neither JDBC nor the HTTP\nserver, the application does not use the adapters, an inbound adapter does not use an outbound\none, nor the reverse, and there is no cycle between the packages of the entities" : "names and packages: the handler of an entity over\nits service over its repository, and no cycle between the packages of the entities"}; it is yours.@endif
 
 The Java that tib writes is in the layout of google-java-format ${pack.formatterVersion()}: formatted
 with it, the files of tib's stay as tib wrote them.

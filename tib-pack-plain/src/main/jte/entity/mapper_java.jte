@@ -5,7 +5,7 @@ package ${entity.webPackage()};
 ${EntityModel.importOf(entity.webPackage(), entity.domainPackage(), entity.name())}
 
 /** Between the entity and its DTO@if(!entity.relations().isEmpty()); a relation is the identifier of its target in both@endif. */
-public class ${entity.name()}Mapper {
+public class ${entity.webMapper()} {
 
   public ${entity.name()}Dto toDto(${entity.name()} ${entity.variable()}) {
     return new ${entity.name()}Dto(${entity.dtoArguments()});
