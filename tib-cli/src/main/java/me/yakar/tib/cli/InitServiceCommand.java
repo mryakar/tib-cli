@@ -105,13 +105,12 @@ class InitServiceCommand implements Callable<Integer> {
 
     @Option(
         names = "--tests",
-        split = ",",
-        paramLabel = "KIND",
-        converter = TestKindConverter.class,
+        paramLabel = "KINDS",
+        converter = TestKindsConverter.class,
         description =
             "The kinds of tests that tib writes, separated by commas: unit, integration, api and"
-                + " archunit; unit, integration and api by default.")
-    List<TestKind> tests;
+                + " archunit, or none; unit, integration and api by default.")
+    TestKinds tests;
 
     @Option(
         names = "--docker",
@@ -142,12 +141,25 @@ class InitServiceCommand implements Callable<Integer> {
     }
   }
 
-  /** Reads a kind of test by its name in the spec, as in {@code unit}. */
-  static class TestKindConverter implements ITypeConverter<TestKind> {
+  /** The kinds of tests that an option or an answer names. */
+  record TestKinds(List<TestKind> list) {}
+
+  /**
+   * Reads kinds of tests by their names in the spec, separated by commas, as in {@code unit,api};
+   * {@code none} is no kind at all.
+   */
+  static class TestKindsConverter implements ITypeConverter<TestKinds> {
 
     @Override
-    public TestKind convert(String value) {
-      return named(TestKind.values(), value);
+    public TestKinds convert(String value) {
+      if (value.equals("none")) {
+        return new TestKinds(List.of());
+      }
+      List<TestKind> kinds = new ArrayList<>();
+      for (String kind : value.split(",", -1)) {
+        kinds.add(named(TestKind.values(), kind.strip()));
+      }
+      return new TestKinds(kinds);
     }
   }
 
@@ -206,7 +218,7 @@ class InitServiceCommand implements Callable<Integer> {
           source.named.pack,
           source.named.java,
           source.named.architecture,
-          source.named.tests,
+          source.named.tests == null ? null : source.named.tests.list(),
           source.named.docker);
     } catch (SpecException e) {
       throw new ParameterException(commandSpec.commandLine(), String.join("\n", e.problems()), e);
@@ -240,7 +252,17 @@ class InitServiceCommand implements Callable<Integer> {
         questions.ask(
             "The kinds of its tests, separated by commas, or none: " + names(TestKind.values()),
             defaults.tests().stream().map(TestKind::toString).collect(Collectors.joining(",")),
-            answer -> checked(() -> Spec.of(name, null, java, null, kinds(answer), null)).tests());
+            answer ->
+                checked(
+                        () ->
+                            Spec.of(
+                                name,
+                                null,
+                                java,
+                                null,
+                                read(new TestKindsConverter(), answer).list(),
+                                null))
+                    .tests());
     Boolean docker = questions.ask("A Dockerfile, yes or no", "no", InitServiceCommand::yes);
     return Spec.of(name, pack, java, architecture, tests, docker);
   }
@@ -277,22 +299,6 @@ class InitServiceCommand implements Callable<Integer> {
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException("'" + answer + "' is not a number", e);
     }
-  }
-
-  /** The kinds of tests that the answer names, separated by commas; none for {@code none}. */
-  private static List<TestKind> kinds(String answer) {
-    if (answer.equals("none")) {
-      return List.of();
-    }
-    List<TestKind> kinds = new ArrayList<>();
-    for (String kind : answer.split(",")) {
-      try {
-        kinds.add(new TestKindConverter().convert(kind.strip()));
-      } catch (TypeConversionException e) {
-        throw new IllegalArgumentException(e.getMessage(), e);
-      }
-    }
-    return kinds;
   }
 
   private static Boolean yes(String answer) {

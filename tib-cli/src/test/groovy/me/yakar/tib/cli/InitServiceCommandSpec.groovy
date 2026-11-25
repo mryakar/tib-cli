@@ -198,7 +198,8 @@ class InitServiceCommandSpec extends Specification {
     how         | args                            | tests
     'no option' | []                              | ['unit', 'integration', 'api']
     '--tests'   | ['--tests', 'api,unit']         | ['api', 'unit']
-    '--tests'   | ['--tests', 'unit', '--tests', 'api'] | ['unit', 'api']
+    '--tests'   | ['--tests', 'api, unit']        | ['api', 'unit']
+    '--tests'   | ['--tests', 'none']             | []
   }
 
   def "the service has a Dockerfile with --docker, and none without"() {
@@ -266,13 +267,29 @@ class InitServiceCommandSpec extends Specification {
     other.err().startsWith("Invalid value for option '--pack': 'spring' is not one of default, plain\n")
   }
 
-  def "a kind of test that tib does not know is a mistake of the command line"() {
+  def "kinds of tests that tib cannot read are a mistake of the command line: #args"() {
     when:
-    Result result = tib.init('vehicle-service', '--tests', 'unit,e2e')
+    Result result = tib.init(['vehicle-service'] + args as String[])
 
     then:
     result.exitCode() == 2
-    result.err().startsWith("Invalid value for option '--tests' (KIND): 'e2e' is not one of unit, integration, api, archunit\n")
+    result.err().startsWith(message + '\nUsage: tib init service ')
+    dir.toFile().list().length == 0
+
+    where:
+    args                     | message
+    ['--tests', 'unit,e2e']  | "Invalid value for option '--tests': 'e2e' is not one of unit, integration, api, archunit"
+    ['--tests', 'unit,']     | "Invalid value for option '--tests': '' is not one of unit, integration, api, archunit"
+    ['--tests', 'unit,none'] | "Invalid value for option '--tests': 'none' is not one of unit, integration, api, archunit"
+  }
+
+  def "the kinds of tests are given once"() {
+    when:
+    Result result = tib.init('vehicle-service', '--tests', 'unit', '--tests', 'api')
+
+    then:
+    result.exitCode() == 2
+    result.err().contains('Usage: tib init service ')
     dir.toFile().list().length == 0
   }
 
