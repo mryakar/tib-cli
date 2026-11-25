@@ -24,6 +24,7 @@ import java.util.Locale;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import me.yakar.tib.generate.PackException;
 import me.yakar.tib.generate.Packs;
 import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.Spec;
@@ -127,15 +128,19 @@ class InitServiceCommand implements Callable<Integer> {
     }
   }
 
-  /** Reads a pack by its name, which has to be the name of a pack on the class path. */
+  /**
+   * Reads a pack as a spec names it: by its name, with its version after an at sign to pin it. The
+   * pack has to be on the class path.
+   */
   static class PackConverter implements ITypeConverter<String> {
 
     @Override
     public String convert(String value) {
-      List<String> names = Packs.names();
-      if (!names.contains(value)) {
+      try {
+        Packs.find(value);
+      } catch (PackException e) {
         throw new TypeConversionException(
-            "'" + value + "' is not one of " + String.join(", ", names));
+            "'" + value + "' is not one of " + String.join(", ", Packs.names()));
       }
       return value;
     }

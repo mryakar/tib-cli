@@ -267,6 +267,26 @@ class InitServiceCommandSpec extends Specification {
     other.err().startsWith("Invalid value for option '--pack': 'spring' is not one of default, plain\n")
   }
 
+  def "the pack of --pack may pin its version, as the pack of a spec may"() {
+    given:
+    String version = System.getProperty('tib.version')
+
+    when:
+    Result result = tib.init('vehicle-service', '--pack', "plain@$version")
+
+    then:
+    result.exitCode() == 0
+    tib.state().spec().pack() == "plain@$version"
+    tib.state().pack() == new State.PackRef('plain', version, 'Plain Java')
+
+    when:
+    Result other = new Tib(dir.resolve('other')).init('other-service', '--pack', 'plain@0')
+
+    then:
+    other.exitCode() == 2
+    other.err().startsWith("Invalid value for option '--pack': 'plain@0' is not one of default, plain\n")
+  }
+
   def "kinds of tests that tib cannot read are a mistake of the command line: #args"() {
     when:
     Result result = tib.init(['vehicle-service'] + args as String[])
