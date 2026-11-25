@@ -23,6 +23,7 @@ import me.yakar.tib.generate.Generation
 import me.yakar.tib.generate.Pack
 import me.yakar.tib.generate.Packs
 import me.yakar.tib.generate.Project
+import me.yakar.tib.pack.GradleWrapper
 import me.yakar.tib.pack.Migration
 import me.yakar.tib.spec.Architecture
 import me.yakar.tib.spec.Spec
@@ -118,32 +119,6 @@ class PlainPackSpec extends Specification {
     ].every { it ==~ /\d+(\.\d+)*/ }
   }
 
-  def "what the pack carries has to be readable: #what"() {
-    when:
-    read(new InputStream() {
-          int read() {
-            throw new IOException('unreadable')
-          }
-        })
-
-    then:
-    thrown(UncheckedIOException)
-
-    where:
-    what             | read
-    'its properties' | { InputStream stream -> PlainPack.load(stream) }
-    'a file'         | { InputStream stream -> PlainPack.bytes(stream) }
-  }
-
-  def "a file that the pack does not carry is a mistake of its build, named by its name"() {
-    when:
-    PlainPack.resource('wrapper/none')
-
-    then:
-    IllegalStateException e = thrown()
-    e.message == 'the pack does not carry wrapper/none'
-  }
-
   def "generates the example service of the documentation as the snapshot says"() {
     when:
     List<Change> changes = generate(VEHICLES, dir).changes()
@@ -223,7 +198,7 @@ class PlainPackSpec extends Specification {
     List<Change> changes = generate(spec, dir).changes()
 
     then:
-    changes.findAll { !(it.path() in InitGenerator.WRAPPER) }.each { change ->
+    changes.findAll { !(it.path() in GradleWrapper.FILES) }.each { change ->
       String header = new String(change.after(), 'UTF-8').readLines()[0].replaceFirst(/^(\/\/|#|--|<!--) /, '')
       assert HEADERS[change.owner()].any { header.startsWith(it) } : change.path()
     }
@@ -384,6 +359,6 @@ class PlainPackSpec extends Specification {
 
   /** What a snapshot holds of the generated files: all but the Gradle wrapper. */
   private static List<Change> snapshotted(List<Change> generated) {
-    generated.findAll { !(it.path() in InitGenerator.WRAPPER) }
+    generated.findAll { !(it.path() in GradleWrapper.FILES) }
   }
 }

@@ -52,23 +52,10 @@ tasks.processResources {
   filesMatching("**/pack.properties") { expand(properties.get()) }
 }
 
-// The Gradle wrapper of this build, which the pack writes into a new service.
-tasks.processResources {
-  val root = layout.settingsDirectory
-  val wrapper = "me/yakar/tib/pack/$stack/wrapper"
-  from(root.files("gradlew", "gradlew.bat")) { into(wrapper) }
-  from(
-    root.files("gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties"),
-  ) {
-    into("$wrapper/gradle/wrapper")
-  }
-}
-
-// Coverage leaves out the classes that jte generates from the templates, and the jar of the Gradle
-// wrapper that the pack carries.
+// Coverage leaves out the classes that jte generates from the templates.
 tasks.withType<JacocoReportBase>().configureEach {
   classDirectories.setFrom(
-    classDirectories.files.map { fileTree(it) { exclude("gg/jte/generated/**", "**/*.jar") } },
+    classDirectories.files.map { fileTree(it) { exclude("gg/jte/generated/**") } },
   )
 }
 

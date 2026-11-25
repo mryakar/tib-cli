@@ -15,12 +15,9 @@
  */
 package me.yakar.tib.pack.spring;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.util.Properties;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Pack;
+import me.yakar.tib.pack.PackProperties;
 import me.yakar.tib.pack.Templates;
 
 /**
@@ -32,16 +29,16 @@ public final class SpringPack implements Pack {
   /** The templates of the pack, which its build compiles into a package of their own. */
   static final Templates TEMPLATES = new Templates("gg.jte.generated.spring");
 
-  private final Properties properties = load(stream("pack.properties"));
+  private final PackProperties properties = PackProperties.of(SpringPack.class);
 
   @Override
   public String name() {
-    return properties.getProperty("name");
+    return "default";
   }
 
   @Override
   public String version() {
-    return properties.getProperty("version");
+    return properties.get("version");
   }
 
   /** Spring Boot, by its major version, as in {@code Spring Boot 4}. */
@@ -53,22 +50,22 @@ public final class SpringPack implements Pack {
 
   /** The Spring Boot version of the generated service. */
   public String bootVersion() {
-    return properties.getProperty("boot");
+    return properties.get("boot");
   }
 
   /** The ArchUnit version of the tests of the architecture of the generated service. */
   public String archunitVersion() {
-    return properties.getProperty("archunit");
+    return properties.get("archunit");
   }
 
   /** The version of google-java-format, whose layout the generated Java has. */
   public String formatterVersion() {
-    return properties.getProperty("google-java-format");
+    return properties.get("google-java-format");
   }
 
   /** The PostgreSQL major version that the tests of the generated service run against. */
   public String postgresVersion() {
-    return properties.getProperty("postgres");
+    return properties.get("postgres");
   }
 
   @Override
@@ -79,36 +76,5 @@ public final class SpringPack implements Pack {
   @Override
   public Generator entity() {
     return new EntityGenerator();
-  }
-
-  /** A file that the pack carries, next to this class, as bytes. */
-  static byte[] resource(String name) {
-    return bytes(stream(name));
-  }
-
-  private static InputStream stream(String name) {
-    InputStream stream = SpringPack.class.getResourceAsStream(name);
-    if (stream == null) {
-      throw new IllegalStateException("the pack does not carry " + name);
-    }
-    return stream;
-  }
-
-  static byte[] bytes(InputStream stream) {
-    try (stream) {
-      return stream.readAllBytes();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  static Properties load(InputStream stream) {
-    Properties properties = new Properties();
-    try (stream) {
-      properties.load(stream);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-    return properties;
   }
 }
