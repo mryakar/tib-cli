@@ -101,7 +101,8 @@ jobs:
       - name: Install the zip with Homebrew and run tib
         if: runner.os == 'macOS'
         run: |
-          zip="$(ls "$PWD"/tib-cli/build/packages/tib-*-macos-*.zip)"
+          zips=("$PWD"/tib-cli/build/packages/tib-*-macos-*.zip)
+          zip="${zips[0]}"
           version="$(basename "$zip")"
           version="${version#tib-}"
           version="${version%-macos-*}"
