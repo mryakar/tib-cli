@@ -58,20 +58,7 @@ class StatusCommand implements Callable<Integer> {
     List<Difference> inputs = state.inputDifferences(tree.root());
     List<Difference> files = state.differences(tree);
     PrintWriter out = commandSpec.commandLine().getOut();
-    int entities = state.spec().entities().size();
-    out.println(
-        state.spec().service()
-            + ": tib "
-            + state.tib()
-            + ", pack "
-            + state.pack().name()
-            + " "
-            + state.pack().version()
-            + ", "
-            + Messages.count(entities, "entity", "entities")
-            + ", "
-            + Messages.count(state.files().size(), "file", "files")
-            + ".");
+    out.println(summary(state));
     if (inputs.isEmpty() && !state.inputs().isEmpty()) {
       out.println("Every file that tib read the spec from is as it read it.");
     }
@@ -81,17 +68,25 @@ class StatusCommand implements Callable<Integer> {
     list(out, "Read from:", inputs);
     list(out, "Files:", files);
     List<Difference> differences = Stream.concat(inputs.stream(), files.stream()).toList();
-    if (differences.isEmpty()) {
-      return ExitCode.OK;
-    }
-    out.println();
-    for (Difference.Kind kind : Difference.Kind.values()) {
-      if (differences.stream().anyMatch(difference -> difference.kind() == kind)) {
-        out.println(explanation(kind));
-      }
-    }
+    explain(out, differences);
     boolean wrong = differences.stream().anyMatch(difference -> difference.kind().problem());
     return wrong ? TibCommand.PROBLEM : ExitCode.OK;
+  }
+
+  /** The service in a line: what generated it, and how many entities and files it has. */
+  private static String summary(State state) {
+    return state.spec().service()
+        + ": tib "
+        + state.tib()
+        + ", pack "
+        + state.pack().name()
+        + " "
+        + state.pack().version()
+        + ", "
+        + Messages.count(state.spec().entities().size(), "entity", "entities")
+        + ", "
+        + Messages.count(state.files().size(), "file", "files")
+        + ".";
   }
 
   /** The differences under their heading, after an empty line; nothing when there are none. */
@@ -103,6 +98,19 @@ class StatusCommand implements Callable<Integer> {
     out.println(heading);
     for (Difference difference : differences) {
       out.printf("%-8s %s%n", difference.kind(), difference.path());
+    }
+  }
+
+  /** What each kind of difference that is there means, after an empty line. */
+  private static void explain(PrintWriter out, List<Difference> differences) {
+    if (differences.isEmpty()) {
+      return;
+    }
+    out.println();
+    for (Difference.Kind kind : Difference.Kind.values()) {
+      if (differences.stream().anyMatch(difference -> difference.kind() == kind)) {
+        out.println(explanation(kind));
+      }
     }
   }
 
