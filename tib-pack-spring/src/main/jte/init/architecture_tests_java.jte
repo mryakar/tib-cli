@@ -22,10 +22,12 @@ import org.springframework.web.bind.annotation.RestController;
  */
 class ArchitectureTests {
 
+  private static final String BASE = "${project.basePackage()}";
+
   private static final JavaClasses CLASSES =
       new ClassFileImporter()
           .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-          .importPackages("${project.basePackage()}");
+          .importPackages(BASE);
 
   @Test
   void onlyControllersUseControllers() {
@@ -73,7 +75,7 @@ class ArchitectureTests {
   @Test
   void thePackagesOfTheEntitiesHaveNoCycle() {
     slices()
-        .matching("${project.basePackage()}.(*)..")
+        .matching(BASE + ".(*)..")
         .should()
         .beFreeOfCycles()
         .allowEmptyShould(true)
