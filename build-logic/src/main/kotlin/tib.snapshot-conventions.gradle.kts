@@ -18,7 +18,7 @@
 // ./gradlew test updateSnapshots --continue: the snapshots become what the unit tests wrote, and
 // git diff shows the change. Copied by hand, as Gradle's copies leave out .gitignore files. The
 // unit tests start with nothing under build/snapshots/test, so the snapshots become what this run
-// of them wrote: all of them, when the run is the whole suite.
+// of them wrote: updateSnapshots refuses a run that did not write every snapshot.
 import me.yakar.tib.gradle.snapshots.TestRun
 
 plugins { id("tib.java-conventions") }
@@ -30,9 +30,6 @@ tasks {
     gradle.startParameter.taskNames.any {
       it == "updateSnapshots" || it.endsWith(":updateSnapshots")
     }
-  // A run of some of the unit tests writes only their snapshots, and the others would be deleted.
-  val filtered =
-    gradle.startParameter.taskNames.any { it == "--tests" || it.startsWith("--tests=") }
   val expected = layout.projectDirectory.dir("src/test/snapshots").asFile
   val actual = layout.buildDirectory.dir("snapshots/test")
   // Tests that did not run in this build wrote nothing to copy: updateSnapshots asks for a run.
@@ -65,16 +62,18 @@ tasks {
     mustRunAfter(test)
     usesService(testRun)
     doLast {
-      check(!filtered) {
-        "updateSnapshots replaces every snapshot with what the unit tests of this run wrote:" +
-          " run it without --tests"
-      }
       check(testRun.get().ran.get()) {
         "The unit tests did not run in this build, so there is nothing of theirs to copy:" +
           " run them again with the full name of the task, as in test updateSnapshots --continue"
       }
       val written = actual.get().asFile
       check(written.isDirectory) { "$written is missing: the unit tests wrote no snapshot" }
+      // A run of some of the unit tests, or one in which a test fails early, writes some snapshots.
+      val missing = expected.list().orEmpty().filterNot { written.resolve(it).exists() }.sorted()
+      check(missing.isEmpty()) {
+        "The unit tests of this run did not write ${missing.joinToString()}: run all of them," +
+          " or delete by hand a snapshot that is gone on purpose"
+      }
       expected.deleteRecursively()
       written.copyRecursively(expected)
     }
