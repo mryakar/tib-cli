@@ -154,6 +154,26 @@ class EntityGeneratorSpec extends Specification {
     '  - name: A\n    options: { mapper: false, pagination: false }\n'          | false | false
   }
 
+  def "a repository has nothing that only the tests call: they empty the tables through the database of the tests, and count the rows of a list in pages"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new EntityGenerator().generate(project('entities:\n  - name: B\n    options: { pagination: false }\n  - name: A\n    relations:\n      - { kind: manyToOne, target: B, nullable: false }\n'), tree)
+    String a = tree.read(BASE + 'a/ARepository.java').orElseThrow()
+    String b = tree.read(BASE + 'b/BRepository.java').orElseThrow()
+    String tests = BASE.replace('/main/', '/test/')
+
+    then:
+    !a.contains('deleteAll') && !b.contains('deleteAll')
+    a.contains('  public long count() throws SQLException {\n')
+    !b.contains('count()')
+    tree.read(tests + 'a/ARepositoryTests.java').orElseThrow().contains('  void deleteAll() {\n    TestDatabase.clear("A", "B");\n  }\n')
+    tree.read(tests + 'a/AApiTests.java').orElseThrow().contains('  void deleteAll() {\n    TestDatabase.clear("A", "B");\n  }\n')
+    tree.read(tests + 'b/BRepositoryTests.java').orElseThrow().contains('    List<B> found = transactions.run(() -> bRepository.findAll());\n    assertEquals(1, found.size());\n')
+    !tree.read(tests + 'b/BApiTests.java').orElseThrow().contains('Transactions')
+  }
+
   def "a service learns from the update and from the delete whether the row was there, without a query before the delete: #architecture"() {
     given:
     Tree tree = Tree.at(dir)

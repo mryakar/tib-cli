@@ -23,11 +23,7 @@ class BranchPersistenceAdapterTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          branchRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("BRANCH");
   }
 
   @Test

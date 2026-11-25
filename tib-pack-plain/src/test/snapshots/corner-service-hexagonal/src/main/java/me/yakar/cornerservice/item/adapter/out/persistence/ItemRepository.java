@@ -109,13 +109,6 @@ public class ItemRepository {
     }
   }
 
-  /** Deletes every item. */
-  public void deleteAll() throws SQLException {
-    try (PreparedStatement statement = connection().prepareStatement("DELETE FROM ITEM")) {
-      statement.executeUpdate();
-    }
-  }
-
   private Connection connection() {
     return transactions.connection();
   }

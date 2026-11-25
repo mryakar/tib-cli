@@ -15,7 +15,6 @@ import me.yakar.cornerservice.branch.BranchSamples;
 import me.yakar.cornerservice.branch.domain.Branch;
 import me.yakar.cornerservice.branch.domain.BranchRepository;
 import me.yakar.cornerservice.tag.TagSamples;
-import me.yakar.cornerservice.tag.domain.TagRepository;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,7 +28,6 @@ class TagApiTests {
   private static TestService service;
 
   private final Transactions transactions = new Transactions(TestDatabase.dataSource());
-  private final TagRepository tagRepository = new TagRepository(transactions);
   private final BranchRepository branchRepository = new BranchRepository(transactions);
 
   @BeforeAll
@@ -51,12 +49,7 @@ class TagApiTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          tagRepository.deleteAll();
-          branchRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("TAG", "BRANCH");
   }
 
   @Test

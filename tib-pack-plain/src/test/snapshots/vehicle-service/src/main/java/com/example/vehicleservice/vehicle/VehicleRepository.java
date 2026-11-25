@@ -128,13 +128,6 @@ public class VehicleRepository {
     }
   }
 
-  /** Deletes every vehicle. */
-  public void deleteAll() throws SQLException {
-    try (PreparedStatement statement = connection().prepareStatement("DELETE FROM VEHICLE")) {
-      statement.executeUpdate();
-    }
-  }
-
   private Connection connection() {
     return transactions.connection();
   }

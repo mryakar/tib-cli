@@ -70,6 +70,7 @@ public class ${name}Repository {
     return ${entity.plural()};
   }
   @endif
+  @if(entity.paginated())
 
   /** How many ${entity.plural()} there are. */
   public long count() throws SQLException {
@@ -79,6 +80,7 @@ public class ${name}Repository {
       return rows.getLong(1);
     }
   }
+  @endif
 
   public Optional<${name}> findById(${entity.idType()} id) throws SQLException {
     try (PreparedStatement statement =
@@ -148,13 +150,6 @@ public class ${name}Repository {
     try (PreparedStatement statement = connection().prepareStatement("DELETE FROM ${entity.table()} WHERE ${entity.idColumn()} = ?")) {
       statement.setObject(1, id);
       return statement.executeUpdate() == 1;
-    }
-  }
-
-  /** Deletes every ${variable}. */
-  public void deleteAll() throws SQLException {
-    try (PreparedStatement statement = connection().prepareStatement("DELETE FROM ${entity.table()}")) {
-      statement.executeUpdate();
     }
   }
 

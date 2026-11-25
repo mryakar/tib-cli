@@ -110,13 +110,6 @@ public class TagRepository {
     }
   }
 
-  /** Deletes every tag. */
-  public void deleteAll() throws SQLException {
-    try (PreparedStatement statement = connection().prepareStatement("DELETE FROM TAG")) {
-      statement.executeUpdate();
-    }
-  }
-
   private Connection connection() {
     return transactions.connection();
   }

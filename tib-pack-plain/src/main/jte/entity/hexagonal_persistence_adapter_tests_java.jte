@@ -43,14 +43,7 @@ class ${name}PersistenceAdapterTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          ${repository}.deleteAll();
-          @for(var target : tests.requiredTargets().reversed())
-          ${target.variable()}Repository.deleteAll();
-          @endfor
-          return null;
-        });
+    TestDatabase.clear(${tests.tables()});
   }
 
   @Test

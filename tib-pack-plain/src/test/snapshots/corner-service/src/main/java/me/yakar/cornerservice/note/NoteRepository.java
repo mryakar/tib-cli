@@ -100,13 +100,6 @@ public class NoteRepository {
     }
   }
 
-  /** Deletes every note. */
-  public void deleteAll() throws SQLException {
-    try (PreparedStatement statement = connection().prepareStatement("DELETE FROM NOTE")) {
-      statement.executeUpdate();
-    }
-  }
-
   private Connection connection() {
     return transactions.connection();
   }

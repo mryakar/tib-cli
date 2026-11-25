@@ -19,11 +19,7 @@ class DepotRepositoryTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          depotRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("DEPOTS");
   }
 
   @Test

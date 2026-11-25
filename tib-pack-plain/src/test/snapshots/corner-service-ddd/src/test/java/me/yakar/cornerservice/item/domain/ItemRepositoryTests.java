@@ -31,12 +31,7 @@ class ItemRepositoryTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          itemRepository.deleteAll();
-          branchRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("ITEM", "BRANCH");
   }
 
   @Test

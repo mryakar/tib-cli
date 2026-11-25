@@ -106,13 +106,6 @@ public class DepotRepository {
     }
   }
 
-  /** Deletes every depot. */
-  public void deleteAll() throws SQLException {
-    try (PreparedStatement statement = connection().prepareStatement("DELETE FROM DEPOTS")) {
-      statement.executeUpdate();
-    }
-  }
-
   private Connection connection() {
     return transactions.connection();
   }

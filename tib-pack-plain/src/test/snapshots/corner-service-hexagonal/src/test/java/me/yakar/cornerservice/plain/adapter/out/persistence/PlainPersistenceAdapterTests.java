@@ -22,11 +22,7 @@ class PlainPersistenceAdapterTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          plainRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("PLAIN");
   }
 
   @Test

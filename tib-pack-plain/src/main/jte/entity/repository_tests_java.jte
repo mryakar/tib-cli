@@ -23,6 +23,9 @@ ${Sources.importOf(entity.persistencePackage(), target.domainPackage(), target.n
 ${Sources.importOf(entity.persistencePackage(), target.persistencePackage(), target.name() + "Repository")}
 ${Sources.importOf(entity.persistencePackage(), target.packageName(), target.name() + "Samples")}
 @endfor
+@if(!entity.paginated())
+import java.util.List;
+@endif
 import org.junit.jupiter.api.AfterEach;
 @if(!tests.requiredTargets().isEmpty())
 import org.junit.jupiter.api.BeforeEach;
@@ -41,14 +44,7 @@ class ${name}RepositoryTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          ${repository}.deleteAll();
-          @for(var target : tests.requiredTargets().reversed())
-          ${target.variable()}Repository.deleteAll();
-          @endfor
-          return null;
-        });
+    TestDatabase.clear(${tests.tables()});
   }
 
   @Test
@@ -92,11 +88,12 @@ class ${name}RepositoryTests {
     assertEquals(
         ${entity.variable()}.getId(),
         transactions.run(() -> ${repository}.findAll(0, 20)).content().getFirst().getId());
-    @else
-    assertEquals(
-        ${entity.variable()}.getId(), transactions.run(() -> ${repository}.findAll()).getFirst().getId());
-    @endif
     assertEquals(1, transactions.run(${repository}::count));
+    @else
+    List<${name}> found = transactions.run(() -> ${repository}.findAll());
+    assertEquals(1, found.size());
+    assertEquals(${entity.variable()}.getId(), found.getFirst().getId());
+    @endif
   }
 
   @Test

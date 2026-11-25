@@ -11,7 +11,6 @@ import java.net.http.HttpResponse;
 import me.yakar.cornerservice.Json;
 import me.yakar.cornerservice.TestDatabase;
 import me.yakar.cornerservice.TestService;
-import me.yakar.cornerservice.Transactions;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -22,9 +21,6 @@ import tools.jackson.databind.JsonNode;
 class BranchApiTests {
 
   private static TestService service;
-
-  private final Transactions transactions = new Transactions(TestDatabase.dataSource());
-  private final BranchRepository branchRepository = new BranchRepository(transactions);
 
   @BeforeAll
   static void start() throws IOException {
@@ -38,11 +34,7 @@ class BranchApiTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          branchRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("BRANCH");
   }
 
   @Test

@@ -20,11 +20,7 @@ class VehicleRepositoryTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          vehicleRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("VEHICLE");
   }
 
   @Test

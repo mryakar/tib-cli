@@ -19,11 +19,7 @@ class NoteRepositoryTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          noteRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("NOTE");
   }
 
   @Test

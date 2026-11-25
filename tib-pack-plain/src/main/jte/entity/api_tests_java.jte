@@ -8,7 +8,6 @@
 !{String name = entity.name();}
 !{String path = entity.path();}
 !{String type = name + "Dto";}
-!{String repository = entity.variable() + "Repository";}
 package ${entity.webPackage()};
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,9 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import ${entity.basePackage()}.Json;
 import ${entity.basePackage()}.TestDatabase;
 import ${entity.basePackage()}.TestService;
+@if(!tests.requiredTargets().isEmpty())
 import ${entity.basePackage()}.Transactions;
+@endif
 ${Sources.importOf(entity.webPackage(), entity.packageName(), name + "Samples")}
-${Sources.importOf(entity.webPackage(), entity.persistencePackage(), name + "Repository")}
 @for(var target : tests.requiredTargets())
 ${Sources.importOf(entity.webPackage(), target.domainPackage(), target.name())}
 ${Sources.importOf(entity.webPackage(), target.persistencePackage(), target.name() + "Repository")}
@@ -47,12 +47,13 @@ import tools.jackson.databind.JsonNode;
 class ${name}ApiTests {
 
   private static TestService service;
+  @if(!tests.requiredTargets().isEmpty())<%-- keeps the blank line below --%>
 
   private final Transactions transactions = new Transactions(TestDatabase.dataSource());
-  private final ${name}Repository ${repository} = new ${name}Repository(transactions);
   @for(var target : tests.requiredTargets())
   private final ${target.name()}Repository ${target.variable()}Repository = new ${target.name()}Repository(transactions);
   @endfor
+  @endif
 
   @BeforeAll
   static void start() throws IOException {
@@ -67,14 +68,7 @@ class ${name}ApiTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          ${repository}.deleteAll();
-          @for(var target : tests.requiredTargets().reversed())
-          ${target.variable()}Repository.deleteAll();
-          @endfor
-          return null;
-        });
+    TestDatabase.clear(${tests.tables()});
   }
 
   @Test
