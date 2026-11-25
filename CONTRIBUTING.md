@@ -46,7 +46,8 @@ Antora runs the documentation tasks of the build itself and writes the site to `
   `Dockerfile`; elsewhere it compiles the service and its tests.
 - A change of a template, of the state file or of the schema of the spec changes the snapshots
   under `src/test/snapshots` of its module: `./gradlew test updateSnapshots --continue` replaces
-  them with what the tests wrote, and wants every unit test: it refuses a run with `--tests`.
+  them with what the tests wrote, and wants every unit test: it refuses a run that did not write
+  every snapshot, such as one with `--tests`, and names the ones that are missing.
   Review the change with `git diff`; the change and its snapshots go in one commit of their own.
   An update of the stack that a pack generates, such as Spring Boot, comes in a pull request of its
   own, with the acceptance tests green.
@@ -85,8 +86,8 @@ contain only related changes. CI checks every commit message in a pull request.
 - `main` is protected; all changes go through pull requests, one at a time.
 - Pull requests are merged with **rebase and merge** only, so every commit lands on `main` as-is.
   Rebase your branch onto `main` instead of merging `main` into it.
-- CI builds and tests on Linux and Windows, on Java 21 and 25, builds the packages for Linux,
-  Windows and macOS, and installs each of them.
+- CI builds and tests on Linux and Windows, on Java 21 and 25, and on macOS on Java 21, builds
+  the packages for Linux, Windows and macOS, and installs each of them.
 
 ## Releases
 
@@ -102,7 +103,7 @@ with them, their checksums and signatures. Before the maintainer publishes it, a
 request sets `version=X.Y+1.0-SNAPSHOT`: until that is merged, `main` is not a prerelease, and the
 site shows it as the latest version. The APT repository on GitHub Pages picks up the `.deb` of
 every published release, and the Homebrew workflow writes the formula of its macOS zips into the
-tap `mryakar/tap`.
+tap `mryakar/tap`. Run by hand, that workflow takes the tag of the latest release only.
 
 ## License
 
