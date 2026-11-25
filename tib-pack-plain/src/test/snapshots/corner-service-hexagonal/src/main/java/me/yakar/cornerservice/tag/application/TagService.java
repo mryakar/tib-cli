@@ -40,26 +40,24 @@ public class TagService implements TagUseCase {
 
   @Override
   public Tag update(Long id, Consumer<Tag> change) {
-    return transactions.run(
-        () -> {
-          Tag tag = find(id);
-          change.accept(tag);
-          if (!store.update(tag)) {
-            throw notFound(id);
-          }
-          return tag;
-        });
+    return transactions.run(() -> {
+      Tag tag = find(id);
+      change.accept(tag);
+      if (!store.update(tag)) {
+        throw notFound(id);
+      }
+      return tag;
+    });
   }
 
   @Override
   public void delete(Long id) {
-    transactions.run(
-        () -> {
-          if (!store.delete(id)) {
-            throw notFound(id);
-          }
-          return null;
-        });
+    transactions.run(() -> {
+      if (!store.delete(id)) {
+        throw notFound(id);
+      }
+      return null;
+    });
   }
 
   private Tag find(Long id) {

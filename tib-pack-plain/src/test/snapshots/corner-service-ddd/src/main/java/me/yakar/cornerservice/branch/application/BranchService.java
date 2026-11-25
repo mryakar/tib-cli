@@ -37,25 +37,23 @@ public class BranchService {
 
   /** Changes the branch as the change does, and saves it. */
   public Branch update(Long id, Consumer<Branch> change) {
-    return transactions.run(
-        () -> {
-          Branch branch = find(id);
-          change.accept(branch);
-          if (!repository.update(branch)) {
-            throw notFound(id);
-          }
-          return branch;
-        });
+    return transactions.run(() -> {
+      Branch branch = find(id);
+      change.accept(branch);
+      if (!repository.update(branch)) {
+        throw notFound(id);
+      }
+      return branch;
+    });
   }
 
   public void delete(Long id) {
-    transactions.run(
-        () -> {
-          if (!repository.delete(id)) {
-            throw notFound(id);
-          }
-          return null;
-        });
+    transactions.run(() -> {
+      if (!repository.delete(id)) {
+        throw notFound(id);
+      }
+      return null;
+    });
   }
 
   private Branch find(Long id) throws SQLException {

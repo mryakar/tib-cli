@@ -56,6 +56,9 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   identifiers, whole or in pages. The classes of an entity that is there already are yours, and
   stay as they are.
 - `tib init service` writes the wrapper of Gradle 9.9.1 into a new service, instead of 9.8.2.
+- The Java that tib writes is in the layout of google-java-format 2.0.0, instead of 1.36.1: a
+  lambda with a block stays on the line of its call. The next `tib generate entity` writes the
+  files of tib's of a service in it; yours stay as they are.
 - The help of `tib` and of `tib init service` names both stacks, and that of `tib init service`
   says what it asks for when the command line has no name.
 

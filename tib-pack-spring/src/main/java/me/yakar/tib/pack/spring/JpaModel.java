@@ -165,12 +165,8 @@ public final class JpaModel {
    */
   public String persistenceClasses(List<EntityModel> requiredTargets) {
     return Stream.concat(Stream.of(entity), requiredTargets.stream())
-        .map(
-            model ->
-                model.name()
-                    + "PersistenceAdapter.class, "
-                    + model.name()
-                    + "PersistenceMapper.class")
+        .map(model ->
+            model.name() + "PersistenceAdapter.class, " + model.name() + "PersistenceMapper.class")
         .collect(Collectors.joining(", ", "TestcontainersConfiguration.class, ", ""));
   }
 

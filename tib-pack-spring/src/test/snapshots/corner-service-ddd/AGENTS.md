@@ -57,7 +57,7 @@ classes of the service with ArchUnit: the domain of an entity uses neither its a
 web, the application does not use the web, the domain of an aggregate does not use the domain of
 another, and there is no cycle between the packages of the entities; it is yours.
 
-The Java that tib writes is in the layout of google-java-format 1.36.1: formatted
+The Java that tib writes is in the layout of google-java-format 2.0.0: formatted
 with it, the files of tib's stay as tib wrote them.
 
 `tib status` lists the files of tib's that differ from what it wrote, and the spec files and DDL

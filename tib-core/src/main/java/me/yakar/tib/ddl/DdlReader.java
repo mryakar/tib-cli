@@ -95,12 +95,11 @@ public final class DdlReader {
     for (Entity entity : service.entities()) {
       merged.add(entities.getOrDefault(key(entity.table()), entity));
     }
-    entities.forEach(
-        (table, entity) -> {
-          if (!known.containsKey(table)) {
-            merged.add(entity);
-          }
-        });
+    entities.forEach((table, entity) -> {
+      if (!known.containsKey(table)) {
+        merged.add(entity);
+      }
+    });
     return service.withEntities(merged).check();
   }
 
@@ -206,10 +205,8 @@ public final class DdlReader {
         .matcher(message)
         .results()
         .findFirst()
-        .map(
-            at ->
-                ", at "
-                    + statement.at(Integer.parseInt(at.group(1)), Integer.parseInt(at.group(2))))
+        .map(at ->
+            ", at " + statement.at(Integer.parseInt(at.group(1)), Integer.parseInt(at.group(2))))
         .orElse("");
   }
 

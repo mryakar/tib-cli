@@ -30,34 +30,31 @@ public class DepotService {
   }
 
   public DepotDto create(DepotDto dto) {
-    return transactions.run(
-        () -> {
-          Depot depot = new Depot();
-          mapper.update(dto, depot);
-          return mapper.toDto(repository.insert(depot));
-        });
+    return transactions.run(() -> {
+      Depot depot = new Depot();
+      mapper.update(dto, depot);
+      return mapper.toDto(repository.insert(depot));
+    });
   }
 
   public DepotDto update(UUID id, DepotDto dto) {
-    return transactions.run(
-        () -> {
-          Depot depot = find(id);
-          mapper.update(dto, depot);
-          if (!repository.update(depot)) {
-            throw notFound(id);
-          }
-          return mapper.toDto(depot);
-        });
+    return transactions.run(() -> {
+      Depot depot = find(id);
+      mapper.update(dto, depot);
+      if (!repository.update(depot)) {
+        throw notFound(id);
+      }
+      return mapper.toDto(depot);
+    });
   }
 
   public void delete(UUID id) {
-    transactions.run(
-        () -> {
-          if (!repository.delete(id)) {
-            throw notFound(id);
-          }
-          return null;
-        });
+    transactions.run(() -> {
+      if (!repository.delete(id)) {
+        throw notFound(id);
+      }
+      return null;
+    });
   }
 
   private Depot find(UUID id) throws SQLException {

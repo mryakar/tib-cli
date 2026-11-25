@@ -30,34 +30,31 @@ public class VehicleService {
   }
 
   public VehicleDto create(VehicleDto dto) {
-    return transactions.run(
-        () -> {
-          Vehicle vehicle = new Vehicle();
-          mapper.update(dto, vehicle);
-          return mapper.toDto(repository.insert(vehicle));
-        });
+    return transactions.run(() -> {
+      Vehicle vehicle = new Vehicle();
+      mapper.update(dto, vehicle);
+      return mapper.toDto(repository.insert(vehicle));
+    });
   }
 
   public VehicleDto update(Long id, VehicleDto dto) {
-    return transactions.run(
-        () -> {
-          Vehicle vehicle = find(id);
-          mapper.update(dto, vehicle);
-          if (!repository.update(vehicle)) {
-            throw notFound(id);
-          }
-          return mapper.toDto(vehicle);
-        });
+    return transactions.run(() -> {
+      Vehicle vehicle = find(id);
+      mapper.update(dto, vehicle);
+      if (!repository.update(vehicle)) {
+        throw notFound(id);
+      }
+      return mapper.toDto(vehicle);
+    });
   }
 
   public void delete(Long id) {
-    transactions.run(
-        () -> {
-          if (!repository.delete(id)) {
-            throw notFound(id);
-          }
-          return null;
-        });
+    transactions.run(() -> {
+      if (!repository.delete(id)) {
+        throw notFound(id);
+      }
+      return null;
+    });
   }
 
   private Vehicle find(Long id) throws SQLException {

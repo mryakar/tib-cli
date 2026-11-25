@@ -169,11 +169,10 @@ public final class EntityTestsModel {
     return Stream.concat(
             fieldProperties(),
             entity.relations().stream()
-                .map(
-                    relation ->
-                        entity.refersById()
-                            ? new Property(relation.target().idType(), relation.idField())
-                            : new Property(relation.target().name(), relation.field())))
+                .map(relation ->
+                    entity.refersById()
+                        ? new Property(relation.target().idType(), relation.idField())
+                        : new Property(relation.target().name(), relation.field())))
         .toList();
   }
 

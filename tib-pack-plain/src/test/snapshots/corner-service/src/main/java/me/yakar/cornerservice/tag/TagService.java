@@ -29,34 +29,31 @@ public class TagService {
   }
 
   public TagDto create(TagDto dto) {
-    return transactions.run(
-        () -> {
-          Tag tag = new Tag();
-          mapper.update(dto, tag);
-          return mapper.toDto(repository.insert(tag));
-        });
+    return transactions.run(() -> {
+      Tag tag = new Tag();
+      mapper.update(dto, tag);
+      return mapper.toDto(repository.insert(tag));
+    });
   }
 
   public TagDto update(Long id, TagDto dto) {
-    return transactions.run(
-        () -> {
-          Tag tag = find(id);
-          mapper.update(dto, tag);
-          if (!repository.update(tag)) {
-            throw notFound(id);
-          }
-          return mapper.toDto(tag);
-        });
+    return transactions.run(() -> {
+      Tag tag = find(id);
+      mapper.update(dto, tag);
+      if (!repository.update(tag)) {
+        throw notFound(id);
+      }
+      return mapper.toDto(tag);
+    });
   }
 
   public void delete(Long id) {
-    transactions.run(
-        () -> {
-          if (!repository.delete(id)) {
-            throw notFound(id);
-          }
-          return null;
-        });
+    transactions.run(() -> {
+      if (!repository.delete(id)) {
+        throw notFound(id);
+      }
+      return null;
+    });
   }
 
   private Tag find(Long id) throws SQLException {

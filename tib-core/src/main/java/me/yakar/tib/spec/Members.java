@@ -105,20 +105,17 @@ final class Members {
    * @param entities the entities of the spec, by name
    */
   void targetIds(Map<String, Entity> entities) {
-    relations.forEach(
-        (relationPath, relation) -> {
-          Entity target = entities.get(relation.target());
-          if (target != null) {
-            String member = relation.field() + Names.property(target.id().field());
-            if (!members.add(member)) {
-              problems.add(
-                  relationPath + ".field",
-                  "'"
-                      + member
-                      + "', which holds the identifier of the target, is already a member");
-            }
-          }
-        });
+    relations.forEach((relationPath, relation) -> {
+      Entity target = entities.get(relation.target());
+      if (target != null) {
+        String member = relation.field() + Names.property(target.id().field());
+        if (!members.add(member)) {
+          problems.add(
+              relationPath + ".field",
+              "'" + member + "', which holds the identifier of the target, is already a member");
+        }
+      }
+    });
   }
 
   private String taken(String member) {

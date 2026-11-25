@@ -98,13 +98,12 @@ public final class DtoModel {
     return entity.fields().stream()
         .filter(field -> field.precision() != null)
         .findFirst()
-        .map(
-            field ->
-                new TooLarge(
-                    field.name(),
-                    "BigDecimal.TEN.pow("
-                        + (field.precision() - (field.scale() == null ? 0 : field.scale()))
-                        + ")"));
+        .map(field ->
+            new TooLarge(
+                field.name(),
+                "BigDecimal.TEN.pow("
+                    + (field.precision() - (field.scale() == null ? 0 : field.scale()))
+                    + ")"));
   }
 
   /**
