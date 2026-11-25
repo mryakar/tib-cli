@@ -349,16 +349,25 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
     } catch (SpecException e) {
       throw new StateException(e.problems());
     }
+    List<String> problems = state.problems();
+    if (!problems.isEmpty()) {
+      throw new StateException(problems);
+    }
+    return state;
+  }
+
+  /** The values that the state lacks, and the problems of its spec, each by its path. */
+  private List<String> problems() {
     List<String> problems = new ArrayList<>();
-    required(problems, "tib", state.tib());
-    if (state.pack() == null) {
+    required(problems, "tib", tib);
+    if (pack == null) {
       problems.add("pack: required");
     } else {
-      required(problems, "pack.name", state.pack().name());
-      required(problems, "pack.version", state.pack().version());
+      required(problems, "pack.name", pack.name());
+      required(problems, "pack.version", pack.version());
     }
-    for (int i = 0; i < state.inputs().size(); i++) {
-      Input input = state.inputs().get(i);
+    for (int i = 0; i < inputs.size(); i++) {
+      Input input = inputs.get(i);
       if (input == null) {
         problems.add("inputs[" + i + "]: missing");
       } else {
@@ -367,17 +376,17 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
         required(problems, "inputs[" + i + "].sha256", input.sha256());
       }
     }
-    if (state.spec() == null) {
+    if (spec == null) {
       problems.add("spec: required");
     } else {
       try {
-        state.spec().check();
+        spec.check();
       } catch (SpecException e) {
         e.problems().forEach(problem -> problems.add("spec." + problem));
       }
     }
-    for (int i = 0; i < state.files().size(); i++) {
-      File file = state.files().get(i);
+    for (int i = 0; i < files.size(); i++) {
+      File file = files.get(i);
       if (file == null) {
         problems.add("files[" + i + "]: missing");
       } else {
@@ -386,10 +395,7 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
         required(problems, "files[" + i + "].sha256", file.sha256());
       }
     }
-    if (!problems.isEmpty()) {
-      throw new StateException(problems);
-    }
-    return state;
+    return problems;
   }
 
   /**
