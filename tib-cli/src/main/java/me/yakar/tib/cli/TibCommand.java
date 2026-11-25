@@ -41,7 +41,7 @@ import picocli.CommandLine.ScopeType;
       StatusCommand.class,
       SchemaCommand.class
     })
-public class TibCommand {
+final class TibCommand {
 
   /** The exit code of a problem that the user can fix. */
   static final int PROBLEM = 1;

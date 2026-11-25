@@ -25,7 +25,7 @@ import picocli.CommandLine.IFactory;
  * Builds the commands of tib with the version that they print and write into the state file, and
  * the answers to the questions that they ask.
  */
-public final class CommandFactory implements IFactory {
+final class CommandFactory implements IFactory {
 
   private final TibVersion version;
 
@@ -35,7 +35,7 @@ public final class CommandFactory implements IFactory {
    * With the version that the build wrote into the application, and the answers to its questions
    * from standard input.
    */
-  public CommandFactory() {
+  CommandFactory() {
     this(TibVersion.ofBuild(), System.in);
   }
 
