@@ -28,11 +28,9 @@ import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
 
 /**
- * Generates a new service: the build and its Gradle wrapper, the application that wires the service
- * by hand, its configuration, the support of its transactions and of its JSON, the tests that start
- * PostgreSQL in a container, a main against it, and the notes for agents. Every file is written
- * once and is the developer's from then on, but for the routes of the API, which tib keeps in step
- * with the entities of the spec: a new service has none.
+ * Generates a new service: its build, its application, and the tests and the Dockerfile that its
+ * spec chooses. Every file is written once and is the developer's from then on, but for the routes
+ * of the API, which tib keeps in step with the entities of the spec: a new service has none.
  */
 final class InitGenerator implements Generator {
 

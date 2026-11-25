@@ -171,8 +171,8 @@ public final class EntityModel {
   }
 
   /**
-   * The package of the entity, and of its repository but in the hexagonal architecture: its domain,
-   * or the package of the entity.
+   * The package of the entity: its domain, or the package of the entity in the anemic architecture.
+   * The repository is there too, except in the hexagonal architecture.
    */
   public String domainPackage() {
     return layerPackage("domain", "domain");
@@ -184,8 +184,8 @@ public final class EntityModel {
   }
 
   /**
-   * The package of the controller, the DTO and the mapper: its web, its inbound adapter of the web,
-   * or the package of the entity.
+   * The package of the controller or the handler, the DTO and the mapper: its web, its inbound
+   * adapter of the web, or the package of the entity.
    */
   public String webPackage() {
     return layerPackage("web", "adapter.in.web");
@@ -291,7 +291,10 @@ public final class EntityModel {
     return entity.options().dto();
   }
 
-  /** Whether the service and the controller are generated: they need the DTO and the mapper. */
+  /**
+   * Whether the service and the controller or the handler are generated: they need the DTO and the
+   * mapper.
+   */
   public boolean layer() {
     return entity.options().dto() && entity.options().mapper();
   }
@@ -329,8 +332,8 @@ public final class EntityModel {
 
   /**
    * The arguments of the DTO of an entity, in the order of its components; a relation is the
-   * identifier of its target, or null: of the entity it refers to, or the one it keeps for DDD and
-   * the hexagonal architecture.
+   * identifier of its target, or null: the one the entity keeps when it refers by identifier, else
+   * the one of the entity it refers to.
    */
   public String dtoArguments() {
     String variable = variable();

@@ -70,7 +70,8 @@ public final class EntityTestsModel {
 
   /**
    * The parameters of the samples of the entity: the saved targets of its required relations, as in
-   * {@code Depot depot}.
+   * {@code Depot depot}, or their identifiers where the entity refers by identifier, as in {@code
+   * Long depotId}.
    */
   public String requiredParameters() {
     return entity.refersById()
@@ -121,7 +122,8 @@ public final class EntityTestsModel {
 
   /**
    * The calls that give a builder of the entity the first or the second sample values, and the
-   * saved targets of its required relations: {@code .name("One").depot(depot)}.
+   * saved targets of its required relations, or their identifiers where the entity refers by
+   * identifier: {@code .name("One").depot(depot)}, or {@code .name("One").depotId(depotId)}.
    */
   public String sampleValues(int variant) {
     return fieldValues(variant)
@@ -148,7 +150,10 @@ public final class EntityTestsModel {
         .collect(Collectors.joining());
   }
 
-  /** What the builder of the entity takes: every field, and the target of every relation. */
+  /**
+   * What the builder of the entity takes: every field, and the target of every relation, or its
+   * identifier where the entity refers by identifier.
+   */
   public List<Property> builderProperties() {
     return Stream.concat(
             fieldProperties(),
