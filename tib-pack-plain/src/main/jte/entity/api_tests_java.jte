@@ -54,6 +54,7 @@ class ${name}ApiTests {
   private final ${target.name()}Repository ${target.variable()}Repository = new ${target.name()}Repository(transactions);
   @endfor
   @endif
+  @template.entity.required_targets(tests = tests)
 
   @BeforeAll
   static void start() throws IOException {
@@ -64,7 +65,6 @@ class ${name}ApiTests {
   static void stop() {
     service.close();
   }
-  @template.entity.required_targets(tests = tests)
 
   @AfterEach
   void deleteAll() {

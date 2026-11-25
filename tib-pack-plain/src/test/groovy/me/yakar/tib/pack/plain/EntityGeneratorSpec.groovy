@@ -174,6 +174,19 @@ class EntityGeneratorSpec extends Specification {
     !tree.read(tests + 'b/BApiTests.java').orElseThrow().contains('Transactions')
   }
 
+  def "the tests of the API declare their fields before their methods"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new EntityGenerator().generate(project('entities:\n  - name: B\n  - name: A\n    relations:\n      - { kind: manyToOne, target: B, nullable: false }\n'), tree)
+    String tests = tree.read('src/test/java/com/example/s/a/AApiTests.java').orElseThrow()
+
+    then:
+    tests.contains('  private final BRepository bRepository = new BRepository(transactions);\n\n  private B b;\n\n  @BeforeEach\n')
+    tests.contains('    b = transactions.run(() -> bRepository.insert(BSamples.b().build()));\n  }\n\n  @BeforeAll\n')
+  }
+
   def "a service learns from the update and from the delete whether the row was there, without a query before the delete: #architecture"() {
     given:
     Tree tree = Tree.at(dir)

@@ -30,6 +30,13 @@ class ItemApiTests {
   private final Transactions transactions = new Transactions(TestDatabase.dataSource());
   private final BranchRepository branchRepository = new BranchRepository(transactions);
 
+  private Branch branch;
+
+  @BeforeEach
+  void saveWhatAnItemNeeds() {
+    branch = transactions.run(() -> branchRepository.insert(BranchSamples.branch().build()));
+  }
+
   @BeforeAll
   static void start() throws IOException {
     service = TestService.start();
@@ -38,13 +45,6 @@ class ItemApiTests {
   @AfterAll
   static void stop() {
     service.close();
-  }
-
-  private Branch branch;
-
-  @BeforeEach
-  void saveWhatAnItemNeeds() {
-    branch = transactions.run(() -> branchRepository.insert(BranchSamples.branch().build()));
   }
 
   @AfterEach
