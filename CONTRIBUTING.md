@@ -39,11 +39,13 @@ Antora runs the documentation tasks of the build itself and writes the site to `
   acceptance tests in `src/acceptanceTest/groovy`.
 - Every change comes with tests. The build requires 100% instruction, branch and line coverage.
 - Generators are tested three ways: a snapshot of the files they write, a second run that changes
-  nothing, and the acceptance test of each pack. It generates services from the example spec, from
-  DDL and from the corner spec of the snapshots, the last in each architecture, and builds each
-  with its Gradle wrapper. Where Docker runs Linux containers, the build runs the tests of the
-  service against PostgreSQL in a container, and builds the image of a service that has a
-  `Dockerfile`; elsewhere it compiles the service and its tests.
+  nothing, and the acceptance test of each pack. What every pack keeps is tested once, in the
+  specifications that the packs share, in `tib-pack-support/src/testFixtures`. The acceptance test
+  generates services from the example spec, from DDL and from the corner spec of the snapshots, in
+  each architecture, and builds each with its Gradle wrapper. Where Docker runs Linux containers,
+  the build runs the tests of the service against PostgreSQL in a container, and builds the image
+  of a service that has a `Dockerfile`; elsewhere it compiles the service and runs its unit tests
+  and the test of its architecture.
 - A change of a template, of the state file or of the schema of the spec changes the snapshots
   under `src/test/snapshots` of its module: `./gradlew test updateSnapshots --continue` replaces
   them with what the tests wrote, and wants every unit test: it refuses a run that did not write
@@ -103,7 +105,8 @@ with them, their checksums and signatures. Before the maintainer publishes it, a
 request sets `version=X.Y+1.0-SNAPSHOT`: until that is merged, `main` is not a prerelease, and the
 site shows it as the latest version. The APT repository on GitHub Pages picks up the `.deb` of
 every published release, and the Homebrew workflow writes the formula of its macOS zips into the
-tap `mryakar/tap`. Run by hand, that workflow takes the tag of the latest release only.
+tap `mryakar/tap`. Run by hand, that workflow is started on the tag of the latest release, and
+takes no other.
 
 ## License
 
