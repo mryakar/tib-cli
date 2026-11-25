@@ -32,12 +32,12 @@ class RelationModelSpec extends Specification {
 
     expect:
     [relation.field(), relation.property(), relation.idField(), relation.idProperty(), relation.column()] == names
-    [relation.validation(), relation.nullable(), relation.oneToOne()] == rules
+    [relation.nullable(), relation.oneToOne()] == rules
 
     where:
     spec                                                           | names                                                | rules
-    '{ kind: manyToOne, target: B }'                               | ['b', 'B', 'bId', 'BId', 'B_ID']                     | ['', true, false]
-    '{ kind: oneToOne, target: B, field: other, nullable: false }' | ['other', 'Other', 'otherId', 'OtherId', 'OTHER_ID'] | ['@NotNull ', false, true]
-    '{ kind: manyToOne, target: C }'                               | ['c', 'C', 'cCode', 'CCode', 'C_ID']                 | ['', true, false]
+    '{ kind: manyToOne, target: B }'                               | ['b', 'B', 'bId', 'BId', 'B_ID']                     | [true, false]
+    '{ kind: oneToOne, target: B, field: other, nullable: false }' | ['other', 'Other', 'otherId', 'OtherId', 'OTHER_ID'] | [false, true]
+    '{ kind: manyToOne, target: C }'                               | ['c', 'C', 'cCode', 'CCode', 'C_ID']                 | [true, false]
   }
 }

@@ -327,25 +327,6 @@ public final class EntityModel {
         .toList();
   }
 
-  // The DTO.
-
-  /** The components of the record: the type and the name of each, after its validation. */
-  public String dtoComponents() {
-    List<String> components = new ArrayList<>();
-    components.add(idType() + " " + idField());
-    for (FieldModel field : fields) {
-      components.add(field.validation() + field.javaType() + " " + field.name());
-    }
-    for (RelationModel relation : relations) {
-      components.add(relation.validation() + relation.target().idType() + " " + relation.idField());
-    }
-    if (entity.audit()) {
-      components.add("Instant createdAt");
-      components.add("Instant updatedAt");
-    }
-    return String.join(", ", components);
-  }
-
   /**
    * The arguments of the DTO of an entity, in the order of its components; a relation is the
    * identifier of its target, or null: of the entity it refers to, or the one it keeps for DDD and

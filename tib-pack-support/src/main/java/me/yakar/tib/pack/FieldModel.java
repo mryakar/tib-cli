@@ -93,18 +93,6 @@ public record FieldModel(Field field) {
     return field.length();
   }
 
-  /** The validation annotations of the DTO's component, in front of its type. */
-  String validation() {
-    StringBuilder validation = new StringBuilder();
-    if (!field.nullable()) {
-      validation.append("@NotNull ");
-    }
-    if (length() != null) {
-      validation.append("@Size(max = ").append(length()).append(") ");
-    }
-    return validation.toString();
-  }
-
   /**
    * A value of the field for the tests, as Java: the first or the second, which differ. A String
    * fits its length, and a BigDecimal its precision and scale, so that it reads back as it was.

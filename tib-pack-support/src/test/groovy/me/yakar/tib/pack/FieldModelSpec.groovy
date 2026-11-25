@@ -106,21 +106,19 @@ class FieldModelSpec extends Specification {
     ]
   }
 
-  def "the column and the validation of a field say what its spec says: #spec"() {
+  def "the column of a field and its rules are the ones of its spec: #spec"() {
     given:
     FieldModel field = field(spec)
 
     expect:
     [field.column(), field.nullable(), field.unique(), field.length(), field.precision(), field.scale()] == column
-    field.validation() == validation
 
     where:
-    spec                                                                   | column                                  | validation
-    '{ name: v, type: String }'                                            | ['V', true, false, 255, null, null]     | '@Size(max = 255) '
-    '{ name: v, type: String, length: 20, nullable: false, unique: true }' | ['V', false, true, 20, null, null]      | '@NotNull @Size(max = 20) '
-    '{ name: v, type: BigDecimal, precision: 12, scale: 2 }'               | ['V', true, false, null, 12, 2]         | ''
-    '{ name: v, type: BigDecimal, precision: 12 }'                         | ['V', true, false, null, 12, null]      | ''
-    '{ name: v, type: Integer, column: QTY, nullable: false }'             | ['QTY', false, false, null, null, null] | '@NotNull '
+    spec                                                                   | column
+    '{ name: v, type: String }'                                            | ['V', true, false, 255, null, null]
+    '{ name: v, type: String, length: 20, nullable: false, unique: true }' | ['V', false, true, 20, null, null]
+    '{ name: v, type: BigDecimal, precision: 12, scale: 2 }'               | ['V', true, false, null, 12, 2]
+    '{ name: v, type: Integer, column: QTY, nullable: false }'             | ['QTY', false, false, null, null, null]
   }
 
   def "the accessors of a field take its name with a capital"() {

@@ -54,9 +54,4 @@ public record RelationModel(Relation relation, EntityModel target) {
   public boolean oneToOne() {
     return relation.kind() == RelationKind.ONE_TO_ONE;
   }
-
-  /** The validation annotation of the DTO's component, in front of its type. */
-  String validation() {
-    return relation.nullable() ? "" : "@NotNull ";
-  }
 }
