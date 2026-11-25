@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 /**
  * The rules of the anemic architecture, checked on the classes of the service by their names and
  * packages, as no annotation marks them: the handler of an entity over its service over its
- * repository, a handler used by the wiring of its entity alone, and no cycle between the packages
+ * repository, a handler used by the wiring alone, and no cycle between the packages
  * of the entities.
  */
 class ArchitectureTests {

@@ -67,12 +67,13 @@ as in `XSamples.x().name("Other").build()`.
 A query of your own goes in a class of yours, which takes the connection of the unit of work from
 `Transactions.connection()`.
 `ErrorHandler`, in the base package, answers a request for an entity that is not there with 404
-Not Found, one that breaks a constraint of the database with 409 Conflict, and one whose DTO breaks
-a rule or cannot be read with 400 Bad Request, as problem details; it is yours, and so are
-`NotFoundException`, `BadRequestException`, `Http` and `Page`.
+Not Found, one that breaks a constraint of the database or whose value does not fit its column
+with 409 Conflict, and one whose DTO breaks a rule or cannot be read with 400 Bad Request, as
+problem details; it is yours, and so are `NotFoundException`, `BadRequestException`, `Http` and
+`Page`.
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
 classes of the service with ArchUnit, by their names and packages: the handler of an entity over
-its service over its repository, a handler used by the wiring of its entity alone, and no cycle
+its service over its repository, a handler used by the wiring alone, and no cycle
 between the packages of the entities; it is yours.
 
 The Java that tib writes is in the layout of google-java-format 1.36.1: formatted
