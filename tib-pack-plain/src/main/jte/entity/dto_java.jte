@@ -4,13 +4,24 @@
 @param DtoModel dto
 package ${entity.webPackage()};
 
-import java.math.BigDecimal;
+@if(entity.audited())
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+@endif
+@if(!dto.checks().isEmpty())
 import java.util.ArrayList;
+@endif
 import java.util.List;
+@if(entity.uuidId())
 import java.util.UUID;
+@endif
+@for(var field : entity.fields())
+${field.typeImport()}
+@endfor
+@for(var relation : entity.relations())
+@if(relation.target().uuidId())
+import java.util.UUID;
+@endif
+@endfor
 
 /**
  * ${entity.article()} ${entity.variable()} as the API shows and takes it@if(!entity.relations().isEmpty()); a relation is the identifier of its target@endif.

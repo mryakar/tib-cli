@@ -8,23 +8,36 @@
 !{String variable = entity.variable();}
 package ${entity.persistencePackage()};
 
+@if(entity.paginated())
 import ${entity.basePackage()}.Page;
+@endif
 import ${entity.basePackage()}.Transactions;
 ${Sources.importOf(entity.persistencePackage(), entity.domainPackage(), name)}
-import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+@if(repository.instants())
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+@endif
+@if(repository.instants() || entity.audited())
+import java.time.OffsetDateTime;
+@endif
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+@if(entity.uuidId())
 import java.util.UUID;
+@endif
+@for(var field : entity.fields())
+${field.typeImport()}
+@endfor
+@for(var relation : entity.relations())
+@if(relation.target().uuidId())
+import java.util.UUID;
+@endif
+@endfor
 
 /**
  * The table ${entity.table()}, in SQL, on the connection of the unit of work that {@link Transactions}
