@@ -45,15 +45,16 @@ class TemplatesSpec extends Specification {
     e.message == 'Failed to load class_java.jte'
   }
 
-  def "the templates that an architecture has to itself have its prefix: #architecture"() {
+  def "the templates of an architecture have its prefix, or the one that DDD and the hexagonal architecture share: #architecture"() {
     expect:
     Templates.prefix(architecture) == prefix
+    Templates.domainPrefix(architecture) == shared
 
     where:
-    architecture           | prefix
-    Architecture.ANEMIC    | ''
-    Architecture.DDD       | 'ddd_'
-    Architecture.HEXAGONAL | 'hexagonal_'
+    architecture           | prefix       | shared
+    Architecture.ANEMIC    | ''           | ''
+    Architecture.DDD       | 'ddd_'       | 'domain_'
+    Architecture.HEXAGONAL | 'hexagonal_' | 'domain_'
   }
 
   def "a header is a comment of the file's kind: #path"() {

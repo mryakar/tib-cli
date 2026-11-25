@@ -65,6 +65,14 @@ public final class Templates {
     };
   }
 
+  /**
+   * The prefix of the name of a template that DDD and the hexagonal architecture share, where their
+   * classes work on the domain alike: none for the anemic architecture.
+   */
+  public static String domainPrefix(Architecture architecture) {
+    return architecture == Architecture.ANEMIC ? "" : "domain_";
+  }
+
   /** The text of the file at the path, formatted if it is Java. */
   static String format(String path, String text) {
     if (!path.endsWith(".java")) {

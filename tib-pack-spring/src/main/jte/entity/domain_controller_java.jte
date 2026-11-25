@@ -2,9 +2,13 @@
 @param EntityModel entity
 !{String name = entity.name();}
 !{String mapper = entity.webMapper();}
+!{boolean hexagonal = entity.hexagonal();}
+!{String useCase = name + (hexagonal ? "UseCase" : "Service");}
+!{String useCasePackage = hexagonal ? entity.useCasePackage() : entity.applicationPackage();}
+!{String useCases = hexagonal ? "useCases" : "service";}
 package ${entity.webPackage()};
 
-import ${entity.useCasePackage()}.${name}UseCase;
+import ${useCasePackage}.${useCase};
 import ${entity.domainPackage()}.${name};
 import jakarta.validation.Valid;
 @if(entity.uuidId())
@@ -27,34 +31,34 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-/** The API of ${entity.plural()}: their DTOs, mapped to and from the domain, over the use cases. */
+/** The API of ${entity.plural()}: their DTOs, mapped to and from the ${hexagonal ? "domain, over the use cases" : "aggregate"}. */
 @RestController
 @RequestMapping("${entity.path()}")
 public class ${name}Controller {
 
-  private final ${name}UseCase useCases;
+  private final ${useCase} ${useCases};
   private final ${mapper} mapper;
 
-  public ${name}Controller(${name}UseCase useCases, ${mapper} mapper) {
-    this.useCases = useCases;
+  public ${name}Controller(${useCase} ${useCases}, ${mapper} mapper) {
+    this.${useCases} = ${useCases};
     this.mapper = mapper;
   }
 
   @GetMapping
   @if(entity.paginated())
   public Page<${name}Dto> list(Pageable pageable) {
-    return useCases.list(pageable).map(mapper::toDto);
+    return ${useCases}.list(pageable).map(mapper::toDto);
   }
 
   @else
   public List<${name}Dto> list() {
-    return useCases.list().stream().map(mapper::toDto).toList();
+    return ${useCases}.list().stream().map(mapper::toDto).toList();
   }
 
   @endif
   @GetMapping("/{id}")
   public ${name}Dto get(@PathVariable ${entity.idType()} id) {
-    return mapper.toDto(useCases.get(id));
+    return mapper.toDto(${useCases}.get(id));
   }
 
   @PostMapping
@@ -62,17 +66,17 @@ public class ${name}Controller {
   public ${name}Dto create(@Valid @RequestBody ${name}Dto dto) {
     ${name} ${entity.variable()} = new ${name}();
     mapper.update(dto, ${entity.variable()});
-    return mapper.toDto(useCases.create(${entity.variable()}));
+    return mapper.toDto(${useCases}.create(${entity.variable()}));
   }
 
   @PutMapping("/{id}")
   public ${name}Dto update(@PathVariable ${entity.idType()} id, @Valid @RequestBody ${name}Dto dto) {
-    return mapper.toDto(useCases.update(id, ${entity.variable()} -> mapper.update(dto, ${entity.variable()})));
+    return mapper.toDto(${useCases}.update(id, ${entity.variable()} -> mapper.update(dto, ${entity.variable()})));
   }
 
   @DeleteMapping("/{id}")
   @ResponseStatus(HttpStatus.NO_CONTENT)
   public void delete(@PathVariable ${entity.idType()} id) {
-    useCases.delete(id);
+    ${useCases}.delete(id);
   }
 }

@@ -1,9 +1,13 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
 !{String name = entity.name();}
+!{boolean hexagonal = entity.hexagonal();}
+!{String useCase = name + (hexagonal ? "UseCase" : "Service");}
+!{String useCasePackage = hexagonal ? entity.useCasePackage() : entity.applicationPackage();}
+!{String useCases = hexagonal ? "useCases" : "service";}
 package ${entity.webPackage()};
 
-import ${entity.applicationPackage()}.${name}Service;
+import ${useCasePackage}.${useCase};
 import ${entity.basePackage()}.Http;
 import ${entity.domainPackage()}.${name};
 import com.sun.net.httpserver.HttpExchange;
@@ -16,17 +20,17 @@ import java.util.UUID;
 
 /**
  * The API of ${entity.plural()}, at the path of its context: ${entity.path()}, and ${entity.path()}/{id} for one of
- * them; their DTOs, mapped to and from the aggregate. A request whose DTO does not read or breaks a
+ * them; their DTOs, mapped to and from the ${hexagonal ? "domain" : "aggregate"}. A request whose DTO does not read or breaks a
  * rule is a bad request, and an identifier that no ${entity.variable()} has is not found: {@code ErrorHandler}
  * answers them.
  */
 public class ${name}Handler implements HttpHandler {
 
-  private final ${name}Service service;
-  private final ${name}Mapper mapper;
+  private final ${useCase} ${useCases};
+  private final ${entity.webMapper()} mapper;
 
-  public ${name}Handler(${name}Service service, ${name}Mapper mapper) {
-    this.service = service;
+  public ${name}Handler(${useCase} ${useCases}, ${entity.webMapper()} mapper) {
+    this.${useCases} = ${useCases};
     this.mapper = mapper;
   }
 
@@ -37,9 +41,9 @@ public class ${name}Handler implements HttpHandler {
       switch (exchange.getRequestMethod()) {
         @if(entity.paginated())
         case "GET" ->
-            Http.send(exchange, 200, service.list(Http.pageNumber(exchange), Http.pageSize(exchange)).map(mapper::toDto));
+            Http.send(exchange, 200, ${useCases}.list(Http.pageNumber(exchange), Http.pageSize(exchange)).map(mapper::toDto));
         @else
-        case "GET" -> Http.send(exchange, 200, service.list().stream().map(mapper::toDto).toList());
+        case "GET" -> Http.send(exchange, 200, ${useCases}.list().stream().map(mapper::toDto).toList());
         @endif
         case "POST" -> Http.send(exchange, 201, create(dto(exchange)));
         default -> Http.methodNotAllowed(exchange, "GET, POST");
@@ -47,13 +51,13 @@ public class ${name}Handler implements HttpHandler {
     } else {
       ${entity.idType()} key = Http.parse(id.get(), ${entity.uuidId() ? "UUID::fromString" : "Long::valueOf"});
       switch (exchange.getRequestMethod()) {
-        case "GET" -> Http.send(exchange, 200, mapper.toDto(service.get(key)));
+        case "GET" -> Http.send(exchange, 200, mapper.toDto(${useCases}.get(key)));
         case "PUT" -> {
           ${name}Dto dto = dto(exchange);
-          Http.send(exchange, 200, mapper.toDto(service.update(key, ${entity.variable()} -> mapper.update(dto, ${entity.variable()}))));
+          Http.send(exchange, 200, mapper.toDto(${useCases}.update(key, ${entity.variable()} -> mapper.update(dto, ${entity.variable()}))));
         }
         case "DELETE" -> {
-          service.delete(key);
+          ${useCases}.delete(key);
           Http.noContent(exchange);
         }
         default -> Http.methodNotAllowed(exchange, "GET, PUT, DELETE");
@@ -65,7 +69,7 @@ public class ${name}Handler implements HttpHandler {
   private ${name}Dto create(${name}Dto dto) {
     ${name} ${entity.variable()} = new ${name}();
     mapper.update(dto, ${entity.variable()});
-    return mapper.toDto(service.create(${entity.variable()}));
+    return mapper.toDto(${useCases}.create(${entity.variable()}));
   }
 
   /** The DTO in the body of the request, which has to keep the rules of the spec. */

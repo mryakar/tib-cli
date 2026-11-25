@@ -96,9 +96,8 @@ final class EntityGenerator implements Generator {
       generated.own(Sources.main(web, name + "Dto"), "entity/dto_java.jte", model);
     }
     if (entity.layer()) {
-      // DDD and hexagonal have services of their own: the use cases of the domain, which know no
-      // DTO.
-      String architecture = Templates.prefix(project.architecture());
+      // DDD and hexagonal have services of their own, the use cases of the domain, which know no
+      // DTO, and share the controller that maps the domain to and from it.
       generated.own(Sources.main(web, entity.webMapper()), "entity/mapper_java.jte", model);
       if (entity.hexagonal()) {
         generated.onceWithEntity(
@@ -108,11 +107,11 @@ final class EntityGenerator implements Generator {
       }
       generated.onceWithEntity(
           Sources.main(entity.applicationPackage(), name + "Service"),
-          "entity/" + architecture + "service_java.jte",
+          "entity/" + Templates.prefix(project.architecture()) + "service_java.jte",
           model);
       generated.onceWithEntity(
           Sources.main(web, name + "Controller"),
-          "entity/" + architecture + "controller_java.jte",
+          "entity/" + Templates.domainPrefix(project.architecture()) + "controller_java.jte",
           model);
     }
   }
@@ -147,7 +146,7 @@ final class EntityGenerator implements Generator {
     if (serviceTests) {
       generated.onceWithEntity(
           Sources.test(entity.applicationPackage(), name + "ServiceTests"),
-          "entity/" + Templates.prefix(project.architecture()) + "service_tests_java.jte",
+          "entity/" + Templates.domainPrefix(project.architecture()) + "service_tests_java.jte",
           tests);
     }
     if (apiTests) {

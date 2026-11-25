@@ -107,9 +107,8 @@ final class EntityGenerator implements Generator {
       generated.own(Sources.main(web, name + "Dto"), "entity/dto_java.jte", model);
     }
     if (entity.layer()) {
-      // DDD and hexagonal have services of their own, on the domain, and handlers that map it to
-      // its DTO.
-      String architecture = Templates.prefix(project.architecture());
+      // DDD and hexagonal have services of their own, on the domain, and share the handler that
+      // maps it to and from its DTO.
       generated.own(Sources.main(web, entity.webMapper()), "entity/mapper_java.jte", model);
       if (entity.hexagonal()) {
         generated.onceWithEntity(
@@ -119,11 +118,11 @@ final class EntityGenerator implements Generator {
       }
       generated.onceWithEntity(
           Sources.main(entity.applicationPackage(), name + "Service"),
-          "entity/" + architecture + "service_java.jte",
+          "entity/" + Templates.prefix(project.architecture()) + "service_java.jte",
           model);
       generated.onceWithEntity(
           Sources.main(web, name + "Handler"),
-          "entity/" + architecture + "handler_java.jte",
+          "entity/" + Templates.domainPrefix(project.architecture()) + "handler_java.jte",
           model);
     }
   }
