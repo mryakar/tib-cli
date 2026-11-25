@@ -38,7 +38,7 @@ class GenerationRunSpec extends Specification {
   def "a service whose tracked files have uncommitted changes is refused, and nothing is written"() {
     given:
     tib.init('vehicle-service')
-    committed()
+    TestGit.commitAll(dir)
     tib.write('AGENTS.md', 'mine\n')
     Map<String, String> before = tib.files()
 
@@ -67,7 +67,7 @@ class GenerationRunSpec extends Specification {
   def "the lines of the message that refuses uncommitted changes end the same on every platform"() {
     given:
     tib.init('vehicle-service')
-    committed()
+    TestGit.commitAll(dir)
     tib.write('AGENTS.md', 'mine\n')
     Exception refused = null
 
@@ -96,13 +96,13 @@ class GenerationRunSpec extends Specification {
         service.write(file, Tib.DEPOT_ONLY)
       }
     }
-    committed()
+    TestGit.commitAll(dir)
 
     when: 'the diff of a dry run is applied to the service, and the copy is generated into'
     Result dryRun = tib.generate('--spec', dir.resolve(file).toString(), '--dry-run')
     tib.write('.git/tib.diff', dryRun.out())
-    git('apply', '--check', '.git/tib.diff')
-    git('apply', '.git/tib.diff')
+    TestGit.run(dir, 'apply', '--check', '.git/tib.diff')
+    TestGit.run(dir, 'apply', '.git/tib.diff')
     Result result = new Tib(copy).generate('--spec', copy.resolve(file).toString())
 
     then:
@@ -118,10 +118,10 @@ class GenerationRunSpec extends Specification {
   def "with --allow-dirty, a service with uncommitted changes is written, with a warning"() {
     given:
     tib.init('vehicle-service')
-    committed()
+    TestGit.commitAll(dir)
     (1..12).each { tib.write("File${it}.txt", 'x\n') }
-    git('add', '.')
-    git('commit', '-q', '-m', 'files')
+    TestGit.run(dir, 'add', '.')
+    TestGit.run(dir, 'commit', '-q', '-m', 'files')
     (1..12).each { tib.write("File${it}.txt", 'y\n') }
 
     when:
@@ -143,7 +143,7 @@ class GenerationRunSpec extends Specification {
   def "untracked files, and a run that changes nothing, are no reason to refuse"() {
     given:
     tib.init('vehicle-service')
-    committed()
+    TestGit.commitAll(dir)
     tib.write('notes.txt', 'untracked\n')
 
     when:
@@ -159,35 +159,5 @@ class GenerationRunSpec extends Specification {
     then:
     again.exitCode() == 0
     again.out() == 'Nothing to change.\n'
-  }
-
-  /** Makes the service a git repository with everything in it committed. */
-  private void committed() {
-    git('init', '-q')
-    git('add', '.')
-    git('commit', '-q', '-m', 'service')
-  }
-
-  /**
-   * Runs git in the service, without the signing, the identity or the line endings of the machine;
-   * its output is read while it runs, so that git never waits for the test.
-   */
-  private void git(String... args) {
-    Process process = ([
-      'git',
-      '-c',
-      'user.name=tib',
-      '-c',
-      'user.email=tib@example.com',
-      '-c',
-      'commit.gpgsign=false',
-      '-c',
-      'core.autocrlf=false'
-    ] + args.toList())
-    .execute(null, dir.toFile())
-    StringBuilder out = new StringBuilder()
-    StringBuilder err = new StringBuilder()
-    process.waitForProcessOutput(out, err)
-    assert process.exitValue() == 0 : err
   }
 }
