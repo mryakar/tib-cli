@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.yakar.tib.gradle
+package me.yakar.tib.gradle.packaging
+
+import me.yakar.tib.gradle.JavacExports
 
 /** The JVM of the packaged launcher: its options, and the start-up cache that it loads. */
 object Launcher {

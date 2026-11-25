@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 // The command line: the picocli commands, and the application that the packages ship.
-import me.yakar.tib.gradle.JPackage
-import me.yakar.tib.gradle.JPackageImage
-import me.yakar.tib.gradle.JPackageInstaller
-import me.yakar.tib.gradle.JdkModules
-import me.yakar.tib.gradle.Launcher
-import me.yakar.tib.gradle.StartupCacheScript
+import me.yakar.tib.gradle.packaging.JPackage
+import me.yakar.tib.gradle.packaging.JPackageImage
+import me.yakar.tib.gradle.packaging.JPackageInstaller
+import me.yakar.tib.gradle.packaging.JdkModules
+import me.yakar.tib.gradle.packaging.Launcher
+import me.yakar.tib.gradle.packaging.StartupCacheScript
 
 plugins { id("tib.java-conventions") }
 
