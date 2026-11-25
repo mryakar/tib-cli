@@ -43,7 +43,12 @@ final class EntityGenerator implements Generator {
   public void generate(Project project, ProjectFiles files) {
     Map<String, EntityModel> models = EntityModel.modelsByIdentifier(project);
     GeneratedFiles generated = new GeneratedFiles(PlainPack.TEMPLATES, files);
-    models.values().forEach(model -> generateEntity(project, model, generated, files));
+    for (EntityModel entity : models.values()) {
+      DtoModel dto = new DtoModel(entity);
+      generateEntity(project, entity, dto, generated);
+      Migration.write(files, entity, SEQUENCE_STEP);
+      generateTests(project, entity, dto, generated);
+    }
     // Written here and not by init: only a service with an API needs them.
     if (models.values().stream().anyMatch(EntityModel::layer)) {
       generated.onceWithFirstEntity(
@@ -72,26 +77,15 @@ final class EntityGenerator implements Generator {
             "project", project, "entities", entities.stream().filter(EntityModel::layer).toList()));
   }
 
+  /** Stages the classes of an entity. */
   private static void generateEntity(
-      Project project, EntityModel entity, GeneratedFiles generated, ProjectFiles files) {
+      Project project, EntityModel entity, DtoModel dto, GeneratedFiles generated) {
     String name = entity.name();
     String domain = entity.domainPackage();
-    String application = entity.applicationPackage();
     String web = entity.webPackage();
     String persistence = entity.persistencePackage();
-    // DDD and hexagonal have services of their own, on the domain, and handlers that map it to its
-    // DTO.
-    String architecture = Templates.prefix(project.architecture());
     Map<String, Object> model =
-        Map.of(
-            "entity",
-            entity,
-            "dto",
-            new DtoModel(entity),
-            "repository",
-            new RepositoryModel(entity));
-    Map<String, Object> tests =
-        Map.of("tests", new EntityTestsModel(entity), "dto", new DtoModel(entity));
+        Map.of("entity", entity, "dto", dto, "repository", new RepositoryModel(entity));
     generated.own(Sources.main(domain, name + "Generated"), "entity/generated_java.jte", model);
     generated.onceWithEntity(Sources.main(domain, name), "entity/entity_java.jte", model);
     // The repository is the SQL of the table that the spec makes, so it follows the spec.
@@ -112,8 +106,37 @@ final class EntityGenerator implements Generator {
     if (entity.dto()) {
       generated.own(Sources.main(web, name + "Dto"), "entity/dto_java.jte", model);
     }
-    Migration.write(files, entity, SEQUENCE_STEP);
-    // The tests of the kinds of the spec; the service and the API only of an entity with a layer.
+    if (entity.layer()) {
+      // DDD and hexagonal have services of their own, on the domain, and handlers that map it to
+      // its DTO.
+      String architecture = Templates.prefix(project.architecture());
+      generated.own(Sources.main(web, entity.webMapper()), "entity/mapper_java.jte", model);
+      if (entity.hexagonal()) {
+        generated.onceWithEntity(
+            Sources.main(entity.useCasePackage(), name + "UseCase"),
+            "entity/hexagonal_use_case_java.jte",
+            model);
+      }
+      generated.onceWithEntity(
+          Sources.main(entity.applicationPackage(), name + "Service"),
+          "entity/" + architecture + "service_java.jte",
+          model);
+      generated.onceWithEntity(
+          Sources.main(web, name + "Handler"),
+          "entity/" + architecture + "handler_java.jte",
+          model);
+    }
+  }
+
+  /**
+   * Stages the tests of an entity, of the kinds of the spec; the tests of the service and of the
+   * API only of an entity with a service.
+   */
+  private static void generateTests(
+      Project project, EntityModel entity, DtoModel dto, GeneratedFiles generated) {
+    String name = entity.name();
+    String persistence = entity.persistencePackage();
+    Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity), "dto", dto);
     boolean repositoryTests = project.tests(TestKind.INTEGRATION);
     boolean serviceTests = entity.layer() && project.tests(TestKind.UNIT);
     boolean apiTests = entity.layer() && project.tests(TestKind.API);
@@ -132,32 +155,15 @@ final class EntityGenerator implements Generator {
           "entity/repository_tests_java.jte",
           tests);
     }
-    if (entity.layer()) {
-      generated.own(Sources.main(web, entity.webMapper()), "entity/mapper_java.jte", model);
-      if (entity.hexagonal()) {
-        generated.onceWithEntity(
-            Sources.main(entity.useCasePackage(), name + "UseCase"),
-            "entity/hexagonal_use_case_java.jte",
-            model);
-      }
-      generated.onceWithEntity(
-          Sources.main(application, name + "Service"),
-          "entity/" + architecture + "service_java.jte",
-          model);
-      generated.onceWithEntity(
-          Sources.main(web, name + "Handler"),
-          "entity/" + architecture + "handler_java.jte",
-          model);
-    }
     if (serviceTests) {
       generated.onceWithEntity(
-          Sources.test(application, name + "ServiceTests"),
-          "entity/" + architecture + "service_tests_java.jte",
+          Sources.test(entity.applicationPackage(), name + "ServiceTests"),
+          "entity/" + Templates.prefix(project.architecture()) + "service_tests_java.jte",
           tests);
     }
     if (apiTests) {
       generated.onceWithEntity(
-          Sources.test(web, name + "ApiTests"), "entity/api_tests_java.jte", tests);
+          Sources.test(entity.webPackage(), name + "ApiTests"), "entity/api_tests_java.jte", tests);
     }
   }
 }
