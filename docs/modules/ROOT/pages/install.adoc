@@ -1,5 +1,5 @@
 = Install
-:description: How to install tib on Linux and Windows.
+:description: How to install tib on Linux, macOS and Windows.
 
 Every package embeds its own Java runtime: nothing else needs to be installed. The packages are on
 the https://github.com/mryakar/tib-cli/releases[releases page], with their checksums and signatures.
@@ -25,6 +25,19 @@ sudo apt install ./tib_<version>_amd64.deb
 
 Either way, `tib` is in `/usr/bin`, and the application in `/opt/tib`.
 
+== macOS
+
+With Homebrew, on Apple silicon or Intel, from the tap of tib, which also brings updates with
+`brew upgrade`:
+
+[source,bash]
+----
+brew install mryakar/tap/tib
+----
+
+Homebrew installs the zip of your processor with its runtime and builds the start-up cache, and
+puts `tib` on its PATH. The formula of a version is in the tap once its release is published.
+
 == Windows
 
 Run the `.msi` of a release, or install it silently:
@@ -40,9 +53,9 @@ was already open keeps its old PATH.
 == Portable zip
 
 For a machine where you cannot install packages: unpack the zip of your platform anywhere, run
-`tib/lib/app/startup-cache.sh` on Linux or `tib\app\startup-cache.cmd` on Windows once, so that
-tib starts faster, and run `tib/bin/tib` or `tib\tib.exe`. Put that directory on your PATH if you
-like.
+`tib/lib/app/startup-cache.sh` on Linux, `tib.app/Contents/app/startup-cache.sh` on macOS or
+`tib\app\startup-cache.cmd` on Windows once, so that tib starts faster, and run `tib/bin/tib`,
+`tib.app/Contents/MacOS/tib` or `tib\tib.exe`. Put that directory on your PATH if you like.
 
 == Verify a download
 

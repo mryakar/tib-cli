@@ -70,6 +70,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   architecture, by the packages of the classes. A service stays with its pack, as before:
   `tib generate entity` refuses a spec of the other one.
 
+- tib runs on macOS, on Apple silicon and Intel: `brew install mryakar/tap/tib` installs it from
+  its Homebrew tap, with its own Java runtime, as the other packages have, and builds its start-up
+  cache. Each release has a zip of each processor, `tib-<version>-macos-arm64.zip` and
+  `tib-<version>-macos-x64.zip`, signed as the other files; its formula comes into the tap once the
+  release is published.
+
 ### Changed
 
 - `tib init service` writes the wrapper of Gradle 9.9.1 into a new service, instead of 9.8.2.
