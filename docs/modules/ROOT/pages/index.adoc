@@ -3,16 +3,19 @@
 
 tib scaffolds Java services, on Spring Boot or in plain Java, and adds to them: an entity layer
 from SQL DDL or a spec, with its repository, DTO, mapper, service, controller or handler and
-migration, and their tests. It runs again on
-the same project without breaking anything, shows what it would change before it changes it, and
-`tib status` says which of the files it wrote, and of those it read, were changed since. The
-https://github.com/mryakar/tib-cli/blob/main/ROADMAP.md[roadmap] says what is done and what comes
-next.
+migration, and their tests. It runs again on the same service without breaking anything, and shows
+what it would change before it changes it. `tib status` says which files were changed since tib
+wrote or read them. The https://github.com/mryakar/tib-cli/blob/main/ROADMAP.md[roadmap] says what
+is done and what comes next.
 
 == Where to go
 
-* xref:install.adoc[] puts `tib` on your PATH, from the APT repository, a package or a zip.
+* xref:install.adoc[] puts `tib` on your PATH, from the APT repository, Homebrew, a package or a
+  zip.
 * xref:getting-started.adoc[] scaffolds the first service.
+* xref:architectures.adoc[] says where each architecture puts the classes of an entity.
+* xref:packs.adoc[] compares the two template packs: a Spring Boot service and a service in plain
+  Java.
 * xref:spec.adoc[] describes the YAML file that tells tib what to generate.
 * xref:ddl.adoc[] says how tib reads the tables of SQL DDL.
 * xref:state.adoc[] describes `.tib/state.yaml`, the record of what tib wrote into a service.
