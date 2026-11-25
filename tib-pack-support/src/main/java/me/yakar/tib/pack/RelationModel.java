@@ -37,25 +37,12 @@ public record RelationModel(Relation relation, EntityModel target) {
     return relation.field() + Names.property(target.idField());
   }
 
-  /** The column that holds the identifier of the target: {@code DEPOT_ID}. */
   /** The identifier of the target as a property, as in {@code DepotId}. */
   public String idProperty() {
     return Names.property(idField());
   }
 
-  /**
-   * The column that keeps the identifier of the target, for an entity that refers to another by its
-   * identifier.
-   */
-  public String idColumn() {
-    return "@Column(name = \""
-        + relation.column()
-        + "\""
-        + (relation.nullable() ? "" : ", nullable = false")
-        + (oneToOne() ? ", unique = true" : "")
-        + ")";
-  }
-
+  /** The column that holds the identifier of the target: {@code DEPOT_ID}. */
   public String column() {
     return relation.column();
   }
@@ -66,30 +53,6 @@ public record RelationModel(Relation relation, EntityModel target) {
 
   public boolean oneToOne() {
     return relation.kind() == RelationKind.ONE_TO_ONE;
-  }
-
-  /** The JPA annotation of the relation's kind. */
-  public String annotation() {
-    return oneToOne() ? "OneToOne" : "ManyToOne";
-  }
-
-  /** The JPA annotation of the relation: {@code @ManyToOne(fetch = FetchType.LAZY)}. */
-  public String mapping() {
-    return "@"
-        + annotation()
-        + "(fetch = FetchType.LAZY"
-        + (relation.nullable() ? "" : ", optional = false")
-        + ")";
-  }
-
-  /** The JPA annotation of the relation's column. */
-  public String joinColumn() {
-    return "@JoinColumn(name = \""
-        + relation.column()
-        + "\""
-        + (relation.nullable() ? "" : ", nullable = false")
-        + (oneToOne() ? ", unique = true" : "")
-        + ")";
   }
 
   /** The validation annotation of the DTO's component, in front of its type. */

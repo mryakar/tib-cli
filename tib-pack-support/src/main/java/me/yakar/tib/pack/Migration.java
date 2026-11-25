@@ -40,10 +40,14 @@ public final class Migration {
 
   private Migration() {}
 
-  /** Stages the migration that creates the table of the entity, as a file that lasts. */
-  public static void write(ProjectFiles files, EntityModel entity) {
+  /**
+   * Stages the migration that creates the table of the entity, as a file that lasts. The pack says
+   * by how much the sequence of a sequence identifier advances.
+   */
+  public static void write(ProjectFiles files, EntityModel entity, int sequenceStep) {
     String path = path(files, entity);
-    files.lasting(path, Templates.comment(path, Header.MIGRATION.text()) + "\n" + sql(entity));
+    files.lasting(
+        path, Templates.comment(path, Header.MIGRATION.text()) + "\n" + sql(entity, sequenceStep));
   }
 
   /**
@@ -75,13 +79,13 @@ public final class Migration {
    * The SQL of the migration: the sequence of a sequence identifier, the table with its columns,
    * and an index on the column of every many-to-one relation.
    */
-  static String sql(EntityModel entity) {
+  static String sql(EntityModel entity, int sequenceStep) {
     StringBuilder sql = new StringBuilder();
     if (entity.idSequence()) {
       sql.append("CREATE SEQUENCE ")
           .append(entity.sequence())
           .append(" START WITH 1 INCREMENT BY ")
-          .append(entity.sequenceIncrement())
+          .append(sequenceStep)
           .append(";\n\n");
     }
     sql.append("CREATE TABLE ").append(entity.table()).append(" (\n");

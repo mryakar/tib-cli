@@ -59,8 +59,9 @@ final class EntityGenerator implements Generator {
     String persistence = entity.persistencePackage();
     // DDD and hexagonal have services of their own: the use cases of the domain, which know no DTO.
     String architecture = Templates.prefix(project.architecture());
-    Map<String, Object> model = Map.of("entity", entity);
-    Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity));
+    JpaModel jpa = new JpaModel(entity);
+    Map<String, Object> model = Map.of("entity", entity, "jpa", jpa);
+    Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity), "jpa", jpa);
     if (entity.hexagonal()) {
       // The domain knows no JPA: the table is mapped by a class of the persistence adapter, which
       // keeps the domain through the store, the port of the application.
@@ -71,7 +72,7 @@ final class EntityGenerator implements Generator {
       generated.onceWithEntity(
           Sources.main(domain, name), "entity/hexagonal_domain_java.jte", model);
       generated.own(
-          Sources.main(persistence, entity.jpaEntity()), "entity/generated_java.jte", model);
+          Sources.main(persistence, jpa.entityClass()), "entity/generated_java.jte", model);
       generated.own(
           Sources.main(persistence, name + "PersistenceMapper"),
           "entity/hexagonal_persistence_mapper_java.jte",
@@ -89,11 +90,11 @@ final class EntityGenerator implements Generator {
       generated.onceWithEntity(Sources.main(domain, name), "entity/entity_java.jte", model);
     }
     generated.onceWithEntity(
-        Sources.main(persistence, entity.repository()), "entity/repository_java.jte", model);
+        Sources.main(persistence, jpa.repository()), "entity/repository_java.jte", model);
     if (entity.dto()) {
       generated.own(Sources.main(web, name + "Dto"), "entity/dto_java.jte", model);
     }
-    Migration.write(files, entity);
+    Migration.write(files, entity, JpaModel.ALLOCATION_SIZE);
     // The tests of the kinds of the spec; the service and the API only of an entity with a layer.
     boolean repositoryTests = project.tests(TestKind.INTEGRATION);
     boolean serviceTests = entity.layer() && project.tests(TestKind.UNIT);

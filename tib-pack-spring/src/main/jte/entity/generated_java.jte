@@ -1,5 +1,7 @@
 @import me.yakar.tib.pack.EntityModel
+@import me.yakar.tib.pack.spring.JpaModel
 @param EntityModel entity
+@param JpaModel jpa
 package ${entity.persistencePackage()};
 
 import jakarta.persistence.Column;
@@ -23,7 +25,7 @@ import java.util.UUID;
 @else
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.${relation.annotation()};
+import jakarta.persistence.${jpa.annotation(relation)};
 @endif
 @endfor
 @if(entity.uuidId())
@@ -54,14 +56,14 @@ import ${target.packageName()}.${target.name()};
  */
 @Entity
 @Table(name = "${entity.table()}")
-public class ${entity.jpaEntity()} {
+public class ${jpa.entityClass()} {
 @else
 /** The columns of ${entity.table()}, as the spec names them; {@link ${entity.name()}} is the entity. */
 @MappedSuperclass
 public abstract class ${entity.name()}Generated {
 @endif<%-- keeps the blank line below --%>
 
-  @for(var annotation : entity.idAnnotations())
+  @for(var annotation : jpa.idAnnotations())
   ${annotation}
   @endfor
   @Column(name = "${entity.idColumn()}")
@@ -71,17 +73,17 @@ public abstract class ${entity.name()}Generated {
   @if(field.text())
   @JdbcTypeCode(SqlTypes.LONGVARCHAR)
   @endif
-  ${field.columnAnnotation()}
+  ${jpa.column(field)}
   private ${field.javaType()} ${field.name()};
 
   @endfor
   @for(var relation : entity.relations())
   @if(entity.refersById())
-  ${relation.idColumn()}
+  ${jpa.column(relation)}
   private ${relation.target().idType()} ${relation.idField()};
   @else
-  ${relation.mapping()}
-  ${relation.joinColumn()}
+  ${jpa.mapping(relation)}
+  ${jpa.joinColumn(relation)}
   private ${relation.target().name()} ${relation.field()};
   @endif
 

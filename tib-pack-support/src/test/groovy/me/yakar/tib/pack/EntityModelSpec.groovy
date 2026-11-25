@@ -82,7 +82,7 @@ class EntityModelSpec extends Specification {
     ['com.example.s', 'Vehicle', 'vehicle', 'vehicles', '/api/vehicles', 'VEHICLE']
   }
 
-  def "the packages and the classes of an entity follow the architecture: #architecture"() {
+  def "the packages and the mapper of an entity follow the architecture: #architecture"() {
     given:
     EntityModel model = models("architecture: $architecture\nentities:\n  - name: Vehicle\n").Vehicle
     String entity = 'com.example.s.vehicle'
@@ -99,12 +99,12 @@ class EntityModelSpec extends Specification {
     ] ==
     packages.collect { it ? "$entity.$it" : entity }
     [model.hexagonal(), model.refersById()] == [hexagonal, refersById]
-    [model.jpaEntity(), model.repository(), model.webMapper()] == classes
+    model.webMapper() == mapper
 
     where:
-    architecture | packages                                                                                               | hexagonal | refersById | classes
-    'anemic'     | ['', '', '', '', 'port.in', 'port.out']                                                                 | false     | false      | ['Vehicle', 'VehicleRepository', 'VehicleMapper']
-    'ddd'        | ['domain', 'application', 'web', 'domain', 'application.port.in', 'application.port.out']              | false     | true       | ['Vehicle', 'VehicleRepository', 'VehicleMapper']
+    architecture | packages                                                                                  | hexagonal | refersById | mapper
+    'anemic'     | ['', '', '', '', 'port.in', 'port.out']                                                   | false     | false      | 'VehicleMapper'
+    'ddd'        | ['domain', 'application', 'web', 'domain', 'application.port.in', 'application.port.out'] | false     | true       | 'VehicleMapper'
     'hexagonal'  | [
       'domain',
       'application',
@@ -112,10 +112,10 @@ class EntityModelSpec extends Specification {
       'adapter.out.persistence',
       'application.port.in',
       'application.port.out'
-    ] | true | true | ['VehicleEntity', 'VehicleJpaRepository', 'VehicleWebMapper']
+    ] | true | true | 'VehicleWebMapper'
   }
 
-  def "the identifier is mapped by its strategy: #id"() {
+  def "the identifier has its field, its column, its type and its strategy: #id"() {
     given:
     EntityModel model = models("entities:\n  - name: A\n    id: $id\n").A
 
@@ -128,18 +128,12 @@ class EntityModelSpec extends Specification {
       model.uuidId(),
       model.idSequence()
     ] == identifier
-    model.idAnnotations() == annotations
-    model.sequenceIncrement() == 50
 
     where:
-    id                            | identifier                                     | annotations
-    '{}'                          | ['id', 'ID', 'Long', 'identity', false, false] | ['@Id', '@GeneratedValue(strategy = GenerationType.IDENTITY)']
-    '{ strategy: sequence }'      | ['id', 'ID', 'Long', 'sequence', false, true]  | [
-      '@Id',
-      '@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "a")',
-      '@SequenceGenerator(name = "a", sequenceName = "A_SEQ", allocationSize = 50)'
-    ]
-    '{ type: UUID, field: code }' | ['code', 'CODE', 'UUID', 'uuid', true, false]  | ['@Id', '@GeneratedValue(strategy = GenerationType.UUID)']
+    id                            | identifier
+    '{}'                          | ['id', 'ID', 'Long', 'identity', false, false]
+    '{ strategy: sequence }'      | ['id', 'ID', 'Long', 'sequence', false, true]
+    '{ type: UUID, field: code }' | ['code', 'CODE', 'UUID', 'uuid', true, false]
   }
 
   def "the options of an entity say what it gets: #options"() {
@@ -182,12 +176,10 @@ class EntityModelSpec extends Specification {
     model.targets()*.name() == ['B', 'C', 'A']
     model.otherTargets()*.name() == ['B', 'C']
     model.dtoComponents() == 'Long id, @NotNull @Size(max = 255) String label, Long bId, @NotNull UUID cId, Long parentId, Instant createdAt, Instant updatedAt'
-    model.repositoryParameters() == 'BRepository bs, CRepository cs, ARepository as'
     model.dtoArguments() == arguments
     !models.B.audited()
     models.B.dtoComponents() == 'Long id'
     models.B.dtoArguments() == 'b.getId()'
-    models.B.repositoryParameters() == ''
 
     where:
     architecture | arguments
