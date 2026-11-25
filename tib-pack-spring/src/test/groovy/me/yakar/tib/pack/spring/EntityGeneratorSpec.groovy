@@ -128,6 +128,42 @@ class EntityGeneratorSpec extends Specification {
     'hexagonal'  | 'adapter/in/web/' | 'b/adapter/out/persistence/BPersistenceAdapter.java'
   }
 
+  def "in #architecture, a file imports the class of the service that it names, and no other class of its name: #file"() {
+    given:
+    Tree tree = Tree.at(dir)
+    String entities = 'entities:\n  - name: Instant\n    table: INSTANTS\n  - name: UUID\n    table: UUIDS\n    fields: [{ name: label, type: String, nullable: false }]\n'
+
+    when:
+    new EntityGenerator().generate(new Project(SpecReader.parse("tib: 1\nservice: s\narchitecture: $architecture\n$entities")), tree)
+    List<String> imports = tree.read("src/$file").orElseThrow().readLines().findAll {
+      it.startsWith('import ') && it.endsWith(".$name;")
+    }
+
+    then:
+    imports == imported
+
+    where:
+    architecture | file                                                                       | name      | imported
+    'ddd'        | 'main/java/com/example/s/instant/domain/InstantGenerated.java'             | 'Instant' | []
+    'ddd'        | 'main/java/com/example/s/instant/domain/InstantRepository.java'            | 'Instant' | []
+    'ddd'        | 'main/java/com/example/s/instant/web/InstantDto.java'                      | 'Instant' | []
+    'ddd'        | 'main/java/com/example/s/instant/application/InstantService.java'          | 'Instant' | ['import com.example.s.instant.domain.Instant;']
+    'ddd'        | 'test/java/com/example/s/instant/InstantSamples.java'                      | 'Instant' | ['import com.example.s.instant.domain.Instant;']
+    'ddd'        | 'main/java/com/example/s/uuid/domain/UUIDGenerated.java'                   | 'UUID'    | []
+    'ddd'        | 'main/java/com/example/s/uuid/web/UUIDDto.java'                            | 'UUID'    | []
+    'ddd'        | 'main/java/com/example/s/uuid/application/UUIDService.java'                | 'UUID'    | ['import com.example.s.uuid.domain.UUID;']
+    'ddd'        | 'test/java/com/example/s/uuid/application/UUIDServiceTests.java'           | 'UUID'    | ['import com.example.s.uuid.domain.UUID;']
+    'hexagonal'  | 'main/java/com/example/s/instant/domain/InstantGenerated.java'             | 'Instant' | []
+    'hexagonal'  | 'main/java/com/example/s/instant/adapter/out/persistence/InstantEntity.java' | 'Instant' | []
+    'hexagonal'  | 'main/java/com/example/s/instant/adapter/in/web/InstantDto.java'           | 'Instant' | []
+    'hexagonal'  | 'main/java/com/example/s/instant/adapter/out/persistence/InstantPersistenceAdapter.java' | 'Instant' | ['import com.example.s.instant.domain.Instant;']
+    'hexagonal'  | 'main/java/com/example/s/instant/application/InstantService.java'          | 'Instant' | ['import com.example.s.instant.domain.Instant;']
+    'hexagonal'  | 'main/java/com/example/s/uuid/domain/UUIDGenerated.java'                   | 'UUID'    | []
+    'hexagonal'  | 'main/java/com/example/s/uuid/adapter/out/persistence/UUIDEntity.java'     | 'UUID'    | []
+    'hexagonal'  | 'main/java/com/example/s/uuid/adapter/out/persistence/UUIDPersistenceAdapter.java' | 'UUID' | ['import com.example.s.uuid.domain.UUID;']
+    'hexagonal'  | 'test/java/com/example/s/uuid/application/UUIDServiceTests.java'           | 'UUID'    | ['import com.example.s.uuid.domain.UUID;']
+  }
+
   def "an entity gets the tests of the kinds of the spec: #tests"() {
     given:
     Tree tree = Tree.at(dir)

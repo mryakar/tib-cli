@@ -74,6 +74,44 @@ class EntityGeneratorSpec extends Specification {
     '[]'                       | []
   }
 
+  def "in #architecture, a file imports the class of the service that it names, and no other class of its name: #file"() {
+    given:
+    Tree tree = Tree.at(dir)
+    String entities = 'entities:\n  - name: Instant\n    table: INSTANTS\n  - name: UUID\n    table: UUIDS\n    fields: [{ name: label, type: String, nullable: false }]\n  - name: Holder\n    audit: true\n    relations:\n      - { kind: manyToOne, target: Instant, nullable: false }\n      - { kind: manyToOne, target: UUID }\n'
+
+    when:
+    new EntityGenerator().generate(project("architecture: $architecture\n$entities"), tree)
+    List<String> imports = tree.read("src/$file").orElseThrow().readLines().findAll {
+      it.startsWith('import ') && it.endsWith(".$name;")
+    }
+
+    then:
+    imports == imported
+
+    where:
+    architecture | file                                                                       | name      | imported
+    'anemic'     | 'main/java/com/example/s/instant/InstantGenerated.java'                    | 'Instant' | []
+    'anemic'     | 'main/java/com/example/s/instant/InstantRepository.java'                   | 'Instant' | []
+    'anemic'     | 'main/java/com/example/s/instant/InstantDto.java'                          | 'Instant' | []
+    'anemic'     | 'main/java/com/example/s/instant/InstantService.java'                      | 'Instant' | []
+    'anemic'     | 'test/java/com/example/s/instant/InstantSamples.java'                      | 'Instant' | []
+    'anemic'     | 'main/java/com/example/s/uuid/UUIDRepository.java'                         | 'UUID'    | []
+    'anemic'     | 'main/java/com/example/s/uuid/UUIDDto.java'                                | 'UUID'    | []
+    'anemic'     | 'test/java/com/example/s/uuid/UUIDServiceTests.java'                       | 'UUID'    | []
+    'anemic'     | 'main/java/com/example/s/holder/HolderRepository.java'                     | 'Instant' | []
+    'anemic'     | 'main/java/com/example/s/holder/HolderDto.java'                            | 'Instant' | ['import java.time.Instant;']
+    'ddd'        | 'main/java/com/example/s/instant/domain/InstantRepository.java'            | 'Instant' | []
+    'ddd'        | 'main/java/com/example/s/instant/web/InstantDto.java'                      | 'Instant' | []
+    'ddd'        | 'main/java/com/example/s/instant/web/InstantHandler.java'                  | 'Instant' | ['import com.example.s.instant.domain.Instant;']
+    'ddd'        | 'main/java/com/example/s/uuid/application/UUIDService.java'                | 'UUID'    | ['import com.example.s.uuid.domain.UUID;']
+    'ddd'        | 'main/java/com/example/s/uuid/domain/UUIDRepository.java'                  | 'UUID'    | []
+    'hexagonal'  | 'main/java/com/example/s/instant/adapter/out/persistence/InstantRepository.java' | 'Instant' | ['import com.example.s.instant.domain.Instant;']
+    'hexagonal'  | 'main/java/com/example/s/instant/adapter/in/web/InstantDto.java'           | 'Instant' | []
+    'hexagonal'  | 'main/java/com/example/s/uuid/adapter/out/persistence/UUIDRepository.java' | 'UUID'    | ['import com.example.s.uuid.domain.UUID;']
+    'hexagonal'  | 'main/java/com/example/s/uuid/adapter/out/persistence/UUIDPersistenceAdapter.java' | 'UUID' | ['import com.example.s.uuid.domain.UUID;']
+    'hexagonal'  | 'main/java/com/example/s/uuid/application/port/out/UUIDStore.java'         | 'UUID'    | ['import com.example.s.uuid.domain.UUID;']
+  }
+
   def "the files of an entity have their owners: the ones that follow the spec are tib's"() {
     given:
     Tree tree = Tree.at(dir)
