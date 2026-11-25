@@ -11,7 +11,7 @@ generated-pgjdbc = "42.7.14"
 generated-postgres = "18"
 generated-spring-boot = "4.1.2"
 generated-testcontainers = "2.0.5"
-google-java-format = "1.36.1"
+google-java-format = "2.0.0"
 groovy = "5.1.3"
 # The engine's Jackson: it reads the spec and the state file and writes the JSON Schema.
 jackson = "3.3.0"
