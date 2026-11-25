@@ -14,42 +14,17 @@
  * limitations under the License.
  */
 // The plain template pack: a service in plain Java, without a framework of dependency injection,
-// on the HTTP server of the JDK, with JDBC, PostgreSQL, Flyway, Jackson and Testcontainers. Its
-// templates are compiled by the build, not when tib runs.
-import gg.jte.ContentType
-
-plugins {
-  id("tib.java-conventions")
-  id("tib.snapshot-conventions")
-  alias(libs.plugins.jte)
-}
+// on the HTTP server of the JDK, with JDBC, PostgreSQL, Flyway, Jackson and Testcontainers.
+plugins { id("tib.pack-conventions") }
 
 description =
   "tib plain template pack: plain Java, the JDK's HTTP server, JDBC, PostgreSQL, Flyway, Jackson"
 
-dependencies {
-  implementation(project(":tib-pack-support"))
-  // The tests check that the generated Java is in the layout of google-java-format.
-  testImplementation(libs.google.java.format)
-}
-
-// The package of the compiled templates is the pack's own: another pack has templates of the same
-// names.
-jte {
-  generate()
-  packageName = "gg.jte.generated.plain"
-  contentType = ContentType.Plain
-  trimControlStructures = true
-}
-
-// The pack ships with tib and has its version. The versions of the generated stack come from the
-// version catalog, where Dependabot sees them.
-val tibVersion = version.toString()
-
-tasks.processResources {
-  val properties =
+// The versions of the stack that the pack generates, from the version catalog, where Dependabot
+// sees them.
+pack {
+  versions =
     mapOf(
-      "version" to tibVersion,
       "jackson" to libs.versions.generated.jackson.get(),
       "pgjdbc" to libs.versions.generated.pgjdbc.get(),
       "flyway" to libs.versions.generated.flyway.get(),
@@ -60,61 +35,4 @@ tasks.processResources {
       "postgres" to libs.versions.generated.postgres.get(),
       "googleJavaFormat" to libs.versions.google.java.format.get(),
     )
-  inputs.properties(properties)
-  filesMatching("**/pack.properties") { expand(properties) }
-  // The Gradle wrapper of this build, which the pack writes into a new service.
-  val root = layout.settingsDirectory
-  from(root.files("gradlew", "gradlew.bat")) { into("me/yakar/tib/pack/plain/wrapper") }
-  from(
-    root.files("gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties"),
-  ) {
-    into("me/yakar/tib/pack/plain/wrapper/gradle/wrapper")
-  }
 }
-
-// Coverage leaves out the classes that jte generates from the templates, and the jar of the Gradle
-// wrapper that the pack carries.
-tasks.withType<JacocoReportBase>().configureEach {
-  classDirectories.setFrom(
-    classDirectories.files.map { fileTree(it) { exclude("gg/jte/generated/**", "**/*.jar") } },
-  )
-}
-
-// The tests compare the generated example service with its snapshot under src/test/snapshots
-// (resources would leave out .gitignore); the acceptance test builds it with its own wrapper.
-testing {
-  suites {
-    register<JvmTestSuite>("acceptanceTest") {
-      description = "Generates the example services and builds them with Gradle."
-      dependencies {
-        implementation(project())
-        implementation(project(":tib-core"))
-      }
-      // The corner spec, which the unit tests compare with its snapshot, is built here too.
-      sources { resources.srcDir("src/test/resources") }
-      targets.all {
-        testTask.configure {
-          shouldRunAfter(tasks.test)
-          // A generated service compiles with the JDK of its Java, which its build finds among the
-          // JDKs of this one: one for every Java that a spec may give.
-          val jdks =
-            listOf(21, 25).map { java ->
-              javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java) }
-            }
-          jvmArgumentProviders.add(
-            CommandLineArgumentProvider {
-              listOf(
-                "-Dtib.jdks=" +
-                  jdks.joinToString(",") { it.get().metadata.installationPath.asFile.absolutePath },
-              )
-            },
-          )
-          // Shows the output of the service's build in the log.
-          testLogging.showStandardStreams = true
-        }
-      }
-    }
-  }
-}
-
-tasks.check { dependsOn(testing.suites.named("acceptanceTest")) }

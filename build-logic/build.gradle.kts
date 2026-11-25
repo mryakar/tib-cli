@@ -15,4 +15,9 @@
  */
 plugins { `kotlin-dsl` }
 
-dependencies { implementation(libs.spotless.gradle.plugin) }
+dependencies {
+  implementation(libs.jte.gradle.plugin)
+  // The plugin's options name types of the runtime, which it does not export.
+  implementation(libs.jte.runtime)
+  implementation(libs.spotless.gradle.plugin)
+}

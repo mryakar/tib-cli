@@ -20,7 +20,7 @@ import gg.jte.ContentType
 plugins {
   `java-library`
   id("tib.java-conventions")
-  alias(libs.plugins.jte)
+  id("gg.jte.gradle")
 }
 
 description = "tib pack support: template models and rendering, shared by the template packs"
