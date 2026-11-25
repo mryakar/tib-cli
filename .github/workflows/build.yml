@@ -27,10 +27,12 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         java: [21, 25]
         # The acceptance test builds the generated services with the JDKs of the build's toolchains,
-        # whatever the tests run on; the cells of 21 run it.
+        # whatever the tests run on; the cells of 21 run it. macOS, on Apple silicon, has one cell.
         include:
           - java: 25
             args: -x acceptanceTest
+          - os: macos-latest
+            java: 21
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
