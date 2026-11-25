@@ -112,13 +112,16 @@ class EntityGeneratorSpec extends Specification {
     !tree.read(main + "b/${web}BController.java").orElseThrow().contains('Sort')
 
     and: 'a list is sorted where it is read'
-    tree.read(main + list).orElseThrow().contains('findAll(Sort.by("id"))')
+    tree.read(main + list).orElseThrow().contains('findAll(org.springframework.data.domain.Sort.by("id"))')
     !tree.read(main + list.replace('b/', 'a/').replace('/B', '/A')).orElseThrow().contains('Sort')
 
-    and: 'the tests of the API change the first of two rows and expect it first; identifiers that are UUIDs sort as their text'
+    and: 'the tests of the API change the row that comes first and expect it first, among the entities of the answer alone; identifiers that are UUIDs sort as their text'
     tree.read(tests + "a/${web}AApiTests.java").orElseThrow().contains('    http.put("/api/as/{id}", other, first.id());\n')
     tree.read(tests + "a/${web}AApiTests.java").orElseThrow().contains('        .containsExactly(first.id().toString(), second.id().toString());\n')
-    tree.read(tests + "b/${web}BApiTests.java").orElseThrow().contains('    assertThat(list.getBody().findValuesAsString("id")).hasSize(2).isSorted();\n')
+    tree.read(tests + "a/${web}AApiTests.java").orElseThrow().contains('    JsonNode listed = list.getBody().path("content");\n')
+    tree.read(tests + "b/${web}BApiTests.java").orElseThrow().contains('    http.put("/api/bs/{id}", other, firstId.compareTo(secondId) < 0 ? firstId : secondId);\n')
+    tree.read(tests + "b/${web}BApiTests.java").orElseThrow().contains('    JsonNode listed = list.getBody();\n')
+    tree.read(tests + "b/${web}BApiTests.java").orElseThrow().contains('    assertThat(listed.findValuesAsString("id")).hasSize(2).isSorted();\n')
     !tree.read(tests + "c/${web}CApiTests.java").orElseThrow().contains('InTheOrderOfTheirIdentifiers')
 
     where:

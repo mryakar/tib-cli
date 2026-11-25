@@ -15,7 +15,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 @else
 import java.util.List;
-import org.springframework.data.domain.Sort;
 @endif
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +38,7 @@ public class ${name}Service {
 
   @else
   public List<${name}> list() {
-    return ${entity.plural()}.findAll(Sort.by("${entity.idField()}"));
+    return ${entity.plural()}.findAll(org.springframework.data.domain.Sort.by("${entity.idField()}"));
   }
 
   @endif
