@@ -48,20 +48,20 @@ import tools.jackson.databind.JsonNode;
 class ${entity.name()}ApiTests {
 
   @Autowired private TestRestTemplate http;
-  @Autowired private ${jpa.repository()} ${tests.repositoryVariable(entity)};
+  @Autowired private ${jpa.repository()} ${jpa.repositoryVariable(entity)};
   @for(var target : tests.requiredTargets())
   @if(entity.hexagonal())
   @Autowired private ${target.name()}Store ${target.plural()};
   @endif
-  @Autowired private ${jpa.repository(target)} ${tests.repositoryVariable(target)};
+  @Autowired private ${jpa.repository(target)} ${jpa.repositoryVariable(target)};
   @endfor
-  @template.entity.required_targets(tests = tests)
+  @template.entity.required_targets(tests = tests, jpa = jpa)
 
   @AfterEach
   void deleteAll() {
-    ${tests.repositoryVariable(entity)}.deleteAll();
+    ${jpa.repositoryVariable(entity)}.deleteAll();
     @for(var target : tests.requiredTargets().reversed())
-    ${tests.repositoryVariable(target)}.deleteAll();
+    ${jpa.repositoryVariable(target)}.deleteAll();
     @endfor
   }
 

@@ -17,6 +17,7 @@ package me.yakar.tib.pack.spring;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import me.yakar.tib.pack.EntityModel;
 import me.yakar.tib.pack.FieldModel;
 import me.yakar.tib.pack.RelationModel;
@@ -137,6 +138,40 @@ public final class JpaModel {
   /** The annotation of the column of a relation. */
   public String joinColumn(RelationModel relation) {
     return "@JoinColumn(" + columnAttributes(relation) + ")";
+  }
+
+  /**
+   * The method that saves an entity in a test and flushes it, so that a broken constraint shows:
+   * {@code saveAndFlush} of its repository, or {@code save} of its store in the hexagonal
+   * architecture, which flushes.
+   */
+  public String save() {
+    return entity.hexagonal() ? "save" : "saveAndFlush";
+  }
+
+  /**
+   * The variable of the repository of an entity in the test of the API, which deletes its rows:
+   * {@code depots}, or {@code depotRepository} in the hexagonal architecture, where {@code depots}
+   * is the store that saves what the entity needs.
+   */
+  public String repositoryVariable(EntityModel model) {
+    return model.hexagonal() ? model.variable() + "Repository" : model.plural();
+  }
+
+  /**
+   * The classes that the test of the persistence adapter imports into its context: the
+   * configuration of the container, and the adapter and the persistence mapper of the entity and of
+   * every entity that it needs before it is saved.
+   */
+  public String persistenceClasses(List<EntityModel> requiredTargets) {
+    return Stream.concat(Stream.of(entity), requiredTargets.stream())
+        .map(
+            model ->
+                model.name()
+                    + "PersistenceAdapter.class, "
+                    + model.name()
+                    + "PersistenceMapper.class")
+        .collect(Collectors.joining(", ", "TestcontainersConfiguration.class, ", ""));
   }
 
   /** The name of the column of a relation, and its rules. */

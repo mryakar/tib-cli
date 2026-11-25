@@ -1,6 +1,8 @@
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.EntityTestsModel
+@import me.yakar.tib.pack.spring.JpaModel
 @param EntityTestsModel tests
+@param JpaModel jpa
 !{EntityModel entity = tests.entity();}
 !{String name = entity.name();}
 !{String plural = entity.plural();}
@@ -39,7 +41,7 @@ import org.springframework.data.domain.Pageable;
 
 /** The store of ${plural} on their table, through its adapter, against PostgreSQL in a container. */
 @DataJpaTest
-@Import({${tests.persistenceClasses()}})
+@Import({${jpa.persistenceClasses(tests.requiredTargets())}})
 class ${name}PersistenceAdapterTests {
 
   @Autowired private ${name}Store ${plural};
@@ -47,7 +49,7 @@ class ${name}PersistenceAdapterTests {
   @Autowired private ${target.name()}Store ${target.plural()};
   @endfor
   @Autowired private TestEntityManager entityManager;
-  @template.entity.required_targets(tests = tests)
+  @template.entity.required_targets(tests = tests, jpa = jpa)
 
   @Test
   void savesAndFinds${entity.article()}${name}() {
