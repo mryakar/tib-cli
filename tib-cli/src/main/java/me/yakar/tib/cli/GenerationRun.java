@@ -44,10 +44,13 @@ final class GenerationRun {
 
   @Mixin private GenerationOptions options;
 
-  private final TibVersion version;
+  private final String tibVersion;
 
-  GenerationRun(TibVersion version) {
-    this.version = version;
+  /**
+   * @param tibVersion the version of tib that runs
+   */
+  GenerationRun(String tibVersion) {
+    this.tibVersion = tibVersion;
   }
 
   /**
@@ -73,7 +76,7 @@ final class GenerationRun {
 
   /** A run of the pack of the service on the tree. */
   private Generation generation(Spec service, Tree tree) {
-    return new Generation(Packs.find(service.pack()), version.version(), tree);
+    return new Generation(Packs.find(service.pack()), tibVersion, tree);
   }
 
   /**

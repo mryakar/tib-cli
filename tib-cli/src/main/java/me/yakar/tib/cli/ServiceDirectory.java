@@ -30,10 +30,13 @@ final class ServiceDirectory {
       description = "The directory of the service; the current one by default.")
   private Path dir = Path.of(".");
 
-  private final TibVersion version;
+  private final String tibVersion;
 
-  ServiceDirectory(TibVersion version) {
-    this.version = version;
+  /**
+   * @param tibVersion the version of tib that runs
+   */
+  ServiceDirectory(String tibVersion) {
+    this.tibVersion = tibVersion;
   }
 
   /** The files of the service. */
@@ -47,7 +50,7 @@ final class ServiceDirectory {
    */
   State state(Tree tree) {
     try {
-      return State.in(tree, version.version())
+      return State.in(tree, tibVersion)
           .orElseThrow(
               () ->
                   new RefusalException(
