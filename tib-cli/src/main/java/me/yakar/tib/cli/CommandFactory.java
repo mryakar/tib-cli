@@ -50,13 +50,13 @@ public final class CommandFactory implements IFactory {
       return cls.cast(version);
     }
     if (cls == GenerationRun.class) {
-      return cls.cast(new GenerationRun(version));
+      return cls.cast(new GenerationRun(version.version()));
     }
     if (cls == Questions.class) {
       return cls.cast(new Questions(new InputStreamReader(answers, Charset.defaultCharset())));
     }
     if (cls == ServiceDirectory.class) {
-      return cls.cast(new ServiceDirectory(version));
+      return cls.cast(new ServiceDirectory(version.version()));
     }
     return CommandLine.defaultFactory().create(cls);
   }
