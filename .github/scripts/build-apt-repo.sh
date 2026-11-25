@@ -70,7 +70,7 @@ Suite: stable
 Codename: stable
 Architectures: amd64
 Components: main
-Description: The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services
+Description: The Idempotent Boilerplate: a scaffolding CLI for Java services, on Spring Boot or in plain Java
 Date: $(date -Ru)
 RELEASE
   for hash in MD5Sum:md5sum SHA1:sha1sum SHA256:sha256sum; do

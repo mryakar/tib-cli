@@ -3,10 +3,10 @@
 # the maintainer publishes it.
 project:
   name: tib
-  description: "The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services"
+  description: "The Idempotent Boilerplate: a scaffolding CLI for Java services, on Spring Boot or in plain Java"
   longDescription: |
-    tib scaffolds Spring Boot services and adds to them, from SQL DDL or a spec, and runs again on
-    the same project without breaking anything.
+    tib scaffolds Java services, on Spring Boot or in plain Java, and adds to them, from SQL DDL or
+    a spec, and runs again on the same project without breaking anything.
   authors:
     - Amo
   license: Apache-2.0
