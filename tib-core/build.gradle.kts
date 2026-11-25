@@ -15,7 +15,10 @@
  */
 // The engine: the spec and its JSON Schema, the DDL reader, the pack and generator contracts, the
 // file tree and the state file. It has no dependency on Spring.
-plugins { id("tib.java-conventions") }
+plugins {
+  id("tib.java-conventions")
+  id("tib.snapshot-conventions")
+}
 
 description = "tib engine: spec, DDL reader, pack contracts, file tree and state"
 
