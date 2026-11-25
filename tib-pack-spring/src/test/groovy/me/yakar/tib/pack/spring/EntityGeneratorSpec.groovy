@@ -95,12 +95,13 @@ class EntityGeneratorSpec extends Specification {
     given:
     SpringPack pack = new SpringPack()
     Tree tree = Tree.at(dir)
-    Generation.first(A, [], pack, pack.entity(), '0.0.0', tree)
+    new Generation(pack, '0.0.0', tree).first(A, [])
+    new Generation(pack, '0.0.0', tree).next(State.of(tree, '0.0.0'), A, [])
     tree.apply(State.PATH)
 
     when:
     Tree later = Tree.at(dir)
-    Generation.next(State.of(later, '0.0.0'), new Project(SpecReader.parse('tib: 1\nservice: s\n')), [], pack, pack.entity(), '0.0.0', later)
+    new Generation(pack, '0.0.0', later).next(State.of(later, '0.0.0'), new Project(SpecReader.parse('tib: 1\nservice: s\n')), [])
 
     then:
     List<String> deleted = later.changes().findAll { it.deletes() }*.path()

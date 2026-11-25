@@ -31,13 +31,26 @@ import me.yakar.tib.tree.Owner;
 import me.yakar.tib.tree.Tree;
 
 /**
- * One run of a generator on a project: the generator stages its files in the tree, a later run
+ * One run of a pack on a project: a generator of the pack stages its files in the tree, a later run
  * deletes the files that the spec no longer generates, and then the state file is staged, with the
- * files that the spec is read from and the files of tib's that are there.
+ * files that the spec is read from and the files of tib's that are there. The tree holds the result
+ * until it is applied.
  */
 public final class Generation {
 
-  private Generation() {}
+  private final Pack pack;
+  private final String tibVersion;
+  private final Tree tree;
+
+  /**
+   * @param tibVersion the version of tib that runs
+   * @param tree the files of the project
+   */
+  public Generation(Pack pack, String tibVersion, Tree tree) {
+    this.pack = pack;
+    this.tibVersion = tibVersion;
+    this.tree = tree;
+  }
 
   /**
    * What a run says beyond its changes.
@@ -63,31 +76,23 @@ public final class Generation {
       List<Lasting> lastingReturned) {}
 
   /**
-   * The first run on a project: runs the generator and stages the state file; the tree holds the
-   * result until it is applied.
+   * The first run on a project: runs the generator of a new service and stages the state file.
    *
    * @param inputs the files that the spec of this run was read from
-   * @param pack the pack of the generator
    */
-  public static Result first(
-      Project project,
-      List<State.Input> inputs,
-      Pack pack,
-      Generator generator,
-      String tibVersion,
-      Tree tree) {
+  public Result first(Project project, List<State.Input> inputs) {
     Recorder recorder = new Recorder(tree);
-    generator.generate(project, recorder);
-    State first = new State(tibVersion, ref(pack), inputs, project.spec(), recorder.written());
+    pack.init().generate(project, recorder);
+    State first = new State(tibVersion, ref(), inputs, project.spec(), recorder.written());
     tree.own(State.PATH, first.yaml());
     return new Result(List.of(), List.of(), List.of(), List.of(), List.of());
   }
 
   /**
-   * A later run on a project: runs the generator, drops the files that it generated from the
-   * previous spec and no longer generates, and stages the state file that {@link State#next} makes
-   * of the previous one; the tree holds the result until it is applied. The generator stages no
-   * file of the developer's that an earlier run wrote.
+   * A later run on a project: runs the generator of the entity layer, drops the files that it
+   * generated from the previous spec and no longer generates, and stages the state file that {@link
+   * State#next} makes of the previous one. The generator stages no file of the developer's that an
+   * earlier run wrote.
    *
    * <p>A file that the spec no longer generates is deleted when the generator owns it, edited or
    * not, whichever generator wrote it. A file of the developer's that this generator wrote once
@@ -102,34 +107,25 @@ public final class Generation {
    *
    * @param previous the state file of the project
    * @param inputs the files that the spec of this run was read from
-   * @param pack the pack of the generator
    * @throws PackException when the pack generates for another stack than the service has
    */
-  public static Result next(
-      State previous,
-      Project project,
-      List<State.Input> inputs,
-      Pack pack,
-      Generator generator,
-      String tibVersion,
-      Tree tree) {
-    sameStack(pack, previous, tibVersion, tree);
-    Recorder now = generate(generator, project, previous, tree);
+  public Result next(State previous, Project project, List<State.Input> inputs) {
+    sameStack(previous);
+    Recorder now = generate(project, previous, tree);
     // What the generator makes of the previous spec, in a tree of its own that is never applied.
-    Recorder before =
-        generate(generator, new Project(previous.spec()), previous, Tree.at(tree.root()));
-    Dropped dropped = drop(previous, before.generated(), now.generated(), tree);
+    Recorder before = generate(new Project(previous.spec()), previous, Tree.at(tree.root()));
+    Dropped dropped = drop(previous, before.generated(), now.generated());
     State next =
         previous.next(
             tibVersion,
-            ref(pack),
+            ref(),
             inputs,
             project.spec(),
             tree.root(),
             now.written(),
             Stream.concat(dropped.deleted().stream(), dropped.kept().stream()).toList());
     tree.own(State.PATH, next.yaml());
-    Left left = left(previous, before.lasting(), now.lasting(), tree);
+    Left left = left(previous, before.lasting(), now.lasting());
     return new Result(
         dropped.kept(),
         previous.inputs().stream()
@@ -153,8 +149,8 @@ public final class Generation {
    * @param before the files that the generator makes of the previous spec, with their content
    * @param now the files that it makes of this one
    */
-  private static Left left(
-      State previous, SortedMap<String, byte[]> before, SortedMap<String, byte[]> now, Tree tree) {
+  private Left left(
+      State previous, SortedMap<String, byte[]> before, SortedMap<String, byte[]> now) {
     Set<String> recorded =
         previous.files().stream().map(State.File::path).collect(Collectors.toSet());
     Set<String> staged = tree.changes().stream().map(Change::path).collect(Collectors.toSet());
@@ -186,7 +182,7 @@ public final class Generation {
    * recorded the stack. A service that this version of tib generated has the stack of another pack
    * than the one the spec names; one of another version may have that of the same pack.
    */
-  private static void sameStack(Pack pack, State previous, String tibVersion, Tree tree) {
+  private void sameStack(State previous) {
     if (!pack.stack().equals(previous.pack().stack())) {
       throw new PackException(
           tree.root()
@@ -214,19 +210,18 @@ public final class Generation {
     }
   }
 
-  private static State.PackRef ref(Pack pack) {
+  private State.PackRef ref() {
     return new State.PackRef(pack.name(), pack.version(), pack.stack());
   }
 
   /**
-   * Runs the generator on the tree, which is told the files that tib wrote before, and records what
-   * it generates.
+   * Runs the generator of the entity layer on a tree, which is told the files that tib wrote
+   * before, and records what it generates.
    */
-  private static Recorder generate(
-      Generator generator, Project project, State previous, Tree tree) {
-    tree.writtenBefore(previous.files().stream().map(State.File::path).toList());
-    Recorder recorder = new Recorder(tree);
-    generator.generate(project, recorder);
+  private Recorder generate(Project project, State previous, Tree on) {
+    on.writtenBefore(previous.files().stream().map(State.File::path).toList());
+    Recorder recorder = new Recorder(on);
+    pack.entity().generate(project, recorder);
     return recorder;
   }
 
@@ -245,8 +240,7 @@ public final class Generation {
    * @param generatedBefore the paths that the generator generates from the previous spec
    * @param generated the paths that it generates from this one
    */
-  private static Dropped drop(
-      State previous, Set<String> generatedBefore, Set<String> generated, Tree tree) {
+  private Dropped drop(State previous, Set<String> generatedBefore, Set<String> generated) {
     List<String> deleted = new ArrayList<>();
     List<String> kept = new ArrayList<>();
     for (State.File file : previous.files()) {
@@ -262,6 +256,6 @@ public final class Generation {
         kept.add(path);
       }
     }
-    return new Dropped(deleted, kept);
+    return new Dropped(List.copyOf(deleted), List.copyOf(kept));
   }
 }

@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import me.yakar.tib.generate.Generation;
 import me.yakar.tib.generate.Lasting;
-import me.yakar.tib.generate.Pack;
 import me.yakar.tib.generate.Packs;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Spec;
@@ -58,10 +57,7 @@ final class GenerationRun {
    * @param inputs the files that the spec was read from
    */
   int init(Spec service, List<State.Input> inputs, Tree tree) {
-    Pack pack = Packs.find(service.pack());
-    return end(
-        Generation.first(new Project(service), inputs, pack, pack.init(), version.version(), tree),
-        tree);
+    return end(generation(service, tree).first(new Project(service), inputs), tree);
   }
 
   /**
@@ -71,17 +67,13 @@ final class GenerationRun {
    * @param input the file that the spec was read from
    */
   int entity(State previous, Spec service, State.Input input, Tree tree) {
-    Pack pack = Packs.find(service.pack());
     return end(
-        Generation.next(
-            previous,
-            new Project(service),
-            List.of(input),
-            pack,
-            pack.entity(),
-            version.version(),
-            tree),
-        tree);
+        generation(service, tree).next(previous, new Project(service), List.of(input)), tree);
+  }
+
+  /** A run of the pack of the service on the tree. */
+  private Generation generation(Spec service, Tree tree) {
+    return new Generation(Packs.find(service.pack()), version.version(), tree);
   }
 
   /**

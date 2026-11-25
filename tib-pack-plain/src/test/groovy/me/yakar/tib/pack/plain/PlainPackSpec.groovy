@@ -280,7 +280,7 @@ class PlainPackSpec extends Specification {
 
     when:
     Tree again = Tree.at(dir)
-    Generation.Result result = Generation.next(State.of(again, TIB), new Project(spec), [], pack, pack.entity(), TIB, again)
+    Generation.Result result = new Generation(pack, TIB, again).next(State.of(again, TIB), new Project(spec), [])
 
     then:
     again.changes().empty
@@ -331,8 +331,9 @@ class PlainPackSpec extends Specification {
     Project project = new Project(spec)
     Tree tree = Tree.at(dir)
     PlainPack pack = new PlainPack()
-    Generation.first(project, [], pack, pack.init(), TIB, tree)
-    Generation.next(State.of(tree, TIB), project, [], pack, pack.entity(), TIB, tree)
+    Generation generation = new Generation(pack, TIB, tree)
+    generation.first(project, [])
+    generation.next(State.of(tree, TIB), project, [])
     return tree
   }
 
