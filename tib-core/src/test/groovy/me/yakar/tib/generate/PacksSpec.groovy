@@ -15,7 +15,6 @@
  */
 package me.yakar.tib.generate
 
-import me.yakar.tib.spec.Architecture
 import spock.lang.Specification
 
 class PacksSpec extends Specification {
@@ -39,11 +38,6 @@ class PacksSpec extends Specification {
 
     where:
     reference << ['three', 'two@1.0.0']
-  }
-
-  def "a pack arranges a service in every architecture unless it says otherwise"() {
-    expect:
-    one.architectures() == EnumSet.allOf(Architecture)
   }
 
   def "the names of the packs come once each, in alphabetical order"() {

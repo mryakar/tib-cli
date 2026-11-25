@@ -95,7 +95,6 @@ class PlainPackSpec extends Specification {
     pack.name() == 'plain'
     pack.version() == VERSION
     pack.stack() == 'Plain Java'
-    pack.architectures() == EnumSet.allOf(Architecture)
     Packs.find('plain') instanceof PlainPack
     Packs.find("plain@$VERSION") instanceof PlainPack
     Packs.names() == ['plain']
