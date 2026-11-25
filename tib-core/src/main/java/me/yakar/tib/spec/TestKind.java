@@ -17,9 +17,9 @@ package me.yakar.tib.spec;
 
 import java.util.Locale;
 
-/** A kind of test that tib writes for the entities of a service. */
+/** A kind of test that tib writes for a service. */
 public enum TestKind {
-  /** The tests of the service of an entity, with its repository and its mapper mocked. */
+  /** The tests of the service of an entity, with what it uses mocked. */
   UNIT,
 
   /**

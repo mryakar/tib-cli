@@ -19,25 +19,19 @@ import java.util.Locale;
 
 /** How the code of a service is arranged in packages, and which part may use which. */
 public enum Architecture {
-  /**
-   * Every class of an entity in the package of the entity: its data, repository, service, mapper,
-   * DTO and controller, the controller over the service over the repository.
-   */
+  /** Every class of an entity in the package of the entity. */
   ANEMIC,
 
   /**
-   * Every entity an aggregate in three packages: its domain, with the entity and its repository;
-   * its application, with the service of its use cases; and its web, with its controller, DTO and
-   * mapper. An entity refers to another by its identifier.
+   * Every entity an aggregate in three packages: its domain, its application and its web. An entity
+   * refers to another by its identifier.
    */
   DDD,
 
   /**
-   * Every entity a domain without a framework, in the middle of ports and adapters: its domain, in
-   * plain Java; its application, with the service of its use cases and the ports, the use cases
-   * that the inbound adapters call and the store that the outbound ones implement; and its
-   * adapters, the web with its controller, DTO and mapper, and the persistence with its JPA entity,
-   * repository, mapper and the adapter of the store. An entity refers to another by its identifier.
+   * Every entity a domain in plain Java among ports and adapters: its domain, its application with
+   * the ports, and its inbound and outbound adapters. An entity refers to another by its
+   * identifier.
    */
   HEXAGONAL;
 
