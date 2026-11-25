@@ -23,6 +23,7 @@ import me.yakar.tib.pack.EntityTestsModel;
 import me.yakar.tib.pack.GeneratedFiles;
 import me.yakar.tib.pack.Migration;
 import me.yakar.tib.pack.Sources;
+import me.yakar.tib.pack.Templates;
 import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.TestKind;
 import me.yakar.tib.tree.ProjectFiles;
@@ -57,7 +58,7 @@ final class EntityGenerator implements Generator {
     String web = entity.webPackage();
     String persistence = entity.persistencePackage();
     // DDD and hexagonal have services of their own: the use cases of the domain, which know no DTO.
-    String architecture = architecture(project);
+    String architecture = Templates.prefix(project.architecture());
     Map<String, Object> model = Map.of("entity", entity);
     Map<String, Object> tests = Map.of("tests", new EntityTestsModel(entity));
     if (entity.hexagonal()) {
@@ -139,17 +140,5 @@ final class EntityGenerator implements Generator {
       generated.onceWithEntity(
           Sources.test(web, name + "ApiTests"), "entity/api_tests_java.jte", tests);
     }
-  }
-
-  /**
-   * The prefix of the templates of the service, its tests and the controller in the architecture of
-   * the project: none for the anemic one, whose service maps the entity to and from its DTO.
-   */
-  private static String architecture(Project project) {
-    return switch (project.architecture()) {
-      case ANEMIC -> "";
-      case DDD -> "ddd_";
-      case HEXAGONAL -> "hexagonal_";
-    };
   }
 }
