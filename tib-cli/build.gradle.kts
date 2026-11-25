@@ -19,6 +19,7 @@ import me.yakar.tib.gradle.packaging.JPackageImage
 import me.yakar.tib.gradle.packaging.JPackageInstaller
 import me.yakar.tib.gradle.packaging.JdkModules
 import me.yakar.tib.gradle.packaging.Launcher
+import me.yakar.tib.gradle.packaging.Platform
 import me.yakar.tib.gradle.packaging.StartupCacheScript
 
 plugins { id("tib.java-conventions") }
@@ -45,15 +46,8 @@ tasks.processResources {
 // macOS, Homebrew installs the zip) and an application image that the portable zip wraps; each
 // embeds a runtime of JDK 25, trimmed to the modules the application uses.
 val packagingJdk = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
-val windows = System.getProperty("os.name").startsWith("Windows")
-val mac = System.getProperty("os.name").startsWith("Mac")
+val platform = Platform.current()
 val launcherName = "tib"
-val platform =
-  when {
-    windows -> "windows"
-    mac -> "macos"
-    else -> "linux"
-  }
 // The processor of the package: a Mac is either, the others are built on x64 only.
 val architecture = if (System.getProperty("os.arch") == "aarch64") "arm64" else "x64"
 
@@ -79,7 +73,9 @@ tasks.withType<JPackage>().configureEach {
   // A snapshot packages as its release version. The version of a macOS bundle cannot start with
   // 0, so before 1.0 the bundle says 1.0.0; tib --version reads its own from the jar.
   applicationVersion =
-    projectVersion.substringBefore('-').let { if (mac && it.startsWith("0.")) "1.0.0" else it }
+    projectVersion.substringBefore('-').let {
+      if (platform == Platform.MACOS && it.startsWith("0.")) "1.0.0" else it
+    }
   options.addAll(
     "--vendor",
     "Amo",
@@ -97,7 +93,7 @@ val jpackageAppImage =
     modules = jdkModules.flatMap { it.output }
     destination = layout.buildDirectory.dir("jpackage/app-image")
     // The launcher is a console application; an option of the image, not of the installer.
-    if (windows) {
+    if (platform == Platform.WINDOWS) {
       options.add("--win-console")
     }
     // jlink's defaults, without --strip-native-commands: the start-up cache is built with the
@@ -117,46 +113,32 @@ val shippedImage =
   tasks.register<Sync>("shippedImage") {
     description = "Prepares the application image that the packages ship."
     from(jpackageAppImage.map { it.destination })
-    if (windows) {
+    val runtime = platform.runtimeHome(launcherName)
+    if (platform == Platform.WINDOWS) {
       exclude(
-        "$launcherName/runtime/bin/javac.exe",
-        "$launcherName/runtime/bin/keytool.exe",
-        "$launcherName/runtime/bin/serialver.exe",
+        "$runtime/bin/javac.exe",
+        "$runtime/bin/keytool.exe",
+        "$runtime/bin/serialver.exe",
       )
-    } else if (mac) {
-      // The bundle as jpackage signed it, but for the commands of its runtime other than java.
-      val commands = "$launcherName.app/Contents/runtime/Contents/Home/bin/"
-      exclude { it.path.startsWith(commands) && it.name != "java" }
     } else {
-      exclude(
-        "$launcherName/lib/runtime/lib/libawt_xawt.so",
-        "$launcherName/lib/runtime/lib/libsplashscreen.so",
-        "$launcherName/lib/runtime/lib/libjsound.so",
-        "$launcherName/lib/runtime/lib/libfontmanager.so",
-      )
-      val commands = "$launcherName/lib/runtime/bin/"
+      // A macOS bundle stays as jpackage signed it, but for these.
+      val commands = "$runtime/bin/"
       exclude { it.path.startsWith(commands) && it.name != "java" }
+    }
+    if (platform == Platform.LINUX) {
+      exclude(
+        "$runtime/lib/libawt_xawt.so",
+        "$runtime/lib/libsplashscreen.so",
+        "$runtime/lib/libjsound.so",
+        "$runtime/lib/libfontmanager.so",
+      )
     }
     into(layout.buildDirectory.dir("jpackage/image"))
     // The runtime's legal files are read-only, so a copy cannot overwrite the previous one.
     doFirst { destinationDir.deleteRecursively() }
     val launcher = launcherName
-    val appDirectory =
-      when {
-        windows -> "$launcher/app"
-        mac -> "$launcher.app/Contents/app"
-        else -> "$launcher/lib/app"
-      }
-    val runtimeHome = if (mac) "../runtime/Contents/Home" else "../runtime"
-    val isWindows = windows
-    doLast {
-      StartupCacheScript.write(
-        destinationDir.resolve(appDirectory),
-        launcher,
-        isWindows,
-        runtimeHome,
-      )
-    }
+    val target = platform
+    doLast { StartupCacheScript.write(destinationDir, launcher, target) }
   }
 
 val portableZip =
@@ -177,45 +159,46 @@ val portableZip =
         permissions { unix("rwxr-xr-x") }
       }
     }
-    archiveFileName = "tib-$projectVersion-$platform-$architecture.zip"
+    archiveFileName = "tib-$projectVersion-${platform.label}-$architecture.zip"
     destinationDirectory = layout.buildDirectory.dir("jpackage/zip")
   }
 
 // The installers are built from the image that the packages ship.
 tasks.withType<JPackageInstaller>().configureEach {
-  appImage = layout.dir(shippedImage.map { it.destinationDir.resolve(launcherName) })
+  val image = platform.image(launcherName)
+  appImage = layout.dir(shippedImage.map { it.destinationDir.resolve(image) })
   aboutUrl = "https://github.com/mryakar/tib-cli"
   licenseFile = layout.settingsDirectory.file("LICENSE")
 }
 
 // A Mac has no installer of its own: Homebrew installs the portable zip.
 val installer =
-  if (mac) {
-    null
-  } else if (windows) {
-    tasks.register<JPackageInstaller>("jpackageMsi") {
-      description = "Builds the Windows installer."
-      type = "msi"
-      resources = layout.projectDirectory.dir("src/jpackage/windows")
-      destination = layout.buildDirectory.dir("jpackage/msi")
-      // A fixed upgrade code, so that installing a newer version replaces the older one.
-      options.addAll("--win-upgrade-uuid", "d91cba2b-e77e-47de-8bcc-4ca76321cfdf")
-    }
-  } else {
-    tasks.register<JPackageInstaller>("jpackageDeb") {
-      description = "Builds the Debian package."
-      type = "deb"
-      resources = layout.projectDirectory.dir("src/jpackage/linux")
-      destination = layout.buildDirectory.dir("jpackage/deb")
-      options.addAll(
-        "--linux-package-name",
-        "tib",
-        "--linux-deb-maintainer",
-        "ahmet@yakar.me",
-        "--linux-app-category",
-        "utils",
-      )
-    }
+  when (platform) {
+    Platform.MACOS -> null
+    Platform.WINDOWS ->
+      tasks.register<JPackageInstaller>("jpackageMsi") {
+        description = "Builds the Windows installer."
+        type = "msi"
+        resources = layout.projectDirectory.dir("src/jpackage/windows")
+        destination = layout.buildDirectory.dir("jpackage/msi")
+        // A fixed upgrade code, so that installing a newer version replaces the older one.
+        options.addAll("--win-upgrade-uuid", "d91cba2b-e77e-47de-8bcc-4ca76321cfdf")
+      }
+    Platform.LINUX ->
+      tasks.register<JPackageInstaller>("jpackageDeb") {
+        description = "Builds the Debian package."
+        type = "deb"
+        resources = layout.projectDirectory.dir("src/jpackage/linux")
+        destination = layout.buildDirectory.dir("jpackage/deb")
+        options.addAll(
+          "--linux-package-name",
+          "tib",
+          "--linux-deb-maintainer",
+          "ahmet@yakar.me",
+          "--linux-app-category",
+          "utils",
+        )
+      }
   }
 
 tasks.register<Sync>("packages") {

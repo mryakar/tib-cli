@@ -32,16 +32,10 @@ object StartupCacheScript {
   /** The training run, but for the directory: a new service, as a dry run. */
   private const val TRAINING = "init service sample --dry-run"
 
-  /**
-   * Writes the script for one platform; on Linux and macOS, with the home of the runtime relative
-   * to the directory of the jars, which a macOS bundle keeps deeper.
-   */
-  fun write(
-    appDirectory: File,
-    launcherName: String,
-    windows: Boolean,
-    runtimeHome: String = "../runtime",
-  ) {
+  /** Writes the script of a platform into the image of a launcher, which is in [directory]. */
+  fun write(directory: File, launcherName: String, platform: Platform) {
+    val appDirectory = directory.resolve(platform.appDirectory(launcherName))
+    val runtime = platform.runtimeFromApp
     val configuration = appDirectory.resolve("$launcherName.cfg").readLines()
     val mainClass =
       configuration.single { it.startsWith("app.mainclass=") }.substringAfter('=').trim()
@@ -51,7 +45,7 @@ object StartupCacheScript {
         .map { it.substringAfter('=').trim().removePrefix("\$APPDIR").trimStart('/', '\\') }
     val options = Launcher.JVM_OPTIONS.joinToString(" ")
     val cache = Launcher.cache(launcherName)
-    if (windows) {
+    if (platform == Platform.WINDOWS) {
       appDirectory
         .resolve("startup-cache.cmd")
         .writeText(
@@ -61,7 +55,7 @@ object StartupCacheScript {
           |rem run it yourself after unpacking the portable zip.
           |set "app=%~dp0"
           |set "app=%app:~0,-1%"
-          |set "java=%app%\..\runtime\bin\java.exe"
+          |set "java=%app%\${runtime.replace('/', '\\')}\bin\java.exe"
           |set "cp=${jars.joinToString(";") { "%app%\\$it" }}"
           |"%java%" $options ^
           |  -XX:AOTMode=record -XX:AOTConfiguration="%app%\$cache.config" ^
@@ -85,7 +79,7 @@ object StartupCacheScript {
           |# runs it; run it yourself after unpacking the portable zip.
           |set -e
           |app=$(cd "$(dirname "$0")" && pwd)
-          |java="${'$'}app/$runtimeHome/bin/java"
+          |java="${'$'}app/$runtime/bin/java"
           |cp="${jars.joinToString(":") { "\$app/$it" }}"
           |trap 'rm -f "${'$'}app/$cache.config"' EXIT
           |"${'$'}java" $options \
