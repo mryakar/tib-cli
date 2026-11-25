@@ -21,7 +21,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        # macOS on both of its processors: Apple silicon, and Intel while GitHub has a runner of it.
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-15-intel]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -75,15 +76,40 @@ jobs:
           if [[ "$RUNNER_OS" == Windows ]]; then
             tib=portable/tib/tib.exe app=portable/tib/app
             cmd.exe //c 'portable\tib\app\startup-cache.cmd'
+          elif [[ "$RUNNER_OS" == macOS ]]; then
+            tib=portable/tib.app/Contents/MacOS/tib app=portable/tib.app/Contents/app
+            "$app/startup-cache.sh"
           else
             tib=portable/tib/bin/tib app=portable/tib/lib/app
             "$app/startup-cache.sh"
           fi
           .github/scripts/smoke-tib.sh "$tib" "$app" "$RUNNER_TEMP/portable"
 
+      # The formula that a release writes into the tap, here from a tap of this runner and the zip on
+      # its disk: Homebrew installs it, builds its start-up cache and runs its test.
+      - name: Install the zip with Homebrew and run tib
+        if: runner.os == 'macOS'
+        run: |
+          zip="$(ls "$PWD"/tib-cli/build/packages/tib-*-macos-*.zip)"
+          version="$(basename "$zip")"
+          version="${version#tib-}"
+          version="${version%-macos-*}"
+          sha256="$(shasum -a 256 "$zip" | cut -d ' ' -f 1)"
+          brew tap-new --no-git tib/local
+          .github/scripts/homebrew-formula.sh "$version" "file://$zip" "$sha256" "file://$zip" "$sha256" \
+            > "$(brew --repository tib/local)/Formula/tib.rb"
+          brew install tib/local/tib
+          .github/scripts/smoke-tib.sh tib "$(brew --prefix tib)/libexec/tib.app/Contents/app" "$RUNNER_TEMP/brew"
+          brew test tib/local/tib
+          brew uninstall tib
+          brew untap tib/local
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+          HOMEBREW_NO_INSTALL_CLEANUP: "1"
+
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: packages-${{ runner.os }}
+          name: packages-${{ runner.os }}-${{ runner.arch }}
           path: tib-cli/build/packages/*
           if-no-files-found: error
           retention-days: 7
