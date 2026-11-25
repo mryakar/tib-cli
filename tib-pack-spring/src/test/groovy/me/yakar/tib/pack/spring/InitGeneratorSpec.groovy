@@ -79,6 +79,30 @@ class InitGeneratorSpec extends Specification {
     '[]'                       | false       | false
   }
 
+  def "the build of a service that may have no test yet does not fail for it: #tests"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new InitGenerator(new SpringPack()).generate(project("tests: $tests\n"), tree)
+    String build = texts(tree)['build.gradle.kts']
+
+    then: 'only the test of the application and the test of the architecture are there from the start'
+    build.contains('tasks.withType<Test> { useJUnitPlatform() }\n') == always
+    build.contains('tasks.withType<Test> {\n  useJUnitPlatform()\n') == !always
+    build.contains('  failOnNoDiscoveredTests = false\n}\n') == !always
+
+    where:
+    tests                      | always
+    '[unit, integration, api]' | true
+    '[integration]'            | true
+    '[archunit]'               | true
+    '[unit, api]'              | false
+    '[unit]'                   | false
+    '[api]'                    | false
+    '[]'                       | false
+  }
+
   def "a service with the test of its architecture gets ArchitectureTests and ArchUnit, and the notes tell of it: #tests"() {
     given:
     Tree tree = Tree.at(dir)
