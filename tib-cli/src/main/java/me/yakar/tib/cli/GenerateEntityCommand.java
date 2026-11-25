@@ -82,63 +82,51 @@ class GenerateEntityCommand implements Callable<Integer> {
   }
 
   /**
-   * Refuses the spec file of another service than the one of the project, of another group, on
-   * another Java or architecture, with other kinds of tests, or with a Dockerfile where it has none
-   * or the reverse.
+   * Refuses a spec file that is not the one of this service: what is chosen when a service is
+   * created does not change.
    */
   private void sameService(Spec read, Spec project) {
-    if (!read.service().equals(project.service())) {
-      throw new RefusalException(
-          source.spec
-              + " is the spec of "
-              + read.service()
-              + "; this project is "
-              + project.service());
+    same(read.service().equals(project.service()), read.service(), "is " + project.service(), null);
+    same(
+        read.group().equals(project.group()),
+        "a service in " + read.group(),
+        "is in " + project.group(),
+        null);
+    same(
+        read.java().equals(project.java()),
+        "a service on Java " + read.java(),
+        "is on Java " + project.java(),
+        "The Java of a service is chosen when it is created.");
+    same(
+        read.architecture() == project.architecture(),
+        "a service of the architecture " + read.architecture(),
+        "is " + project.architecture(),
+        "The architecture of a service is chosen when it is created.");
+    same(
+        Set.copyOf(read.tests()).equals(Set.copyOf(project.tests())),
+        "a service with " + kinds(read.tests()),
+        "has " + kinds(project.tests()),
+        "The kinds of tests of a service are chosen when it is created.");
+    same(
+        read.docker().equals(project.docker()),
+        "a service " + (read.docker() ? "with" : "without") + " a Dockerfile",
+        "has " + (project.docker() ? "one" : "none"),
+        "Whether a service has a Dockerfile is chosen when it is created.");
+  }
+
+  /**
+   * Refuses the spec file unless it says the same as the project.
+   *
+   * @param read what the file is the spec of, as in {@code a service on Java 25}
+   * @param project what the project is or has instead, as in {@code is on Java 21}
+   * @param advice what follows the problem on a line of its own, or null for nothing
+   */
+  private void same(boolean same, String read, String project, String advice) {
+    if (same) {
+      return;
     }
-    if (!read.group().equals(project.group())) {
-      throw new RefusalException(
-          source.spec
-              + " is the spec of a service in "
-              + read.group()
-              + "; this project is in "
-              + project.group());
-    }
-    if (!read.java().equals(project.java())) {
-      throw new RefusalException(
-          source.spec
-              + " is the spec of a service on Java "
-              + read.java()
-              + "; this project is on Java "
-              + project.java(),
-          "The Java of a service is chosen when it is created.");
-    }
-    if (read.architecture() != project.architecture()) {
-      throw new RefusalException(
-          source.spec
-              + " is the spec of a service of the architecture "
-              + read.architecture()
-              + "; this project is "
-              + project.architecture(),
-          "The architecture of a service is chosen when it is created.");
-    }
-    if (!Set.copyOf(read.tests()).equals(Set.copyOf(project.tests()))) {
-      throw new RefusalException(
-          source.spec
-              + " is the spec of a service with "
-              + kinds(read.tests())
-              + "; this project has "
-              + kinds(project.tests()),
-          "The kinds of tests of a service are chosen when it is created.");
-    }
-    if (!read.docker().equals(project.docker())) {
-      throw new RefusalException(
-          source.spec
-              + " is the spec of a service "
-              + (read.docker() ? "with" : "without")
-              + " a Dockerfile; this project has "
-              + (project.docker() ? "one" : "none"),
-          "Whether a service has a Dockerfile is chosen when it is created.");
-    }
+    String problem = source.spec + " is the spec of " + read + "; this project " + project;
+    throw advice == null ? new RefusalException(problem) : new RefusalException(problem, advice);
   }
 
   /** The kinds of tests in words, as in {@code unit and api tests}, or {@code no tests}. */
