@@ -32,8 +32,16 @@ object StartupCacheScript {
   /** The training run, but for the directory: a new service, as a dry run. */
   private const val TRAINING = "init service sample --dry-run"
 
-  /** Writes the script for one platform. */
-  fun write(appDirectory: File, launcherName: String, windows: Boolean) {
+  /**
+   * Writes the script for one platform; on Linux and macOS, with the home of the runtime relative
+   * to the directory of the jars, which a macOS bundle keeps deeper.
+   */
+  fun write(
+    appDirectory: File,
+    launcherName: String,
+    windows: Boolean,
+    runtimeHome: String = "../runtime",
+  ) {
     val configuration = appDirectory.resolve("$launcherName.cfg").readLines()
     val mainClass =
       configuration.single { it.startsWith("app.mainclass=") }.substringAfter('=').trim()
@@ -77,7 +85,7 @@ object StartupCacheScript {
           |# runs it; run it yourself after unpacking the portable zip.
           |set -e
           |app=$(cd "$(dirname "$0")" && pwd)
-          |java="${'$'}app/../runtime/bin/java"
+          |java="${'$'}app/$runtimeHome/bin/java"
           |cp="${jars.joinToString(":") { "\$app/$it" }}"
           |trap 'rm -f "${'$'}app/$cache.config"' EXIT
           |"${'$'}java" $options \

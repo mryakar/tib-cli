@@ -41,13 +41,21 @@ tasks.processResources {
   filesMatching("**/version.properties") { expand("version" to version) }
 }
 
-// Packaging. jpackage builds the installer of this platform (.deb on Linux, .msi on Windows) and
-// an application image that the portable zip wraps; each embeds a runtime of JDK 25, trimmed to
-// the modules the application uses.
+// Packaging. jpackage builds the installer of this platform (.deb on Linux, .msi on Windows; on
+// macOS, Homebrew installs the zip) and an application image that the portable zip wraps; each
+// embeds a runtime of JDK 25, trimmed to the modules the application uses.
 val packagingJdk = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(25) }
 val windows = System.getProperty("os.name").startsWith("Windows")
+val mac = System.getProperty("os.name").startsWith("Mac")
 val launcherName = "tib"
-val platform = if (windows) "windows" else "linux"
+val platform =
+  when {
+    windows -> "windows"
+    mac -> "macos"
+    else -> "linux"
+  }
+// The processor of the package: a Mac is either, the others are built on x64 only.
+val architecture = if (System.getProperty("os.arch") == "aarch64") "arm64" else "x64"
 
 val jpackageInput =
   tasks.register<Sync>("jpackageInput") {
@@ -68,8 +76,10 @@ val jdkModules =
 tasks.withType<JPackage>().configureEach {
   javaLauncher = packagingJdk
   applicationName = launcherName
-  // A snapshot packages as its release version.
-  applicationVersion = projectVersion.substringBefore('-')
+  // A snapshot packages as its release version. The version of a macOS bundle cannot start with
+  // 0, so before 1.0 the bundle says 1.0.0; tib --version reads its own from the jar.
+  applicationVersion =
+    projectVersion.substringBefore('-').let { if (mac && it.startsWith("0.")) "1.0.0" else it }
   options.addAll(
     "--vendor",
     "Amo",
@@ -113,6 +123,10 @@ val shippedImage =
         "$launcherName/runtime/bin/keytool.exe",
         "$launcherName/runtime/bin/serialver.exe",
       )
+    } else if (mac) {
+      // The bundle as jpackage signed it, but for the commands of its runtime other than java.
+      val commands = "$launcherName.app/Contents/runtime/Contents/Home/bin/"
+      exclude { it.path.startsWith(commands) && it.name != "java" }
     } else {
       exclude(
         "$launcherName/lib/runtime/lib/libawt_xawt.so",
@@ -127,9 +141,22 @@ val shippedImage =
     // The runtime's legal files are read-only, so a copy cannot overwrite the previous one.
     doFirst { destinationDir.deleteRecursively() }
     val launcher = launcherName
-    val appDirectory = if (windows) "$launcher/app" else "$launcher/lib/app"
+    val appDirectory =
+      when {
+        windows -> "$launcher/app"
+        mac -> "$launcher.app/Contents/app"
+        else -> "$launcher/lib/app"
+      }
+    val runtimeHome = if (mac) "../runtime/Contents/Home" else "../runtime"
     val isWindows = windows
-    doLast { StartupCacheScript.write(destinationDir.resolve(appDirectory), launcher, isWindows) }
+    doLast {
+      StartupCacheScript.write(
+        destinationDir.resolve(appDirectory),
+        launcher,
+        isWindows,
+        runtimeHome,
+      )
+    }
   }
 
 val portableZip =
@@ -140,11 +167,17 @@ val portableZip =
     // The archive is reproducible, so it carries no permissions of its own; the launcher, the
     // scripts, the runtime's commands and its jspawnhelper, which starts processes, get theirs.
     eachFile {
-      if (relativePath.segments.contains("bin") || name.endsWith(".sh") || name == "jspawnhelper") {
+      val segments = relativePath.segments
+      if (
+        segments.contains("bin") ||
+          segments.contains("MacOS") ||
+          name.endsWith(".sh") ||
+          name == "jspawnhelper"
+      ) {
         permissions { unix("rwxr-xr-x") }
       }
     }
-    archiveFileName = "tib-$projectVersion-$platform-x64.zip"
+    archiveFileName = "tib-$projectVersion-$platform-$architecture.zip"
     destinationDirectory = layout.buildDirectory.dir("jpackage/zip")
   }
 
@@ -155,8 +188,11 @@ tasks.withType<JPackageInstaller>().configureEach {
   licenseFile = layout.settingsDirectory.file("LICENSE")
 }
 
+// A Mac has no installer of its own: Homebrew installs the portable zip.
 val installer =
-  if (windows) {
+  if (mac) {
+    null
+  } else if (windows) {
     tasks.register<JPackageInstaller>("jpackageMsi") {
       description = "Builds the Windows installer."
       type = "msi"
@@ -183,9 +219,9 @@ val installer =
   }
 
 tasks.register<Sync>("packages") {
-  description = "Builds the packages of this platform: the installer and the portable zip."
+  description = "Builds the packages of this platform: its installer, if it has one, and the zip."
   group = "distribution"
-  from(installer.map { it.destination })
+  installer?.let { from(it.map { task -> task.destination }) }
   from(portableZip)
   into(layout.buildDirectory.dir("packages"))
 }
