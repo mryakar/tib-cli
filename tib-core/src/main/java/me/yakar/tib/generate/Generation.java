@@ -105,6 +105,12 @@ public final class Generation {
    * recorded the stack, is refused before anything is staged: the files that tib wrote once, such
    * as the build, are of that stack.
    *
+   * <p>The spec of the project has to be one of the service of the previous state: with its name,
+   * its group, its Java version, its architecture, its kinds of tests and its Dockerfile or none.
+   * The run does not check that: with another of these, it writes the files of the entities as the
+   * spec of the project asks, deletes the ones of the previous spec, and leaves the files that were
+   * written once, such as the build, as they are.
+   *
    * @param previous the state file of the project
    * @param inputs the files that the spec of this run was read from
    * @throws PackException when the pack generates for another stack than the service has
