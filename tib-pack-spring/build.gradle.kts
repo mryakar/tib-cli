@@ -16,7 +16,7 @@
 // The default template pack: a Spring Boot service with JPA, PostgreSQL, Flyway and Testcontainers.
 plugins { id("tib.pack-conventions") }
 
-description = "tib default template pack: Spring Boot 4, JPA, PostgreSQL, Flyway, Testcontainers"
+description = "tib default template pack: Spring Boot, JPA, PostgreSQL, Flyway, Testcontainers"
 
 // The versions of the stack that the pack generates, from the version catalog, where Dependabot
 // sees them.
