@@ -4,13 +4,29 @@
 @param DtoModel dto
 package ${entity.webPackage()};
 
+@for(var field : entity.fields())
+@if(!field.nullable())
 import jakarta.validation.constraints.NotNull;
+@endif
+@if(field.length() != null)
 import jakarta.validation.constraints.Size;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+@endif
+${field.typeImport()}
+@endfor
+@for(var relation : entity.relations())
+@if(!relation.nullable())
+import jakarta.validation.constraints.NotNull;
+@endif
+@if(relation.target().uuidId())
 import java.util.UUID;
+@endif
+@endfor
+@if(entity.uuidId())
+import java.util.UUID;
+@endif
+@if(entity.audited())
+import java.time.Instant;
+@endif
 
 /**
  * ${entity.article()} ${entity.variable()} as the API shows and takes it@if(!entity.relations().isEmpty()); a relation is the identifier of its target@endif.
