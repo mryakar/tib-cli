@@ -1,7 +1,7 @@
 <!-- Written by tib when the service was created; it is yours from then on. -->
 # corner-service
 
-A service in plain Java 25, scaffolded by tib, without a framework of dependency injection:
+A service in plain Java 25, scaffolded by tib, without a dependency injection framework:
 its objects are wired by hand. It answers HTTP with the server of the JDK, keeps its entities in
 PostgreSQL with JDBC, migrates its schema with Flyway and reads and writes JSON with Jackson; its
 tests start PostgreSQL in a container with Testcontainers. The base package is

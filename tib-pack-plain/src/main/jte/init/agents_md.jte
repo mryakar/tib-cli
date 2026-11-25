@@ -9,7 +9,7 @@
 !{boolean hexagonal = project.architecture() == Architecture.HEXAGONAL;}
 # ${project.name()}
 
-A service in plain Java ${project.java()}, scaffolded by tib, without a framework of dependency injection:
+A service in plain Java ${project.java()}, scaffolded by tib, without a dependency injection framework:
 its objects are wired by hand. It answers HTTP with the server of the JDK, keeps its entities in
 PostgreSQL with JDBC, migrates its schema with Flyway and reads and writes JSON with Jackson; its
 tests start PostgreSQL in a container with Testcontainers. The base package is

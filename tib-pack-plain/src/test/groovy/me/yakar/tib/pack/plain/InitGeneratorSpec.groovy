@@ -82,7 +82,7 @@ class InitGeneratorSpec extends Specification {
     files['build.gradle.kts'].contains("java { toolchain { languageVersion = JavaLanguageVersion.of($java) } }\n")
     files['build.gradle.kts'].contains('application { mainClass = "com.example.s.SApplication" }\n')
     files['build.gradle.kts'].contains('  mainClass = "com.example.s.TestSApplication"\n')
-    files['AGENTS.md'].contains("A service in plain Java $java, scaffolded by tib")
+    files['AGENTS.md'].contains("A service in plain Java $java, scaffolded by tib, without a dependency injection framework:\n")
 
     where:
     yaml         | java

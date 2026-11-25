@@ -21,7 +21,7 @@ import me.yakar.tib.pack.PackProperties;
 import me.yakar.tib.pack.Templates;
 
 /**
- * The plain pack: a service in plain Java, without a framework of dependency injection, its objects
+ * The plain pack: a service in plain Java, without a dependency injection framework, its objects
  * wired by hand; the HTTP server of the JDK, JDBC on PostgreSQL, Flyway, Jackson and
  * Testcontainers, built with Gradle. It arranges a service in the anemic architecture, in DDD or in
  * the hexagonal one.
