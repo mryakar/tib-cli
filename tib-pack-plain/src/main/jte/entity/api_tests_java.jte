@@ -101,6 +101,14 @@ class ${name}ApiTests {
   }
 
   @Test
+  void aPathThatNoEntityHasIsNotFound() throws Exception {
+    HttpResponse<String> found = service.send("GET", "/api");
+
+    assertEquals(404, found.statusCode());
+    assertEquals("There is nothing at /api", Json.MAPPER.readTree(found.body()).path("detail").asString());
+  }
+
+  @Test
   void updates${entity.article()}${name}() throws Exception {
     ${type} ${entity.variable()} = create();
     ${type} dto = ${name}Samples.otherDto(${tests.requiredIdArguments()}).build();

@@ -41,12 +41,13 @@ ${"  "}below.
 `${project.applicationClass()}` reads `Config`, migrates the database with the migrations under
 `src/main/resources/db/migration`, and starts the HTTP server of the JDK with the routes that
 `Routes` adds: for every entity `X` with an API, the handler that `XWiring` makes, at `/api/` and
-the plural of `x`, behind `ErrorHandler`. `Routes` is tib's and follows the spec, so that a new
-entity needs no change of `${project.applicationClass()}`. `XWiring`, in the package `x`, is yours:
-it makes the objects of the entity by hand, so what a class of the entity takes in its constructor,
-it is given there. `Transactions` runs a unit of work on one connection, in one transaction, which
-the repositories of the work take from it; a service runs each of its use cases so. `Json` holds
-the one mapper of the API.
+the plural of `x`, and one for every other path, which is not found, all behind `ErrorHandler`.
+`Routes` is tib's and follows the spec, so that a new entity needs no change of
+`${project.applicationClass()}`. `XWiring`, in the package `x`, is yours: it makes the objects of
+the entity by hand, so what a class of the entity takes in its constructor, it is given there.
+`Transactions` runs a unit of work on one connection, in one transaction, which the repositories of
+the work take from it; a service runs each of its use cases so. `Json` holds the one mapper of the
+API.
 
 ## What tib owns
 

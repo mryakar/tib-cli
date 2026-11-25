@@ -108,7 +108,7 @@ class EntityGeneratorSpec extends Specification {
     }
   }
 
-  def "the routes put the handler that the wiring of an entity makes at its path, for the entities with a service and a handler only: #entities"() {
+  def "the routes put the handler that the wiring of an entity makes at its path, for the entities with a service and a handler only, and answer every other path of a service with an API as not found: #entities"() {
     given:
     Tree tree = Tree.at(dir)
 
@@ -122,6 +122,9 @@ class EntityGeneratorSpec extends Specification {
     ['AHandler', 'AService', 'ARepository', 'AMapper'].every { !routes.contains(it) }
     tree.read(BASE + 'b/BWiring.java').present == b
     routes.contains('getFilters().add(new ErrorHandler())') == (a || b)
+    routes.contains('    route(server, "/", Routes::nothing);\n  }\n') == (a || b)
+    routes.contains('  private static void nothing(HttpExchange exchange) {\n    throw new NotFoundException("There is nothing at " + exchange.getRequestURI().getPath());\n') == (a || b)
+    !a || tree.read('src/test/java/com/example/s/a/AApiTests.java').orElseThrow().contains('  void aPathThatNoEntityHasIsNotFound() throws Exception {\n    HttpResponse<String> found = service.send("GET", "/api");\n\n    assertEquals(404, found.statusCode());\n')
 
     where:
     entities                                                            | a     | b

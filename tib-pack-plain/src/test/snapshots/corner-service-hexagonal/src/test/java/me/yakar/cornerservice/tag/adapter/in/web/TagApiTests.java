@@ -82,6 +82,15 @@ class TagApiTests {
   }
 
   @Test
+  void aPathThatNoEntityHasIsNotFound() throws Exception {
+    HttpResponse<String> found = service.send("GET", "/api");
+
+    assertEquals(404, found.statusCode());
+    assertEquals(
+        "There is nothing at /api", Json.MAPPER.readTree(found.body()).path("detail").asString());
+  }
+
+  @Test
   void updatesATag() throws Exception {
     TagDto tag = create();
     TagDto dto = TagSamples.otherDto(branch.getId()).build();
