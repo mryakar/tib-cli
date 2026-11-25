@@ -57,12 +57,14 @@ jobs:
         env:
           TAG: ${{ github.event.release.tag_name || inputs.tag }}
       # Through the contents API, so that the commit is the token owner's, as the maintainer's.
+      # A tap that has no formula yet answers with an error, which gh prints in place of the SHA.
       - name: Put the formula into the tap
         run: |
-          sha="$(gh api "repos/$TAP/contents/Formula/tib.rb" --jq .sha 2>/dev/null || true)"
           args=(--method PUT "repos/$TAP/contents/Formula/tib.rb"
             -f message="tib ${TAG#v}" -f content="$(base64 -w 0 tib.rb)")
-          if [[ -n "$sha" ]]; then args+=(-f sha="$sha"); fi
+          if sha="$(gh api "repos/$TAP/contents/Formula/tib.rb" --jq .sha 2>/dev/null)"; then
+            args+=(-f sha="$sha")
+          fi
           gh api "${args[@]}" --jq .commit.html_url
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
