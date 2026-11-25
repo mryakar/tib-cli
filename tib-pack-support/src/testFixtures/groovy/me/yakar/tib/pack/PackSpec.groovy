@@ -122,7 +122,7 @@ abstract class PackSpec extends Specification {
     Locale.setDefault(locale)
 
     where:
-    name << [Services.VEHICLES, 'corner-service']
+    name << Services.NAMES
   }
 
   def "the generated Java is in the layout of google-java-format, which leaves it as it is: #name"() {
@@ -172,16 +172,16 @@ abstract class PackSpec extends Specification {
     name << Services.NAMES
   }
 
-  def "the notes for agents name every header: #header"() {
+  def "the notes for agents name every header: #header, #name"() {
     given:
     Tree tree = Tree.at(dir)
-    pack().init().generate(new Project(Services.vehicles(pack())), tree)
+    pack().init().generate(new Project(Services.named(name, pack())), tree)
 
     expect: 'what a header says after "Written by tib", up to its first mark'
     tree.read('AGENTS.md').orElseThrow().replaceAll(/\s+/, ' ').contains((header - 'Written by tib ').split(/[;.]/)[0])
 
     where:
-    header << HEADERS.values().flatten()
+    [header, name] << [HEADERS.values().flatten(), Services.NAMES].combinations()
   }
 
   def "the same spec gives the same files, the state included: #name"() {
@@ -232,7 +232,7 @@ abstract class PackSpec extends Specification {
     DdlReader.parse(migrations, Services.named(name, pack())) == Services.readBack(name, pack())
 
     where:
-    name << [Services.VEHICLES, 'corner-service']
+    name << Services.NAMES
   }
 
   /**
