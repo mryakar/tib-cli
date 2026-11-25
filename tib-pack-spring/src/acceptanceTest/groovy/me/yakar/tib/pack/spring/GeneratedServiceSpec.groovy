@@ -25,7 +25,9 @@ import me.yakar.tib.spec.SpecReader
 
 /**
  * The services of the default pack: beside the ones that every pack builds, the ones of the DDL of
- * the example service and of the example of what pg_dump writes.
+ * the example service and of the example of what pg_dump writes. Both are on Java 21 and without a
+ * Dockerfile, with some of the kinds of tests: one in the DDD architecture, the other in the
+ * hexagonal.
  */
 class GeneratedServiceSpec extends PackAcceptanceSpec {
 
@@ -38,10 +40,10 @@ class GeneratedServiceSpec extends PackAcceptanceSpec {
   Map<String, Spec> others() {
     [
       // Only the unit tests, which need no database.
-      'example DDL': DdlReader.parse(Files.readString(Services.EXAMPLES.resolve('vehicle-service.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\ntests: [unit]\n')),
+      'example DDL, DDD': DdlReader.parse(Files.readString(Services.EXAMPLES.resolve('vehicle-service.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\narchitecture: ddd\ntests: [unit]\n')),
       // What pg_dump 18 wrote of a database: an identifier in an integer column, a text, a
       // one-to-one; with the tests of the API only.
-      'example pg_dump': DdlReader.parse(Files.readString(Services.EXAMPLES.resolve('pg-dump-18.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\ntests: [api]\n')),
+      'example pg_dump, hexagonal': DdlReader.parse(Files.readString(Services.EXAMPLES.resolve('pg-dump-18.sql')), SpecReader.parse('tib: 1\nservice: vehicle-service\narchitecture: hexagonal\ntests: [api]\n')),
     ]
   }
 }
