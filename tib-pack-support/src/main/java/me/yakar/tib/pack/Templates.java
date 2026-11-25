@@ -21,6 +21,7 @@ import gg.jte.ContentType;
 import gg.jte.TemplateEngine;
 import gg.jte.output.StringOutput;
 import java.util.Map;
+import me.yakar.tib.spec.Architecture;
 
 /**
  * The templates of a pack, compiled by its build into a package of its own: two packs on one class
@@ -50,6 +51,18 @@ public final class Templates {
     StringOutput output = new StringOutput();
     engine.render(template, parameters, output);
     return format(path, comment(path, header) + "\n" + output);
+  }
+
+  /**
+   * The prefix of the name of a template that an architecture has to itself: none for the anemic
+   * one, whose templates the others use where they have none.
+   */
+  public static String prefix(Architecture architecture) {
+    return switch (architecture) {
+      case ANEMIC -> "";
+      case DDD -> "ddd_";
+      case HEXAGONAL -> "hexagonal_";
+    };
   }
 
   /** The text of the file at the path, formatted if it is Java. */

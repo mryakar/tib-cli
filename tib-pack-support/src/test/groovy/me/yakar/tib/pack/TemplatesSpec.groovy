@@ -16,6 +16,7 @@
 package me.yakar.tib.pack
 
 import gg.jte.TemplateNotFoundException
+import me.yakar.tib.spec.Architecture
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -42,6 +43,17 @@ class TemplatesSpec extends Specification {
     then:
     TemplateNotFoundException e = thrown()
     e.message == 'Failed to load class_java.jte'
+  }
+
+  def "the templates that an architecture has to itself have its prefix: #architecture"() {
+    expect:
+    Templates.prefix(architecture) == prefix
+
+    where:
+    architecture           | prefix
+    Architecture.ANEMIC    | ''
+    Architecture.DDD       | 'ddd_'
+    Architecture.HEXAGONAL | 'hexagonal_'
   }
 
   def "a header is a comment of the file's kind: #path"() {
