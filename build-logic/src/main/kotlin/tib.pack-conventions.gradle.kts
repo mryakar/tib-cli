@@ -35,14 +35,28 @@ dependencies {
   testImplementation(versionCatalogs.named("libs").findLibrary("google-java-format").get())
 }
 
+// The templates of a pack are its own and the ones that every pack shares, which tib-pack-support
+// holds. A template has one name among them.
+val templates =
+  tasks.register<Sync>("templates") {
+    description = "Collects the templates of the pack and the ones that every pack shares."
+    from(layout.settingsDirectory.dir("tib-pack-support/src/main/jte"))
+    from(layout.projectDirectory.dir("src/main/jte"))
+    into(layout.buildDirectory.dir("templates"))
+    duplicatesStrategy = DuplicatesStrategy.FAIL
+  }
+
 // The package of the compiled templates is the pack's own: another pack has templates of the same
 // names.
 jte {
   generate()
+  sourceDirectory = templates.map { it.destinationDir.toPath() }
   packageName = "gg.jte.generated.$stack"
   contentType = ContentType.Plain
   trimControlStructures = true
 }
+
+tasks.generateJte { dependsOn(templates) }
 
 // The pack ships with tib and has its version.
 tasks.processResources {
