@@ -11,8 +11,7 @@ import me.yakar.cornerservice.tag.domain.Tag;
 
 /**
  * The API of tags, at the path of its context: /api/tags, and /api/tags/{id} for one of them; their
- * DTOs, mapped to and from the aggregate. A request whose DTO does not read or breaks a rule is a
- * bad request, and an identifier that no tag has is not found: {@code ErrorHandler} answers them.
+ * DTOs, mapped to and from the aggregate.
  */
 public class TagHandler implements HttpHandler {
 

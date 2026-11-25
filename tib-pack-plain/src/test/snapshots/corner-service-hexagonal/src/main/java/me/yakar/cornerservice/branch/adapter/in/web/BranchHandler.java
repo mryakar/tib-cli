@@ -11,9 +11,7 @@ import me.yakar.cornerservice.branch.domain.Branch;
 
 /**
  * The API of branches, at the path of its context: /api/branches, and /api/branches/{id} for one of
- * them; their DTOs, mapped to and from the domain. A request whose DTO does not read or breaks a
- * rule is a bad request, and an identifier that no branch has is not found: {@code ErrorHandler}
- * answers them.
+ * them; their DTOs, mapped to and from the domain.
  */
 public class BranchHandler implements HttpHandler {
 

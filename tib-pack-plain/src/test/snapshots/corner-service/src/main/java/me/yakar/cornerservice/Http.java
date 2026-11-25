@@ -16,10 +16,10 @@ import tools.jackson.core.JacksonException;
  */
 public final class Http {
 
-  /** The size of a page when the request gives none, as in Spring Data. */
+  /** The size of a page when the request gives none. */
   static final int DEFAULT_SIZE = 20;
 
-  /** The largest size of a page that a request may ask for, as in Spring Data. */
+  /** The largest size of a page that a request may ask for. */
   static final int MAX_SIZE = 2000;
 
   private Http() {}
@@ -61,8 +61,8 @@ public final class Http {
   }
 
   /**
-   * The size of the page that the request asks for: its parameter size, or 20; at least 1 and at
-   * most 2000.
+   * The size of the page that the request asks for: its parameter size, at most {@link #MAX_SIZE};
+   * {@link #DEFAULT_SIZE} when it is not there or is less than 1.
    */
   public static int pageSize(HttpExchange exchange) {
     int size = parameter(exchange, "size", DEFAULT_SIZE);

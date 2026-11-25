@@ -9,8 +9,7 @@ import java.util.Optional;
 
 /**
  * The API of vehicles, at the path of its context: /api/vehicles, and /api/vehicles/{id} for one of
- * them. A request whose DTO does not read or breaks a rule is a bad request, and an identifier that
- * no vehicle has is not found: {@code ErrorHandler} answers them.
+ * them.
  */
 public class VehicleHandler implements HttpHandler {
 

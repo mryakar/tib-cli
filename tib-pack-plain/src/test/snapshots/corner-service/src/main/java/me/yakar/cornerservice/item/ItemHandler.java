@@ -8,9 +8,7 @@ import java.util.Optional;
 import me.yakar.cornerservice.Http;
 
 /**
- * The API of items, at the path of its context: /api/items, and /api/items/{id} for one of them. A
- * request whose DTO does not read or breaks a rule is a bad request, and an identifier that no item
- * has is not found: {@code ErrorHandler} answers them.
+ * The API of items, at the path of its context: /api/items, and /api/items/{id} for one of them.
  */
 public class ItemHandler implements HttpHandler {
 

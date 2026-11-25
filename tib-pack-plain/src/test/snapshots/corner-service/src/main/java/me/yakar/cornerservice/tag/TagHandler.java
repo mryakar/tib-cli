@@ -7,11 +7,7 @@ import java.io.IOException;
 import java.util.Optional;
 import me.yakar.cornerservice.Http;
 
-/**
- * The API of tags, at the path of its context: /api/tags, and /api/tags/{id} for one of them. A
- * request whose DTO does not read or breaks a rule is a bad request, and an identifier that no tag
- * has is not found: {@code ErrorHandler} answers them.
- */
+/** The API of tags, at the path of its context: /api/tags, and /api/tags/{id} for one of them. */
 public class TagHandler implements HttpHandler {
 
   private final TagService service;
