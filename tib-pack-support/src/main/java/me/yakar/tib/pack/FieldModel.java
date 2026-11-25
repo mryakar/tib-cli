@@ -29,6 +29,14 @@ public record FieldModel(Field field) {
     return field.name();
   }
 
+  public FieldType type() {
+    return field.type();
+  }
+
+  public String column() {
+    return field.column();
+  }
+
   /** The simple name of the Java type of the value: a Text is a String. */
   public String javaType() {
     return switch (field.type()) {
@@ -63,8 +71,18 @@ public record FieldModel(Field field) {
     return field.nullable();
   }
 
-  boolean unique() {
+  public boolean unique() {
     return field.unique();
+  }
+
+  /** The precision of a BigDecimal, or null. */
+  public Integer precision() {
+    return field.precision();
+  }
+
+  /** The scale of a BigDecimal, or null. */
+  public Integer scale() {
+    return field.scale();
   }
 
   /** The length of a String: the spec's, or else the default; a field of another type has none. */
@@ -149,40 +167,5 @@ public record FieldModel(Field field) {
       return "0." + "0".repeat(scale - 1) + variant;
     }
     return variant + "." + "0".repeat(scale);
-  }
-
-  /** The definition of the column in SQL. */
-  String sql() {
-    StringBuilder sql = new StringBuilder(field.column() + " " + sqlType());
-    if (!field.nullable()) {
-      sql.append(" NOT NULL");
-    }
-    if (field.unique()) {
-      sql.append(" UNIQUE");
-    }
-    return sql.toString();
-  }
-
-  /** The SQL type of a field type. */
-  private String sqlType() {
-    return switch (field.type()) {
-      case STRING -> "VARCHAR(" + length() + ")";
-      case TEXT -> "TEXT";
-      case INTEGER -> "INTEGER";
-      case LONG -> "BIGINT";
-      case BIG_DECIMAL ->
-          field.precision() == null
-              ? "NUMERIC"
-              : "NUMERIC("
-                  + field.precision()
-                  + ", "
-                  + (field.scale() == null ? 0 : field.scale())
-                  + ")";
-      case BOOLEAN -> "BOOLEAN";
-      case LOCAL_DATE -> "DATE";
-      case LOCAL_DATE_TIME -> "TIMESTAMP";
-      case INSTANT -> "TIMESTAMP WITH TIME ZONE";
-      case UUID -> "UUID";
-    };
   }
 }

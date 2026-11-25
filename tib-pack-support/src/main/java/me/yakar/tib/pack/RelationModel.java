@@ -64,7 +64,7 @@ public record RelationModel(Relation relation, EntityModel target) {
     return relation.nullable();
   }
 
-  boolean oneToOne() {
+  public boolean oneToOne() {
     return relation.kind() == RelationKind.ONE_TO_ONE;
   }
 
@@ -95,19 +95,5 @@ public record RelationModel(Relation relation, EntityModel target) {
   /** The validation annotation of the DTO's component, in front of its type. */
   String validation() {
     return relation.nullable() ? "" : "@NotNull ";
-  }
-
-  /** The definition of the column in SQL, with its foreign key. */
-  String sql() {
-    return relation.column()
-        + " "
-        + target.idSqlType()
-        + (relation.nullable() ? "" : " NOT NULL")
-        + (oneToOne() ? " UNIQUE" : "")
-        + " REFERENCES "
-        + target.table()
-        + " ("
-        + target.idColumn()
-        + ")";
   }
 }
