@@ -337,7 +337,7 @@ class GenerationSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    Generation.next(State.of(tree, '1.2.3'), project, [], new TestPack('p', '2'), generator, '1.2.4', tree)
+    new Generation(new TestPack('p', '2'), '1.2.4', tree).next(State.of(tree, '1.2.3'), project, [])
 
     then:
     PackException e = thrown()
@@ -357,7 +357,7 @@ class GenerationSpec extends Specification {
     Tree tree = Tree.at(dir)
 
     when:
-    Generation.next(State.of(tree, '1.2.3'), project, [], new TestPack('q', '2'), generator, '1.2.3', tree)
+    new Generation(new TestPack('q', '2'), '1.2.3', tree).next(State.of(tree, '1.2.3'), project, [])
 
     then:
     PackException e = thrown()
@@ -433,19 +433,18 @@ class GenerationSpec extends Specification {
   }
 
   /**
-   * Runs the generator on the project in the directory, as the first run when tib has no state
-   * there and as a later one otherwise, and applies nothing.
+   * Runs a pack with the generator on the project in the directory, as the first run when tib has
+   * no state there and as a later one otherwise, and applies nothing.
    *
    * @return the tree of the run, and its result
    */
   private Map run(Project project, Generator generator, List<State.Input> inputs = [], String version = '1.2.3') {
     Tree tree = Tree.at(dir)
     Optional<State> previous = State.in(tree, version)
+    Generation generation = new Generation(new TestPack(pack.name(), pack.version(), generator), version, tree)
     [
       tree  : tree,
-      result: previous.present
-      ? Generation.next(previous.get(), project, inputs, pack, generator, version, tree)
-      : Generation.first(project, inputs, pack, generator, version, tree)
+      result: previous.present ? generation.next(previous.get(), project, inputs) : generation.first(project, inputs)
     ]
   }
 }

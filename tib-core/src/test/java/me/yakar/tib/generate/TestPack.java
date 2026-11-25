@@ -15,21 +15,27 @@
  */
 package me.yakar.tib.generate;
 
-import me.yakar.tib.tree.ProjectFiles;
-
 /** A pack that the tests of the engine find on the class path, or build with a name of theirs. */
 public final class TestPack implements Pack {
 
   private final String name;
   private final String version;
+  private final Generator generator;
 
   public TestPack() {
     this("test", "0");
   }
 
+  /** A pack whose generator writes one file of tib's, with the name of the service in it. */
   public TestPack(String name, String version) {
+    this(name, version, (project, files) -> files.own("test.txt", project.name() + "\n"));
+  }
+
+  /** A pack that generates a new service and its entity layer with the same generator. */
+  public TestPack(String name, String version, Generator generator) {
     this.name = name;
     this.version = version;
+    this.generator = generator;
   }
 
   @Override
@@ -49,11 +55,11 @@ public final class TestPack implements Pack {
 
   @Override
   public Generator init() {
-    return (Project project, ProjectFiles files) -> files.own("test.txt", project.name() + "\n");
+    return generator;
   }
 
   @Override
   public Generator entity() {
-    return init();
+    return generator;
   }
 }
