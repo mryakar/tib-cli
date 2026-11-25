@@ -17,6 +17,7 @@ package me.yakar.tib.pack.plain;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import me.yakar.tib.pack.EntityModel;
 import me.yakar.tib.pack.FieldModel;
 import me.yakar.tib.pack.RelationModel;
@@ -35,6 +36,14 @@ public final class DtoModel {
    * @param length the length that a String may not exceed, or null
    */
   public record Check(String name, boolean required, Integer length) {}
+
+  /**
+   * A value that the DTO takes and its column does not.
+   *
+   * @param name the component that holds the value
+   * @param value the value, as Java
+   */
+  public record TooLarge(String name, String value) {}
 
   private final EntityModel entity;
 
@@ -79,6 +88,23 @@ public final class DtoModel {
       }
     }
     return checks;
+  }
+
+  /**
+   * A value that keeps the rules of the DTO and does not fit its column, if a field has one: a
+   * BigDecimal with a digit more before the point than the precision of its column has.
+   */
+  public Optional<TooLarge> tooLarge() {
+    return entity.fields().stream()
+        .filter(field -> field.precision() != null)
+        .findFirst()
+        .map(
+            field ->
+                new TooLarge(
+                    field.name(),
+                    "BigDecimal.TEN.pow("
+                        + (field.precision() - (field.scale() == null ? 0 : field.scale()))
+                        + ")"));
   }
 
   /**

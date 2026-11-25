@@ -27,6 +27,9 @@ ${Sources.importOf(entity.webPackage(), target.persistencePackage(), target.name
 ${Sources.importOf(entity.webPackage(), target.packageName(), target.name() + "Samples")}
 @endfor
 import java.io.IOException;
+@if(dto.tooLarge().isPresent())
+import java.math.BigDecimal;
+@endif
 import java.net.http.HttpResponse;
 @if(entity.uuidId())
 import java.util.UUID;
@@ -152,6 +155,17 @@ class ${name}ApiTests {
     HttpResponse<String> created = service.send("POST", "${path}", empty);
 
     assertEquals(400, created.statusCode());
+  }
+  @endif
+  @if(dto.tooLarge().isPresent())
+
+  @Test
+  void refuses${entity.article()}${name}WhoseValueDoesNotFitItsColumn() throws Exception {
+    ${type} tooLarge = ${name}Samples.dto(${tests.requiredIdArguments()}).${dto.tooLarge().get().name()}(${dto.tooLarge().get().value()}).build();
+
+    HttpResponse<String> created = service.send("POST", "${path}", tooLarge);
+
+    assertEquals(409, created.statusCode());
   }
   @endif
   @if(tests.unique())

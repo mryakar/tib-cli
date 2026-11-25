@@ -57,4 +57,18 @@ class DtoModelSpec extends Specification {
     new DtoModel(models.B).checks() == []
     new DtoModel(models.B).writableArguments('dto') == 'null'
   }
+
+  def "a BigDecimal with a precision can be too large for its column, by a digit before the point: #tooLarge"() {
+    given:
+    Map<String, EntityModel> models = EntityModel.modelsByIdentifier(new Project(SpecReader.parse("tib: 1\nservice: s\nentities:\n  - name: A\n    fields:\n$fields")))
+
+    expect:
+    new DtoModel(models.A).tooLarge() == Optional.ofNullable(tooLarge)
+
+    where:
+    fields                                                                  | tooLarge
+    '      - { name: price, type: BigDecimal, precision: 12, scale: 2 }\n' | new DtoModel.TooLarge('price', 'BigDecimal.TEN.pow(10)')
+    '      - { name: label, type: String }\n      - { name: amount, type: BigDecimal, precision: 10 }\n      - { name: price, type: BigDecimal, precision: 12, scale: 2 }\n' | new DtoModel.TooLarge('amount', 'BigDecimal.TEN.pow(10)')
+    '      - { name: ratio, type: BigDecimal }\n      - { name: count, type: Long }\n' | null
+  }
 }

@@ -154,6 +154,20 @@ class EntityGeneratorSpec extends Specification {
     '  - name: A\n    options: { mapper: false, pagination: false }\n'          | false | false
   }
 
+  def "a value that does not fit its column is a conflict, as a broken constraint is, and the tests of the API of an entity that can have one show it"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new EntityGenerator().generate(project('entities:\n  - name: A\n    fields:\n      - { name: price, type: BigDecimal, precision: 12, scale: 2 }\n  - name: B\n'), tree)
+    String tests = tree.read('src/test/java/com/example/s/a/AApiTests.java').orElseThrow()
+
+    then:
+    tree.read(BASE + 'ErrorHandler.java').orElseThrow().contains('if (state != null && (state.startsWith(DATA) || state.startsWith(CONSTRAINT))) {\n        Http.problem(exchange, 409, ')
+    tests.contains('  void refusesAnAWhoseValueDoesNotFitItsColumn() throws Exception {\n    ADto tooLarge = ASamples.dto().price(BigDecimal.TEN.pow(10)).build();\n')
+    !tree.read('src/test/java/com/example/s/b/BApiTests.java').orElseThrow().contains('DoesNotFitItsColumn')
+  }
+
   def "a body that is not the JSON of the DTO is a bad request, which says that it cannot be read"() {
     given:
     Tree tree = Tree.at(dir)

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.http.HttpResponse;
 import me.yakar.cornerservice.Json;
 import me.yakar.cornerservice.TestDatabase;
@@ -116,6 +117,15 @@ class BranchApiTests {
     HttpResponse<String> created = service.send("POST", "/api/branches", empty);
 
     assertEquals(400, created.statusCode());
+  }
+
+  @Test
+  void refusesABranchWhoseValueDoesNotFitItsColumn() throws Exception {
+    BranchDto tooLarge = BranchSamples.dto().amount(BigDecimal.TEN.pow(10)).build();
+
+    HttpResponse<String> created = service.send("POST", "/api/branches", tooLarge);
+
+    assertEquals(409, created.statusCode());
   }
 
   /** A branch created through the API, with the first sample values. */

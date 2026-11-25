@@ -10,6 +10,7 @@ import com.example.vehicleservice.TestDatabase;
 import com.example.vehicleservice.TestService;
 import com.example.vehicleservice.Transactions;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.http.HttpResponse;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
@@ -117,6 +118,15 @@ class VehicleApiTests {
     HttpResponse<String> created = service.send("POST", "/api/vehicles", empty);
 
     assertEquals(400, created.statusCode());
+  }
+
+  @Test
+  void refusesAVehicleWhoseValueDoesNotFitItsColumn() throws Exception {
+    VehicleDto tooLarge = VehicleSamples.dto().price(BigDecimal.TEN.pow(10)).build();
+
+    HttpResponse<String> created = service.send("POST", "/api/vehicles", tooLarge);
+
+    assertEquals(409, created.statusCode());
   }
 
   @Test
