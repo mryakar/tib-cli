@@ -28,7 +28,7 @@ description = "tib command line"
 dependencies {
   implementation(project(":tib-core"))
   implementation(libs.picocli)
-  runtimeOnly(project(":tib-pack-default"))
+  runtimeOnly(project(":tib-pack-spring"))
   runtimeOnly(project(":tib-pack-plain"))
 }
 
