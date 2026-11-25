@@ -32,6 +32,8 @@ jobs:
     timeout-minutes: 10
     # The token that writes into the tap lives in the release environment.
     environment: release
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
       # The latest release is never a draft or a pre-release.
       - name: Check that the tag is the latest release
@@ -43,7 +45,6 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -56,24 +57,24 @@ jobs:
           grep -e '-macos-arm64\.zip$' -e '-macos-x64\.zip$' checksums_sha256.txt | sha256sum --check
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
       - name: Write the formula
         run: |
           version="${TAG#v}"
           download="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
           sum() { sha256sum "release/tib-$version-macos-$1.zip" | cut -d ' ' -f 1; }
+          arm64="$(sum arm64)"
+          x64="$(sum x64)"
           .github/scripts/homebrew-formula.sh "$version" \
-            "$download/tib-$version-macos-arm64.zip" "$(sum arm64)" \
-            "$download/tib-$version-macos-x64.zip" "$(sum x64)" > tib.rb
+            "$download/tib-$version-macos-arm64.zip" "$arm64" \
+            "$download/tib-$version-macos-x64.zip" "$x64" > tib.rb
           cat tib.rb
-        env:
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
       # Through the contents API, so that the commit is the token owner's, as the maintainer's.
       # A tap that has no formula yet answers with an error, which gh prints in place of the SHA.
       - name: Put the formula into the tap
         run: |
+          content="$(base64 -w 0 tib.rb)"
           args=(--method PUT "repos/$TAP/contents/Formula/tib.rb"
-            -f message="tib ${TAG#v}" -f content="$(base64 -w 0 tib.rb)")
+            -f message="tib ${TAG#v}" -f content="$content")
           if sha="$(gh api "repos/$TAP/contents/Formula/tib.rb" --jq .sha 2>/dev/null)"; then
             args+=(-f sha="$sha")
           fi
@@ -81,4 +82,3 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
           TAP: mryakar/homebrew-tap
-          TAG: ${{ github.event.release.tag_name || inputs.tag }}
