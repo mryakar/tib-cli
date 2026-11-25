@@ -19,7 +19,7 @@ import spock.lang.Specification
 
 class EntityTestsModelSpec extends Specification {
 
-  def "the entities that an entity needs come once each, each after the ones it needs, without itself"() {
+  def "the entities that an entity needs come once each, each after the ones it needs, without itself, and their tables empty in the reverse order"() {
     given:
     Map<String, EntityTestsModel> tests = tests('''\
       entities:
@@ -28,6 +28,7 @@ class EntityTestsModelSpec extends Specification {
           relations:
             - { kind: manyToOne, target: C, nullable: false }
         - name: D
+          table: DS
         - name: A
           relations:
             - { kind: manyToOne, target: B, nullable: false }
@@ -38,6 +39,8 @@ class EntityTestsModelSpec extends Specification {
 
     expect:
     tests.A.requiredTargets()*.name() == ['C', 'B']
+    tests.A.tables() == '"A", "B", "C"'
+    tests.D.tables() == '"DS"'
   }
 
   def "two entities with the same values break a constraint when #what"() {

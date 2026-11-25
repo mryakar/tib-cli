@@ -46,16 +46,6 @@ public class BranchRepository {
     return branches;
   }
 
-  /** How many branches there are. */
-  public long count() throws SQLException {
-    try (PreparedStatement statement =
-            connection().prepareStatement("SELECT COUNT(*) FROM BRANCH");
-        ResultSet rows = statement.executeQuery()) {
-      rows.next();
-      return rows.getLong(1);
-    }
-  }
-
   public Optional<Branch> findById(Long id) throws SQLException {
     try (PreparedStatement statement =
         connection().prepareStatement("SELECT " + COLUMNS + " FROM BRANCH WHERE BRANCH_KEY = ?")) {
@@ -139,13 +129,6 @@ public class BranchRepository {
         connection().prepareStatement("DELETE FROM BRANCH WHERE BRANCH_KEY = ?")) {
       statement.setObject(1, id);
       return statement.executeUpdate() == 1;
-    }
-  }
-
-  /** Deletes every branch. */
-  public void deleteAll() throws SQLException {
-    try (PreparedStatement statement = connection().prepareStatement("DELETE FROM BRANCH")) {
-      statement.executeUpdate();
     }
   }
 

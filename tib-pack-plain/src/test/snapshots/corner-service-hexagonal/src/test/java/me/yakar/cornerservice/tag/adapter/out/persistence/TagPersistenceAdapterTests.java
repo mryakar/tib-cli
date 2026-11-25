@@ -34,12 +34,7 @@ class TagPersistenceAdapterTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          tagRepository.deleteAll();
-          branchRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("TAG", "BRANCH");
   }
 
   @Test

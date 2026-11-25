@@ -63,6 +63,17 @@ public final class EntityTestsModel {
     }
   }
 
+  /**
+   * The tables that a test of the entity fills, as Java strings, in the order that empties them:
+   * the table of the entity, then those of the entities it needs, each before the ones it refers
+   * to.
+   */
+  public String tables() {
+    return Stream.concat(Stream.of(entity), requiredTargets.reversed().stream())
+        .map(model -> "\"" + model.table() + "\"")
+        .collect(Collectors.joining(", "));
+  }
+
   /** The name of the collection as a type: {@code Vehicles}. */
   public String pluralType() {
     return Names.property(entity.plural());

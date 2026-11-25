@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.example.vehicleservice.Json;
 import com.example.vehicleservice.TestDatabase;
 import com.example.vehicleservice.TestService;
-import com.example.vehicleservice.Transactions;
 import java.io.IOException;
 import java.net.http.HttpResponse;
 import java.util.UUID;
@@ -23,9 +22,6 @@ class DepotApiTests {
 
   private static TestService service;
 
-  private final Transactions transactions = new Transactions(TestDatabase.dataSource());
-  private final DepotRepository depotRepository = new DepotRepository(transactions);
-
   @BeforeAll
   static void start() throws IOException {
     service = TestService.start();
@@ -38,11 +34,7 @@ class DepotApiTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          depotRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("DEPOTS");
   }
 
   @Test

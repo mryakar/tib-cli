@@ -101,13 +101,6 @@ public class PlainRepository {
     }
   }
 
-  /** Deletes every plain. */
-  public void deleteAll() throws SQLException {
-    try (PreparedStatement statement = connection().prepareStatement("DELETE FROM PLAIN")) {
-      statement.executeUpdate();
-    }
-  }
-
   private Connection connection() {
     return transactions.connection();
   }

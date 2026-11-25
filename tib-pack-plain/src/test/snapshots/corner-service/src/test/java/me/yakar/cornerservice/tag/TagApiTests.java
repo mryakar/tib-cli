@@ -27,7 +27,6 @@ class TagApiTests {
   private static TestService service;
 
   private final Transactions transactions = new Transactions(TestDatabase.dataSource());
-  private final TagRepository tagRepository = new TagRepository(transactions);
   private final BranchRepository branchRepository = new BranchRepository(transactions);
 
   @BeforeAll
@@ -49,12 +48,7 @@ class TagApiTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          tagRepository.deleteAll();
-          branchRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("TAG", "BRANCH");
   }
 
   @Test

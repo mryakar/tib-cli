@@ -4,6 +4,9 @@
 @param PlainPack pack
 package ${project.basePackage()};
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
 import javax.sql.DataSource;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -36,5 +39,17 @@ public final class TestDatabase {
       ${project.applicationClass()}.migrate(dataSource);
     }
     return dataSource;
+  }
+
+  /** Deletes every row of the tables, in the order given: a table before the ones it refers to. */
+  public static void clear(String... tables) {
+    try (Connection connection = dataSource().getConnection();
+        Statement statement = connection.createStatement()) {
+      for (String table : tables) {
+        statement.executeUpdate("DELETE FROM " + table);
+      }
+    } catch (SQLException e) {
+      throw new IllegalStateException(e);
+    }
   }
 }

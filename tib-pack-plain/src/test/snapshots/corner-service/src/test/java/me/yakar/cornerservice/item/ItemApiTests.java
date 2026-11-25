@@ -27,7 +27,6 @@ class ItemApiTests {
   private static TestService service;
 
   private final Transactions transactions = new Transactions(TestDatabase.dataSource());
-  private final ItemRepository itemRepository = new ItemRepository(transactions);
   private final BranchRepository branchRepository = new BranchRepository(transactions);
 
   @BeforeAll
@@ -49,12 +48,7 @@ class ItemApiTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          itemRepository.deleteAll();
-          branchRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("ITEM", "BRANCH");
   }
 
   @Test

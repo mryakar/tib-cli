@@ -15,7 +15,6 @@ import me.yakar.cornerservice.branch.BranchSamples;
 import me.yakar.cornerservice.branch.adapter.out.persistence.BranchRepository;
 import me.yakar.cornerservice.branch.domain.Branch;
 import me.yakar.cornerservice.item.ItemSamples;
-import me.yakar.cornerservice.item.adapter.out.persistence.ItemRepository;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,7 +28,6 @@ class ItemApiTests {
   private static TestService service;
 
   private final Transactions transactions = new Transactions(TestDatabase.dataSource());
-  private final ItemRepository itemRepository = new ItemRepository(transactions);
   private final BranchRepository branchRepository = new BranchRepository(transactions);
 
   @BeforeAll
@@ -51,12 +49,7 @@ class ItemApiTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          itemRepository.deleteAll();
-          branchRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("ITEM", "BRANCH");
   }
 
   @Test

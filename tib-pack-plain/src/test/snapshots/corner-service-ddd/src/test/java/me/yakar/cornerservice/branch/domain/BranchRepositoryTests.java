@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import me.yakar.cornerservice.TestDatabase;
 import me.yakar.cornerservice.Transactions;
 import me.yakar.cornerservice.branch.BranchSamples;
@@ -20,11 +21,7 @@ class BranchRepositoryTests {
 
   @AfterEach
   void deleteAll() {
-    transactions.run(
-        () -> {
-          branchRepository.deleteAll();
-          return null;
-        });
+    TestDatabase.clear("BRANCH");
   }
 
   @Test
@@ -69,9 +66,9 @@ class BranchRepositoryTests {
   void listsBranches() {
     Branch branch = transactions.run(() -> branchRepository.insert(BranchSamples.branch().build()));
 
-    assertEquals(
-        branch.getId(), transactions.run(() -> branchRepository.findAll()).getFirst().getId());
-    assertEquals(1, transactions.run(branchRepository::count));
+    List<Branch> found = transactions.run(() -> branchRepository.findAll());
+    assertEquals(1, found.size());
+    assertEquals(branch.getId(), found.getFirst().getId());
   }
 
   @Test

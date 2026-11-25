@@ -177,7 +177,7 @@ class InitGeneratorSpec extends Specification {
     files.containsKey('src/test/java/com/example/s/SApplicationTests.java') == application
     files.containsKey('src/test/java/com/example/s/TestService.java') == service
     files.containsKey('src/test/java/com/example/s/TestSApplication.java')
-    files.containsKey('src/test/java/com/example/s/TestDatabase.java')
+    files['src/test/java/com/example/s/TestDatabase.java'].contains('  public static void clear(String... tables) {\n')
     agents.contains('- `./gradlew build` compiles, tests and checks. The tests start PostgreSQL in a container, so\n  Docker has to run.\n') == container
     agents.contains('- `./gradlew build` compiles, tests and checks.\n') == !container
     agents.contains(notes)
