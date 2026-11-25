@@ -92,6 +92,8 @@ class InitGeneratorSpec extends Specification {
     agents.contains('with ArchUnit: the controller of an entity over its service over its\nrepository, and no cycle') == (!ddd && !hexagonal)
     agents.contains('`XGenerated`, `XDto` and `XMapper`\nare tib\'s; `X`, `XRepository`, `XService`, `XController` and the migration are yours.') == !hexagonal
     agents.contains('.\n`X` keeps a constructor without parameters: the files of tib\'s make an `X` and set its values.\n`ConflictHandler`, in the base package, answers a request that breaks a constraint of the database\n')
+    agents.contains('with 409 Conflict; it is yours.\n') == (!ddd && !hexagonal)
+    agents.contains('with 409 Conflict, and a request for an entity that is not there, which a service throws as\n`NotFoundException`, with 404 Not Found; both are yours.\n') == (ddd || hexagonal)
     files['.gitignore'].contains('\nout/\n') == !hexagonal
     files['.gitignore'].contains('\nbuild/\n/out/\n.idea/\n') == hexagonal
     agents.contains('`XGenerated`, `XEntity`, `XDto`,\n`XWebMapper` and `XPersistenceMapper` are tib\'s; `X`, `XUseCase`, `XStore`, `XService`,\n`XController`, `XJpaRepository`, `XPersistenceAdapter` and the migration are yours.') == hexagonal
