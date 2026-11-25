@@ -17,6 +17,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 @else
 import java.util.List;
+import org.springframework.data.domain.Sort;
 @endif
 import org.springframework.stereotype.Component;
 
@@ -39,7 +40,7 @@ public class ${name}PersistenceAdapter implements ${name}Store {
   }
   @else
   public List<${name}> findAll() {
-    return ${plural}.findAll().stream().map(mapper::toDomain).toList();
+    return ${plural}.findAll(Sort.by("${entity.idField()}")).stream().map(mapper::toDomain).toList();
   }
   @endif
 

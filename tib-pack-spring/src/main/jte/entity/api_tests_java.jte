@@ -135,6 +135,27 @@ class ${entity.name()}ApiTests {
     assertThat(list.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(list.getBody().findValuesAsString("${entity.idField()}")).contains(${entity.variable()}.${entity.idField()}().toString());
   }
+  @if(!tests.unique())
+
+  @Test
+  void lists${tests.pluralType()}InTheOrderOfTheirIdentifiers() {
+    ${dto} first = create();
+    ${dto} other = ${entity.name()}Samples.otherDto(${tests.requiredIdArguments()}).build();
+    ${dto} second = http.postForObject("${path}", other, ${dto}.class);
+    // PostgreSQL writes a row that changes at the end of its table, where a list without an order
+    // would show it.
+    http.put("${path}/{id}", other, first.${entity.idField()}());
+
+    ResponseEntity<JsonNode> list = http.getForEntity("${path}", JsonNode.class);
+
+    @if(entity.uuidId())
+    assertThat(list.getBody().findValuesAsString("${entity.idField()}")).hasSize(2).isSorted();
+    @else
+    assertThat(list.getBody().findValuesAsString("${entity.idField()}"))
+        .containsExactly(first.${entity.idField()}().toString(), second.${entity.idField()}().toString());
+    @endif
+  }
+  @endif
 
   @Test
   void deletes${entity.article()}${entity.name()}() {

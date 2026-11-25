@@ -9,6 +9,7 @@ import java.util.UUID;
 @if(entity.paginated())
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.SortDefault;
 @else
 import java.util.List;
 @endif
@@ -36,7 +37,7 @@ public class ${entity.name()}Controller {
 
   @GetMapping
   @if(entity.paginated())
-  public Page<${entity.name()}Dto> list(Pageable pageable) {
+  public Page<${entity.name()}Dto> list(@SortDefault("${entity.idField()}") Pageable pageable) {
     return service.list(pageable);
   }
 

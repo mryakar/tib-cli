@@ -6,6 +6,7 @@ import me.yakar.cornerservice.item.application.ItemService;
 import me.yakar.cornerservice.item.domain.Item;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +32,7 @@ public class ItemController {
   }
 
   @GetMapping
-  public Page<ItemDto> list(Pageable pageable) {
+  public Page<ItemDto> list(@SortDefault("id") Pageable pageable) {
     return service.list(pageable).map(mapper::toDto);
   }
 

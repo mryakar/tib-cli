@@ -97,6 +97,37 @@ class EntityGeneratorSpec extends Specification {
     'main/java/com/example/s/valid/ValidController.java'        | 'Valid'      | ['import jakarta.validation.Valid;']
   }
 
+  def "a list and a page of entities come in the order of their identifiers, which the tests of the API show: #architecture"() {
+    given:
+    Tree tree = Tree.at(dir)
+    Project project = new Project(SpecReader.parse("tib: 1\nservice: s\narchitecture: $architecture\nentities:\n  - name: A\n    fields: [{ name: label, type: String }]\n  - name: B\n    id: { type: UUID }\n    options: { pagination: false }\n  - name: C\n    fields: [{ name: code, type: String, unique: true }]\n"))
+
+    when:
+    new EntityGenerator().generate(project, tree)
+    String main = 'src/main/java/com/example/s/'
+    String tests = 'src/test/java/com/example/s/'
+
+    then: 'a page is sorted by the identifier unless the request asks for another order'
+    tree.read(main + "a/${web}AController.java").orElseThrow().contains('list(@SortDefault("id") Pageable pageable) {\n')
+    !tree.read(main + "b/${web}BController.java").orElseThrow().contains('Sort')
+
+    and: 'a list is sorted where it is read'
+    tree.read(main + list).orElseThrow().contains('findAll(Sort.by("id"))')
+    !tree.read(main + list.replace('b/', 'a/').replace('/B', '/A')).orElseThrow().contains('Sort')
+
+    and: 'the tests of the API change the first of two rows and expect it first; identifiers that are UUIDs sort as their text'
+    tree.read(tests + "a/${web}AApiTests.java").orElseThrow().contains('    http.put("/api/as/{id}", other, first.id());\n')
+    tree.read(tests + "a/${web}AApiTests.java").orElseThrow().contains('        .containsExactly(first.id().toString(), second.id().toString());\n')
+    tree.read(tests + "b/${web}BApiTests.java").orElseThrow().contains('    assertThat(list.getBody().findValuesAsString("id")).hasSize(2).isSorted();\n')
+    !tree.read(tests + "c/${web}CApiTests.java").orElseThrow().contains('InTheOrderOfTheirIdentifiers')
+
+    where:
+    architecture | web               | list
+    'anemic'     | ''                | 'b/BService.java'
+    'ddd'        | 'web/'            | 'b/application/BService.java'
+    'hexagonal'  | 'adapter/in/web/' | 'b/adapter/out/persistence/BPersistenceAdapter.java'
+  }
+
   def "an entity gets the tests of the kinds of the spec: #tests"() {
     given:
     Tree tree = Tree.at(dir)
