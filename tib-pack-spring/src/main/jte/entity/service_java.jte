@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 @else
 import java.util.List;
+import org.springframework.data.domain.Sort;
 @endif
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -37,7 +38,7 @@ public class ${entity.name()}Service {
 
   @else
   public List<${entity.name()}Dto> list() {
-    return ${entity.plural()}.findAll().stream().map(mapper::toDto).toList();
+    return ${entity.plural()}.findAll(Sort.by("${entity.idField()}")).stream().map(mapper::toDto).toList();
   }
 
   @endif

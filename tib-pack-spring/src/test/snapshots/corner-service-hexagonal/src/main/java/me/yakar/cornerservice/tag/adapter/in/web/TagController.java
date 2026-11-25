@@ -6,6 +6,7 @@ import me.yakar.cornerservice.tag.application.port.in.TagUseCase;
 import me.yakar.cornerservice.tag.domain.Tag;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,7 +32,7 @@ public class TagController {
   }
 
   @GetMapping
-  public Page<TagDto> list(Pageable pageable) {
+  public Page<TagDto> list(@SortDefault("id") Pageable pageable) {
     return useCases.list(pageable).map(mapper::toDto);
   }
 

@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 import me.yakar.cornerservice.NotFoundException;
 import me.yakar.cornerservice.branch.domain.Branch;
 import me.yakar.cornerservice.branch.domain.BranchRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,7 +23,7 @@ public class BranchService {
 
   @Transactional(readOnly = true)
   public List<Branch> list() {
-    return branches.findAll();
+    return branches.findAll(Sort.by("id"));
   }
 
   @Transactional(readOnly = true)

@@ -2,6 +2,7 @@
 package me.yakar.cornerservice.branch;
 
 import java.util.List;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,7 +23,7 @@ public class BranchService {
 
   @Transactional(readOnly = true)
   public List<BranchDto> list() {
-    return branches.findAll().stream().map(mapper::toDto).toList();
+    return branches.findAll(Sort.by("id")).stream().map(mapper::toDto).toList();
   }
 
   @Transactional(readOnly = true)

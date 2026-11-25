@@ -101,6 +101,21 @@ class BranchApiTests {
   }
 
   @Test
+  void listsBranchesInTheOrderOfTheirIdentifiers() {
+    BranchDto first = create();
+    BranchDto other = BranchSamples.otherDto().build();
+    BranchDto second = http.postForObject("/api/branches", other, BranchDto.class);
+    // PostgreSQL writes a row that changes at the end of its table, where a list without an order
+    // would show it.
+    http.put("/api/branches/{id}", other, first.id());
+
+    ResponseEntity<JsonNode> list = http.getForEntity("/api/branches", JsonNode.class);
+
+    assertThat(list.getBody().findValuesAsString("id"))
+        .containsExactly(first.id().toString(), second.id().toString());
+  }
+
+  @Test
   void deletesABranch() {
     BranchDto branch = create();
 

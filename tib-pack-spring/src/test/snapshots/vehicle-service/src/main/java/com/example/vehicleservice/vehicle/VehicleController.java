@@ -4,6 +4,7 @@ package com.example.vehicleservice.vehicle;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,7 +28,7 @@ public class VehicleController {
   }
 
   @GetMapping
-  public Page<VehicleDto> list(Pageable pageable) {
+  public Page<VehicleDto> list(@SortDefault("id") Pageable pageable) {
     return service.list(pageable);
   }
 

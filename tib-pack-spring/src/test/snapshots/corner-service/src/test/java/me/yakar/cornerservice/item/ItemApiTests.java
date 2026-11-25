@@ -98,6 +98,21 @@ class ItemApiTests {
   }
 
   @Test
+  void listsItemsInTheOrderOfTheirIdentifiers() {
+    ItemDto first = create();
+    ItemDto other = ItemSamples.otherDto(branch.getId()).build();
+    ItemDto second = http.postForObject("/api/items", other, ItemDto.class);
+    // PostgreSQL writes a row that changes at the end of its table, where a list without an order
+    // would show it.
+    http.put("/api/items/{id}", other, first.id());
+
+    ResponseEntity<JsonNode> list = http.getForEntity("/api/items", JsonNode.class);
+
+    assertThat(list.getBody().findValuesAsString("id"))
+        .containsExactly(first.id().toString(), second.id().toString());
+  }
+
+  @Test
   void deletesAnItem() {
     ItemDto item = create();
 
