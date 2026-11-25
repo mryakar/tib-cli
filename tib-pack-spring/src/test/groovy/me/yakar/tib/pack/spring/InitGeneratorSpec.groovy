@@ -107,6 +107,38 @@ class InitGeneratorSpec extends Specification {
     'hexagonal'  | false | true
   }
 
+  def "the build has the test dependencies of the kinds of tests of the spec, and no other: #tests"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new InitGenerator(new SpringPack()).generate(new Project(SpecReader.parse("tib: 1\nservice: s\ntests: $tests\n")), tree)
+    String build = new String(tree.changes().find {
+      it.path() == 'build.gradle.kts'
+    }.after(), 'UTF-8')
+
+    then: 'what every service has: the tests of Spring Boot, and PostgreSQL in a container for the test application'
+    build.contains('  runtimeOnly("org.postgresql:postgresql")\n  testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")\n')
+    build.contains('  testImplementation("org.springframework.boot:spring-boot-testcontainers")\n  testImplementation("org.testcontainers:testcontainers-postgresql")\n')
+
+    and: 'the tests of the repositories, and the client of the tests of the API'
+    build.contains('  testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")\n') == integration
+    build.contains('  testImplementation("org.springframework.boot:spring-boot-restclient")\n  testImplementation("org.springframework.boot:spring-boot-resttestclient")\n') == api
+    build.readLines().findAll {
+      it.contains('Implementation(') || it.contains('Only(')
+    }.every {
+      it.startsWith('  ') && !it.startsWith('   ')
+    }
+
+    where:
+    tests                      | integration | api
+    '[unit, integration, api]' | true        | true
+    '[integration]'            | true        | false
+    '[api, archunit]'          | false       | true
+    '[unit]'                   | false       | false
+    '[]'                       | false       | false
+  }
+
   def "a service with the test of its architecture gets ArchitectureTests and ArchUnit, and the notes tell of it: #tests"() {
     given:
     Tree tree = Tree.at(dir)
