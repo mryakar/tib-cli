@@ -329,7 +329,7 @@ class GenerationSpec extends Specification {
     run(two, lasting).result == new Generation.Result([], [], [], [], [])
   }
 
-  def "a service that was generated for #stack is refused, before anything is staged"() {
+  def "a service that another tib generated for #stack is refused, before anything is staged"() {
     given:
     run(project, generator).tree.apply(State.PATH)
     Path state = dir.resolve(State.PATH)
@@ -349,6 +349,21 @@ class GenerationSpec extends Specification {
     stack              | line
     'an earlier stack' | ''
     'Test 1'           | '  stack: Test 1\n'
+  }
+
+  def "a service that this tib generated with another pack is refused, with the pack to give the spec"() {
+    given:
+    run(project, generator).tree.apply(State.PATH)
+    Tree tree = Tree.at(dir)
+
+    when:
+    Generation.next(State.of(tree, '1.2.3'), project, [], new TestPack('q', '2'), generator, '1.2.3', tree)
+
+    then:
+    PackException e = thrown()
+    e.message == "${tree.root()} was generated for Test 1 by tib 1.2.3; pack q 2 generates for Test 2\n" +
+        'Give the spec the pack of the service, p, or move the service to Test 2 by hand.'
+    tree.changes() == []
   }
 
   def "the inputs that the state forgot are named"() {

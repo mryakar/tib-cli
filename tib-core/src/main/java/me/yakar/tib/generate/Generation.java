@@ -113,7 +113,7 @@ public final class Generation {
       Generator generator,
       String tibVersion,
       Tree tree) {
-    sameStack(pack, previous, tree);
+    sameStack(pack, previous, tibVersion, tree);
     Recorder now = generate(generator, project, previous, tree);
     // What the generator makes of the previous spec, in a tree of its own that is never applied.
     Recorder before =
@@ -183,9 +183,10 @@ public final class Generation {
 
   /**
    * Refuses a service that was generated for another stack than the one of the pack, or before tib
-   * recorded the stack.
+   * recorded the stack. A service that this version of tib generated has the stack of another pack
+   * than the one the spec names; one of another version may have that of the same pack.
    */
-  private static void sameStack(Pack pack, State previous, Tree tree) {
+  private static void sameStack(Pack pack, State previous, String tibVersion, Tree tree) {
     if (!pack.stack().equals(previous.pack().stack())) {
       throw new PackException(
           tree.root()
@@ -199,11 +200,17 @@ public final class Generation {
               + pack.version()
               + " generates for "
               + pack.stack(),
-          "Go on with tib "
-              + previous.tib()
-              + " for this service, or move it to "
-              + pack.stack()
-              + " by hand.");
+          previous.tib().equals(tibVersion)
+              ? "Give the spec the pack of the service, "
+                  + previous.pack().name()
+                  + ", or move the service to "
+                  + pack.stack()
+                  + " by hand."
+              : "Go on with tib "
+                  + previous.tib()
+                  + " for this service, or move it to "
+                  + pack.stack()
+                  + " by hand.");
     }
   }
 
