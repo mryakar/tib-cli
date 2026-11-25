@@ -22,7 +22,7 @@
       "default": "com.example"
     },
     "pack": {
-      "description": "The template pack, by name, with its version after an at sign to pin it.",
+      "description": "The template pack, default or plain, with its version after an at sign to pin it.",
       "type": "string",
       "pattern": "^[a-z][a-z0-9-]*(@[0-9A-Za-z.+-]+)?$",
       "default": "default"
