@@ -26,9 +26,13 @@ dependencies {
   implementation("org.flywaydb:flyway-database-postgresql")
   runtimeOnly("org.postgresql:postgresql")
   testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
-  testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
-  testImplementation("org.springframework.boot:spring-boot-restclient")
-  testImplementation("org.springframework.boot:spring-boot-resttestclient")
+@if(project.tests(TestKind.INTEGRATION))
+${"  "}testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
+@endif
+@if(project.tests(TestKind.API))
+${"  "}testImplementation("org.springframework.boot:spring-boot-restclient")
+${"  "}testImplementation("org.springframework.boot:spring-boot-resttestclient")
+@endif
   testImplementation("org.springframework.boot:spring-boot-testcontainers")
   testImplementation("org.testcontainers:testcontainers-postgresql")
 @if(project.tests(TestKind.ARCHUNIT))

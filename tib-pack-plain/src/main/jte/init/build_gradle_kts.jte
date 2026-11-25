@@ -24,7 +24,9 @@ dependencies {
   runtimeOnly("org.flywaydb:flyway-database-postgresql:${pack.flywayVersion()}")
   testImplementation(platform("org.junit:junit-bom:${pack.junitVersion()}"))
   testImplementation("org.junit.jupiter:junit-jupiter")
-  testImplementation("org.mockito:mockito-junit-jupiter:${pack.mockitoVersion()}")
+@if(project.tests(TestKind.UNIT))
+${"  "}testImplementation("org.mockito:mockito-junit-jupiter:${pack.mockitoVersion()}")
+@endif
   testImplementation("org.testcontainers:testcontainers-postgresql:${pack.testcontainersVersion()}")
 @if(project.tests(TestKind.ARCHUNIT))
 ${"  "}testImplementation("com.tngtech.archunit:archunit:${pack.archunitVersion()}")

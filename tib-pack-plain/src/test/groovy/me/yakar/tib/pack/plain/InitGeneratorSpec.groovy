@@ -109,6 +109,27 @@ class InitGeneratorSpec extends Specification {
     }
   }
 
+  def "the build has Mockito for the tests of the services, and not without them: #tests"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new InitGenerator(new PlainPack()).generate(project("tests: $tests\n"), tree)
+    String build = texts(tree)['build.gradle.kts']
+
+    then:
+    build.contains("  testImplementation(\"org.junit.jupiter:junit-jupiter\")\n  testImplementation(\"org.mockito:mockito-junit-jupiter:${new PlainPack().mockitoVersion()}\")\n  testImplementation(\"org.testcontainers:") == unit
+    build.contains('mockito') == unit
+    build.contains('  testImplementation("org.junit.jupiter:junit-jupiter")\n  testImplementation("org.testcontainers:testcontainers-postgresql:') == !unit
+
+    where:
+    tests                      | unit
+    '[unit, integration, api]' | true
+    '[unit]'                   | true
+    '[integration, api]'       | false
+    '[]'                       | false
+  }
+
   def "a service with the test of its architecture gets ArchitectureTests and ArchUnit, and the notes tell of it: #tests"() {
     given:
     Tree tree = Tree.at(dir)
