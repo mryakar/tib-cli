@@ -192,6 +192,28 @@ class SpringPackSpec extends Specification {
     'corner-service-hexagonal' | CORNERS_HEXAGONAL
   }
 
+  def "every generated Java file is in the directory of its package: #name"() {
+    when:
+    List<Change> java = generate(spec, dir).changes().findAll { it.path().endsWith('.java') }
+
+    then:
+    !java.empty
+    java.each { change ->
+      String declared = new String(change.after(), 'UTF-8').readLines().find {
+        it.startsWith('package ')
+      }
+      String directory = change.path().replaceFirst(/^src\/(main|test)\/java\//, '').replaceFirst(/\/[^\/]+$/, '')
+      assert declared == "package ${directory.replace('/', '.')};" : change.path()
+    }
+
+    where:
+    name              | spec
+    'vehicle-service' | VEHICLES
+    'corner-service'  | CORNERS
+    'corner-service-ddd' | CORNERS_DDD
+    'corner-service-hexagonal' | CORNERS_HEXAGONAL
+  }
+
   def "the notes for agents name every header: #header"() {
     given:
     Tree tree = Tree.at(dir)
