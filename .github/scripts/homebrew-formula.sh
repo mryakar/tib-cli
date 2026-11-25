@@ -47,8 +47,7 @@ class Tib < Formula
 
   def install
     # Homebrew enters the only directory of an archive, which here is the bundle itself.
-    bundle = File.basename(Dir.pwd) == "tib.app" ? "." : "tib.app"
-    (libexec/"tib.app").install Dir["#{bundle}/*"]
+    (libexec/"tib.app").install "Contents"
     bin.write_exec_script libexec/"tib.app/Contents/MacOS/tib"
     # The cache fits the class path where tib is installed; without a bottle, that is here.
     system libexec/"tib.app/Contents/app/startup-cache.sh"
