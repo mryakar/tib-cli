@@ -19,16 +19,19 @@ updates:
         update-types: [version-update:semver-major]
     groups:
       # The Spring Boot of the generated services changes the snapshots; its update comes alone.
-      generated-stack:
+      generated-spring-boot:
         patterns: ["org.springframework.boot:spring-boot-gradle-plugin"]
-      # The libraries of the services of the plain pack change its snapshots; their updates come
-      # together.
-      generated-plain-stack:
+      # The libraries whose versions the packs write into a service change the snapshots; their
+      # updates come together. JUnit is the JUnit of this build's tests too.
+      generated-libraries:
         patterns:
+          - "com.tngtech.archunit:*"
           - "org.flywaydb:*"
+          - "org.junit:*"
           - "org.mockito:*"
           - "org.postgresql:*"
           - "org.testcontainers:*"
+          - "tools.jackson.core:*"
       # The formatter and the plugin that runs it move together. google-java-format also formats
       # what the packs generate: its update changes the snapshots and comes with them.
       format:
