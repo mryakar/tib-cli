@@ -68,10 +68,6 @@ final class Script {
    */
   record Statement(String text, int line, int column, boolean rowsWithoutEnd) {
 
-    Statement(String text, int line, int column) {
-      this(text, line, column, false);
-    }
-
     /**
      * Where in the script a line and a column of the statement are, both from 1: {@code line 3,
      * column 17}.

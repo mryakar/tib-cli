@@ -22,15 +22,15 @@ class ScriptSpec extends Specification {
   def "a semicolon ends a statement, which starts at its line and column"() {
     expect:
     Script.split('CREATE TABLE A (ID INT);\n  CREATE TABLE B (ID INT) ;\r\nC') == [
-      new Script.Statement('CREATE TABLE A (ID INT)', 1, 1),
-      new Script.Statement('CREATE TABLE B (ID INT)', 2, 3),
-      new Script.Statement('C', 3, 1),
+      new Script.Statement('CREATE TABLE A (ID INT)', 1, 1, false),
+      new Script.Statement('CREATE TABLE B (ID INT)', 2, 3, false),
+      new Script.Statement('C', 3, 1, false),
     ]
   }
 
   def "line #line, column #column of a statement is at #at of the script"() {
     expect:
-    new Script.Statement('B (\n  X', 3, 5).at(line, column) == at
+    new Script.Statement('B (\n  X', 3, 5, false).at(line, column) == at
 
     where:
     line | column | at
@@ -86,7 +86,7 @@ class ScriptSpec extends Specification {
 
   def "a backslash between statements starts a command of psql, which runs to the end of its line"() {
     expect:
-    Script.split(sql) == [new Script.Statement('SET A = 1', 2, 1)]
+    Script.split(sql) == [new Script.Statement('SET A = 1', 2, 1, false)]
 
     where:
     sql << [
@@ -97,15 +97,15 @@ class ScriptSpec extends Specification {
 
   def "a backslash in a statement is part of the statement"() {
     expect:
-    Script.split('SELECT 1\n\\x\n;') == [new Script.Statement('SELECT 1\n\\x', 1, 1)]
+    Script.split('SELECT 1\n\\x\n;') == [new Script.Statement('SELECT 1\n\\x', 1, 1, false)]
   }
 
   def "the rows after COPY FROM stdin are no statements: #rows"() {
     expect:
     Script.split("A;\n${copy};\n${rows}\\.\nB;") == [
-      new Script.Statement('A', 1, 1),
-      new Script.Statement(copy, 2, 1),
-      new Script.Statement('B', 4 + copy.count('\n') + rows.count('\n'), 1),
+      new Script.Statement('A', 1, 1, false),
+      new Script.Statement(copy, 2, 1, false),
+      new Script.Statement('B', 4 + copy.count('\n') + rows.count('\n'), 1, false),
     ]
 
     where:
@@ -121,7 +121,7 @@ class ScriptSpec extends Specification {
   def "rows that no line ends run to the end of the script, and their statement says so"() {
     expect:
     Script.split("A;\n COPY t FROM stdin;$rows") == [
-      new Script.Statement('A', 1, 1),
+      new Script.Statement('A', 1, 1, false),
       new Script.Statement('COPY t FROM stdin', 2, 2, true),
     ]
 
