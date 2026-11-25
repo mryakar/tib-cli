@@ -5,14 +5,15 @@
 @param EntityTestsModel tests
 @param JpaModel jpa
 !{EntityModel entity = tests.entity();}
+!{String name = entity.name();}
 !{String path = entity.path();}
-!{String dto = entity.name() + "Dto";}
+!{String dto = name + "Dto";}
 package ${entity.webPackage()};
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ${entity.basePackage()}.TestcontainersConfiguration;
-${Sources.importOf(entity.webPackage(), entity.packageName(), entity.name() + "Samples")}
+${Sources.importOf(entity.webPackage(), entity.packageName(), name + "Samples")}
 @for(var target : tests.requiredTargets())
 ${Sources.importOf(entity.webPackage(), target.domainPackage(), target.name())}
 ${Sources.importOf(entity.webPackage(), target.persistencePackage(), jpa.repository(target))}
@@ -45,7 +46,7 @@ import tools.jackson.databind.JsonNode;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureTestRestTemplate
 @Import(TestcontainersConfiguration.class)
-class ${entity.name()}ApiTests {
+class ${name}ApiTests {
 
   @Autowired private TestRestTemplate http;
   @Autowired private ${jpa.repository()} ${jpa.repositoryVariable(entity)};
@@ -66,7 +67,7 @@ class ${entity.name()}ApiTests {
   }
 
   @Test
-  void creates${entity.article()}${entity.name()}() {
+  void creates${entity.article()}${name}() {
     ${dto} dto = dto();
 
     ResponseEntity<${dto}> created = http.postForEntity("${path}", dto, ${dto}.class);
@@ -80,7 +81,7 @@ class ${entity.name()}ApiTests {
   }
 
   @Test
-  void gets${entity.article()}${entity.name()}() {
+  void gets${entity.article()}${name}() {
     ${dto} ${entity.variable()} = create();
 
     ResponseEntity<${dto}> found =
@@ -98,7 +99,7 @@ class ${entity.name()}ApiTests {
   }
 
   @Test
-  void anUnknown${entity.name()}IsNotFound() {
+  void anUnknown${name}IsNotFound() {
     ResponseEntity<String> found =
         http.getForEntity("${path}/{id}", String.class, ${tests.unknownId()});
 
@@ -106,9 +107,9 @@ class ${entity.name()}ApiTests {
   }
 
   @Test
-  void updates${entity.article()}${entity.name()}() {
+  void updates${entity.article()}${name}() {
     ${dto} ${entity.variable()} = create();
-    ${dto} dto = ${entity.name()}Samples.otherDto(${tests.requiredIdArguments()}).build();
+    ${dto} dto = ${name}Samples.otherDto(${tests.requiredIdArguments()}).build();
 
     ResponseEntity<${dto}> updated =
         http.exchange(
@@ -140,7 +141,7 @@ class ${entity.name()}ApiTests {
   @Test
   void lists${tests.pluralType()}InTheOrderOfTheirIdentifiers() {
     ${dto} first = create();
-    ${dto} other = ${entity.name()}Samples.otherDto(${tests.requiredIdArguments()}).build();
+    ${dto} other = ${name}Samples.otherDto(${tests.requiredIdArguments()}).build();
     ${dto} second = http.postForObject("${path}", other, ${dto}.class);
     // PostgreSQL writes a row that changes at the end of its table, where a list without an order
     // would show it.
@@ -158,7 +159,7 @@ class ${entity.name()}ApiTests {
   @endif
 
   @Test
-  void deletes${entity.article()}${entity.name()}() {
+  void deletes${entity.article()}${name}() {
     ${dto} ${entity.variable()} = create();
 
     ResponseEntity<Void> deleted =
@@ -172,8 +173,8 @@ class ${entity.name()}ApiTests {
   @if(tests.requiresValues())
 
   @Test
-  void refuses${entity.article()}${entity.name()}WithoutItsRequiredValues() {
-    ${dto} empty = ${entity.name()}Samples.emptyDto().build();
+  void refuses${entity.article()}${name}WithoutItsRequiredValues() {
+    ${dto} empty = ${name}Samples.emptyDto().build();
 
     ResponseEntity<String> created = http.postForEntity("${path}", empty, String.class);
 
@@ -183,7 +184,7 @@ class ${entity.name()}ApiTests {
   @if(tests.unique())
 
   @Test
-  void refuses${entity.article()}${entity.name()}WhoseUniqueValuesAreTaken() {
+  void refuses${entity.article()}${name}WhoseUniqueValuesAreTaken() {
     create();
 
     ResponseEntity<JsonNode> created = http.postForEntity("${path}", dto(), JsonNode.class);
@@ -201,6 +202,6 @@ class ${entity.name()}ApiTests {
 
   /** ${entity.article()} ${entity.variable()} as the API takes it, with the first sample values. */
   private ${dto} dto() {
-    return ${entity.name()}Samples.dto(${tests.requiredIdArguments()}).build();
+    return ${name}Samples.dto(${tests.requiredIdArguments()}).build();
   }
 }

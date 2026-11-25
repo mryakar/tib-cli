@@ -3,9 +3,10 @@
 @import me.yakar.tib.pack.spring.JpaModel
 @param EntityModel entity
 @param JpaModel jpa
+!{String name = entity.name();}
 package ${entity.webPackage()};
 
-${Sources.importOf(entity.webPackage(), entity.domainPackage(), entity.name())}
+${Sources.importOf(entity.webPackage(), entity.domainPackage(), name)}
 
 import org.springframework.stereotype.Component;
 @if(!entity.refersById())
@@ -30,12 +31,12 @@ public class ${entity.webMapper()} {
   }
 
   @endif
-  public ${entity.name()}Dto toDto(${entity.name()} ${entity.variable()}) {
-    return new ${entity.name()}Dto(${entity.dtoArguments()});
+  public ${name}Dto toDto(${name} ${entity.variable()}) {
+    return new ${name}Dto(${entity.dtoArguments()});
   }
 
   /** Copies the DTO onto the entity, all but its identifier@if(entity.audited()) and its audit times@endif. */
-  public void update(${entity.name()}Dto dto, ${entity.name()} ${entity.variable()}) {
+  public void update(${name}Dto dto, ${name} ${entity.variable()}) {
     @for(var field : entity.fields())
     ${entity.variable()}.set${field.property()}(dto.${field.name()}());
     @endfor
