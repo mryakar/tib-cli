@@ -18,6 +18,7 @@ package me.yakar.tib.pack.plain
 import java.nio.file.Files
 import java.nio.file.Path
 import me.yakar.tib.generate.Project
+import me.yakar.tib.pack.GradleWrapper
 import me.yakar.tib.spec.SpecReader
 import me.yakar.tib.tree.Change
 import me.yakar.tib.tree.Owner
@@ -39,10 +40,10 @@ class InitGeneratorSpec extends Specification {
 
     when:
     new InitGenerator(new PlainPack()).generate(project(''), tree)
-    List<Change> wrapper = tree.changes().findAll { it.path() in InitGenerator.WRAPPER }
+    List<Change> wrapper = tree.changes().findAll { it.path() in GradleWrapper.FILES }
 
     then: 'the files are Gradle\'s, as they are, without a header of tib\'s'
-    wrapper*.path() == InitGenerator.WRAPPER.toSorted()
+    wrapper*.path() == GradleWrapper.FILES.toSorted()
     wrapper.every { it.owner() == Owner.DEVELOPER && it.before() == null }
     wrapper.findAll { it.executable() }*.path() == ['gradlew']
     wrapper.each { assert it.after() == Files.readAllBytes(BUILD.resolve(it.path())) : it.path() }

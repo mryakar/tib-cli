@@ -31,6 +31,23 @@ dependencies {
   implementation(libs.google.java.format)
 }
 
+// The Gradle wrapper of this build, which a pack writes into a new service.
+tasks.processResources {
+  val root = layout.settingsDirectory
+  val wrapper = "me/yakar/tib/pack/wrapper"
+  from(root.files("gradlew", "gradlew.bat")) { into(wrapper) }
+  from(
+    root.files("gradle/wrapper/gradle-wrapper.jar", "gradle/wrapper/gradle-wrapper.properties"),
+  ) {
+    into("$wrapper/gradle/wrapper")
+  }
+}
+
+// Coverage leaves out the jar of the Gradle wrapper.
+tasks.withType<JacocoReportBase>().configureEach {
+  classDirectories.setFrom(classDirectories.files.map { fileTree(it) { exclude("**/*.jar") } })
+}
+
 // The module has no templates of its own. The tests render some of theirs, which jte compiles
 // into a directory of the build that only the tests have on their class path.
 jte {

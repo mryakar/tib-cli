@@ -15,12 +15,9 @@
  */
 package me.yakar.tib.pack.plain;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.util.Properties;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Pack;
+import me.yakar.tib.pack.PackProperties;
 import me.yakar.tib.pack.Templates;
 
 /**
@@ -34,16 +31,16 @@ public final class PlainPack implements Pack {
   /** The templates of the pack, which its build compiles into a package of their own. */
   static final Templates TEMPLATES = new Templates("gg.jte.generated.plain");
 
-  private final Properties properties = load(stream("pack.properties"));
+  private final PackProperties properties = PackProperties.of(PlainPack.class);
 
   @Override
   public String name() {
-    return properties.getProperty("name");
+    return "plain";
   }
 
   @Override
   public String version() {
-    return properties.getProperty("version");
+    return properties.get("version");
   }
 
   /** Plain Java, whatever the versions of the libraries of the generated service. */
@@ -54,47 +51,47 @@ public final class PlainPack implements Pack {
 
   /** The Jackson version of the JSON of the generated service. */
   public String jacksonVersion() {
-    return properties.getProperty("jackson");
+    return properties.get("jackson");
   }
 
   /** The version of the JDBC driver of PostgreSQL. */
   public String pgjdbcVersion() {
-    return properties.getProperty("pgjdbc");
+    return properties.get("pgjdbc");
   }
 
   /** The Flyway version that migrates the database of the generated service. */
   public String flywayVersion() {
-    return properties.getProperty("flyway");
+    return properties.get("flyway");
   }
 
   /** The JUnit version of the tests of the generated service. */
   public String junitVersion() {
-    return properties.getProperty("junit");
+    return properties.get("junit");
   }
 
   /** The Mockito version of the unit tests of the generated service. */
   public String mockitoVersion() {
-    return properties.getProperty("mockito");
+    return properties.get("mockito");
   }
 
   /** The Testcontainers version that starts PostgreSQL for the tests of the generated service. */
   public String testcontainersVersion() {
-    return properties.getProperty("testcontainers");
+    return properties.get("testcontainers");
   }
 
   /** The ArchUnit version of the tests of the architecture of the generated service. */
   public String archunitVersion() {
-    return properties.getProperty("archunit");
+    return properties.get("archunit");
   }
 
   /** The version of google-java-format, whose layout the generated Java has. */
   public String formatterVersion() {
-    return properties.getProperty("google-java-format");
+    return properties.get("google-java-format");
   }
 
   /** The PostgreSQL major version that the tests of the generated service run against. */
   public String postgresVersion() {
-    return properties.getProperty("postgres");
+    return properties.get("postgres");
   }
 
   @Override
@@ -105,36 +102,5 @@ public final class PlainPack implements Pack {
   @Override
   public Generator entity() {
     return new EntityGenerator();
-  }
-
-  /** A file that the pack carries, next to this class, as bytes. */
-  static byte[] resource(String name) {
-    return bytes(stream(name));
-  }
-
-  private static InputStream stream(String name) {
-    InputStream stream = PlainPack.class.getResourceAsStream(name);
-    if (stream == null) {
-      throw new IllegalStateException("the pack does not carry " + name);
-    }
-    return stream;
-  }
-
-  static byte[] bytes(InputStream stream) {
-    try (stream) {
-      return stream.readAllBytes();
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  static Properties load(InputStream stream) {
-    Properties properties = new Properties();
-    try (stream) {
-      properties.load(stream);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-    return properties;
   }
 }

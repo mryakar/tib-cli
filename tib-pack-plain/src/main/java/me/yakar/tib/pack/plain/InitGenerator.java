@@ -20,6 +20,7 @@ import java.util.Map;
 import me.yakar.tib.generate.Generator;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.pack.GeneratedFiles;
+import me.yakar.tib.pack.GradleWrapper;
 import me.yakar.tib.pack.Sources;
 import me.yakar.tib.pack.Templates;
 import me.yakar.tib.pack.TestsModel;
@@ -34,17 +35,6 @@ import me.yakar.tib.tree.ProjectFiles;
  * with the entities of the spec: a new service has none.
  */
 final class InitGenerator implements Generator {
-
-  /**
-   * The Gradle wrapper, as the build of tib has it: the files of Gradle's, without a header of
-   * tib's; {@code gradlew} is written as a file that can be run.
-   */
-  static final List<String> WRAPPER =
-      List.of(
-          "gradlew",
-          "gradlew.bat",
-          "gradle/wrapper/gradle-wrapper.jar",
-          "gradle/wrapper/gradle-wrapper.properties");
 
   private final PlainPack pack;
 
@@ -61,9 +51,7 @@ final class InitGenerator implements Generator {
     String application = project.applicationClass();
     generated.onceWithService("settings.gradle.kts", "init/settings_gradle_kts.jte", model);
     generated.onceWithService("build.gradle.kts", "init/build_gradle_kts.jte", model);
-    for (String file : WRAPPER) {
-      files.once(file, PlainPack.resource("wrapper/" + file), file.equals("gradlew"));
-    }
+    GradleWrapper.write(files);
     generated.onceWithService(".gitignore", "init/gitignore.jte", model);
     generated.onceWithService(".gitattributes", "init/gitattributes.jte", model);
     generated.onceWithService(Sources.main(base, application), "init/application_java.jte", model);
