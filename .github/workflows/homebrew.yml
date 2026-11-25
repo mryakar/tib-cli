@@ -1,6 +1,7 @@
 # Writes the Homebrew formula of a release into the tap, mryakar/homebrew-tap, once the maintainer
 # has published the release: the formula points at the macOS zips of the release, so it waits until
-# they can be downloaded. A pre-release gets no formula. It can be run again for a published tag.
+# they can be downloaded. The tap holds the formula of the latest release: a pre-release gets none,
+# and a run by hand writes the formula of the latest release again, not that of another tag.
 name: Homebrew
 
 on:
@@ -9,7 +10,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "The tag of a published release, as v1.2.3"
+        description: "The tag of the latest release, as v1.2.3"
         required: true
 
 permissions:
@@ -32,6 +33,17 @@ jobs:
     # The token that writes into the tap lives in the release environment.
     environment: release
     steps:
+      # The latest release is never a draft or a pre-release.
+      - name: Check that the tag is the latest release
+        run: |
+          latest="$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName --jq .tagName)"
+          if [[ "$TAG" != "$latest" ]]; then
+            echo "::error::$TAG is not the latest release, which is $latest: the tap gets no formula of it"
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
