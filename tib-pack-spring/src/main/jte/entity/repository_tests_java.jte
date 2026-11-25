@@ -5,6 +5,7 @@
 @param EntityTestsModel tests
 @param JpaModel jpa
 !{EntityModel entity = tests.entity();}
+!{String name = entity.name();}
 package ${entity.domainPackage()};
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @endif
 
 import ${entity.basePackage()}.TestcontainersConfiguration;
-${Sources.importOf(entity.domainPackage(), entity.packageName(), entity.name() + "Samples")}
+${Sources.importOf(entity.domainPackage(), entity.packageName(), name + "Samples")}
 @for(var target : tests.requiredTargets())
 ${Sources.importOf(entity.domainPackage(), target.domainPackage(), target.name())}
 ${Sources.importOf(entity.domainPackage(), target.domainPackage(), target.name() + "Repository")}
@@ -34,9 +35,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 /** The table of ${entity.plural()}, against PostgreSQL in a container. */
 @DataJpaTest
 @Import(TestcontainersConfiguration.class)
-class ${entity.name()}RepositoryTests {
+class ${name}RepositoryTests {
 
-  @Autowired private ${entity.name()}Repository ${entity.plural()};
+  @Autowired private ${name}Repository ${entity.plural()};
   @for(var target : tests.requiredTargets())
   @Autowired private ${target.name()}Repository ${target.plural()};
   @endfor
@@ -44,11 +45,11 @@ class ${entity.name()}RepositoryTests {
   @template.entity.required_targets(tests = tests, jpa = jpa)
 
   @Test
-  void savesAndFinds${entity.article()}${entity.name()}() {
-    ${entity.name()} ${entity.variable()} = ${entity.plural()}.saveAndFlush(${tests.sample(entity)});
+  void savesAndFinds${entity.article()}${name}() {
+    ${name} ${entity.variable()} = ${entity.plural()}.saveAndFlush(${tests.sample(entity)});
     entityManager.clear();
 
-    ${entity.name()} found = ${entity.plural()}.findById(${entity.variable()}.getId()).orElseThrow();
+    ${name} found = ${entity.plural()}.findById(${entity.variable()}.getId()).orElseThrow();
     @for(var field : entity.fields())
     assertThat(found.get${field.property()}()).isEqualTo(${entity.variable()}.get${field.property()}());
     @endfor
@@ -67,7 +68,7 @@ class ${entity.name()}RepositoryTests {
   @if(tests.unique())
 
   @Test
-  void refuses${entity.article()}${entity.name()}WhoseUniqueValuesAreTaken() {
+  void refuses${entity.article()}${name}WhoseUniqueValuesAreTaken() {
     ${entity.plural()}.saveAndFlush(${tests.sample(entity)});
 
     assertThatThrownBy(() -> ${entity.plural()}.saveAndFlush(${tests.sample(entity)}))

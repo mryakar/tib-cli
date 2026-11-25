@@ -1,5 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
+!{String name = entity.name();}
 package ${entity.packageName()};
 
 import jakarta.validation.Valid;
@@ -27,39 +28,39 @@ import org.springframework.web.bind.annotation.RestController;
 /** The API of ${entity.plural()}. */
 @RestController
 @RequestMapping("${entity.path()}")
-public class ${entity.name()}Controller {
+public class ${name}Controller {
 
-  private final ${entity.name()}Service service;
+  private final ${name}Service service;
 
-  public ${entity.name()}Controller(${entity.name()}Service service) {
+  public ${name}Controller(${name}Service service) {
     this.service = service;
   }
 
   @GetMapping
   @if(entity.paginated())
-  public Page<${entity.name()}Dto> list(@SortDefault("${entity.idField()}") Pageable pageable) {
+  public Page<${name}Dto> list(@SortDefault("${entity.idField()}") Pageable pageable) {
     return service.list(pageable);
   }
 
   @else
-  public List<${entity.name()}Dto> list() {
+  public List<${name}Dto> list() {
     return service.list();
   }
 
   @endif
   @GetMapping("/{id}")
-  public ${entity.name()}Dto get(@PathVariable ${entity.idType()} id) {
+  public ${name}Dto get(@PathVariable ${entity.idType()} id) {
     return service.get(id);
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ${entity.name()}Dto create(@Valid @RequestBody ${entity.name()}Dto dto) {
+  public ${name}Dto create(@Valid @RequestBody ${name}Dto dto) {
     return service.create(dto);
   }
 
   @PutMapping("/{id}")
-  public ${entity.name()}Dto update(@PathVariable ${entity.idType()} id, @Valid @RequestBody ${entity.name()}Dto dto) {
+  public ${name}Dto update(@PathVariable ${entity.idType()} id, @Valid @RequestBody ${name}Dto dto) {
     return service.update(id, dto);
   }
 

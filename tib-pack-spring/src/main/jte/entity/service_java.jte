@@ -1,5 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @param EntityModel entity
+!{String name = entity.name();}
 package ${entity.packageName()};
 
 @if(entity.uuidId())
@@ -20,41 +21,41 @@ import org.springframework.web.server.ResponseStatusException;
 /** The use cases of ${entity.plural()}. */
 @Service
 @Transactional
-public class ${entity.name()}Service {
+public class ${name}Service {
 
-  private final ${entity.name()}Repository ${entity.plural()};
-  private final ${entity.name()}Mapper mapper;
+  private final ${name}Repository ${entity.plural()};
+  private final ${name}Mapper mapper;
 
-  public ${entity.name()}Service(${entity.name()}Repository ${entity.plural()}, ${entity.name()}Mapper mapper) {
+  public ${name}Service(${name}Repository ${entity.plural()}, ${name}Mapper mapper) {
     this.${entity.plural()} = ${entity.plural()};
     this.mapper = mapper;
   }
 
   @Transactional(readOnly = true)
   @if(entity.paginated())
-  public Page<${entity.name()}Dto> list(Pageable pageable) {
+  public Page<${name}Dto> list(Pageable pageable) {
     return ${entity.plural()}.findAll(pageable).map(mapper::toDto);
   }
 
   @else
-  public List<${entity.name()}Dto> list() {
+  public List<${name}Dto> list() {
     return ${entity.plural()}.findAll(Sort.by("${entity.idField()}")).stream().map(mapper::toDto).toList();
   }
 
   @endif
   @Transactional(readOnly = true)
-  public ${entity.name()}Dto get(${entity.idType()} id) {
+  public ${name}Dto get(${entity.idType()} id) {
     return mapper.toDto(find(id));
   }
 
-  public ${entity.name()}Dto create(${entity.name()}Dto dto) {
-    ${entity.name()} ${entity.variable()} = new ${entity.name()}();
+  public ${name}Dto create(${name}Dto dto) {
+    ${name} ${entity.variable()} = new ${name}();
     mapper.update(dto, ${entity.variable()});
     return mapper.toDto(${entity.plural()}.saveAndFlush(${entity.variable()}));
   }
 
-  public ${entity.name()}Dto update(${entity.idType()} id, ${entity.name()}Dto dto) {
-    ${entity.name()} ${entity.variable()} = find(id);
+  public ${name}Dto update(${entity.idType()} id, ${name}Dto dto) {
+    ${name} ${entity.variable()} = find(id);
     mapper.update(dto, ${entity.variable()});
     return mapper.toDto(${entity.plural()}.saveAndFlush(${entity.variable()}));
   }
@@ -63,7 +64,7 @@ public class ${entity.name()}Service {
     ${entity.plural()}.delete(find(id));
   }
 
-  private ${entity.name()} find(${entity.idType()} id) {
+  private ${name} find(${entity.idType()} id) {
     return ${entity.plural()}
         .findById(id)
         .orElseThrow(

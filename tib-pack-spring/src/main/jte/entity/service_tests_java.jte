@@ -2,6 +2,7 @@
 @import me.yakar.tib.pack.EntityTestsModel
 @param EntityTestsModel tests
 !{EntityModel entity = tests.entity();}
+!{String name = entity.name();}
 package ${entity.packageName()};
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,18 +31,18 @@ import org.springframework.web.server.ResponseStatusException;
 
 /** The use cases of ${entity.plural()}, with the repository and the mapper mocked. */
 @ExtendWith(MockitoExtension.class)
-class ${entity.name()}ServiceTests {
+class ${name}ServiceTests {
 
   private static final ${entity.idType()} ID = ${tests.sampleId()};
 
-  @Mock private ${entity.name()}Repository ${entity.plural()};
-  @Mock private ${entity.name()}Mapper mapper;
-  @InjectMocks private ${entity.name()}Service service;
+  @Mock private ${name}Repository ${entity.plural()};
+  @Mock private ${name}Mapper mapper;
+  @InjectMocks private ${name}Service service;
 
   @Test
-  void gets${entity.article()}${entity.name()}() {
-    ${entity.name()} ${entity.variable()} = new ${entity.name()}();
-    ${entity.name()}Dto dto = dto();
+  void gets${entity.article()}${name}() {
+    ${name} ${entity.variable()} = new ${name}();
+    ${name}Dto dto = dto();
     when(${entity.plural()}.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
     when(mapper.toDto(${entity.variable()})).thenReturn(dto);
 
@@ -49,7 +50,7 @@ class ${entity.name()}ServiceTests {
   }
 
   @Test
-  void anUnknown${entity.name()}IsNotFound() {
+  void anUnknown${name}IsNotFound() {
     when(${entity.plural()}.findById(ID)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> service.get(ID))
@@ -59,19 +60,19 @@ class ${entity.name()}ServiceTests {
   }
 
   @Test
-  void creates${entity.article()}${entity.name()}FromItsDto() {
-    ${entity.name()}Dto dto = dto();
-    when(${entity.plural()}.saveAndFlush(any(${entity.name()}.class))).thenAnswer(call -> call.getArgument(0));
-    when(mapper.toDto(any(${entity.name()}.class))).thenReturn(dto);
+  void creates${entity.article()}${name}FromItsDto() {
+    ${name}Dto dto = dto();
+    when(${entity.plural()}.saveAndFlush(any(${name}.class))).thenAnswer(call -> call.getArgument(0));
+    when(mapper.toDto(any(${name}.class))).thenReturn(dto);
 
     assertThat(service.create(dto)).isSameAs(dto);
-    verify(mapper).update(eq(dto), any(${entity.name()}.class));
+    verify(mapper).update(eq(dto), any(${name}.class));
   }
 
   @Test
-  void updates${entity.article()}${entity.name()}FromItsDto() {
-    ${entity.name()} ${entity.variable()} = new ${entity.name()}();
-    ${entity.name()}Dto dto = dto();
+  void updates${entity.article()}${name}FromItsDto() {
+    ${name} ${entity.variable()} = new ${name}();
+    ${name}Dto dto = dto();
     when(${entity.plural()}.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
     when(${entity.plural()}.saveAndFlush(${entity.variable()})).thenReturn(${entity.variable()});
     when(mapper.toDto(${entity.variable()})).thenReturn(dto);
@@ -81,8 +82,8 @@ class ${entity.name()}ServiceTests {
   }
 
   @Test
-  void deletes${entity.article()}${entity.name()}() {
-    ${entity.name()} ${entity.variable()} = new ${entity.name()}();
+  void deletes${entity.article()}${name}() {
+    ${name} ${entity.variable()} = new ${name}();
     when(${entity.plural()}.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
 
     service.delete(ID);
@@ -90,7 +91,7 @@ class ${entity.name()}ServiceTests {
     verify(${entity.plural()}).delete(${entity.variable()});
   }
 
-  private static ${entity.name()}Dto dto() {
-    return ${entity.name()}Samples.dto(${tests.sampleIdArguments()}).${entity.idField()}(ID).build();
+  private static ${name}Dto dto() {
+    return ${name}Samples.dto(${tests.sampleIdArguments()}).${entity.idField()}(ID).build();
   }
 }

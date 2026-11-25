@@ -2,6 +2,7 @@
 @import me.yakar.tib.pack.spring.JpaModel
 @param EntityModel entity
 @param JpaModel jpa
+!{String name = entity.name();}
 package ${entity.persistencePackage()};
 
 import jakarta.persistence.Column;
@@ -51,16 +52,16 @@ import ${target.packageName()}.${target.name()};
 
 @if(entity.hexagonal())
 /**
- * The table ${entity.table()}, its columns as the spec names them; {@link ${entity.name()}PersistenceMapper} maps it to and
+ * The table ${entity.table()}, its columns as the spec names them; {@link ${name}PersistenceMapper} maps it to and
  * from the domain.
  */
 @Entity
 @Table(name = "${entity.table()}")
 public class ${jpa.entityClass()} {
 @else
-/** The columns of ${entity.table()}, as the spec names them; {@link ${entity.name()}} is the entity. */
+/** The columns of ${entity.table()}, as the spec names them; {@link ${name}} is the entity. */
 @MappedSuperclass
-public abstract class ${entity.name()}Generated {
+public abstract class ${name}Generated {
 @endif<%-- keeps the blank line below --%>
 
   @for(var annotation : jpa.idAnnotations())
