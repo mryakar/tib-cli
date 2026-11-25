@@ -30,7 +30,7 @@ import picocli.CommandLine.ScopeType;
     exitCodeListHeading = "Exit codes:%n",
     exitCodeList = {
       "0:Done, or nothing to change.",
-      TibApplication.PROBLEM
+      TibCommand.PROBLEM
           + ":The spec, the DDL, the pack or the project has a problem; the message says which.",
       TibCommand.USAGE_MEANS,
       TibCommand.BUG_MEANS
@@ -43,10 +43,15 @@ import picocli.CommandLine.ScopeType;
     })
 public class TibCommand {
 
+  /** The exit code of a problem that the user can fix. */
+  static final int PROBLEM = 1;
+
+  /** The exit code of a bug. */
+  static final int BUG = 3;
+
   /** What exit code 2 means, for every command. */
   static final String USAGE_MEANS = ExitCode.USAGE + ":The command line is wrong.";
 
   /** What exit code 3 means, for every command. */
-  static final String BUG_MEANS =
-      TibApplication.BUG + ":tib failed; a bug, reported with its stack trace.";
+  static final String BUG_MEANS = BUG + ":tib failed; a bug, reported with its stack trace.";
 }
