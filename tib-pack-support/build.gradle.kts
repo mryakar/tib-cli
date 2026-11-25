@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 // What a template pack shares whatever stack it generates: the models of a service, its entities
-// and their tests that the templates read, and the rendering of a pack's precompiled templates.
+// and their tests that the templates read, the rendering of a pack's precompiled templates, the
+// templates that are the same for every stack, and the Gradle wrapper of a new service.
 import gg.jte.ContentType
 
 plugins {
@@ -48,8 +49,9 @@ tasks.withType<JacocoReportBase>().configureEach {
   classDirectories.setFrom(classDirectories.files.map { fileTree(it) { exclude("**/*.jar") } })
 }
 
-// The module has no templates of its own. The tests render some of theirs, which jte compiles
-// into a directory of the build that only the tests have on their class path.
+// The templates under src/main/jte are the ones that every pack shares: the build of a pack
+// compiles them with its own. The tests render some of theirs, which jte compiles into a directory
+// of the build that only the tests have on their class path.
 jte {
   precompile()
   sourceDirectory = layout.projectDirectory.dir("src/test/jte").asFile.toPath()
