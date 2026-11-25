@@ -1,5 +1,5 @@
 # Builds the packages of each platform and installs them, as a user would, before it uploads them:
-# each installed tib has its start-up cache and scaffolds a service.
+# each installed tib loads its start-up cache and scaffolds a service.
 # The build workflow runs it on every change, and the release workflow for the files of a release.
 name: Packages
 
@@ -60,6 +60,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "tib --version exited with $LASTEXITCODE" }
           $installDir = Split-Path (Get-Command tib).Source
           if (-not (Test-Path "$installDir\app\tib.aot")) { throw "the installer built no start-up cache" }
+          $env:JAVA_TOOL_OPTIONS = '-XX:AOTMode=on'
+          tib --version | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "tib does not load its start-up cache" }
+          $env:JAVA_TOOL_OPTIONS = $null
           tib init service smoke -d "$env:RUNNER_TEMP\msi\smoke"
           if ($LASTEXITCODE -ne 0) { throw "tib init service exited with $LASTEXITCODE" }
           if (-not (Test-Path "$env:RUNNER_TEMP\msi\smoke\gradlew.bat")) { throw "the service has no gradlew.bat" }
