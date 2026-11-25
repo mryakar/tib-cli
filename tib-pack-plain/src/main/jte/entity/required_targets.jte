@@ -4,7 +4,7 @@
 
   @for(var target : tests.requiredTargets())
   private ${target.name()} ${target.variable()};
-  @endfor<%-- keeps the blank line below --%>
+  @endfor
 
   @BeforeEach
   void saveWhat${tests.entity().article()}${tests.entity().name()}Needs() {

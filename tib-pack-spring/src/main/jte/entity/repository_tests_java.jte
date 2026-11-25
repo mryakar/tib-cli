@@ -64,7 +64,7 @@ class ${entity.name()}RepositoryTests {
     assertThat(found.getUpdatedAt()).isNotNull();
     @endif
   }
-  @if(tests.unique())<%-- keeps the blank line below --%>
+  @if(tests.unique())
 
   @Test
   void refuses${entity.article()}${entity.name()}WhoseUniqueValuesAreTaken() {

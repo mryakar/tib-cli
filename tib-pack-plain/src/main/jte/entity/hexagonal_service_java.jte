@@ -42,7 +42,7 @@ public class ${name}Service implements ${name}UseCase {
   public List<${name}> list() {
     return transactions.run(store::findAll);
   }
-  @endif<%-- keeps the blank line below --%>
+  @endif
 
   @Override
   public ${name} get(${entity.idType()} id) {

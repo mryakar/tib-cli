@@ -148,7 +148,7 @@ class ${entity.name()}ApiTests {
     assertThat(deleted.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
     assertThat(found.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
   }
-  @if(tests.requiresValues())<%-- keeps the blank line below --%>
+  @if(tests.requiresValues())
 
   @Test
   void refuses${entity.article()}${entity.name()}WithoutItsRequiredValues() {
@@ -159,7 +159,7 @@ class ${entity.name()}ApiTests {
     assertThat(created.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
   }
   @endif
-  @if(tests.unique())<%-- keeps the blank line below --%>
+  @if(tests.unique())
 
   @Test
   void refuses${entity.article()}${entity.name()}WhoseUniqueValuesAreTaken() {
@@ -171,7 +171,7 @@ class ${entity.name()}ApiTests {
     assertThat(created.getBody().path("detail").asString())
         .isEqualTo("The request breaks a constraint of the database.");
   }
-  @endif<%-- keeps the blank line below --%>
+  @endif
 
   /** ${entity.article()} ${entity.variable()} created through the API, with the first sample values. */
   private ${dto} create() {

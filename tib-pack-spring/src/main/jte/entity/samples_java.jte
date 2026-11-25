@@ -46,7 +46,7 @@ public final class ${name}Samples {
   public static ${builder} other${name}(${tests.requiredParameters()}) {
     return new ${builder}()${tests.sampleValues(2)};
   }
-  @if(entity.dto())<%-- keeps the blank line below --%>
+  @if(entity.dto())
 
   /** ${entity.article()} ${entity.variable()} as the API takes it, with the first sample values@if(!entity.requiredRelations().isEmpty()), and the identifiers of the entities it needs@endif. */
   public static ${dtoBuilder} dto(${tests.requiredIdParameters()}) {
@@ -62,7 +62,7 @@ public final class ${name}Samples {
   public static ${dtoBuilder} emptyDto() {
     return new ${dtoBuilder}();
   }
-  @endif<%-- keeps the blank line below --%>
+  @endif
 
   /** ${entity.article()} ${entity.variable()} to build, one value at a time. */
   public static final class ${builder} {
@@ -83,7 +83,7 @@ public final class ${name}Samples {
       return ${entity.variable()};
     }
   }
-  @if(entity.dto())<%-- keeps the blank line below --%>
+  @if(entity.dto())
 
   /** ${entity.article()} ${entity.variable()} as the API takes it, to build one value at a time@if(entity.audited()); its audit times are none@endif. */
   public static final class ${dtoBuilder} {

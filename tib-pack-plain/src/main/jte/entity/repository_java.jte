@@ -170,7 +170,7 @@ public class ${name}Repository {
     @endfor
     return ${variable};
   }
-  @if(repository.instants())<%-- keeps the blank line below --%>
+  @if(repository.instants())
 
   /** The time as the driver binds it to a TIMESTAMP WITH TIME ZONE. */
   private static OffsetDateTime offset(Instant instant) {

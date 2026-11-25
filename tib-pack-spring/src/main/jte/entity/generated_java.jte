@@ -47,7 +47,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 @for(var target : entity.otherTargets())
 import ${target.packageName()}.${target.name()};
 @endfor
-@endif<%-- keeps the blank line below --%>
+@endif
 
 @if(entity.hexagonal())
 /**
@@ -105,7 +105,7 @@ public abstract class ${entity.name()}Generated {
   public void setId(${entity.idType()} ${entity.idField()}) {
     this.${entity.idField()} = ${entity.idField()};
   }
-  @for(var field : entity.fields())<%-- keeps the blank line below --%>
+  @for(var field : entity.fields())
 
   public ${field.javaType()} get${field.property()}() {
     return ${field.name()};
@@ -115,7 +115,7 @@ public abstract class ${entity.name()}Generated {
     this.${field.name()} = ${field.name()};
   }
   @endfor
-  @for(var relation : entity.relations())<%-- keeps the blank line below --%>
+  @for(var relation : entity.relations())
 
   @if(entity.refersById())
   public ${relation.target().idType()} get${relation.idProperty()}() {
@@ -135,22 +135,22 @@ public abstract class ${entity.name()}Generated {
   }
   @endif
   @endfor
-  @if(entity.audited())<%-- keeps the blank line below --%>
+  @if(entity.audited())
 
   public Instant getCreatedAt() {
     return createdAt;
   }
-  @if(entity.hexagonal())<%-- keeps the blank line below --%>
+  @if(entity.hexagonal())
 
   public void setCreatedAt(Instant createdAt) {
     this.createdAt = createdAt;
   }
-  @endif<%-- keeps the blank line below --%>
+  @endif
 
   public Instant getUpdatedAt() {
     return updatedAt;
   }
-  @if(entity.hexagonal())<%-- keeps the blank line below --%>
+  @if(entity.hexagonal())
 
   public void setUpdatedAt(Instant updatedAt) {
     this.updatedAt = updatedAt;

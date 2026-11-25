@@ -90,7 +90,7 @@ class ${name}PersistenceAdapterTests {
 
     assertThat(${plural}.findById(${entity.variable()}.getId())).isEmpty();
   }
-  @if(tests.unique())<%-- keeps the blank line below --%>
+  @if(tests.unique())
 
   @Test
   void refuses${entity.article()}${name}WhoseUniqueValuesAreTaken() {

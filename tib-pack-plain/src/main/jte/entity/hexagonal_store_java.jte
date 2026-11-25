@@ -22,7 +22,7 @@ public interface ${name}Store {
   Page<${name}> findAll(int page, int size);
   @else
   List<${name}> findAll();
-  @endif<%-- keeps the blank line below --%>
+  @endif
 
   Optional<${name}> findById(${entity.idType()} id);
 

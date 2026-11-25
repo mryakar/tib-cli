@@ -26,7 +26,7 @@ public class ConflictHandler {
     return ProblemDetail.forStatusAndDetail(
         HttpStatus.CONFLICT, "The request breaks a constraint of the database.");
   }
-  @if(notFound)<%-- keeps the blank line below --%>
+  @if(notFound)
 
   @ExceptionHandler(NotFoundException.class)
   public ProblemDetail notFound(NotFoundException e) {

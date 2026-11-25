@@ -53,7 +53,7 @@ public final class Routes {
     @endif
     @endfor
   }
-  @if(!entities.isEmpty())<%-- keeps the blank line below --%>
+  @if(!entities.isEmpty())
 
   private static void route(HttpServer server, String path, HttpHandler handler) {
     server.createContext(path, handler).getFilters().add(new ErrorHandler());
