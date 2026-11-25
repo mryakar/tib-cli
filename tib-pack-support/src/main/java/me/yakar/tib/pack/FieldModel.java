@@ -23,7 +23,7 @@ import me.yakar.tib.spec.Names;
 public record FieldModel(Field field) {
 
   /** The length of a String whose spec gives none. */
-  static final int DEFAULT_LENGTH = 255;
+  private static final int DEFAULT_LENGTH = 255;
 
   public String name() {
     return field.name();

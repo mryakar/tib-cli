@@ -54,17 +54,7 @@ public final class EntityModel {
    * The model of an entity, after the models of the entities it refers to: those are in the map, by
    * name.
    */
-  public EntityModel(Project project, Entity entity, Map<String, EntityModel> models) {
-    this(project, entity, models, false);
-  }
-
-  /**
-   * The model of an entity, as {@link #EntityModel(Project, Entity, Map)} makes it.
-   *
-   * @param byIdentifier whether the entity refers to another by the identifier of its target
-   *     whatever the architecture, as in a stack without JPA
-   */
-  public EntityModel(
+  private EntityModel(
       Project project, Entity entity, Map<String, EntityModel> models, boolean byIdentifier) {
     this.project = project;
     this.entity = entity;
@@ -87,11 +77,21 @@ public final class EntityModel {
   /**
    * The models of the entities of the project, by name, each after the entities it refers to, so
    * that its migration can reference their tables.
-   *
-   * @param byIdentifier whether every entity refers to another by the identifier of its target
-   *     whatever the architecture, as in a stack without JPA
    */
-  public static Map<String, EntityModel> models(Project project, boolean byIdentifier) {
+  public static Map<String, EntityModel> models(Project project) {
+    return models(project, false);
+  }
+
+  /**
+   * The models of the entities of the project as {@link #models(Project)} gives them, for a stack
+   * without JPA: every entity refers to another by the identifier of its target, whatever the
+   * architecture.
+   */
+  public static Map<String, EntityModel> modelsByIdentifier(Project project) {
+    return models(project, true);
+  }
+
+  private static Map<String, EntityModel> models(Project project, boolean byIdentifier) {
     Map<String, EntityModel> models = new LinkedHashMap<>();
     for (Entity entity : ordered(project.spec().entities())) {
       models.put(entity.name(), new EntityModel(project, entity, models, byIdentifier));
@@ -182,12 +182,12 @@ public final class EntityModel {
    * or the package of the entity.
    */
   public String domainPackage() {
-    return layer("domain", "domain");
+    return layerPackage("domain", "domain");
   }
 
   /** The package of the service: its application, or the package of the entity. */
   public String applicationPackage() {
-    return layer("application", "application");
+    return layerPackage("application", "application");
   }
 
   /**
@@ -195,7 +195,7 @@ public final class EntityModel {
    * or the package of the entity.
    */
   public String webPackage() {
-    return layer("web", "adapter.in.web");
+    return layerPackage("web", "adapter.in.web");
   }
 
   /**
@@ -217,7 +217,7 @@ public final class EntityModel {
   }
 
   /** The package of a layer: the one of DDD, the one of the hexagonal architecture, or none. */
-  private String layer(String ddd, String hexagonal) {
+  private String layerPackage(String ddd, String hexagonal) {
     return switch (project.architecture()) {
       case ANEMIC -> packageName();
       case DDD -> packageName() + "." + ddd;

@@ -24,7 +24,7 @@ class DtoModelSpec extends Specification {
 
   def "the DTO has every value without annotations, and checks the rules of the spec: what is required and the length of a String"() {
     given:
-    Map<String, EntityModel> models = EntityModel.models(new Project(SpecReader.parse('''\
+    Map<String, EntityModel> models = EntityModel.modelsByIdentifier(new Project(SpecReader.parse('''\
       tib: 1
       service: s
       entities:
@@ -41,7 +41,7 @@ class DtoModelSpec extends Specification {
           relations:
             - { kind: manyToOne, target: B, nullable: false }
             - { kind: manyToOne, target: B, field: other }
-      '''.stripIndent())), true)
+      '''.stripIndent())))
     DtoModel dto = new DtoModel(models.A)
 
     expect:
