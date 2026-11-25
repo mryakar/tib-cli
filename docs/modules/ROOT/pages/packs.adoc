@@ -1,0 +1,156 @@
+= Template packs
+:description: The two template packs of tib: a Spring Boot service and a service in plain Java.
+
+A template pack generates the service for a stack. tib has two packs: `default`, a Spring Boot 4
+service, and `plain`, a service in plain Java without a dependency injection framework. The pack is
+chosen when the service is created, with `--pack` or with `pack` in the
+xref:spec.adoc[spec file]; without it, the service is of the default pack.
+
+[source,bash]
+----
+$ tib init service vehicle-service --pack plain
+----
+
+== What the two share
+
+* The API of an entity: the same paths, the same JSON and the same pages, with errors as problem
+  details.
+* The Flyway migrations, and PostgreSQL.
+* The three xref:architectures.adoc[architectures].
+* The four kinds of tests, with PostgreSQL in a container from Testcontainers, and the `Dockerfile`
+  for a service that wants one.
+* The Gradle build with its wrapper, `AGENTS.md`, the state file, and the owner in the first line
+  of every file.
+
+== What differs
+
+[cols="2,3,3"]
+|===
+| |`default` |`plain`
+
+|Stack, as the xref:state.adoc[state file] names it
+|`Spring Boot 4`
+|`Plain Java`
+
+|HTTP
+|Spring MVC: a controller, `XController`
+|The HTTP server of the JDK, `com.sun.net.httpserver`: a handler, `XHandler`
+
+|Persistence
+|JPA: the repository of an entity is one of Spring Data, written once and yours
+|JDBC, without a pool: `XRepository` is the SQL of the table, written on every run
+
+|A relation
+|The entity it refers to, in the anemic architecture; else its identifier
+|The identifier of its target, as `depotId`
+
+|The sequence of an identifier
+|Advances by 50, the block that JPA takes at once
+|Advances by 1
+
+|The rules of a DTO
+|Annotations of Jakarta Validation
+|`XDto` checks what the spec requires, and the length of a `String`, itself
+
+|Wiring
+|Spring
+|By hand: `XWiring` for every entity with an API, and `Routes`
+
+|Configuration
+|`src/main/resources/application.yaml`; in a container, the environment, as
+`SPRING_DATASOURCE_URL`
+|`Config`, from the environment, as `DATABASE_URL`
+
+|Errors
+|`ConflictHandler`
+|`ErrorHandler`
+
+|JSON
+|Jackson, through Spring
+|Jackson, through `Json`
+
+|Tests
+|JUnit, Mockito and the test support of Spring Boot
+|JUnit, Mockito and the HTTP client of the JDK
+
+|Starts the service against its database
+|`./gradlew bootRun`
+|`./gradlew run`
+
+|Starts the service against PostgreSQL in a container
+|`./gradlew bootTestRun`
+|`./gradlew testRun`
+
+|What the `Dockerfile` runs
+|The jar of the service, in the layers that Spring Boot extracts
+|What `./gradlew installDist` installs under `build/install`
+|===
+
+== A service in plain Java
+
+The build of the service is Gradle's `application`. Its application class reads `Config`, migrates
+the schema with Flyway and starts the HTTP server with the routes of the entities. `Config` reads
+the environment:
+
+[cols="1,2,2"]
+|===
+|Variable |What |Default
+
+|`DATABASE_URL`
+|The JDBC URL of the database.
+|`jdbc:postgresql://localhost:5432/vehicle_service`, the name of the service with underscores
+
+|`DATABASE_USER`
+|The user of the database.
+|`vehicle_service`
+
+|`DATABASE_PASSWORD`
+|The password of the user.
+|`vehicle_service`
+
+|`PORT`
+|The port of the API.
+|`8080`
+|===
+
+tib writes these classes into the base package when the service is created, once: the application
+class, `Config`, `Json`, which holds the one mapper of the API, and `Transactions`, which runs a
+unit of work on one connection, in one transaction. `VehicleService` runs each of its use cases
+so.
+
+=== How it is wired
+
+The objects of the service are made by hand, in two places:
+
+* `VehicleWiring`, in the package of the entity, is written once and is yours. Its method
+  `handler` makes the handler of the entity with its service, repository and mapper, and in the
+  hexagonal architecture with its persistence adapter. Change it when a class of the entity needs
+  another object.
+* `Routes`, in the base package, is written on every run. It puts the handler of every entity at
+  its path, as `/api/vehicles`, so that a new entity needs no change of the application class.
+
+=== The classes that come with the first entity
+
+The first entity with an API brings these classes into the base package, written once:
+
+* `ErrorHandler` answers an entity that is not there with `404 Not Found`, a broken constraint of
+  the database with `409 Conflict`, and a body that is not the JSON of the DTO, or a DTO that
+  breaks a rule, with `400 Bad Request`, as problem details.
+* `NotFoundException` and `BadRequestException`, which `ErrorHandler` answers.
+* `Http`, with what the handlers share: the parts of a request that they read, and the answers
+  that they send.
+
+`Page` comes with the first entity whose list comes in pages.
+
+=== The rules of ArchitectureTests
+
+`ArchitectureTests` checks the xref:architectures.adoc#_the_rules_that_archunit_checks[same rules]
+as in a service of the default pack. In the anemic architecture it tells the classes by their names
+and packages, as a plain class has no annotation that says what it is; in the other two, by their
+packages.
+
+== A service stays with its pack
+
+`tib generate entity` refuses a spec that names the other pack: the files that tib wrote once, such
+as the build and the tests, are of the stack of the first pack.
+xref:state.adoc#_problems[The state file] says what the refusal prints.

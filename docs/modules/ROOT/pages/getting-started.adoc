@@ -11,13 +11,12 @@ tib 0.4.0
 
 == A new service
 
-`tib init service` scaffolds a Spring Boot 4 service: its Gradle build and Gradle wrapper, the
-application class and its configuration, a test and a test application that run it against
-PostgreSQL in a container, a `.gitattributes` that keeps the line feeds of its text files on every
-platform and the carriage returns of its batch files, and `AGENTS.md`, the notes for whoever, or
-whatever, works on the service next; with `--pack plain`, a service in plain Java instead, as
-<<_a_service_in_plain_java>> says. First see what it would write, as a diff, without writing
-anything:
+`tib init service` scaffolds a service: its Gradle build and Gradle wrapper, the application class
+and its configuration, a test and a test application that run it against PostgreSQL in a
+container, a `.gitattributes` that keeps the line ends of its files on every platform, and
+`AGENTS.md`, the notes for the next developer or agent. Without options it is a Spring Boot 4
+service in the anemic architecture, on Java 21. First see what it would write, as a diff, without
+writing anything:
 
 [source,bash]
 ----
@@ -58,78 +57,97 @@ $ ./gradlew build
 $ ./gradlew bootTestRun
 ----
 
-The service is on Java 21. `--java 25` puts it on Java 25 instead; either way, its build compiles
-with a JDK of its Java, which Gradle looks for on the machine:
+== The choices
+
+Five options choose what the service is made with. Each has a property of the same name in the
+xref:spec.adoc[spec file]:
+
+[cols="2,4,2"]
+|===
+|Option |Values |Default
+
+|`--pack`
+|`default`, a Spring Boot 4 service; `plain`, a service in plain Java. xref:packs.adoc[] compares
+the two.
+|`default`
+
+|`--java`
+|`21` or `25`. The build of the service compiles with a JDK of its Java, which Gradle looks for on
+the machine.
+|`21`
+
+|`--architecture`
+|`anemic`, `ddd` or `hexagonal`. xref:architectures.adoc[] says where each puts the classes.
+|`anemic`
+
+|`--tests`
+|`unit`, `integration`, `api` and `archunit`, separated by commas, or `none`.
+|`unit,integration,api`
+
+|`--docker`
+|A `Dockerfile` and a `.dockerignore`, both yours.
+|no `Dockerfile`
+|===
 
 [source,bash]
 ----
-$ tib init service vehicle-service --java 25
+$ tib init service vehicle-service --java 25 --architecture ddd --tests unit,api,archunit --docker
+$ tib init service fleet-service --pack plain --architecture hexagonal
 ----
 
-Every entity gets tests of three kinds: `unit`, the tests of its service with the repository and
-the mapper mocked; `integration`, the tests of its repository against PostgreSQL in a container,
-which come with the test of the application; and `api`, the tests of its API against the running
-service. A fourth kind, `archunit`, is the test of the architecture of the service: rules that
-ArchUnit checks on its classes. `--tests` keeps the kinds you name, separated by commas; with
-`--tests unit`, the build of the service needs no Docker:
+The kinds of tests:
 
-[source,bash]
-----
-$ tib init service vehicle-service --tests unit,api
-----
+* `unit` writes the tests of the service of every entity, with what the service uses mocked.
+* `integration` writes the tests of the repository of every entity against PostgreSQL in a
+  container, and the test of the application.
+* `api` writes the tests of the API of every entity against the running service.
+* `archunit` writes `ArchitectureTests`: the rules of the architecture, which ArchUnit checks on
+  the classes of the service.
 
-The code of the service is arranged in the anemic architecture: the classes of an entity in its
-package, the controller over the service over the repository. `--architecture ddd` arranges it for
-domain-driven design instead: every entity is an aggregate in three packages, its `domain` with
-the entity and its repository, its `application` with the service of its use cases, and its `web`
-with its controller, DTO and mapper; an entity refers to another by its identifier, as `depotId`,
-not by the entity. `--architecture hexagonal` arranges it in ports and adapters: the domain of
-every entity is in plain Java, without JPA or Spring, in its `domain`; its `application` has the
-service of its use cases and the ports, `application.port.in` with the use cases that the
-controller calls and `application.port.out` with the store that keeps the domain; its
-`adapter.in.web` has the controller, DTO and mapper, and its `adapter.out.persistence` the JPA
-entity of its table, its repository, the mapper between the two and the adapter of the store. An
-entity refers to another by its identifier there too. `archunit` checks the rules of the
-architecture the service has.
+A service without `integration` and `api` builds without Docker.
+
+The `Dockerfile` builds the service with its Gradle wrapper and runs it on the Java runtime of its
+version, as a user without root rights. In a container, the service reaches its database through
+the environment: `SPRING_DATASOURCE_URL` with the default pack, `DATABASE_URL` with the plain one.
 
 [source,bash]
 ----
-$ tib init service vehicle-service --architecture ddd --tests unit,integration,api,archunit
-$ tib init service fleet-service --architecture hexagonal --tests unit,integration,api,archunit
-----
-
-`--docker` adds a `Dockerfile` and a `.dockerignore`, both yours. The `Dockerfile` builds the
-service with its Gradle wrapper and runs it on the Java runtime of its version, as a user without
-root rights; in a container, the service reaches its database through the environment, as
-`SPRING_DATASOURCE_URL`:
-
-[source,bash]
-----
-$ tib init service vehicle-service --docker
 $ docker build -t vehicle-service .
 ----
 
-Without the name and without a spec file, tib asks for what the command line would say: the name,
-the Java version, the template pack, the architecture, the kinds of tests and the Dockerfile. An empty answer takes the default in
-brackets, and an answer that tib cannot use is asked again. The questions go to standard error and
-the answers come from standard input, so that a dry run still prints only its diff; when standard
-input ends before the last answer, as in a script, tib writes nothing and exits with 2.
+`--pack` also takes the pack with its version after an at sign, as the spec does. A value that tib
+cannot use, such as a Java version that is not 21 or 25, a kind of test that tib does not know or
+a name that is not the name of a service, is an error of the command line: tib says what is wrong,
+writes nothing and exits with 2.
+
+Each choice is made when the service is created.
+xref:spec.adoc#_the_rules[A later spec that gives another is refused].
+
+=== The questions
+
+Without a name and without a spec file, tib asks for the name and for what the options choose:
+the template pack, the Java version, the architecture, the kinds of tests and the Dockerfile. An
+empty answer takes the default in brackets, and an answer that tib cannot use is asked again. The
+questions go to standard error and the answers come from standard input, so that a dry run still
+prints only its diff. When standard input ends before the last answer, as in a script, tib writes
+nothing and exits with 2.
 
 [source,text]
 ----
 $ tib init service
 The name of the service, in lower case words joined with hyphens: vehicle-service
-Its Java version, 21 or 25 [21]: 25
 Its template pack: default, plain [default]:
+Its Java version, 21 or 25 [21]: 25
 Its architecture: anemic, ddd, hexagonal [anemic]:
 The kinds of its tests, separated by commas, or none: unit, integration, api, archunit [unit,integration,api]: unit,api
 A Dockerfile, yes or no [no]: yes
 Wrote 16 files to /home/you/vehicle-service.
 ----
 
-To scaffold the service from a xref:spec.adoc[spec file] instead of its name, which names its
-group, its pack, its Java, its architecture, its kinds of tests, whether it has a Dockerfile, and
-its entities, give the file instead of the name:
+=== A spec file
+
+A xref:spec.adoc[spec file] names the service with its group, pack, Java, architecture, kinds of
+tests, Dockerfile and entities. Give it in place of the name:
 
 [source,bash]
 ----
@@ -155,9 +173,14 @@ For `Vehicle` that is, in the package `com.example.vehicleservice.vehicle`: `Veh
 the mapped superclass with the columns, `VehicleDto` and `VehicleMapper`, written on every run;
 `Vehicle`, the entity for your code, `VehicleRepository`, and `VehicleService` and
 `VehicleController`, a CRUD API under `/api/vehicles`, written once; and the Flyway migration
-`V2__create_vehicle.sql`, written once and numbered after the migrations already there. The Java
-that tib writes is in the layout of google-java-format, so that a run of it leaves the files as
-they are.
+`V2__create_vehicle.sql`, written once and numbered after the migrations already there. The API
+lists the vehicles in the order of their identifiers, in pages unless the spec turns `pagination`
+off. The Java that tib writes is in the layout of google-java-format, so that a run of it leaves
+the files as they are.
+
+These are the classes of the default pack in the anemic architecture. xref:architectures.adoc[]
+lists the classes and their packages in each architecture, and xref:packs.adoc[] says what the
+plain pack writes instead.
 
 The first entity with an API also brings `ConflictHandler`, in `com.example.vehicleservice`,
 written once: a request that breaks a constraint of the database, such as a plate number that
@@ -175,7 +198,7 @@ that does not name the constraint:
 }
 ----
 
-Its tests come with it, written once, in the same package under `src/test/java`:
+The tests of `Vehicle` come with it, written once, in the same package under `src/test/java`:
 `VehicleRepositoryTests` saves and reads a vehicle, `VehicleApiTests` calls every operation of
 the API over HTTP, both against PostgreSQL in a container, and `VehicleServiceTests` tests the
 service with its repository and mapper mocked. For an entity with a unique value,
@@ -184,7 +207,8 @@ their vehicles from `VehicleSamples`, written on every run, which builds a vehic
 sample values that fit its columns; a test changes a value through the builder, as in
 `VehicleSamples.vehicle().capacity(40).build()`, and the samples follow the spec when it changes.
 `./gradlew build` runs them. An entity without a service and a controller, because its spec turns
-off its DTO or its mapper, gets the repository test only.
+off its DTO or its mapper, gets the repository test only. A service has only the tests of the
+kinds it chose.
 
 The state file now also names the spec file that the entities came from, relative to the service,
 with the hash of its content when tib read it:
@@ -239,84 +263,6 @@ which tib adds to the spec of the service; xref:ddl.adoc[] says what it reads:
 ----
 $ tib generate entity --ddl vehicle-service.sql
 ----
-
-== A service in plain Java
-
-`--pack plain` scaffolds the service with the `plain` pack instead of the default one: a service in
-plain Java, without a framework of dependency injection, whose objects are wired by hand in its
-application class. It answers HTTP with the server of the JDK, `com.sun.net.httpserver`, keeps its
-entities in PostgreSQL with JDBC, without a pool, migrates its schema with Flyway when it starts,
-and reads and writes JSON with Jackson; its tests use JUnit, Mockito and Testcontainers. The pack
-arranges a service in all three architectures. The same is `pack: plain` in the spec.
-
-[source,bash]
-----
-$ tib init service vehicle-service --pack plain
-$ ./gradlew build
-$ ./gradlew testRun
-----
-
-Its build is Gradle's `application`: `./gradlew run` starts the service against the database that
-the environment names, through `Config`, `./gradlew testRun` against PostgreSQL in a container, and
-`./gradlew installDist` installs it under `build/install`, which its `Dockerfile` runs:
-
-[cols="1,2,2"]
-|===
-|Variable |What |Default
-
-|`DATABASE_URL`
-|The JDBC URL of the database.
-|`jdbc:postgresql://localhost:5432/vehicle_service`, the name of the service with underscores
-
-|`DATABASE_USER`
-|The user of the database.
-|`vehicle_service`
-
-|`DATABASE_PASSWORD`
-|The password of the user.
-|`vehicle_service`
-
-|`PORT`
-|The port of the API.
-|`8080`
-|===
-
-`tib generate entity` adds, for every entity, in its package: `VehicleGenerated`, the plain Java
-values of its columns, a relation as the identifier of its target, as `depotId`;
-`VehicleRepository`, the SQL of its table on JDBC; `VehicleDto`, which checks what the spec
-requires and the length of a `String` itself; and `VehicleMapper`, all written on every run; and
-`Vehicle`, `VehicleService`, the use cases on the DTOs, each in a transaction, and `VehicleHandler`,
-the API under `/api/vehicles` as the default pack's, pages included, written once. The migrations
-are the default pack's. `Routes`, in the base package, is written on every run: it wires the
-classes of every entity by hand and puts its handler at its path, so that a new entity needs no
-change of the application class. `ErrorHandler`, written with the first entity, answers an entity
-that is not there with `404 Not Found`, a broken constraint of the database with `409 Conflict` and a
-DTO that breaks a rule or does not read with `400 Bad Request`, as problem details. The tests are
-of the same kinds: `XRepositoryTests` and the test of the application against PostgreSQL in a
-container, `XServiceTests` with the repository and the mapper mocked, `XApiTests` over HTTP with the
-JDK's client, and `ArchitectureTests`, whose rules go by the names and the packages of the classes.
-
-With `--architecture ddd`, the same classes are arranged in three packages of the entity, as with
-the default pack: `vehicle.domain` has `Vehicle`, `VehicleGenerated` and `VehicleRepository`;
-`vehicle.application` has `VehicleService`, whose use cases take and give the aggregate and throw
-`NotFoundException` for one that is not there; and `vehicle.web` has `VehicleHandler`, which maps
-the aggregate to and from `VehicleDto` with `VehicleMapper`. `XServiceTests` mock the repository
-only, and `ArchitectureTests` has the rules of DDD, which go by the packages of the classes.
-
-With `--architecture hexagonal`, the domain of every entity is in plain Java that knows neither
-JDBC nor the HTTP server: `vehicle.domain` has `Vehicle` and `VehicleGenerated`;
-`vehicle.application` has `VehicleService`, which implements `VehicleUseCase`, the port that the
-inbound adapters call, in `vehicle.application.port.in`, and keeps the domain through
-`VehicleStore`, the port in `vehicle.application.port.out`. `vehicle.adapter.in.web` has
-`VehicleHandler`, `VehicleDto` and `VehicleWebMapper`; `vehicle.adapter.out.persistence` has
-`VehicleRepository`, the SQL of the table, and `VehiclePersistenceAdapter`, the store on it, which
-joins the transaction of the use case and turns a failure of JDBC into one of `Transactions`.
-`XPersistenceAdapterTests` test the store against PostgreSQL, in place of `XRepositoryTests`;
-`XServiceTests` mock the store; and `ArchitectureTests` has the rules of the hexagonal
-architecture, which go by the packages of the classes.
-
-A service stays with its pack: `tib generate entity` refuses a spec of the other one, which
-generates for another stack.
 
 == What tib owns
 
