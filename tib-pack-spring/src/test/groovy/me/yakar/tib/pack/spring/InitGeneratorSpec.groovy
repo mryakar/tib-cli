@@ -91,6 +91,7 @@ class InitGeneratorSpec extends Specification {
     agents.contains('classes of the service with ArchUnit: the domain knows neither JPA nor Spring, the application does\nnot use the adapters, an inbound adapter does not use an outbound one, nor the reverse, and there\nis no cycle between the packages of the entities; it is yours.\n\nThe Java that tib writes') == hexagonal
     agents.contains('with ArchUnit: the controller of an entity over its service over its\nrepository, and no cycle') == (!ddd && !hexagonal)
     agents.contains('`XGenerated`, `XDto` and `XMapper`\nare tib\'s; `X`, `XRepository`, `XService`, `XController` and the migration are yours.') == !hexagonal
+    agents.contains('.\n`X` keeps a constructor without parameters: the files of tib\'s make an `X` and set its values.\n`ConflictHandler`, in the base package, answers a request that breaks a constraint of the database\n')
     files['.gitignore'].contains('\nout/\n') == !hexagonal
     files['.gitignore'].contains('\nbuild/\n/out/\n.idea/\n') == hexagonal
     agents.contains('`XGenerated`, `XEntity`, `XDto`,\n`XWebMapper` and `XPersistenceMapper` are tib\'s; `X`, `XUseCase`, `XStore`, `XService`,\n`XController`, `XJpaRepository`, `XPersistenceAdapter` and the migration are yours.') == hexagonal
@@ -178,6 +179,6 @@ class InitGeneratorSpec extends Specification {
     '[integration, unit]' | true        | true      | 'are yours, and so are\ntheir tests: `XRepositoryTests` against PostgreSQL in a container, and\n`XServiceTests` with the repository and the mapper mocked. Their sample entities and DTOs come\n'
     '[api]'               | false       | true      | 'are yours, and so are\ntheir tests: `XApiTests` against PostgreSQL in a container. Their sample'
     '[unit]'              | false       | false     | 'their tests: `XServiceTests` with the repository and the mapper mocked. Their sample'
-    '[]'                  | false       | false     | 'and the migration are yours. `ConflictHandler`, in the base package, answers a\n'
+    '[]'                  | false       | false     | 'and the migration are yours.\n`X` keeps a constructor without parameters: the files of tib\'s make an `X` and set its values.\n'
   }
 }

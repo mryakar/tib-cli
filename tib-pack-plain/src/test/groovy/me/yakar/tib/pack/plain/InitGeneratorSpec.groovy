@@ -136,6 +136,25 @@ class InitGeneratorSpec extends Specification {
     '[unit]'           | false    | true
   }
 
+  def "the notes say what the files of tib's ask of the developer's, and where a query of the developer's goes: #architecture"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new InitGenerator(new PlainPack()).generate(project("architecture: $architecture\n"), tree)
+    String agents = texts(tree)['AGENTS.md']
+
+    then:
+    agents.contains('.\n`X` keeps a constructor without parameters: the files of tib\'s make an `X` and set its values.\nA query of your own goes in ')
+    agents.contains(query + '\n`ErrorHandler`, in the base package, answers a request for an entity that is not there with 404\n')
+
+    where:
+    architecture | query
+    'anemic'     | 'A query of your own goes in a class of yours, which takes the connection of the unit of work from\n`Transactions.connection()`.'
+    'ddd'        | 'A query of your own goes in a class of yours, which takes the connection of the unit of work from\n`Transactions.connection()`.'
+    'hexagonal'  | 'A query of your own goes in `XPersistenceAdapter`, which takes the connection of the unit of work\nfrom `Transactions.connection()`.'
+  }
+
   def "a service with a Dockerfile gets one for the Java of its spec, which runs what Gradle installs, and the notes tell how to build the image: #yaml"() {
     given:
     Tree tree = Tree.at(dir)
@@ -188,7 +207,7 @@ class InitGeneratorSpec extends Specification {
     '[integration, unit]' | true        | true    | true      | 'are yours, and so are\ntheir tests: `XRepositoryTests` against PostgreSQL in a container, and\n`XServiceTests` with the repository and the mapper mocked. Their sample entities and DTOs come\n'
     '[api]'               | false       | true    | true      | 'are yours, and so are\ntheir tests: `XApiTests` against PostgreSQL in a container. Their sample'
     '[unit]'              | false       | false   | false     | 'their tests: `XServiceTests` with the repository and the mapper mocked. Their sample'
-    '[]'                  | false       | false   | false     | 'and the migration are yours. `ErrorHandler`, in the base package, answers a\n'
+    '[]'                  | false       | false   | false     | 'and the migration are yours.\n`X` keeps a constructor without parameters: the files of tib\'s make an `X` and set its values.\n'
   }
 
   private static Project project(String yaml) {

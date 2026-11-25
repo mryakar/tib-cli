@@ -59,11 +59,14 @@ its identifier, as `depotId`: there is no ORM. Its code goes in `X`, never in `X
 their tests: `XRepositoryTests` and `XApiTests` against PostgreSQL in a container, and
 `XServiceTests` with the repository and the mapper mocked. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
-as in `XSamples.x().name("Other").build()`. `ErrorHandler`, in the base package, answers a
-request for an entity that is not there with 404 Not Found, one that breaks a constraint of the
-database with 409 Conflict, and one whose DTO breaks a rule or cannot be read with 400 Bad
-Request, as problem details; it is yours, and so are `NotFoundException`, `BadRequestException`,
-`Http` and `Page`.
+as in `XSamples.x().name("Other").build()`.
+`X` keeps a constructor without parameters: the files of tib's make an `X` and set its values.
+A query of your own goes in a class of yours, which takes the connection of the unit of work from
+`Transactions.connection()`.
+`ErrorHandler`, in the base package, answers a request for an entity that is not there with 404
+Not Found, one that breaks a constraint of the database with 409 Conflict, and one whose DTO breaks
+a rule or cannot be read with 400 Bad Request, as problem details; it is yours, and so are
+`NotFoundException`, `BadRequestException`, `Http` and `Page`.
 
 The Java that tib writes is in the layout of google-java-format 1.36.1: formatted
 with it, the files of tib's stay as tib wrote them.
