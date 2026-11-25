@@ -62,9 +62,9 @@ their tests: `XRepositoryTests` and `XApiTests` against PostgreSQL in a containe
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
 as in `XSamples.x().name("Other").build()`. `ErrorHandler`, in the base package, answers a
 request for an entity that is not there with 404 Not Found, one that breaks a constraint of the
-database with 409 Conflict, and one whose DTO breaks a rule or does not read with 400 Bad Request,
-as problem details; it is yours, and so are `NotFoundException`, `BadRequestException`, `Http`
-and `Page`.
+database with 409 Conflict, and one whose DTO breaks a rule or cannot be read with 400 Bad
+Request, as problem details; it is yours, and so are `NotFoundException`, `BadRequestException`,
+`Http` and `Page`.
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
 classes of the service with ArchUnit, by their names and packages: the handler of an entity over
 its service over its repository, and no cycle between the packages of the entities; it is yours.
