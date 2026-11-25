@@ -74,14 +74,22 @@ are tib's; `X`, `XRepository`, `XService`, `XController`@endif and the migration
 their tests: ${tests.entityTests()}. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
 as in `XSamples.x().name("Other").build()`.@else.@endif `ConflictHandler`, in the base package, answers a
-request that breaks a constraint of the database with 409 Conflict; it is yours.@if(tests.archunit())
+request that breaks a constraint of the database with 409 Conflict; it is yours.
+@if(tests.archunit())
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
-classes of the service with ArchUnit:@if(ddd) the domain of an entity uses neither its application nor its web, the application does
-not use the web, the domain of an aggregate does not use the domain of another, and
-there is no cycle between the packages of the entities@elseif(hexagonal) the domain knows neither JPA nor Spring, the application does
-not use the adapters, an inbound adapter does not use an outbound one, nor the reverse, and
-there is no cycle between the packages of the entities@else the controller of an entity over its service over its
-repository, and no cycle between the packages of the entities@endif; it is yours.@endif
+@if(ddd)
+classes of the service with ArchUnit: the domain of an entity uses neither its application nor its
+web, the application does not use the web, the domain of an aggregate does not use the domain of
+another, and there is no cycle between the packages of the entities; it is yours.
+@elseif(hexagonal)
+classes of the service with ArchUnit: the domain knows neither JPA nor Spring, the application does
+not use the adapters, an inbound adapter does not use an outbound one, nor the reverse, and there
+is no cycle between the packages of the entities; it is yours.
+@else
+classes of the service with ArchUnit: the controller of an entity over its service over its
+repository, and no cycle between the packages of the entities; it is yours.
+@endif
+@endif<%-- keeps the blank line below --%>
 
 The Java that tib writes is in the layout of google-java-format ${pack.formatterVersion()}: formatted
 with it, the files of tib's stay as tib wrote them.
