@@ -113,25 +113,7 @@ public final class Generation {
       Generator generator,
       String tibVersion,
       Tree tree) {
-    if (!pack.stack().equals(previous.pack().stack())) {
-      throw new PackException(
-          tree.root()
-              + " was generated for "
-              + Objects.requireNonNullElse(previous.pack().stack(), "an earlier stack")
-              + " by tib "
-              + previous.tib()
-              + "; pack "
-              + pack.name()
-              + " "
-              + pack.version()
-              + " generates for "
-              + pack.stack()
-              + "\nGo on with tib "
-              + previous.tib()
-              + " for this service, or move it to "
-              + pack.stack()
-              + " by hand.");
-    }
+    sameStack(pack, previous, tree);
     Recorder now = generate(generator, project, previous, tree);
     // What the generator makes of the previous spec, in a tree of its own that is never applied.
     Recorder before =
@@ -197,6 +179,32 @@ public final class Generation {
       }
     }
     return new Left(List.copyOf(changed), List.copyOf(dropped), List.copyOf(returned));
+  }
+
+  /**
+   * Refuses a service that was generated for another stack than the one of the pack, or before tib
+   * recorded the stack.
+   */
+  private static void sameStack(Pack pack, State previous, Tree tree) {
+    if (!pack.stack().equals(previous.pack().stack())) {
+      throw new PackException(
+          tree.root()
+              + " was generated for "
+              + Objects.requireNonNullElse(previous.pack().stack(), "an earlier stack")
+              + " by tib "
+              + previous.tib()
+              + "; pack "
+              + pack.name()
+              + " "
+              + pack.version()
+              + " generates for "
+              + pack.stack(),
+          "Go on with tib "
+              + previous.tib()
+              + " for this service, or move it to "
+              + pack.stack()
+              + " by hand.");
+    }
   }
 
   private static State.PackRef ref(Pack pack) {

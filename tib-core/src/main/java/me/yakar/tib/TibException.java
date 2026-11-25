@@ -48,6 +48,11 @@ public abstract class TibException extends RuntimeException {
     this(message, (Throwable) null);
   }
 
+  /** One problem, with what to do about it on the line after it. */
+  protected TibException(String problem, String advice) {
+    this(problem + "\n" + advice);
+  }
+
   /** A file that cannot be read or written, as in {@code cannot read spec.yaml: no such file}. */
   protected TibException(String verb, Path file, IOException cause) {
     this("cannot " + verb + " " + file + ": " + reason(cause), cause);

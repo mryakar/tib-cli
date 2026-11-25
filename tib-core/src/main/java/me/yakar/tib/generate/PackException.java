@@ -26,4 +26,8 @@ public class PackException extends TibException {
   PackException(String message) {
     super(message);
   }
+
+  PackException(String problem, String advice) {
+    super(problem, advice);
+  }
 }
