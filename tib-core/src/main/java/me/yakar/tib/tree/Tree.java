@@ -206,13 +206,39 @@ public final class Tree implements ProjectFiles {
    * @param last the path of the file that is moved into place last, if it is staged
    */
   public void apply(String last) {
-    Path lastFile = root.resolve(key(last));
-    // The files written next to their targets, by target, in the order of the paths.
-    Map<Path, Path> staged = new LinkedHashMap<>();
-    String verb = "write";
-    // What is written or deleted when it fails: a directory, a file, or the file it replaces.
-    Path target = root;
+    Writing writing = new Writing(root.resolve(key(last)));
     try {
+      writing.stage();
+      writing.move();
+      writing.delete();
+      writing.moveLast();
+    } catch (IOException e) {
+      // Through File: a file that was moved already, or cannot be removed, is no exception.
+      writing.staged.values().forEach(staging -> staging.toFile().delete());
+      throw new TreeException(writing.verb, writing.target, e);
+    }
+    changes.clear();
+  }
+
+  /** The steps of {@link #apply}, in their order, and where they are when one of them fails. */
+  private final class Writing {
+
+    private final Path lastFile;
+
+    /** The files written next to their targets, by target, in the order of the paths. */
+    private final Map<Path, Path> staged = new LinkedHashMap<>();
+
+    private String verb = "write";
+
+    /** What is written or deleted when it fails: a directory, a file, or the file it replaces. */
+    private Path target = root;
+
+    Writing(Path lastFile) {
+      this.lastFile = lastFile;
+    }
+
+    /** Writes every file next to its target. */
+    void stage() throws IOException {
       for (Change change : changes.values()) {
         if (change.deletes()) {
           continue;
@@ -232,12 +258,20 @@ public final class Tree implements ProjectFiles {
         }
         keep(file, staging, KEPT);
       }
+    }
+
+    /** Moves every file over its target, but for the last one. */
+    void move() throws IOException {
       for (Map.Entry<Path, Path> entry : staged.entrySet()) {
         if (!entry.getKey().equals(lastFile)) {
           target = entry.getKey();
-          move(entry.getValue(), target);
+          Tree.move(entry.getValue(), target);
         }
       }
+    }
+
+    /** Deletes the files to delete, and the directories that this leaves empty. */
+    void delete() throws IOException {
       verb = "delete";
       for (Change change : changes.values()) {
         if (change.deletes()) {
@@ -250,17 +284,16 @@ public final class Tree implements ProjectFiles {
           }
         }
       }
+    }
+
+    /** Moves the last file over its target, if it is staged. */
+    void moveLast() throws IOException {
       if (staged.containsKey(lastFile)) {
         verb = "write";
         target = lastFile;
-        move(staged.get(lastFile), target);
+        Tree.move(staged.get(lastFile), target);
       }
-    } catch (IOException e) {
-      // Through File: a file that was moved already, or cannot be removed, is no exception.
-      staged.values().forEach(staging -> staging.toFile().delete());
-      throw new TreeException(verb, target, e);
     }
-    changes.clear();
   }
 
   private static void move(Path staging, Path target) throws IOException {
