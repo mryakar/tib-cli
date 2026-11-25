@@ -42,7 +42,9 @@ public class TagService {
         () -> {
           Tag tag = find(id);
           change.accept(tag);
-          repository.update(tag);
+          if (!repository.update(tag)) {
+            throw notFound(id);
+          }
           return tag;
         });
   }
@@ -50,14 +52,18 @@ public class TagService {
   public void delete(Long id) {
     transactions.run(
         () -> {
-          repository.delete(find(id).getId());
+          if (!repository.delete(id)) {
+            throw notFound(id);
+          }
           return null;
         });
   }
 
   private Tag find(Long id) throws SQLException {
-    return repository
-        .findById(id)
-        .orElseThrow(() -> new NotFoundException("There is no tag " + id));
+    return repository.findById(id).orElseThrow(() -> notFound(id));
+  }
+
+  private static NotFoundException notFound(Long id) {
+    return new NotFoundException("There is no tag " + id);
   }
 }

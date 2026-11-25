@@ -29,7 +29,9 @@ public interface ${name}Store {
   /** Inserts the ${entity.variable()}, and gives it back as it was inserted, with its identifier@if(entity.audited()) and its audit times@endif. */
   ${name} insert(${name} ${entity.variable()});
 
-  void update(${name} ${entity.variable()});
+  /** Updates the ${entity.variable()}, and says whether it is there. */
+  boolean update(${name} ${entity.variable()});
 
-  void delete(${entity.idType()} id);
+  /** Deletes the ${entity.variable()} with the identifier, and says whether it was there. */
+  boolean delete(${entity.idType()} id);
 }

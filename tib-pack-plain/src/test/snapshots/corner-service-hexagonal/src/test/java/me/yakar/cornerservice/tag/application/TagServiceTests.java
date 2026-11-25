@@ -67,20 +67,34 @@ class TagServiceTests {
     Tag tag = new Tag();
     AtomicReference<Tag> changed = new AtomicReference<>();
     when(store.findById(ID)).thenReturn(Optional.of(tag));
+    when(store.update(tag)).thenReturn(true);
 
     assertSame(tag, service.update(ID, changed::set));
     assertSame(tag, changed.get());
-    verify(store).update(tag);
+  }
+
+  @Test
+  void updatingATagThatIsGoneIsNotFound() {
+    Tag tag = new Tag();
+    when(store.findById(ID)).thenReturn(Optional.of(tag));
+    when(store.update(tag)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, change -> {}));
   }
 
   @Test
   void deletesATag() {
-    Tag tag = new Tag();
-    tag.setId(ID);
-    when(store.findById(ID)).thenReturn(Optional.of(tag));
+    when(store.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(store).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknownTagIsNotFound() {
+    when(store.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 }

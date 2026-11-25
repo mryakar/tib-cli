@@ -38,12 +38,12 @@ public class TagPersistenceAdapter implements TagStore {
   }
 
   @Override
-  public void update(Tag tag) {
-    transactions.run(() -> repository.update(tag));
+  public boolean update(Tag tag) {
+    return transactions.run(() -> repository.update(tag));
   }
 
   @Override
-  public void delete(Long id) {
-    transactions.run(() -> repository.delete(id));
+  public boolean delete(Long id) {
+    return transactions.run(() -> repository.delete(id));
   }
 }

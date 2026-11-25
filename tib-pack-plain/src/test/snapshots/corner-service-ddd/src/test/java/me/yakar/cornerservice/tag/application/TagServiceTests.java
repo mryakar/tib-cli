@@ -68,20 +68,34 @@ class TagServiceTests {
     Tag tag = new Tag();
     AtomicReference<Tag> changed = new AtomicReference<>();
     when(repository.findById(ID)).thenReturn(Optional.of(tag));
+    when(repository.update(tag)).thenReturn(true);
 
     assertSame(tag, service.update(ID, changed::set));
     assertSame(tag, changed.get());
-    verify(repository).update(tag);
+  }
+
+  @Test
+  void updatingATagThatIsGoneIsNotFound() throws SQLException {
+    Tag tag = new Tag();
+    when(repository.findById(ID)).thenReturn(Optional.of(tag));
+    when(repository.update(tag)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, change -> {}));
   }
 
   @Test
   void deletesATag() throws SQLException {
-    Tag tag = new Tag();
-    tag.setId(ID);
-    when(repository.findById(ID)).thenReturn(Optional.of(tag));
+    when(repository.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(repository).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknownTagIsNotFound() throws SQLException {
+    when(repository.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 }

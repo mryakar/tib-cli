@@ -67,20 +67,34 @@ class BranchServiceTests {
     Branch branch = new Branch();
     AtomicReference<Branch> changed = new AtomicReference<>();
     when(store.findById(ID)).thenReturn(Optional.of(branch));
+    when(store.update(branch)).thenReturn(true);
 
     assertSame(branch, service.update(ID, changed::set));
     assertSame(branch, changed.get());
-    verify(store).update(branch);
+  }
+
+  @Test
+  void updatingABranchThatIsGoneIsNotFound() {
+    Branch branch = new Branch();
+    when(store.findById(ID)).thenReturn(Optional.of(branch));
+    when(store.update(branch)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, change -> {}));
   }
 
   @Test
   void deletesABranch() {
-    Branch branch = new Branch();
-    branch.setId(ID);
-    when(store.findById(ID)).thenReturn(Optional.of(branch));
+    when(store.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(store).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknownBranchIsNotFound() {
+    when(store.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 }

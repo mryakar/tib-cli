@@ -60,7 +60,9 @@ public class ${name}Service implements ${name}UseCase {
         () -> {
           ${name} ${entity.variable()} = find(id);
           change.accept(${entity.variable()});
-          store.update(${entity.variable()});
+          if (!store.update(${entity.variable()})) {
+            throw notFound(id);
+          }
           return ${entity.variable()};
         });
   }
@@ -69,14 +71,18 @@ public class ${name}Service implements ${name}UseCase {
   public void delete(${entity.idType()} id) {
     transactions.run(
         () -> {
-          store.delete(find(id).getId());
+          if (!store.delete(id)) {
+            throw notFound(id);
+          }
           return null;
         });
   }
 
   private ${name} find(${entity.idType()} id) {
-    return store
-        .findById(id)
-        .orElseThrow(() -> new NotFoundException("There is no ${entity.variable()} " + id));
+    return store.findById(id).orElseThrow(() -> notFound(id));
+  }
+
+  private static NotFoundException notFound(${entity.idType()} id) {
+    return new NotFoundException("There is no ${entity.variable()} " + id);
   }
 }

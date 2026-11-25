@@ -43,7 +43,9 @@ public class DepotService {
         () -> {
           Depot depot = find(id);
           mapper.update(dto, depot);
-          repository.update(depot);
+          if (!repository.update(depot)) {
+            throw notFound(id);
+          }
           return mapper.toDto(depot);
         });
   }
@@ -51,14 +53,18 @@ public class DepotService {
   public void delete(UUID id) {
     transactions.run(
         () -> {
-          repository.delete(find(id).getId());
+          if (!repository.delete(id)) {
+            throw notFound(id);
+          }
           return null;
         });
   }
 
   private Depot find(UUID id) throws SQLException {
-    return repository
-        .findById(id)
-        .orElseThrow(() -> new NotFoundException("There is no depot " + id));
+    return repository.findById(id).orElseThrow(() -> notFound(id));
+  }
+
+  private static NotFoundException notFound(UUID id) {
+    return new NotFoundException("There is no depot " + id);
   }
 }

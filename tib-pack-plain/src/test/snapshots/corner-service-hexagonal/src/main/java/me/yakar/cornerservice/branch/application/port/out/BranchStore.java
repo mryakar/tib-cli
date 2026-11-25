@@ -18,7 +18,9 @@ public interface BranchStore {
    */
   Branch insert(Branch branch);
 
-  void update(Branch branch);
+  /** Updates the branch, and says whether it is there. */
+  boolean update(Branch branch);
 
-  void delete(Long id);
+  /** Deletes the branch with the identifier, and says whether it was there. */
+  boolean delete(Long id);
 }

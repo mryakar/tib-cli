@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 @if(tests.unique())
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 @endif
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import ${entity.basePackage()}.TestDatabase;
 import ${entity.basePackage()}.Transactions;
@@ -76,7 +76,7 @@ class ${name}PersistenceAdapterTests {
     ${name} changed = ${name}Samples.other${name}(${tests.requiredIdArguments()}).build();
     changed.setId(${entity.variable()}.getId());
 
-    store.update(changed);
+    assertTrue(store.update(changed));
     ${name} found = store.findById(${entity.variable()}.getId()).orElseThrow();
     @for(var field : entity.fields())
     assertEquals(changed.get${field.property()}(), found.get${field.property()}());
@@ -103,7 +103,7 @@ class ${name}PersistenceAdapterTests {
   void deletes${entity.article()}${name}() {
     ${name} ${entity.variable()} = store.insert(${tests.sample(entity)});
 
-    store.delete(${entity.variable()}.getId());
+    assertTrue(store.delete(${entity.variable()}.getId()));
     assertFalse(store.findById(${entity.variable()}.getId()).isPresent());
   }
   @if(tests.unique())

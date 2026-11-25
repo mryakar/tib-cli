@@ -16,7 +16,9 @@ public interface ItemStore {
   /** Inserts the item, and gives it back as it was inserted, with its identifier. */
   Item insert(Item item);
 
-  void update(Item item);
+  /** Updates the item, and says whether it is there. */
+  boolean update(Item item);
 
-  void delete(Long id);
+  /** Deletes the item with the identifier, and says whether it was there. */
+  boolean delete(Long id);
 }

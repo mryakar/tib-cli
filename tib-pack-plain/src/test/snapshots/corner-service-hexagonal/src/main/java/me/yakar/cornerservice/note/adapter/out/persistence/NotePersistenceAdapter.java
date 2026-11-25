@@ -38,12 +38,12 @@ public class NotePersistenceAdapter implements NoteStore {
   }
 
   @Override
-  public void update(Note note) {
-    transactions.run(() -> repository.update(note));
+  public boolean update(Note note) {
+    return transactions.run(() -> repository.update(note));
   }
 
   @Override
-  public void delete(Long id) {
-    transactions.run(() -> repository.delete(id));
+  public boolean delete(Long id) {
+    return transactions.run(() -> repository.delete(id));
   }
 }

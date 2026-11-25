@@ -154,6 +154,46 @@ class EntityGeneratorSpec extends Specification {
     '  - name: A\n    options: { mapper: false, pagination: false }\n'          | false | false
   }
 
+  def "a service learns from the update and from the delete whether the row was there, without a query before the delete: #architecture"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new EntityGenerator().generate(project("architecture: $architecture\nentities:\n  - name: A\n"), tree)
+    String service = tree.read(BASE + main).orElseThrow()
+    String tests = tree.read(BASE.replace('/main/', '/test/') + main.replace('.java', 'Tests.java')).orElseThrow()
+
+    then:
+    service.contains("          if (!${port}.update(a)) {\n            throw notFound(id);\n          }\n")
+    service.contains("          if (!${port}.delete(id)) {\n            throw notFound(id);\n          }\n")
+    !service.contains('find(id).getId()')
+    tests.contains("  void deletingAnUnknownAIsNotFound()")
+    tests.contains("    when(${port}.delete(ID)).thenReturn(false);\n\n    assertThrows(NotFoundException.class, () -> service.delete(ID));\n")
+    tests.contains("  void updatingAnAThatIsGoneIsNotFound()")
+
+    where:
+    architecture | main                          | port
+    'anemic'     | 'a/AService.java'             | 'repository'
+    'ddd'        | 'a/application/AService.java' | 'repository'
+    'hexagonal'  | 'a/application/AService.java' | 'store'
+  }
+
+  def "the store of the hexagonal architecture says whether the row was there, as the repository does"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new EntityGenerator().generate(project('architecture: hexagonal\nentities:\n  - name: A\n'), tree)
+    String store = tree.read(BASE + 'a/application/port/out/AStore.java').orElseThrow()
+    String adapter = tree.read(BASE + 'a/adapter/out/persistence/APersistenceAdapter.java').orElseThrow()
+
+    then:
+    store.contains('  boolean update(A a);\n')
+    store.contains('  boolean delete(Long id);\n')
+    adapter.contains('  public boolean update(A a) {\n    return transactions.run(() -> repository.update(a));\n')
+    adapter.contains('  public boolean delete(Long id) {\n    return transactions.run(() -> repository.delete(id));\n')
+  }
+
   def "a value that does not fit its column is a conflict, as a broken constraint is, and the tests of the API of an entity that can have one show it"() {
     given:
     Tree tree = Tree.at(dir)

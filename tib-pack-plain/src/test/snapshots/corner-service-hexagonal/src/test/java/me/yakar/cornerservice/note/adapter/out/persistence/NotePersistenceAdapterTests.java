@@ -3,6 +3,7 @@ package me.yakar.cornerservice.note.adapter.out.persistence;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import me.yakar.cornerservice.TestDatabase;
 import me.yakar.cornerservice.Transactions;
@@ -43,7 +44,7 @@ class NotePersistenceAdapterTests {
     Note changed = NoteSamples.otherNote().build();
     changed.setId(note.getId());
 
-    store.update(changed);
+    assertTrue(store.update(changed));
     Note found = store.findById(note.getId()).orElseThrow();
     assertEquals(changed.getText(), found.getText());
     assertEquals(changed.getBody(), found.getBody());
@@ -61,7 +62,7 @@ class NotePersistenceAdapterTests {
   void deletesANote() {
     Note note = store.insert(NoteSamples.note().build());
 
-    store.delete(note.getId());
+    assertTrue(store.delete(note.getId()));
     assertFalse(store.findById(note.getId()).isPresent());
   }
 }

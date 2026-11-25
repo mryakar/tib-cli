@@ -38,12 +38,12 @@ public class PlainPersistenceAdapter implements PlainStore {
   }
 
   @Override
-  public void update(Plain plain) {
-    transactions.run(() -> repository.update(plain));
+  public boolean update(Plain plain) {
+    return transactions.run(() -> repository.update(plain));
   }
 
   @Override
-  public void delete(Long id) {
-    transactions.run(() -> repository.delete(id));
+  public boolean delete(Long id) {
+    return transactions.run(() -> repository.delete(id));
   }
 }

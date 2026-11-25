@@ -68,20 +68,34 @@ class BranchServiceTests {
     Branch branch = new Branch();
     AtomicReference<Branch> changed = new AtomicReference<>();
     when(repository.findById(ID)).thenReturn(Optional.of(branch));
+    when(repository.update(branch)).thenReturn(true);
 
     assertSame(branch, service.update(ID, changed::set));
     assertSame(branch, changed.get());
-    verify(repository).update(branch);
+  }
+
+  @Test
+  void updatingABranchThatIsGoneIsNotFound() throws SQLException {
+    Branch branch = new Branch();
+    when(repository.findById(ID)).thenReturn(Optional.of(branch));
+    when(repository.update(branch)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, change -> {}));
   }
 
   @Test
   void deletesABranch() throws SQLException {
-    Branch branch = new Branch();
-    branch.setId(ID);
-    when(repository.findById(ID)).thenReturn(Optional.of(branch));
+    when(repository.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(repository).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknownBranchIsNotFound() throws SQLException {
+    when(repository.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 }

@@ -38,12 +38,12 @@ public class ItemPersistenceAdapter implements ItemStore {
   }
 
   @Override
-  public void update(Item item) {
-    transactions.run(() -> repository.update(item));
+  public boolean update(Item item) {
+    return transactions.run(() -> repository.update(item));
   }
 
   @Override
-  public void delete(Long id) {
-    transactions.run(() -> repository.delete(id));
+  public boolean delete(Long id) {
+    return transactions.run(() -> repository.delete(id));
   }
 }

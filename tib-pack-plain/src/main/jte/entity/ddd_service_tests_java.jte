@@ -74,20 +74,34 @@ class ${name}ServiceTests {
     ${name} ${entity.variable()} = new ${name}();
     AtomicReference<${name}> changed = new AtomicReference<>();
     when(repository.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
+    when(repository.update(${entity.variable()})).thenReturn(true);
 
     assertSame(${entity.variable()}, service.update(ID, changed::set));
     assertSame(${entity.variable()}, changed.get());
-    verify(repository).update(${entity.variable()});
+  }
+
+  @Test
+  void updating${entity.article()}${name}ThatIsGoneIsNotFound() throws SQLException {
+    ${name} ${entity.variable()} = new ${name}();
+    when(repository.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
+    when(repository.update(${entity.variable()})).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, change -> {}));
   }
 
   @Test
   void deletes${entity.article()}${name}() throws SQLException {
-    ${name} ${entity.variable()} = new ${name}();
-    ${entity.variable()}.setId(ID);
-    when(repository.findById(ID)).thenReturn(Optional.of(${entity.variable()}));
+    when(repository.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(repository).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknown${name}IsNotFound() throws SQLException {
+    when(repository.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 }

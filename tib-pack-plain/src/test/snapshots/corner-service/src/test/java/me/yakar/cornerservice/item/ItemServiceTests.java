@@ -69,22 +69,36 @@ class ItemServiceTests {
     Item item = new Item();
     ItemDto dto = dto();
     when(repository.findById(ID)).thenReturn(Optional.of(item));
+    when(repository.update(item)).thenReturn(true);
     when(mapper.toDto(item)).thenReturn(dto);
 
     assertSame(dto, service.update(ID, dto));
     verify(mapper).update(dto, item);
-    verify(repository).update(item);
+  }
+
+  @Test
+  void updatingAnItemThatIsGoneIsNotFound() throws SQLException {
+    Item item = new Item();
+    when(repository.findById(ID)).thenReturn(Optional.of(item));
+    when(repository.update(item)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.update(ID, dto()));
   }
 
   @Test
   void deletesAnItem() throws SQLException {
-    Item item = new Item();
-    item.setId(ID);
-    when(repository.findById(ID)).thenReturn(Optional.of(item));
+    when(repository.delete(ID)).thenReturn(true);
 
     service.delete(ID);
 
     verify(repository).delete(ID);
+  }
+
+  @Test
+  void deletingAnUnknownItemIsNotFound() throws SQLException {
+    when(repository.delete(ID)).thenReturn(false);
+
+    assertThrows(NotFoundException.class, () -> service.delete(ID));
   }
 
   private static ItemDto dto() {

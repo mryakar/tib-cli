@@ -3,6 +3,7 @@ package me.yakar.cornerservice.plain.adapter.out.persistence;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import me.yakar.cornerservice.TestDatabase;
 import me.yakar.cornerservice.Transactions;
@@ -42,7 +43,7 @@ class PlainPersistenceAdapterTests {
     Plain changed = PlainSamples.otherPlain().build();
     changed.setId(plain.getId());
 
-    store.update(changed);
+    assertTrue(store.update(changed));
     Plain found = store.findById(plain.getId()).orElseThrow();
     assertEquals(changed.getLabel(), found.getLabel());
   }
@@ -59,7 +60,7 @@ class PlainPersistenceAdapterTests {
   void deletesAPlain() {
     Plain plain = store.insert(PlainSamples.plain().build());
 
-    store.delete(plain.getId());
+    assertTrue(store.delete(plain.getId()));
     assertFalse(store.findById(plain.getId()).isPresent());
   }
 }

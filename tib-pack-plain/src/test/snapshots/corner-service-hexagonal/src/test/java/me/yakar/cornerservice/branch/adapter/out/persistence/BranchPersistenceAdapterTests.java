@@ -4,6 +4,7 @@ package me.yakar.cornerservice.branch.adapter.out.persistence;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import me.yakar.cornerservice.TestDatabase;
 import me.yakar.cornerservice.Transactions;
@@ -53,7 +54,7 @@ class BranchPersistenceAdapterTests {
     Branch changed = BranchSamples.otherBranch().build();
     changed.setId(branch.getId());
 
-    store.update(changed);
+    assertTrue(store.update(changed));
     Branch found = store.findById(branch.getId()).orElseThrow();
     assertEquals(changed.getCode(), found.getCode());
     assertEquals(changed.getCount(), found.getCount());
@@ -79,7 +80,7 @@ class BranchPersistenceAdapterTests {
   void deletesABranch() {
     Branch branch = store.insert(BranchSamples.branch().build());
 
-    store.delete(branch.getId());
+    assertTrue(store.delete(branch.getId()));
     assertFalse(store.findById(branch.getId()).isPresent());
   }
 }

@@ -44,7 +44,9 @@ public class ItemService implements ItemUseCase {
         () -> {
           Item item = find(id);
           change.accept(item);
-          store.update(item);
+          if (!store.update(item)) {
+            throw notFound(id);
+          }
           return item;
         });
   }
@@ -53,12 +55,18 @@ public class ItemService implements ItemUseCase {
   public void delete(Long id) {
     transactions.run(
         () -> {
-          store.delete(find(id).getId());
+          if (!store.delete(id)) {
+            throw notFound(id);
+          }
           return null;
         });
   }
 
   private Item find(Long id) {
-    return store.findById(id).orElseThrow(() -> new NotFoundException("There is no item " + id));
+    return store.findById(id).orElseThrow(() -> notFound(id));
+  }
+
+  private static NotFoundException notFound(Long id) {
+    return new NotFoundException("There is no item " + id);
   }
 }
