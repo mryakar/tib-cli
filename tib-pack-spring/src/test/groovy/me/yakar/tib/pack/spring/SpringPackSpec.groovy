@@ -50,14 +50,14 @@ class SpringPackSpec extends Specification {
   /** The example service of the documentation. */
   static final Spec VEHICLES = SpecReader.parse(Files.readString(EXAMPLES.resolve('vehicle-service.yaml')))
 
-  /** The corners of the entity layer that the example service does not reach. */
+  /** The corners of the service and of its entity layer that the example service does not reach. */
   static final String CORNER_SPEC = SpringPackSpec.getResource('corner-service.yaml').text
   static final Spec CORNERS = SpecReader.parse(CORNER_SPEC)
 
-  /** The corners of the entity layer in the DDD architecture. */
+  /** The corner spec in the DDD architecture. */
   static final Spec CORNERS_DDD = SpecReader.parse(CORNER_SPEC.replace('java: 25\n', 'java: 25\narchitecture: ddd\n'))
 
-  /** The corners of the entity layer in the hexagonal architecture. */
+  /** The corner spec in the hexagonal architecture. */
   static final Spec CORNERS_HEXAGONAL = SpecReader.parse(CORNER_SPEC.replace('java: 25\n', 'java: 25\narchitecture: hexagonal\n'))
 
   /**
@@ -109,7 +109,7 @@ class SpringPackSpec extends Specification {
     matches('vehicle-service', changes)
   }
 
-  def "generates the corners of the entity layer as the snapshot says"() {
+  def "generates the corners of the service and of its entity layer as the snapshot says"() {
     when:
     List<Change> changes = corners(dir).changes()
 
@@ -118,7 +118,7 @@ class SpringPackSpec extends Specification {
     matches('corner-service', changes)
   }
 
-  def "generates the corners of the entity layer in the DDD architecture as the snapshot says"() {
+  def "generates the corners of the service and of its entity layer in the DDD architecture as the snapshot says"() {
     when:
     List<Change> changes = corners(dir, CORNERS_DDD).changes()
 
@@ -128,7 +128,7 @@ class SpringPackSpec extends Specification {
     matches('corner-service-ddd', changes)
   }
 
-  def "generates the corners of the entity layer in the hexagonal architecture as the snapshot says"() {
+  def "generates the corners of the service and of its entity layer in the hexagonal architecture as the snapshot says"() {
     when:
     List<Change> changes = corners(dir, CORNERS_HEXAGONAL).changes()
 
@@ -323,14 +323,12 @@ class SpringPackSpec extends Specification {
   }
 
   /**
-   * The entities of the corner spec, staged in a tree at the directory, which has a migration by
-   * hand and a repeatable one.
+   * The service of a corner spec with its entities, staged in a tree at the directory, which has a
+   * migration by hand and a repeatable one.
    */
   private static Tree corners(Path dir, Spec spec = CORNERS) {
     byHand(dir)
-    Tree tree = Tree.at(dir)
-    new SpringPack().entity().generate(new Project(spec), tree)
-    return tree
+    return generate(spec, dir)
   }
 
   /**

@@ -1,0 +1,19 @@
+# Written by tib when the service was created; it is yours from then on.
+spring:
+  application:
+    name: corner-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/corner_service
+    username: corner_service
+    password: corner_service
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  data:
+    web:
+      pageable:
+        serialization-mode: via-dto
+  mvc:
+    problemdetails:
+      enabled: true
