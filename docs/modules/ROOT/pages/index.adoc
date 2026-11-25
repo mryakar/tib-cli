@@ -1,8 +1,9 @@
 = tib
-:description: The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.
+:description: The Idempotent Boilerplate: a scaffolding CLI for Java services, on Spring Boot or in plain Java.
 
-tib scaffolds Spring Boot services and adds to them: an entity layer from SQL DDL or a spec, with
-its repository, DTO, mapper, service, controller and migration, and their tests. It runs again on
+tib scaffolds Java services, on Spring Boot or in plain Java, and adds to them: an entity layer
+from SQL DDL or a spec, with its repository, DTO, mapper, service, controller or handler and
+migration, and their tests. It runs again on
 the same project without breaking anything, shows what it would change before it changes it, and
 `tib status` says which of the files it wrote, and of those it read, were changed since. The
 https://github.com/mryakar/tib-cli/blob/main/ROADMAP.md[roadmap] says what is done and what comes

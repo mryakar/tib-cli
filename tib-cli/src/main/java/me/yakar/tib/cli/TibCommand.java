@@ -25,7 +25,8 @@ import picocli.CommandLine.ScopeType;
     mixinStandardHelpOptions = true,
     versionProvider = TibVersion.class,
     scope = ScopeType.INHERIT,
-    description = "The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.",
+    description =
+        "The Idempotent Boilerplate: a scaffolding CLI for Java services, on Spring Boot or in plain Java.",
     exitCodeListHeading = "Exit codes:%n",
     exitCodeList = {
       "0:Done, or nothing to change.",

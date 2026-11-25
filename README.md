@@ -1,6 +1,6 @@
 # tib
 
-The Idempotent Boilerplate: a scaffolding CLI for Spring Boot services.
+The Idempotent Boilerplate: a scaffolding CLI for Java services, on Spring Boot or in plain Java.
 
 ## What it does
 
