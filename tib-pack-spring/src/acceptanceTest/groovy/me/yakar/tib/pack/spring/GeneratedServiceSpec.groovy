@@ -86,9 +86,10 @@ class GeneratedServiceSpec extends Specification {
     then:
     gradle.exitValue() == 0
     Files.readString(dir.resolve('build.gradle.kts')).contains("JavaLanguageVersion.of(${spec.java()})")
-    String classes = project.packagePath() + '/' + project.applicationClass()
+    String packagePath = project.basePackage().replace('.', '/')
+    String classes = packagePath + '/' + project.applicationClass()
     Files.exists(dir.resolve("build/classes/java/main/${classes}.class"))
-    Files.exists(dir.resolve("build/classes/java/test/${project.packagePath()}/Test${project.applicationClass()}.class"))
+    Files.exists(dir.resolve("build/classes/java/test/${packagePath}/Test${project.applicationClass()}.class"))
 
     and: 'the tests are of the kinds of the spec; every one compiles, and with Docker, passes'
     List<String> tests = tests(dir)
@@ -98,7 +99,7 @@ class GeneratedServiceSpec extends Specification {
     tests.any {
       it.endsWith('RepositoryTests') || it.endsWith('PersistenceAdapterTests')
     } == spec.tests().contains(TestKind.INTEGRATION)
-    tests.contains("${project.packagePath()}/ArchitectureTests".toString()) == spec.tests().contains(TestKind.ARCHUNIT)
+    tests.contains("${packagePath}/ArchitectureTests".toString()) == spec.tests().contains(TestKind.ARCHUNIT)
     tests.each { test ->
       assert Files.exists(dir.resolve("build/classes/java/test/${test}.class")) : test
       if (docker) {

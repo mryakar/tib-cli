@@ -30,7 +30,6 @@ class ProjectSpec extends Specification {
     project.name() == service
     project.group() == (group ?: 'com.example')
     project.basePackage() == basePackage
-    project.packagePath() == basePackage.replace('.', '/')
     project.applicationClass() == applicationClass
     project.spec().service() == service
     project.java() == 21
