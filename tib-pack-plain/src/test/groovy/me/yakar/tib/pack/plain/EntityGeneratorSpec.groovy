@@ -154,6 +154,17 @@ class EntityGeneratorSpec extends Specification {
     '  - name: A\n    options: { mapper: false, pagination: false }\n'          | false | false
   }
 
+  def "a body that is not the JSON of the DTO is a bad request, which says that it cannot be read"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new EntityGenerator().generate(A, tree)
+
+    then:
+    tree.read(BASE + 'Http.java').orElseThrow().contains('throw new BadRequestException(\n          "The body of the request cannot be read: " + e.getOriginalMessage());\n')
+  }
+
   def "the support of the API is written once: there #there, written before #recorded"() {
     given:
     String handler = BASE + 'ErrorHandler.java'

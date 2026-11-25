@@ -92,9 +92,9 @@ their tests: ${tests.entityTests()}. Their sample entities and DTOs come
 from `XSamples`, which is tib's and follows the spec: a test changes a value through the builder,
 as in `XSamples.x().name("Other").build()`.@else.@endif `ErrorHandler`, in the base package, answers a
 request for an entity that is not there with 404 Not Found, one that breaks a constraint of the
-database with 409 Conflict, and one whose DTO breaks a rule or does not read with 400 Bad Request,
-as problem details; it is yours, and so are `NotFoundException`, `BadRequestException`, `Http`
-and `Page`.@if(tests.archunit())
+database with 409 Conflict, and one whose DTO breaks a rule or cannot be read with 400 Bad
+Request, as problem details; it is yours, and so are `NotFoundException`, `BadRequestException`,
+`Http` and `Page`.@if(tests.archunit())
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
 classes of the service with ArchUnit, by their@if(ddd) packages:
 the domain of an entity uses neither its application nor its web, the application does

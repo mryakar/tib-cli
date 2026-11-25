@@ -96,14 +96,14 @@ public final class Http {
   /**
    * The body of the request, read as JSON into the type.
    *
-   * @throws BadRequestException when it does not read
+   * @throws BadRequestException when it cannot be read
    */
   public static <T> T read(HttpExchange exchange, Class<T> type) {
     T value;
     try {
       value = Json.MAPPER.readValue(exchange.getRequestBody(), type);
     } catch (JacksonException e) {
-      throw new BadRequestException("The body of the request does not read: " + e.getOriginalMessage());
+      throw new BadRequestException("The body of the request cannot be read: " + e.getOriginalMessage());
     }
     if (value == null) {
       throw new BadRequestException("The body of the request is null");
