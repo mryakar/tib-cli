@@ -83,6 +83,8 @@ class InitGeneratorSpec extends Specification {
 
     then:
     rules.contains('void theDomainOfAnAggregateDoesNotUseTheDomainOfAnother()') == ddd
+    rules.contains(' * The rules of the DDD architecture, checked on the classes of the service by their packages: the\n') == ddd
+    rules.contains(' * The rules of the hexagonal architecture, checked on the classes of the service by their packages:\n') == hexagonal
     rules.contains('void theInboundAdaptersDoNotUseTheOutboundOnes()') == hexagonal
     rules.contains('void controllersUseServicesAndNotRepositories()') == (!ddd && !hexagonal)
     agents.contains('The service is arranged for DDD: every entity `X` is an aggregate, in three packages.') == ddd

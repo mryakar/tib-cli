@@ -10,10 +10,10 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import org.junit.jupiter.api.Test;
 
 /**
- * The rules of the DDD architecture, checked on the classes of the service by their packages, as no
- * annotation marks them: the domain of an entity uses neither its application nor its web, the
- * application does not use the web, the domain of an aggregate does not use the domain of another,
- * and there is no cycle between the packages of the entities.
+ * The rules of the DDD architecture, checked on the classes of the service by their packages: the
+ * domain of an entity uses neither its application nor its web, the application does not use the
+ * web, the domain of an aggregate does not use the domain of another, and there is no cycle between
+ * the packages of the entities.
  */
 class ArchitectureTests {
 
