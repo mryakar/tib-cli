@@ -111,16 +111,16 @@ class FieldModelSpec extends Specification {
     FieldModel field = field(spec)
 
     expect:
-    [field.columnAnnotation(), field.validation()] == model
     [field.column(), field.nullable(), field.unique(), field.length(), field.precision(), field.scale()] == column
+    field.validation() == validation
 
     where:
-    spec                                                                   | model                                                                                              | column
-    '{ name: v, type: String }'                                            | ['@Column(name = "V", length = 255)', '@Size(max = 255) ']                                         | ['V', true, false, 255, null, null]
-    '{ name: v, type: String, length: 20, nullable: false, unique: true }' | ['@Column(name = "V", nullable = false, unique = true, length = 20)', '@NotNull @Size(max = 20) '] | ['V', false, true, 20, null, null]
-    '{ name: v, type: BigDecimal, precision: 12, scale: 2 }'               | ['@Column(name = "V", precision = 12, scale = 2)', '']                                             | ['V', true, false, null, 12, 2]
-    '{ name: v, type: BigDecimal, precision: 12 }'                         | ['@Column(name = "V", precision = 12)', '']                                                        | ['V', true, false, null, 12, null]
-    '{ name: v, type: Integer, column: QTY, nullable: false }'             | ['@Column(name = "QTY", nullable = false)', '@NotNull ']                                           | ['QTY', false, false, null, null, null]
+    spec                                                                   | column                                  | validation
+    '{ name: v, type: String }'                                            | ['V', true, false, 255, null, null]     | '@Size(max = 255) '
+    '{ name: v, type: String, length: 20, nullable: false, unique: true }' | ['V', false, true, 20, null, null]      | '@NotNull @Size(max = 20) '
+    '{ name: v, type: BigDecimal, precision: 12, scale: 2 }'               | ['V', true, false, null, 12, 2]         | ''
+    '{ name: v, type: BigDecimal, precision: 12 }'                         | ['V', true, false, null, 12, null]      | ''
+    '{ name: v, type: Integer, column: QTY, nullable: false }'             | ['QTY', false, false, null, null, null] | '@NotNull '
   }
 
   def "the accessors of a field take its name with a capital"() {

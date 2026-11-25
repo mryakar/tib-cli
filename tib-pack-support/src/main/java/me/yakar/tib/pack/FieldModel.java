@@ -93,27 +93,6 @@ public record FieldModel(Field field) {
     return field.length();
   }
 
-  /** The JPA annotation of the column. */
-  public String columnAnnotation() {
-    StringBuilder column = new StringBuilder("@Column(name = \"" + field.column() + "\"");
-    if (!field.nullable()) {
-      column.append(", nullable = false");
-    }
-    if (field.unique()) {
-      column.append(", unique = true");
-    }
-    if (length() != null) {
-      column.append(", length = ").append(length());
-    }
-    if (field.precision() != null) {
-      column.append(", precision = ").append(field.precision());
-    }
-    if (field.scale() != null) {
-      column.append(", scale = ").append(field.scale());
-    }
-    return column.append(")").toString();
-  }
-
   /** The validation annotations of the DTO's component, in front of its type. */
   String validation() {
     StringBuilder validation = new StringBuilder();

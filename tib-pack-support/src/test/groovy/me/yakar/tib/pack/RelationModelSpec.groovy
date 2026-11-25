@@ -32,28 +32,12 @@ class RelationModelSpec extends Specification {
 
     expect:
     [relation.field(), relation.property(), relation.idField(), relation.idProperty(), relation.column()] == names
-    [relation.annotation(), relation.mapping(), relation.joinColumn(), relation.idColumn()] == annotations
     [relation.validation(), relation.nullable(), relation.oneToOne()] == rules
 
     where:
-    spec                                                           | names                                                | annotations                                                                                                 | rules
-    '{ kind: manyToOne, target: B }'                               | ['b', 'B', 'bId', 'BId', 'B_ID']                     | [
-      'ManyToOne',
-      '@ManyToOne(fetch = FetchType.LAZY)',
-      '@JoinColumn(name = "B_ID")',
-      '@Column(name = "B_ID")'
-    ] | ['', true, false]
-    '{ kind: oneToOne, target: B, field: other, nullable: false }' | ['other', 'Other', 'otherId', 'OtherId', 'OTHER_ID'] | [
-      'OneToOne',
-      '@OneToOne(fetch = FetchType.LAZY, optional = false)',
-      '@JoinColumn(name = "OTHER_ID", nullable = false, unique = true)',
-      '@Column(name = "OTHER_ID", nullable = false, unique = true)'
-    ] | ['@NotNull ', false, true]
-    '{ kind: manyToOne, target: C }'                               | ['c', 'C', 'cCode', 'CCode', 'C_ID']                 | [
-      'ManyToOne',
-      '@ManyToOne(fetch = FetchType.LAZY)',
-      '@JoinColumn(name = "C_ID")',
-      '@Column(name = "C_ID")'
-    ] | ['', true, false]
+    spec                                                           | names                                                | rules
+    '{ kind: manyToOne, target: B }'                               | ['b', 'B', 'bId', 'BId', 'B_ID']                     | ['', true, false]
+    '{ kind: oneToOne, target: B, field: other, nullable: false }' | ['other', 'Other', 'otherId', 'OtherId', 'OTHER_ID'] | ['@NotNull ', false, true]
+    '{ kind: manyToOne, target: C }'                               | ['c', 'C', 'cCode', 'CCode', 'C_ID']                 | ['', true, false]
   }
 }

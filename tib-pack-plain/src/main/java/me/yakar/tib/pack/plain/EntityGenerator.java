@@ -36,6 +36,9 @@ import me.yakar.tib.tree.ProjectFiles;
  */
 final class EntityGenerator implements Generator {
 
+  /** By how much the sequence of a sequence identifier advances. */
+  private static final int SEQUENCE_STEP = 50;
+
   @Override
   public void generate(Project project, ProjectFiles files) {
     Map<String, EntityModel> models = EntityModel.modelsByIdentifier(project);
@@ -109,7 +112,7 @@ final class EntityGenerator implements Generator {
     if (entity.dto()) {
       generated.own(Sources.main(web, name + "Dto"), "entity/dto_java.jte", model);
     }
-    Migration.write(files, entity);
+    Migration.write(files, entity, SEQUENCE_STEP);
     // The tests of the kinds of the spec; the service and the API only of an entity with a layer.
     boolean repositoryTests = project.tests(TestKind.INTEGRATION);
     boolean serviceTests = entity.layer() && project.tests(TestKind.UNIT);

@@ -1,6 +1,8 @@
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.Sources
+@import me.yakar.tib.pack.spring.JpaModel
 @param EntityModel entity
+@param JpaModel jpa
 package ${entity.webPackage()};
 
 ${Sources.importOf(entity.webPackage(), entity.domainPackage(), entity.name())}
@@ -21,7 +23,7 @@ public class ${entity.webMapper()} {
   private final ${target.name()}Repository ${target.plural()};
   @endfor<%-- keeps the blank line below --%>
 
-  public ${entity.webMapper()}(${entity.repositoryParameters()}) {
+  public ${entity.webMapper()}(${jpa.repositoryParameters()}) {
     @for(var target : entity.targets())
     this.${target.plural()} = ${target.plural()};
     @endfor

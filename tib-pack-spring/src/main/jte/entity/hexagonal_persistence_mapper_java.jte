@@ -1,5 +1,7 @@
 @import me.yakar.tib.pack.EntityModel
+@import me.yakar.tib.pack.spring.JpaModel
 @param EntityModel entity
+@param JpaModel jpa
 !{String name = entity.name();}
 !{String variable = entity.variable();}
 package ${entity.persistencePackage()};
@@ -11,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class ${name}PersistenceMapper {
 
-  public ${name} toDomain(${entity.jpaEntity()} entity) {
+  public ${name} toDomain(${jpa.entityClass()} entity) {
     ${name} ${variable} = new ${name}();
     ${variable}.setId(entity.getId());
     @for(var field : entity.fields())
@@ -27,8 +29,8 @@ public class ${name}PersistenceMapper {
     return ${variable};
   }
 
-  public ${entity.jpaEntity()} toEntity(${name} ${variable}) {
-    ${entity.jpaEntity()} entity = new ${entity.jpaEntity()}();
+  public ${jpa.entityClass()} toEntity(${name} ${variable}) {
+    ${jpa.entityClass()} entity = new ${jpa.entityClass()}();
     entity.setId(${variable}.getId());
     @for(var field : entity.fields())
     entity.set${field.property()}(${variable}.get${field.property()}());

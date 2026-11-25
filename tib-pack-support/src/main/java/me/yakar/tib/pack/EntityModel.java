@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 import me.yakar.tib.generate.Project;
 import me.yakar.tib.spec.Architecture;
 import me.yakar.tib.spec.Entity;
@@ -36,12 +35,6 @@ import me.yakar.tib.spec.Relation;
  * code declares. The templates lay the code out.
  */
 public final class EntityModel {
-
-  /**
-   * How many identifiers Hibernate takes from a sequence at a time: the increment of the sequence,
-   * which Hibernate checks when it starts.
-   */
-  private static final int ALLOCATION_SIZE = 50;
 
   private final Project project;
   private final Entity entity;
@@ -226,21 +219,6 @@ public final class EntityModel {
   }
 
   /**
-   * The class that JPA maps to the table: the entity, or its {@code Entity} in the hexagonal
-   * architecture, whose domain knows no JPA.
-   */
-  public String jpaEntity() {
-    return hexagonal() ? name() + "Entity" : name();
-  }
-
-  /**
-   * The repository of the JPA entity: {@code VehicleRepository}, or {@code VehicleJpaRepository}.
-   */
-  public String repository() {
-    return name() + (hexagonal() ? "JpaRepository" : "Repository");
-  }
-
-  /**
    * The mapper between the entity and its DTO: {@code VehicleMapper}, or {@code VehicleWebMapper}.
    */
   public String webMapper() {
@@ -277,11 +255,6 @@ public final class EntityModel {
   /** The database sequence of a sequence identifier. */
   public String sequence() {
     return entity.table() + inCaseOfTable("_SEQ");
-  }
-
-  /** The increment of the sequence: the allocation size of its generator. */
-  int sequenceIncrement() {
-    return ALLOCATION_SIZE;
   }
 
   public boolean audited() {
@@ -354,29 +327,6 @@ public final class EntityModel {
         .toList();
   }
 
-  // The generated base class.
-
-  /** The annotations of the identifier, before its column. */
-  public List<String> idAnnotations() {
-    return switch (entity.id().strategy()) {
-      case IDENTITY -> List.of("@Id", "@GeneratedValue(strategy = GenerationType.IDENTITY)");
-      case SEQUENCE ->
-          List.of(
-              "@Id",
-              "@GeneratedValue(strategy = GenerationType.SEQUENCE, generator = \""
-                  + variable()
-                  + "\")",
-              "@SequenceGenerator(name = \""
-                  + variable()
-                  + "\", sequenceName = \""
-                  + sequence()
-                  + "\", allocationSize = "
-                  + ALLOCATION_SIZE
-                  + ")");
-      case UUID -> List.of("@Id", "@GeneratedValue(strategy = GenerationType.UUID)");
-    };
-  }
-
   // The DTO.
 
   /** The components of the record: the type and the name of each, after its validation. */
@@ -394,15 +344,6 @@ public final class EntityModel {
       components.add("Instant updatedAt");
     }
     return String.join(", ", components);
-  }
-
-  // The mapper.
-
-  /** The parameters of the mapper's constructor: the repositories of the relations' targets. */
-  public String repositoryParameters() {
-    return targets.stream()
-        .map(target -> target.name() + "Repository " + target.plural())
-        .collect(Collectors.joining(", "));
   }
 
   /**

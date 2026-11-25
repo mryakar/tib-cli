@@ -1,7 +1,9 @@
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.EntityTestsModel
 @import me.yakar.tib.pack.Sources
+@import me.yakar.tib.pack.spring.JpaModel
 @param EntityTestsModel tests
+@param JpaModel jpa
 !{EntityModel entity = tests.entity();}
 !{String path = entity.path();}
 !{String dto = entity.name() + "Dto";}
@@ -13,13 +15,13 @@ import ${entity.basePackage()}.TestcontainersConfiguration;
 ${Sources.importOf(entity.webPackage(), entity.packageName(), entity.name() + "Samples")}
 @for(var target : tests.requiredTargets())
 ${Sources.importOf(entity.webPackage(), target.domainPackage(), target.name())}
-${Sources.importOf(entity.webPackage(), target.persistencePackage(), target.repository())}
+${Sources.importOf(entity.webPackage(), target.persistencePackage(), jpa.repository(target))}
 @if(entity.hexagonal())
 import ${target.storePackage()}.${target.name()}Store;
 @endif
 ${Sources.importOf(entity.webPackage(), target.packageName(), target.name() + "Samples")}
 @endfor
-${Sources.importOf(entity.webPackage(), entity.persistencePackage(), entity.repository())}
+${Sources.importOf(entity.webPackage(), entity.persistencePackage(), jpa.repository())}
 @if(entity.uuidId())
 import java.util.UUID;
 @endif
@@ -46,12 +48,12 @@ import tools.jackson.databind.JsonNode;
 class ${entity.name()}ApiTests {
 
   @Autowired private TestRestTemplate http;
-  @Autowired private ${entity.repository()} ${tests.repositoryVariable(entity)};
+  @Autowired private ${jpa.repository()} ${tests.repositoryVariable(entity)};
   @for(var target : tests.requiredTargets())
   @if(entity.hexagonal())
   @Autowired private ${target.name()}Store ${target.plural()};
   @endif
-  @Autowired private ${target.repository()} ${tests.repositoryVariable(target)};
+  @Autowired private ${jpa.repository(target)} ${tests.repositoryVariable(target)};
   @endfor
   @template.entity.required_targets(tests = tests)
 

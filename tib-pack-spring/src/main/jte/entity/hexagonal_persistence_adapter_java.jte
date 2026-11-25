@@ -1,5 +1,7 @@
 @import me.yakar.tib.pack.EntityModel
+@import me.yakar.tib.pack.spring.JpaModel
 @param EntityModel entity
+@param JpaModel jpa
 !{String name = entity.name();}
 !{String plural = entity.plural();}
 package ${entity.persistencePackage()};
@@ -22,10 +24,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ${name}PersistenceAdapter implements ${name}Store {
 
-  private final ${entity.repository()} ${plural};
+  private final ${jpa.repository()} ${plural};
   private final ${name}PersistenceMapper mapper;
 
-  public ${name}PersistenceAdapter(${entity.repository()} ${plural}, ${name}PersistenceMapper mapper) {
+  public ${name}PersistenceAdapter(${jpa.repository()} ${plural}, ${name}PersistenceMapper mapper) {
     this.${plural} = ${plural};
     this.mapper = mapper;
   }
