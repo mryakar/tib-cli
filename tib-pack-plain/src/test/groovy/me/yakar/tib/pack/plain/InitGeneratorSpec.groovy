@@ -110,6 +110,30 @@ class InitGeneratorSpec extends Specification {
     '[]'                       | false
   }
 
+  def "the build of a service that may have no test yet does not fail for it: #tests"() {
+    given:
+    Tree tree = Tree.at(dir)
+
+    when:
+    new InitGenerator(new PlainPack()).generate(project("tests: $tests\n"), tree)
+    String build = texts(tree)['build.gradle.kts']
+
+    then: 'only the test of the application and the test of the architecture are there from the start'
+    build.contains('tasks.withType<Test> { useJUnitPlatform() }\n') == always
+    build.contains('tasks.withType<Test> {\n  useJUnitPlatform()\n') == !always
+    build.contains('  failOnNoDiscoveredTests = false\n}\n') == !always
+
+    where:
+    tests                      | always
+    '[unit, integration, api]' | true
+    '[integration]'            | true
+    '[archunit]'               | true
+    '[unit, api]'              | false
+    '[unit]'                   | false
+    '[api]'                    | false
+    '[]'                       | false
+  }
+
   def "a service with the test of its architecture gets ArchitectureTests and ArchUnit, and the notes tell of it: #tests"() {
     given:
     Tree tree = Tree.at(dir)
@@ -127,7 +151,7 @@ class InitGeneratorSpec extends Specification {
     !archunit || new String(architecture.after(), 'UTF-8').contains('void handlersUseServicesAndNotRepositories()')
     !archunit || new String(architecture.after(), 'UTF-8').contains('  void onlyHandlersAndTheWiringUseHandlers() {\n    noClasses()\n        .that(not(HANDLERS).and(not(WIRING)))\n')
     build.contains("  testImplementation(\"com.tngtech.archunit:archunit:${new PlainPack().archunitVersion()}\")\n  testRuntimeOnly(") == archunit
-    agents.contains('and `Page`.\n`ArchitectureTests`, in the tests of the base package,') == archunit
+    agents.contains('`Page`.\n`ArchitectureTests`, in the tests of the base package,') == archunit
     agents.contains('their tests: ') == entities
 
     where:

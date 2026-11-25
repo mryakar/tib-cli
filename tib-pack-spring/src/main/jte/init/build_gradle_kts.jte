@@ -41,4 +41,12 @@ ${"  "}testImplementation("com.tngtech.archunit:archunit:${pack.archunitVersion(
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
+@if(project.tests(TestKind.INTEGRATION) || project.tests(TestKind.ARCHUNIT))
 tasks.withType<Test> { useJUnitPlatform() }
+@else
+tasks.withType<Test> {
+  useJUnitPlatform()
+  // The service has no test of its own: its tests, if any, come with its entities.
+  failOnNoDiscoveredTests = false
+}
+@endif
