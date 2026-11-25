@@ -1,8 +1,9 @@
 @import me.yakar.tib.pack.EntityModel
+@import me.yakar.tib.pack.Sources
 @param EntityModel entity
 package ${entity.webPackage()};
 
-${EntityModel.importOf(entity.webPackage(), entity.domainPackage(), entity.name())}
+${Sources.importOf(entity.webPackage(), entity.domainPackage(), entity.name())}
 
 import org.springframework.stereotype.Component;
 @if(!entity.refersById())

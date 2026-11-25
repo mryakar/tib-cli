@@ -43,12 +43,6 @@ public final class EntityModel {
    */
   private static final int ALLOCATION_SIZE = 50;
 
-  /** The root of the sources of the generated service. */
-  private static final String MAIN = "src/main/java/";
-
-  /** The root of the tests of the generated service. */
-  private static final String TEST = "src/test/java/";
-
   private final Project project;
   private final Entity entity;
   private final boolean byIdentifier;
@@ -251,24 +245,6 @@ public final class EntityModel {
    */
   public String webMapper() {
     return name() + (hexagonal() ? "WebMapper" : "Mapper");
-  }
-
-  /**
-   * The import of a type into a file of the package, as a line of Java; none when the type is in
-   * the package already.
-   */
-  public static String importOf(String filePackage, String typePackage, String type) {
-    return filePackage.equals(typePackage) ? "" : "import " + typePackage + "." + type + ";";
-  }
-
-  /** The directory of the sources of a package, relative to the project. */
-  public static String directory(String packageName) {
-    return MAIN + packageName.replace('.', '/');
-  }
-
-  /** The directory of the tests of a package, relative to the project. */
-  public static String testDirectory(String packageName) {
-    return TEST + packageName.replace('.', '/');
   }
 
   public String idField() {

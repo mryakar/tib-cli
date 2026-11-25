@@ -1,5 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.EntityTestsModel
+@import me.yakar.tib.pack.Sources
 @param EntityTestsModel tests
 !{EntityModel entity = tests.entity();}
 !{String path = entity.path();}
@@ -9,16 +10,16 @@ package ${entity.webPackage()};
 import static org.assertj.core.api.Assertions.assertThat;
 
 import ${entity.basePackage()}.TestcontainersConfiguration;
-${EntityModel.importOf(entity.webPackage(), entity.packageName(), entity.name() + "Samples")}
+${Sources.importOf(entity.webPackage(), entity.packageName(), entity.name() + "Samples")}
 @for(var target : tests.requiredTargets())
-${EntityModel.importOf(entity.webPackage(), target.domainPackage(), target.name())}
-${EntityModel.importOf(entity.webPackage(), target.persistencePackage(), target.repository())}
+${Sources.importOf(entity.webPackage(), target.domainPackage(), target.name())}
+${Sources.importOf(entity.webPackage(), target.persistencePackage(), target.repository())}
 @if(entity.hexagonal())
 import ${target.storePackage()}.${target.name()}Store;
 @endif
-${EntityModel.importOf(entity.webPackage(), target.packageName(), target.name() + "Samples")}
+${Sources.importOf(entity.webPackage(), target.packageName(), target.name() + "Samples")}
 @endfor
-${EntityModel.importOf(entity.webPackage(), entity.persistencePackage(), entity.repository())}
+${Sources.importOf(entity.webPackage(), entity.persistencePackage(), entity.repository())}
 @if(entity.uuidId())
 import java.util.UUID;
 @endif

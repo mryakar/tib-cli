@@ -1,5 +1,6 @@
 @import me.yakar.tib.pack.EntityModel
 @import me.yakar.tib.pack.EntityTestsModel
+@import me.yakar.tib.pack.Sources
 @param EntityTestsModel tests
 !{EntityModel entity = tests.entity();}
 !{String name = entity.name();}
@@ -16,11 +17,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import ${entity.basePackage()}.TestDatabase;
 import ${entity.basePackage()}.Transactions;
-${EntityModel.importOf(entity.persistencePackage(), entity.packageName(), name + "Samples")}
+${Sources.importOf(entity.persistencePackage(), entity.packageName(), name + "Samples")}
 @for(var target : tests.requiredTargets())
-${EntityModel.importOf(entity.persistencePackage(), target.domainPackage(), target.name())}
-${EntityModel.importOf(entity.persistencePackage(), target.persistencePackage(), target.name() + "Repository")}
-${EntityModel.importOf(entity.persistencePackage(), target.packageName(), target.name() + "Samples")}
+${Sources.importOf(entity.persistencePackage(), target.domainPackage(), target.name())}
+${Sources.importOf(entity.persistencePackage(), target.persistencePackage(), target.name() + "Repository")}
+${Sources.importOf(entity.persistencePackage(), target.packageName(), target.name() + "Samples")}
 @endfor
 import org.junit.jupiter.api.AfterEach;
 @if(!tests.requiredTargets().isEmpty())
