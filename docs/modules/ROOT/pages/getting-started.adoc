@@ -247,8 +247,7 @@ plain Java, without a framework of dependency injection, whose objects are wired
 application class. It answers HTTP with the server of the JDK, `com.sun.net.httpserver`, keeps its
 entities in PostgreSQL with JDBC, without a pool, migrates its schema with Flyway when it starts,
 and reads and writes JSON with Jackson; its tests use JUnit, Mockito and Testcontainers. The pack
-arranges a service in the anemic architecture or in DDD; with the hexagonal one, for now, tib
-writes nothing and exits with 1. The same is `pack: plain` in the spec.
+arranges a service in all three architectures. The same is `pack: plain` in the spec.
 
 [source,bash]
 ----
@@ -303,6 +302,18 @@ the default pack: `vehicle.domain` has `Vehicle`, `VehicleGenerated` and `Vehicl
 `NotFoundException` for one that is not there; and `vehicle.web` has `VehicleHandler`, which maps
 the aggregate to and from `VehicleDto` with `VehicleMapper`. `XServiceTests` mock the repository
 only, and `ArchitectureTests` has the rules of DDD, which go by the packages of the classes.
+
+With `--architecture hexagonal`, the domain of every entity is in plain Java that knows neither
+JDBC nor the HTTP server: `vehicle.domain` has `Vehicle` and `VehicleGenerated`;
+`vehicle.application` has `VehicleService`, which implements `VehicleUseCase`, the port that the
+inbound adapters call, in `vehicle.application.port.in`, and keeps the domain through
+`VehicleStore`, the port in `vehicle.application.port.out`. `vehicle.adapter.in.web` has
+`VehicleHandler`, `VehicleDto` and `VehicleWebMapper`; `vehicle.adapter.out.persistence` has
+`VehicleRepository`, the SQL of the table, and `VehiclePersistenceAdapter`, the store on it, which
+joins the transaction of the use case and turns a failure of JDBC into one of `Transactions`.
+`XPersistenceAdapterTests` test the store against PostgreSQL, in place of `XRepositoryTests`;
+`XServiceTests` mock the store; and `ArchitectureTests` has the rules of the hexagonal
+architecture, which go by the packages of the classes.
 
 A service stays with its pack: `tib generate entity` refuses a spec of the other one, which
 generates for another stack.
