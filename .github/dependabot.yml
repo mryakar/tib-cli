@@ -14,10 +14,6 @@ updates:
       # Groovy follows the Spock variant (spock-*-groovy-5.0); move both together.
       - dependency-name: org.apache.groovy:groovy-bom
         update-types: [version-update:semver-major]
-      # google-java-format 1.37 fails under Spotless 8.10 with NoSuchMethodError. Spotless 8.11
-      # runs it: remove this entry once Spotless 8.11 or later is in.
-      - dependency-name: com.google.googlejavaformat:google-java-format
-        versions: [">=1.37.0"]
       # A major version of Spring Boot is another stack than the one the default pack generates.
       - dependency-name: org.springframework.boot:spring-boot-gradle-plugin
         update-types: [version-update:semver-major]
