@@ -40,7 +40,7 @@ class InitServiceCommandSpec extends Specification {
   static final String ARCHITECTURE = 'Its architecture: anemic, ddd, hexagonal [anemic]: '
   static final String TESTS = 'The kinds of its tests, separated by commas, or none: unit, integration, api, archunit [unit,integration,api]: '
   static final String DOCKER = 'A Dockerfile, yes or no [no]: '
-  static final String QUESTIONS = NAME + JAVA + PACK + ARCHITECTURE + TESTS + DOCKER
+  static final String QUESTIONS = NAME + PACK + JAVA + ARCHITECTURE + TESTS + DOCKER
 
   def setup() {
     tib = new Tib(dir)
@@ -68,11 +68,11 @@ class InitServiceCommandSpec extends Specification {
     where:
     what                                    | answers                                             | pack      | java | tests                          | docker | err
     'the defaults'                          | 'vehicle-service\n\n\n\n\n\n'                       | 'default' | 21   | ['unit', 'integration', 'api'] | false  | QUESTIONS
-    'answers of their own, with spaces'     | ' vehicle-service \n25\n default \n anemic \napi, unit, archunit\nY\n' | 'default' | 25 | ['api', 'unit', 'archunit'] | true | QUESTIONS
-    'none for the tests'                    | 'vehicle-service\n21\n\n\nnone\nno\n'               | 'default' | 21   | []                             | false  | QUESTIONS
-    'the plain pack'                        | 'vehicle-service\n\nplain\n\n\n\n'                  | 'plain'   | 21   | ['unit', 'integration', 'api'] | false  | QUESTIONS
-    'answers that do not read, asked again' | '\nVehicle Service\nvehicle-service\n17\nx\n25\nspring\nplain\nonion\n\nunit,e2e\nunit,unit\nunit\nmaybe\nyes\n' | 'plain' | 25 | ['unit'] | true | NAME + "service: '' does not match ${Names.SERVICE}\n" + NAME + "service: 'Vehicle Service' does not match ${Names.SERVICE}\n" + NAME + JAVA + 'java: 17 is not one of 21, 25\n' + JAVA + "'x' is not a number\n" + JAVA + PACK + "'spring' is not one of default, plain\n" + PACK + ARCHITECTURE + "'onion' is not one of anemic, ddd, hexagonal\n" + ARCHITECTURE + TESTS + "'e2e' is not one of unit, integration, api, archunit\n" + TESTS + "tests[1]: 'unit' is already there\n" + TESTS + DOCKER + 'Answer yes or no.\n' + DOCKER
-    'an architecture that the pack has'     | 'vehicle-service\n\n\nlayered\nhexagonal\n\n\n'    | 'default' | 21   | ['unit', 'integration', 'api'] | false  | NAME + JAVA + PACK + ARCHITECTURE + "'layered' is not one of anemic, ddd, hexagonal\n" + ARCHITECTURE + TESTS + DOCKER
+    'answers of their own, with spaces'     | ' vehicle-service \n default \n25\n anemic \napi, unit, archunit\nY\n' | 'default' | 25 | ['api', 'unit', 'archunit'] | true | QUESTIONS
+    'none for the tests'                    | 'vehicle-service\n\n21\n\nnone\nno\n'               | 'default' | 21   | []                             | false  | QUESTIONS
+    'the plain pack'                        | 'vehicle-service\nplain\n\n\n\n\n'                  | 'plain'   | 21   | ['unit', 'integration', 'api'] | false  | QUESTIONS
+    'answers that do not read, asked again' | '\nVehicle Service\nvehicle-service\nspring\nplain\n17\nx\n25\nonion\n\nunit,e2e\nunit,unit\nunit\nmaybe\nyes\n' | 'plain' | 25 | ['unit'] | true | NAME + "service: '' does not match ${Names.SERVICE}\n" + NAME + "service: 'Vehicle Service' does not match ${Names.SERVICE}\n" + NAME + PACK + "'spring' is not one of default, plain\n" + PACK + JAVA + 'java: 17 is not one of 21, 25\n' + JAVA + "'x' is not a number\n" + JAVA + ARCHITECTURE + "'onion' is not one of anemic, ddd, hexagonal\n" + ARCHITECTURE + TESTS + "'e2e' is not one of unit, integration, api, archunit\n" + TESTS + "tests[1]: 'unit' is already there\n" + TESTS + DOCKER + 'Answer yes or no.\n' + DOCKER
+    'an architecture that the pack has'     | 'vehicle-service\n\n\nlayered\nhexagonal\n\n\n'    | 'default' | 21   | ['unit', 'integration', 'api'] | false  | NAME + PACK + JAVA + ARCHITECTURE + "'layered' is not one of anemic, ddd, hexagonal\n" + ARCHITECTURE + TESTS + DOCKER
   }
 
   def "a dry run that asks prints the diff on standard output, and the questions on standard error"() {
@@ -103,7 +103,7 @@ class InitServiceCommandSpec extends Specification {
 
   def "answers that end before the questions do are a mistake of the command line, and nothing is written"() {
     given:
-    tib.answers = new ByteArrayInputStream('vehicle-service\n25\n\n'.getBytes('UTF-8'))
+    tib.answers = new ByteArrayInputStream('vehicle-service\n\n25\n'.getBytes('UTF-8'))
 
     when:
     Result result = tib.init()
@@ -111,7 +111,7 @@ class InitServiceCommandSpec extends Specification {
     then:
     result.exitCode() == 2
     result.out() == ''
-    result.err().startsWith(NAME + JAVA + PACK + ARCHITECTURE + '\nThe command line leaves out what tib asks for, and there are no more answers.\nUsage: tib init service ')
+    result.err().startsWith(NAME + PACK + JAVA + ARCHITECTURE + '\nThe command line leaves out what tib asks for, and there are no more answers.\nUsage: tib init service ')
     dir.toFile().list().length == 0
   }
 

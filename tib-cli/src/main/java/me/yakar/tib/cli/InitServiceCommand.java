@@ -238,16 +238,16 @@ class InitServiceCommand implements Callable<Integer> {
             "",
             answer -> checked(() -> Spec.of(answer)).service());
     Spec defaults = Spec.of(name);
-    Integer java =
-        questions.ask(
-            "Its Java version, 21 or 25",
-            String.valueOf(defaults.java()),
-            answer -> checked(() -> Spec.of(name, null, number(answer), null, null, null)).java());
     String pack =
         questions.ask(
             "Its template pack: " + String.join(", ", Packs.names()),
             defaults.pack(),
             answer -> read(new PackConverter(), answer));
+    Integer java =
+        questions.ask(
+            "Its Java version, 21 or 25",
+            String.valueOf(defaults.java()),
+            answer -> checked(() -> Spec.of(name, null, number(answer), null, null, null)).java());
     Architecture architecture =
         questions.ask(
             "Its architecture: " + names(Architecture.values()),
