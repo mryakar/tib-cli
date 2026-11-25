@@ -36,7 +36,7 @@ final class EntityGenerator implements Generator {
 
   @Override
   public void generate(Project project, ProjectFiles files) {
-    Map<String, EntityModel> models = EntityModel.models(project, false);
+    Map<String, EntityModel> models = EntityModel.models(project);
     GeneratedFiles generated = new GeneratedFiles(SpringPack.TEMPLATES, files);
     models.values().forEach(model -> generateEntity(project, model, generated, files));
     // Written here and not by init: only a service with an API needs it.

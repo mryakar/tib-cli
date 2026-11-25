@@ -214,7 +214,7 @@ entities:
 '''))
 
     when:
-    Map<String, EntityModel> models = EntityModel.models(project, false)
+    Map<String, EntityModel> models = EntityModel.models(project)
 
     then:
     models.keySet() as List == ['B', 'A', 'C']
@@ -227,7 +227,7 @@ entities:
     Project project = new Project(SpecReader.parse("tib: 1\nservice: s\nentities:\n  - name: B\n  - name: A\n    relations:\n      - { kind: manyToOne, target: B }\n"))
 
     when:
-    EntityModel model = EntityModel.models(project, byIdentifier).A
+    EntityModel model = (byIdentifier ? EntityModel.modelsByIdentifier(project) : EntityModel.models(project)).A
 
     then:
     model.refersById() == byIdentifier

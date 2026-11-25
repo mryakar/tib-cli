@@ -23,14 +23,8 @@ final class Models {
 
   private Models() {}
 
-  /**
-   * The models of the entities of the spec of a service, by name. The spec gives each entity after
-   * the ones it refers to, as a pack orders them.
-   */
+  /** The models of the entities of the spec of a service, by name. */
   static Map<String, EntityModel> of(String spec) {
-    Project project = new Project(SpecReader.parse("tib: 1\nservice: s\n$spec"))
-    Map<String, EntityModel> models = [:]
-    project.spec().entities().each { models[it.name()] = new EntityModel(project, it, models) }
-    models
+    EntityModel.models(new Project(SpecReader.parse("tib: 1\nservice: s\n$spec")))
   }
 }

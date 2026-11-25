@@ -73,6 +73,6 @@ class RepositoryModelSpec extends Specification {
 
   /** The models of the entities, as the plain pack makes them: each refers to another by its identifier. */
   private static Map<String, EntityModel> models(String entities) {
-    EntityModel.models(new Project(SpecReader.parse("tib: 1\nservice: s\nentities:\n$entities")), true)
+    EntityModel.modelsByIdentifier(new Project(SpecReader.parse("tib: 1\nservice: s\nentities:\n$entities")))
   }
 }
