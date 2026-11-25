@@ -107,10 +107,10 @@ class TagApiTests {
     // PostgreSQL writes a row that changes at the end of its table, where a list without an order
     // would show it.
     http.put("/api/tags/{id}", other, first.id());
-
     ResponseEntity<JsonNode> list = http.getForEntity("/api/tags", JsonNode.class);
 
-    assertThat(list.getBody().findValuesAsString("id"))
+    JsonNode listed = list.getBody().path("content");
+    assertThat(listed.findValuesAsString("id"))
         .containsExactly(first.id().toString(), second.id().toString());
   }
 

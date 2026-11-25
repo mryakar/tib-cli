@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import me.yakar.cornerservice.branch.application.port.out.BranchStore;
 import me.yakar.cornerservice.branch.domain.Branch;
-import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 
 /**
@@ -24,7 +23,9 @@ public class BranchPersistenceAdapter implements BranchStore {
 
   @Override
   public List<Branch> findAll() {
-    return branches.findAll(Sort.by("id")).stream().map(mapper::toDomain).toList();
+    return branches.findAll(org.springframework.data.domain.Sort.by("id")).stream()
+        .map(mapper::toDomain)
+        .toList();
   }
 
   @Override

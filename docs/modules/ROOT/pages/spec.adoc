@@ -86,7 +86,7 @@ schema does not hold. A problem names the value it is about, as in
   and `updatedAt` in an audited entity; and the member of the DTO that holds the target of a
   relation, the relation's field followed by the target's identifier field, as in `depotId`.
 * An entity is not named like a type that the generated code imports, such as `Entity`, `Table`,
-  `Column`, `Id`, `Service`, `Component`, `Page`, `Pageable`, `Sort`, `List`, `BigDecimal`,
+  `Column`, `Id`, `Service`, `Component`, `Page`, `Pageable`, `List`, `BigDecimal`,
   `LocalDate` or `LocalDateTime`; with the DDD and hexagonal architectures also `Consumer`, and
   `Valid` with the default pack; and with the `plain` pack `Transactions`, `Http`, `Optional`, `Connection`,
   `ResultSet`, `Test` or `BeforeEach`. Nor does a DTO of the `plain` pack have a field named

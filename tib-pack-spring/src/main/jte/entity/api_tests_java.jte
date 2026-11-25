@@ -143,16 +143,29 @@ class ${name}ApiTests {
     ${dto} first = create();
     ${dto} other = ${name}Samples.otherDto(${tests.requiredIdArguments()}).build();
     ${dto} second = http.postForObject("${path}", other, ${dto}.class);
+    @if(entity.uuidId())
+    String firstId = first.${entity.idField()}().toString();
+    String secondId = second.${entity.idField()}().toString();
+    // PostgreSQL writes a row that changes at the end of its table, where a list without an order
+    // would show it: the one that comes first changes.
+    http.put("${path}/{id}", other, firstId.compareTo(secondId) < 0 ? firstId : secondId);
+    @else
     // PostgreSQL writes a row that changes at the end of its table, where a list without an order
     // would show it.
     http.put("${path}/{id}", other, first.${entity.idField()}());
+    @endif
 
     ResponseEntity<JsonNode> list = http.getForEntity("${path}", JsonNode.class);
 
-    @if(entity.uuidId())
-    assertThat(list.getBody().findValuesAsString("${entity.idField()}")).hasSize(2).isSorted();
+    @if(entity.paginated())
+    JsonNode listed = list.getBody().path("content");
     @else
-    assertThat(list.getBody().findValuesAsString("${entity.idField()}"))
+    JsonNode listed = list.getBody();
+    @endif
+    @if(entity.uuidId())
+    assertThat(listed.findValuesAsString("${entity.idField()}")).hasSize(2).isSorted();
+    @else
+    assertThat(listed.findValuesAsString("${entity.idField()}"))
         .containsExactly(first.${entity.idField()}().toString(), second.${entity.idField()}().toString());
     @endif
   }
