@@ -29,6 +29,13 @@ class TagApiTests {
   private final Transactions transactions = new Transactions(TestDatabase.dataSource());
   private final BranchRepository branchRepository = new BranchRepository(transactions);
 
+  private Branch branch;
+
+  @BeforeEach
+  void saveWhatATagNeeds() {
+    branch = transactions.run(() -> branchRepository.insert(BranchSamples.branch().build()));
+  }
+
   @BeforeAll
   static void start() throws IOException {
     service = TestService.start();
@@ -37,13 +44,6 @@ class TagApiTests {
   @AfterAll
   static void stop() {
     service.close();
-  }
-
-  private Branch branch;
-
-  @BeforeEach
-  void saveWhatATagNeeds() {
-    branch = transactions.run(() -> branchRepository.insert(BranchSamples.branch().build()));
   }
 
   @AfterEach
