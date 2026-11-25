@@ -42,23 +42,6 @@ public final class TestsModel {
     return project.tests(TestKind.ARCHUNIT);
   }
 
-  /** The rules that the test of the architecture checks, in words, for the notes for agents. */
-  public String rules() {
-    return switch (project.architecture()) {
-      case ANEMIC ->
-          "the controller of an entity over its service over its\nrepository, and no cycle between"
-              + " the packages of the entities";
-      case DDD ->
-          "the domain of an entity uses neither its application nor its web, the application does"
-              + "\nnot use the web, the domain of an aggregate does not use the domain of another, and"
-              + "\nthere is no cycle between the packages of the entities";
-      case HEXAGONAL ->
-          "the domain knows neither JPA nor Spring, the application does"
-              + "\nnot use the adapters, an inbound adapter does not use an outbound one, nor the reverse, and"
-              + "\nthere is no cycle between the packages of the entities";
-    };
-  }
-
   /** Whether the service has tests that start PostgreSQL in a container. */
   public boolean container() {
     return project.tests(TestKind.INTEGRATION) || project.tests(TestKind.API);

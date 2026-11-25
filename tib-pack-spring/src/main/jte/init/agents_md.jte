@@ -1,9 +1,11 @@
 @import me.yakar.tib.generate.Project
 @import me.yakar.tib.pack.spring.SpringPack
+@import me.yakar.tib.spec.Architecture
 @param Project project
 @param SpringPack pack
 @param me.yakar.tib.pack.TestsModel tests
-!{boolean hexagonal = project.architecture() == me.yakar.tib.spec.Architecture.HEXAGONAL;}
+!{boolean ddd = project.architecture() == Architecture.DDD;}
+!{boolean hexagonal = project.architecture() == Architecture.HEXAGONAL;}
 # ${project.name()}
 
 A Spring Boot ${pack.bootVersion()} service on Java ${project.java()}, with JPA, PostgreSQL, Flyway and Testcontainers,
@@ -42,7 +44,7 @@ with `--dry-run`, tib shows what it would change and changes nothing. To remove 
 it out of the spec and run `tib generate entity --spec <file>`: tib deletes its files, but for
 those you edited and the migration; dropping its table is a new migration.
 
-@if(project.architecture() == me.yakar.tib.spec.Architecture.DDD)
+@if(ddd)
 The service is arranged for DDD: every entity `X` is an aggregate, in three packages. `x.domain`
 has `X`, `XGenerated` and `XRepository`; `x.application` has `XService`, the use cases on the
 aggregate, which throw `NotFoundException` for one that is not there; `x.web` has `XController`,
@@ -74,7 +76,12 @@ from `XSamples`, which is tib's and follows the spec: a test changes a value thr
 as in `XSamples.x().name("Other").build()`.@else.@endif `ConflictHandler`, in the base package, answers a
 request that breaks a constraint of the database with 409 Conflict; it is yours.@if(tests.archunit())
 `ArchitectureTests`, in the tests of the base package, checks the rules of the architecture on the
-classes of the service with ArchUnit: ${tests.rules()}; it is yours.@endif
+classes of the service with ArchUnit:@if(ddd) the domain of an entity uses neither its application nor its web, the application does
+not use the web, the domain of an aggregate does not use the domain of another, and
+there is no cycle between the packages of the entities@elseif(hexagonal) the domain knows neither JPA nor Spring, the application does
+not use the adapters, an inbound adapter does not use an outbound one, nor the reverse, and
+there is no cycle between the packages of the entities@else the controller of an entity over its service over its
+repository, and no cycle between the packages of the entities@endif; it is yours.@endif
 
 The Java that tib writes is in the layout of google-java-format ${pack.formatterVersion()}: formatted
 with it, the files of tib's stay as tib wrote them.
