@@ -38,7 +38,7 @@ class GitSpec extends Specification {
     Files.writeString(service.resolve('Staged.java'), 'class Staged {}\n')
     Files.writeString(service.resolve('Kept.java'), 'class Kept {}\n')
     Files.writeString(repository.resolve('Other.java'), 'class Other {}\n')
-    commit()
+    TestGit.commitAll(repository)
 
     expect: 'a clean service has none'
     Git.uncommitted(service) == []
@@ -46,7 +46,7 @@ class GitSpec extends Specification {
     when:
     Files.writeString(service.resolve('Edited.java'), 'class Edited { int x; }\n')
     Files.writeString(service.resolve('Staged.java'), 'class Staged { int x; }\n')
-    git('add', 'service/Staged.java')
+    TestGit.run(repository, 'add', 'service/Staged.java')
     Files.writeString(service.resolve('New.java'), 'class New {}\n')
     Files.writeString(repository.resolve('Other.java'), 'class Other { int x; }\n')
 
@@ -57,7 +57,7 @@ class GitSpec extends Specification {
   def "a path with letters outside ASCII is as it is on disk"() {
     given:
     Files.writeString(repository.resolve('Şube.java'), 'class Şube {}\n')
-    commit()
+    TestGit.commitAll(repository)
     Files.writeString(repository.resolve('Şube.java'), 'class Şube { int edited; }\n')
 
     expect:
@@ -72,7 +72,7 @@ class GitSpec extends Specification {
   def "an interrupted thread gets the answer, and stays interrupted"() {
     given:
     Files.writeString(repository.resolve('A.java'), 'class A {}\n')
-    commit()
+    TestGit.commitAll(repository)
     Files.writeString(repository.resolve('A.java'), 'class A { int edited; }\n')
 
     when:
@@ -85,35 +85,5 @@ class GitSpec extends Specification {
 
     cleanup:
     Thread.interrupted()
-  }
-
-  /** Makes the directory a repository and commits every file in it. */
-  private void commit() {
-    git('init', '-q')
-    git('add', '.')
-    git('commit', '-q', '-m', 'first')
-  }
-
-  /**
-   * Runs git in the repository, without the signing, the identity or the line endings of the
-   * machine.
-   */
-  private void git(String... args) {
-    Process process = ([
-      'git',
-      '-c',
-      'user.name=tib',
-      '-c',
-      'user.email=tib@example.com',
-      '-c',
-      'commit.gpgsign=false',
-      '-c',
-      'core.autocrlf=false'
-    ] + args.toList())
-    .execute(null, repository.toFile())
-    StringBuilder out = new StringBuilder()
-    StringBuilder err = new StringBuilder()
-    process.waitForProcessOutput(out, err)
-    assert process.exitValue() == 0 : err
   }
 }
