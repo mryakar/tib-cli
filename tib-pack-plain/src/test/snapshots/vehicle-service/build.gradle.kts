@@ -16,8 +16,8 @@ repositories { mavenCentral() }
 dependencies {
   implementation("tools.jackson.core:jackson-databind:3.3.0")
   implementation("org.postgresql:postgresql:42.7.14")
-  implementation("org.flywaydb:flyway-core:12.11.0")
-  runtimeOnly("org.flywaydb:flyway-database-postgresql:12.11.0")
+  implementation("org.flywaydb:flyway-core:13.12.1")
+  runtimeOnly("org.flywaydb:flyway-database-postgresql:13.12.1")
   testImplementation(platform("org.junit:junit-bom:6.1.3"))
   testImplementation("org.junit.jupiter:junit-jupiter")
   testImplementation("org.mockito:mockito-junit-jupiter:5.24.0")
