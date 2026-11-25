@@ -106,6 +106,15 @@ public record Spec(
   }
 
   /**
+   * The spec of a service that has only its name, checked.
+   *
+   * @throws SpecException when the name is not one of a service
+   */
+  public static Spec of(String service) {
+    return of(service, null, null, null, null, null);
+  }
+
+  /**
    * The spec of a service that has only its name, its pack, its Java version, its architecture, its
    * kinds of tests and whether it has a Dockerfile, checked.
    *
@@ -125,6 +134,11 @@ public record Spec(
       List<TestKind> tests,
       Boolean docker) {
     return new Spec(VERSION, service, null, pack, java, architecture, tests, docker, null).check();
+  }
+
+  /** The spec with these entities in place of its own. */
+  public Spec withEntities(List<Entity> entities) {
+    return new Spec(tib, service, group, pack, java, architecture, tests, docker, entities);
   }
 
   /**

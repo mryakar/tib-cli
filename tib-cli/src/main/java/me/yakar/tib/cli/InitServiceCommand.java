@@ -205,8 +205,8 @@ class InitServiceCommand implements Callable<Integer> {
         questions.ask(
             "The name of the service, in lower case words joined with hyphens",
             "",
-            answer -> checked(() -> Spec.of(answer, null, null, null, null, null)).service());
-    Spec defaults = Spec.of(name, null, null, null, null, null);
+            answer -> checked(() -> Spec.of(answer)).service());
+    Spec defaults = Spec.of(name);
     Integer java =
         questions.ask(
             "Its Java version, 21 or 25",
