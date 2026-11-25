@@ -147,9 +147,17 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
       return absolute;
     }
 
+    /**
+     * The file of the input of the service in the directory: its path from the directory as the
+     * file system has it, which is where {@link #of} measured it from.
+     */
+    Path file(Path service) {
+      return real(service).resolve(path).normalize();
+    }
+
     /** Whether the file is not there, as far as can be told from the directory of the service. */
     boolean absent(Path service) {
-      return Files.notExists(service.resolve(path));
+      return Files.notExists(file(service));
     }
 
     /** Whether the content is the one that tib read. */
@@ -285,8 +293,8 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
   /**
    * The inputs that are no longer as tib read them, in the order of the state: one whose content
    * changed, and one that is not there. The path of an input is resolved against the directory of
-   * the service; the bytes of the file are hashed, so a file that is no longer UTF-8 is a changed
-   * one.
+   * the service as the file system has it; the bytes of the file are hashed, so a file that is no
+   * longer UTF-8 is a changed one.
    *
    * @param service the directory of the service
    * @throws StateException when a file is there but cannot be read
@@ -298,7 +306,7 @@ public record State(String tib, PackRef pack, List<Input> inputs, Spec spec, Lis
         differences.add(new Difference(input.path(), Difference.Kind.ABSENT));
         continue;
       }
-      Path file = service.resolve(input.path());
+      Path file = input.file(service);
       try {
         if (!input.holds(Files.readAllBytes(file))) {
           differences.add(new Difference(input.path(), Difference.Kind.CHANGED));

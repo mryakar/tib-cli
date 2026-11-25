@@ -422,19 +422,20 @@ class StateSpec extends Specification {
     read.inputDifferences(Files.createDirectories(dir.resolve('service'))) == [new Difference(spec.toAbsolutePath().toString(), Difference.Kind.CHANGED)]
   }
 
-  def "an input that is there but cannot be read is a problem"() {
+  def "an input that is there but cannot be read is a problem, named by the path that leads to it"() {
     given:
+    Path service = Files.createDirectories(dir.resolve('services/vehicle'))
     Path spec = Files.writeString(dir.resolve('spec.yaml'), 'spec\n')
-    State read = inputs(dir, spec)
+    State read = inputs(service, spec)
     Files.delete(spec)
     Files.createDirectory(spec)
 
     when:
-    read.inputDifferences(dir)
+    read.inputDifferences(service)
 
     then:
     StateException e = thrown()
-    e.message.startsWith("cannot read ${spec}: ")
+    e.message.startsWith("cannot read ${dir.toRealPath().resolve('spec.yaml')}: ")
   }
 
   def "an input is kept with its path relative to the service and the hash of its content"() {
